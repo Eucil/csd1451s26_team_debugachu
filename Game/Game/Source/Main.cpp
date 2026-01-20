@@ -1,6 +1,9 @@
-#include <AEEngine.h>
+#include <iostream>
 
+#include <AEEngine.h>
 #include <crtdbg.h>
+
+#include "GameStateManager.h"
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
                       _In_ LPWSTR lpCmdLine, _In_ int nCmdShow) {
@@ -8,8 +11,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
-
-    bool gameRunning = true;
 
     AESysInit(hInstance, nCmdShow, 1600, 900, 1, 60, false, nullptr);
 
@@ -19,14 +20,47 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     printf("Hello, World\n");
 
+    GameStateManager GSM;
+    GSM.init(StateId::MainMenu);
+
     // Game Loop
-    while (gameRunning) {
-        AESysFrameStart();
+    while (GSM.currentState_ != StateId::Quit) {
+        if (GSM.currentState_ == StateId::Restart) {
+            GSM.currentState_ = GSM.previousState_;
+            GSM.nextState_ = GSM.previousState_;
+        } else {
+            GSM.update(GSM.nextState_);
 
-        if (AEInputCheckTriggered(AEVK_ESCAPE) || 0 == AESysDoesWindowExist())
-            gameRunning = false;
+            GSM.callLoad();
+        }
 
-        AESysFrameEnd();
+        GSM.callInitialize();
+
+        while (GSM.nextState_ == GSM.currentState_) {
+            AESysFrameStart();
+
+            f32 deltaTime = (f32)AEFrameRateControllerGetFrameTime();
+
+            // Click ESCAPE to exit game
+            if (AEInputCheckTriggered(AEVK_ESCAPE) || 0 == AESysDoesWindowExist()) {
+                std::cout << "ESCAPE triggered\n";
+                GSM.nextState_ = StateId::Quit;
+            }
+
+            GSM.callUpdate(deltaTime);
+            GSM.callDraw();
+
+            AESysFrameEnd();
+        }
+
+        GSM.callFree();
+
+        if (GSM.nextState_ != StateId::Restart) {
+            GSM.callUnload();
+        }
+
+        GSM.previousState_ = GSM.currentState_;
+        GSM.currentState_ = GSM.nextState_;
     }
 
     AESysExit();

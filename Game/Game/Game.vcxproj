@@ -11,11 +11,18 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\States\Level1.cpp" />
     <ClCompile Include="Source\Main.cpp" />
+    <ClCompile Include="Source\States\MainMenu.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />
     <None Include="Docs\Standards.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Include\GameStateManager.h" />
+    <ClInclude Include="Include\States\Level1.h" />
+    <ClInclude Include="Include\States\MainMenu.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
