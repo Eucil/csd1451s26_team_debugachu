@@ -1,5 +1,7 @@
 #pragma once
 
+#include <AEEngine.h>
+
 #include "States/Level1.h"
 #include "States/MainMenu.h"
 
@@ -9,7 +11,7 @@ class GameState {
 public:
     void (*init_)(void);
     void (*load_)(void);
-    void (*update_)(float);
+    void (*update_)(f32);
     void (*free_)(void);
 
 private:
@@ -58,7 +60,7 @@ public:
         }
     }
 
-    void callUpdate(float deltaTime) {
+    void callUpdate(f32 deltaTime) {
         if (fpUpdate_) {
             fpUpdate_(*this, deltaTime);
         }
@@ -85,7 +87,7 @@ public:
 private:
     void (*fpLoad_)();
     void (*fpInitialize_)();
-    void (*fpUpdate_)(GameStateManager&, float);
+    void (*fpUpdate_)(GameStateManager&, f32);
     void (*fpDraw_)();
     void (*fpFree_)();
     void (*fpUnload_)();

@@ -16,7 +16,7 @@ void InitializeLevel1() {
     std::cout << "Initialize level 1\n";
 }
 
-void UpdateLevel1(GameStateManager& GSM, float deltaTime) {
+void UpdateLevel1(GameStateManager& GSM, f32 deltaTime) {
     // Todo
     std::cout << "Update level 1\n";
 

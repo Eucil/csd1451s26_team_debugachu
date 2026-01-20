@@ -16,7 +16,7 @@ void InitializeMainMenu() {
     std::cout << "Initialize main menu\n";
 }
 
-void UpdateMainMenu(GameStateManager& GSM, float deltaTime) {
+void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
     // Todo
     std::cout << "Update main menu\n";
 
