@@ -20,6 +20,7 @@
     <None Include="Docs\Standards.md" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\Components.h" />
     <ClInclude Include="Include\GameStateManager.h" />
     <ClInclude Include="Include\States\Level1.h" />
     <ClInclude Include="Include\States\MainMenu.h" />
