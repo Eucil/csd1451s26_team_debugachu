@@ -30,6 +30,9 @@
     <ClCompile Include="Source\States\Level1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\FluidSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Docs\Standards.md">
@@ -47,6 +50,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\States\Level1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Components.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\FluidSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

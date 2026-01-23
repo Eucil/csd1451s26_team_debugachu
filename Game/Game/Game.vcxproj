@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -11,9 +11,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\FluidSystem.cpp" />
     <ClCompile Include="Source\States\Level1.cpp" />
     <ClCompile Include="Source\Main.cpp" />
     <ClCompile Include="Source\States\MainMenu.cpp" />
+    <ClCompile Include="Source\Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />
@@ -21,9 +23,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Components.h" />
+    <ClInclude Include="Include\FluidSystem.h" />
     <ClInclude Include="Include\GameStateManager.h" />
     <ClInclude Include="Include\States\Level1.h" />
     <ClInclude Include="Include\States\MainMenu.h" />
+    <ClInclude Include="Include\Utils.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

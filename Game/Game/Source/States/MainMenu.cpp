@@ -6,6 +6,10 @@
 
 #include "GameStateManager.h"
 
+#include "FluidSystem.h"
+
+static FluidSystem fluidSystem;
+
 void LoadMainMenu() {
     // Todo
     std::cout << "Load main menu\n";
@@ -30,6 +34,11 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
     if (AEInputCheckTriggered(AEVK_R) || 0 == AESysDoesWindowExist()) {
         std::cout << "R triggered\n";
         GSM.nextState_ = StateId::Restart;
+    }
+
+    // Press M1 to spawn particles
+    if (AEInputCheckTriggered(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
+        std::cout << "LBUTTON triggered\n";
     }
 }
 

@@ -6,6 +6,8 @@
 
 #include "GameStateManager.h"
 
+#include "Components.h"
+
 void LoadLevel1() {
     // Todo
     std::cout << "Load level 1\n";
