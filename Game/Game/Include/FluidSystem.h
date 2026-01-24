@@ -10,7 +10,7 @@ struct FluidParticle {
 
     Transform transform_; //  <--- posX, posY, scaleX, scaleY, rotA, worldMtx
 
-    RigidBody2D rgBody2D_; //  <--- mass, velocity, acceleration, forces, gravityScale
+    AEVec2 velocity_;
 
     FluidType type_; //  <--- can be water, lava, wtv
 
@@ -20,7 +20,8 @@ struct FluidParticle {
     FluidParticle(f32 posX, f32 posY, FluidType type);
 
     //* 2.   Custom Particle
-    FluidParticle(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, FluidType type);
+    FluidParticle(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, f32 veloX, f32 veloY,
+                  FluidType type);
 };
 
 class FluidSystem {
@@ -31,22 +32,36 @@ private:
     std::vector<FluidParticle>
         particlePools_[(int)FluidType::Count]; //  <--- stores all live particles
 
-    // graphic configs
+    // graphic configs for each particle type
     Graphics graphicsConfigs_[(int)FluidType::Count]; // <--- mesh, texture, layer
 
     // colour configs (r,g,b,alpha)
-    f32 colorConfigs_[(int)FluidType::Count][4]; // [Type][RGBA]
+    f32 colorConfigs_[(int)FluidType::Count][10]; // [Type][RGBA]
+
+    //  this
+    AEVec2 transformConfigs_[(int)FluidType::Count];
+
+    // physics configs for each particle type
+    // note: im storing it here as there is no point in having every particle store the same
+    //       gravity, acceleration, etc value and making the cpu have to fetch these values
+    //       every single time in an iterator loop.
+    RigidBody2D physicsConfigs_[(
+        int)FluidType::Count]; //  <--- mass, velocity, acceleration, forces, gravityScale
 
 public:
     // --------------------- Constructors / Destructors --------------------- //
 
     // ------------------------- Basic Methods --------------------------- //
 
+    void InitializeMesh();
+
     void Initialize();
 
     void UpdateTransforms(std::vector<FluidParticle>& particlePool);
 
-    void UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt);
+    void UpdateCollision();
+
+    void UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt, FluidType type);
 
     void UpdateMain(f32 dt);
 
@@ -59,12 +74,16 @@ public:
     // ------------------------- Setter / Getter Methods --------------------------- //
 
     // usage: fluidSys1.SetTypeColor(FluidType::Water, 0.0f, 0.0f, 1.0f, 1.0f);
-    void SetTypeColor(FluidType type, f32 r, f32 g, f32 b, f32 a);
+    void SetTypeColor(f32 r, f32 g, f32 b, f32 a, FluidType type);
+
+    //
+    void SetTypePhysics(f32 mass, f32 gravity, FluidType type);
 
     // ------------------------- Utility Methods --------------------------- //
     void SpawnParticle_d(f32 posX, f32 posY, FluidType type);
 
-    void SpawnParticle_c(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, FluidType type);
+    void SpawnParticle_c(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, f32 veloX, f32 veloY,
+                         FluidType type);
 
     int GetParticleCount(FluidType type);
 };

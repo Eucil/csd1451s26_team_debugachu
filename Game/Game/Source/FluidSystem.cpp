@@ -12,8 +12,11 @@
 
 FluidParticle::FluidParticle(f32 posX, f32 posY, FluidType type) {
     transform_.pos_ = {posX, posY};
-    transform_.scale_ = {100.0f, 100.0f};
+    transform_.scale_ = {1.0f, 1.0f};
     transform_.rotationRad_ = 0.0;
+    velocity_.x = 0.0f;
+    velocity_.y = 0.0f;
+
     switch (type) {
     case FluidType::Water:
         type_ = FluidType::Water;
@@ -24,21 +27,32 @@ FluidParticle::FluidParticle(f32 posX, f32 posY, FluidType type) {
     }
 }
 
-FluidParticle::FluidParticle(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, FluidType type) {
+FluidParticle::FluidParticle(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, f32 veloX,
+                             f32 veloY, FluidType type) {
     transform_.pos_ = {posX, posY};
     transform_.scale_ = {scaleX, scaleY};
     transform_.rotationRad_ = rot;
-    type_ = type;
+    velocity_.x = veloX;
+    velocity_.y = veloY;
+
+    switch (type) {
+    case FluidType::Water:
+        type_ = FluidType::Water;
+    case FluidType::Lava:
+        type_ = FluidType::Lava;
+    default:
+        type_ = FluidType::Water;
+    }
 }
 
 // ==========================================
 // FluidSystem
 // ==========================================
 
-void FluidSystem::Initialize() {
+void FluidSystem::InitializeMesh() {
 
     // CreateCircleMesh(number of slices);
-    AEGfxVertexList* circleMesh = CreateCircleMesh(4);
+    AEGfxVertexList* circleMesh = CreateCircleMesh(20);
 
     // Assign circle mesh to all particle types
     for (int i = 0; i < (int)FluidType::Count; ++i) {
@@ -46,14 +60,25 @@ void FluidSystem::Initialize() {
             graphicsConfigs_[i].mesh_ = circleMesh;
         }
     }
-
-    //  Set Default Colors
-    SetTypeColor(FluidType::Water, 0.0f, 0.5f, 1.0f, 0.8f);
-    SetTypeColor(FluidType::Lava, 1.0f, 0.2f, 0.0f, 1.0f);
 }
 
-// Sets the matrices for every single INDIVIDUAL particle in the
+void FluidSystem::Initialize() {
+
+    // Initialize particle mesh
+    InitializeMesh();
+
+    // Initialize matri
+    //**InitializePhysics();
+
+    // Set colors for each particle type
+    SetTypeColor(0.0f, 0.5f, 1.0f, 0.8f, FluidType ::Water);
+    SetTypeColor(1.0f, 0.2f, 0.0f, 1.0f, FluidType::Lava);
+}
+
+// Sets the mesh-matrices for every single INDIVIDUAL particle in the
 // specified particle pool.
+
+// Sub-function, called under UpdateMain()
 void FluidSystem::UpdateTransforms(std::vector<FluidParticle>& particlePool) {
 
     for (auto& p : particlePool) {
@@ -71,7 +96,29 @@ void FluidSystem::UpdateTransforms(std::vector<FluidParticle>& particlePool) {
     }
 }
 
-void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt) {}
+void FluidSystem::UpdateCollision() {}
+
+// Sets the pos.x and pos.y for every single INDIVIDUAL particle in the
+// specified particle pool.
+
+// Sub-function, called under UpdateMain(), AFTER UpdateCollision
+void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt, FluidType type) {
+    int typeIndex = (int)type;
+
+    // load new constants with config values
+    f32 mass = physicsConfigs_[typeIndex].mass_;
+    f32 gravity = physicsConfigs_[typeIndex].gravity_;
+
+    for (auto& p : particlePool) {
+
+        // EFFECT 1: causes the particle to fall downwards
+        p.velocity_.y += gravity * dt;
+
+        // Update Position
+        p.transform_.pos_.x += p.velocity_.x * dt;
+        p.transform_.pos_.y += p.velocity_.y * dt;
+    }
+}
 
 // This function affects ALL particles (used after all other sub-Update functions)
 void FluidSystem::UpdateMain(f32 dt) {
@@ -81,7 +128,7 @@ void FluidSystem::UpdateMain(f32 dt) {
             continue;
 
         // updates ALL particles within this pool
-        UpdatePhysics(particlePools_[i], dt);
+        UpdatePhysics(particlePools_[i], dt, (FluidType)i);
         UpdateTransforms(particlePools_[i]);
     }
 }
@@ -146,19 +193,42 @@ void FluidSystem::DrawTexture() {
         }
     }
 }
+void FluidSystem::Free() {
+    // free the mesh once and then set the rest
+    if (graphicsConfigs_[0].mesh_ != nullptr) {
+        AEGfxMeshFree(graphicsConfigs_[0].mesh_);
+    }
 
-void FluidSystem::Free() {}
+    // nullify all mesh pointers so we don't accidentally use dead memory
+    for (int i = 0; i < (int)FluidType::Count; ++i) {
+        graphicsConfigs_[i].mesh_ = nullptr;
+    }
 
-void FluidSystem::SetTypeColor(FluidType type, f32 r, f32 g, f32 b, f32 a) {
-    // 1. Convert Enum to Integer index (Water -> 0, Lava -> 1)
+    // free textures
+    for (int i = 0; i < (int)FluidType::Count; ++i) {
+        if (graphicsConfigs_[i].texture_ != nullptr) {
+            AEGfxTextureUnload(
+                graphicsConfigs_[i].texture_); // Or AEGfxTextureFree depending on version
+            graphicsConfigs_[i].texture_ = nullptr;
+        }
+    }
+
+    // empty the vectors
+    for (int i = 0; i < (int)FluidType::Count; ++i) {
+        particlePools_[i].clear();
+    }
+}
+
+void FluidSystem::SetTypeColor(f32 r, f32 g, f32 b, f32 a, FluidType type) {
     int i = (int)type;
 
-    // 2. Write to the config array
     colorConfigs_[i][0] = r;
     colorConfigs_[i][1] = g;
     colorConfigs_[i][2] = b;
     colorConfigs_[i][3] = a;
 }
+
+void FluidSystem::SetTypePhysics(f32 mass, f32 gravity, FluidType type) {}
 
 int FluidSystem::GetParticleCount(FluidType type) { return particlePools_[(int)type].size(); }
 
@@ -168,9 +238,9 @@ void FluidSystem::SpawnParticle_d(f32 posX, f32 posY, FluidType type) {
     particlePools_[i].push_back(newParticle);
 }
 
-void FluidSystem::SpawnParticle_c(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot,
-                                  FluidType type) {
+void FluidSystem::SpawnParticle_c(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, f32 veloX,
+                                  f32 veloY, FluidType type) {
     int i = (int)type;
-    FluidParticle newParticle(posX, posY, scaleX, scaleY, rot, type);
+    FluidParticle newParticle(posX, posY, scaleX, scaleY, rot, veloX, veloY, type);
     particlePools_[i].push_back(newParticle);
 }

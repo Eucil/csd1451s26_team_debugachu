@@ -47,7 +47,12 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
         s32 mouseX, mouseY;
         AEInputGetCursorPosition(&mouseX, &mouseY);
         // Spawn WATER at mouse position
-        fluidSystem.SpawnParticle_d((f32)mouseX, (f32)mouseY, FluidType::Water);
+
+        // convert mouse coordinates to world coordinates.
+        // (mouse coords start at top left while world coords start in the center)
+        f32 worldX = (f32)mouseX - (1600.0f / 2.0f);
+        f32 worldY = (900.0f / 2.0f) - (f32)mouseY;
+        fluidSystem.SpawnParticle_d(worldX, worldY, FluidType::Water);
     }
 
     // Update functions
@@ -64,6 +69,8 @@ void DrawMainMenu() {
 void FreeMainMenu() {
     // Todo
     std::cout << "Free main menu\n";
+
+    fluidSystem.Free();
 }
 
 void UnloadMainMenu() {
