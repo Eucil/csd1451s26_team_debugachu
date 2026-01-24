@@ -2,7 +2,7 @@
 #include "AEEngine.h"
 #include "Components.h"
 #include <vector>
-enum class FluidType { Water, Lava };
+enum class FluidType { Water, Lava, Count };
 
 struct FluidParticle {
 
@@ -16,24 +16,26 @@ struct FluidParticle {
 
     // --------------------- Constructors / Destructors --------------------- //
 
-    //* 1.   Default (Water)
-    FluidParticle();
+    //* 1.   Default Particle
+    FluidParticle(f32 posX, f32 posY, FluidType type);
 
     //* 2.   Custom Particle
-    FluidParticle(f32 posX, f32 posY, f32 scaleX, f32 scaleY, FluidType type);
+    FluidParticle(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, FluidType type);
 };
 
 class FluidSystem {
 private:
     // ----------------------------- Components ----------------------------- //
 
-    std::vector<FluidParticle> particles; //  <--- stores all live particles
+    // particles[0] holds Water, particles[1] holds Lava, etc.
+    std::vector<FluidParticle>
+        particlePools_[(int)FluidType::Count]; //  <--- stores all live particles
 
-    Graphics waterGraphics_; //  <--- mesh, texture, layer
-    f32 waterColor_[4];
+    // graphic configs
+    Graphics graphicsConfigs_[(int)FluidType::Count]; // <--- mesh, texture, layer
 
-    // Graphics lavaGraphics_;
-    // f32 lavaColor_[4];
+    // colour configs (r,g,b,alpha)
+    f32 colorConfigs_[(int)FluidType::Count][4]; // [Type][RGBA]
 
 public:
     // --------------------- Constructors / Destructors --------------------- //
@@ -42,20 +44,27 @@ public:
 
     void Initialize();
 
-    void Update();
+    void UpdateTransforms(std::vector<FluidParticle>& particlePool);
 
-    void ApplyGraphics();
+    void UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt);
+
+    void UpdateMain(f32 dt);
 
     void DrawColor(); //  <---    draws the mesh using the mesh's color
 
     void DrawTexture(); //  <---    draws the mesh using a loaded texture
 
+    void Free();
+
+    // ------------------------- Setter / Getter Methods --------------------------- //
+
+    // usage: fluidSys1.SetTypeColor(FluidType::Water, 0.0f, 0.0f, 1.0f, 1.0f);
+    void SetTypeColor(FluidType type, f32 r, f32 g, f32 b, f32 a);
+
     // ------------------------- Utility Methods --------------------------- //
-    void SetMesh(AEGfxVertexList* pMesh);
+    void SpawnParticle_d(f32 posX, f32 posY, FluidType type);
 
-    void SetWaterColor(f32 r, f32 g, f32 b, f32 a);
+    void SpawnParticle_c(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, FluidType type);
 
-    void SetTexture() {}
-    // ------------------------- Game Methods --------------------------- //
-    void SpawnParticle();
+    int GetParticleCount(FluidType type);
 };
