@@ -4,7 +4,7 @@
 
 AEGfxVertexList* CreateCircleMesh(f32 slices) {
     // 1. Constants
-    f32 radius = 300.0f; // <--- CHANGE RADIUS HERE
+    f32 radius = 0.5f; // <--- DO NOT CHANGE THIS RADIUS
     f32 angle_step = (3.14159265f * 2.0f) / (f32)slices;
 
     // 2. Loop to create pizza slices

@@ -52,7 +52,9 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
         // (mouse coords start at top left while world coords start in the center)
         f32 worldX = (f32)mouseX - (1600.0f / 2.0f);
         f32 worldY = (900.0f / 2.0f) - (f32)mouseY;
-        fluidSystem.SpawnParticle_d(worldX, worldY, FluidType::Water);
+
+        // the particle contains all the values stated below
+        fluidSystem.SpawnParticle(worldX, worldY, 20.0f, 20.0f, 0.0f, FluidType::Water);
     }
 
     // Update functions

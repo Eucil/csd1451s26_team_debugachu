@@ -14,8 +14,6 @@ FluidParticle::FluidParticle(f32 posX, f32 posY, FluidType type) {
     transform_.pos_ = {posX, posY};
     transform_.scale_ = {1.0f, 1.0f};
     transform_.rotationRad_ = 0.0;
-    velocity_.x = 0.0f;
-    velocity_.y = 0.0f;
 
     switch (type) {
     case FluidType::Water:
@@ -27,13 +25,9 @@ FluidParticle::FluidParticle(f32 posX, f32 posY, FluidType type) {
     }
 }
 
-FluidParticle::FluidParticle(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, f32 veloX,
-                             f32 veloY, FluidType type) {
+FluidParticle::FluidParticle(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, FluidType type) {
     transform_.pos_ = {posX, posY};
     transform_.scale_ = {scaleX, scaleY};
-    transform_.rotationRad_ = rot;
-    velocity_.x = veloX;
-    velocity_.y = veloY;
 
     switch (type) {
     case FluidType::Water:
@@ -49,6 +43,8 @@ FluidParticle::FluidParticle(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot
 // FluidSystem
 // ==========================================
 
+
+// UPDATE (MAYBE BROKEN)
 void FluidSystem::InitializeMesh() {
 
     // CreateCircleMesh(number of slices);
@@ -85,6 +81,7 @@ void FluidSystem::UpdateTransforms(std::vector<FluidParticle>& particlePool) {
 
         AEMtx33 scale, rot, trans;
 
+        // Takes scale, rotation, position FROM THE PARTICLE ITSELF
         AEMtx33Scale(&scale, p.transform_.scale_.x, p.transform_.scale_.y);
         AEMtx33Rot(&rot, p.transform_.rotationRad_);
         AEMtx33Trans(&trans, p.transform_.pos_.x, p.transform_.pos_.y);
@@ -96,7 +93,12 @@ void FluidSystem::UpdateTransforms(std::vector<FluidParticle>& particlePool) {
     }
 }
 
-void FluidSystem::UpdateCollision() {}
+
+void FluidSystem::UpdateCollision() {
+    // bla bla  
+}   
+
+
 
 // Sets the pos.x and pos.y for every single INDIVIDUAL particle in the
 // specified particle pool.
@@ -106,18 +108,28 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
     int typeIndex = (int)type;
 
     // load new constants with config values
-    f32 mass = physicsConfigs_[typeIndex].mass_;
-    f32 gravity = physicsConfigs_[typeIndex].gravity_;
+    f32 mass = particlePool[0].physics_.mass_;
+    f32 gravity = particlePool[0].physics_.gravity_ ;
 
     for (auto& p : particlePool) {
 
         // EFFECT 1: causes the particle to fall downwards
-        p.velocity_.y += gravity * dt;
+        //physicsConfigs_[typeIndex].velocityX_ += gravity * dt;
+        //p.physics_.velocityX_ += gravity * dt;
+        p.physics_.velocityY_ += gravity * dt;
 
         // Update Position
-        p.transform_.pos_.x += p.velocity_.x * dt;
-        p.transform_.pos_.y += p.velocity_.y * dt;
+        //p.transform_.pos_.x += p.physics_.velocityX_ * dt;
+        p.transform_.pos_.y += p.physics_.velocityY_ * dt;
+
+        if (p.transform_.pos_.x < -800.0f) {
+            p.transform_.pos_.x = -800.0f;
+        }
+        if (p.transform_.pos_.y < -450.0f) {
+			p.transform_.pos_.y = -450.0f;
+		}
     }
+    
 }
 
 // This function affects ALL particles (used after all other sub-Update functions)
@@ -128,6 +140,7 @@ void FluidSystem::UpdateMain(f32 dt) {
             continue;
 
         // updates ALL particles within this pool
+        UpdateCollision();  
         UpdatePhysics(particlePools_[i], dt, (FluidType)i);
         UpdateTransforms(particlePools_[i]);
     }
@@ -228,19 +241,14 @@ void FluidSystem::SetTypeColor(f32 r, f32 g, f32 b, f32 a, FluidType type) {
     colorConfigs_[i][3] = a;
 }
 
-void FluidSystem::SetTypePhysics(f32 mass, f32 gravity, FluidType type) {}
+void FluidSystem::SetTypePhysics(f32 mass, f32 gravity, FluidType type) {
+
+}
 
 int FluidSystem::GetParticleCount(FluidType type) { return particlePools_[(int)type].size(); }
 
-void FluidSystem::SpawnParticle_d(f32 posX, f32 posY, FluidType type) {
+void FluidSystem::SpawnParticle(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, FluidType type) {
     int i = (int)type;
-    FluidParticle newParticle(posX, posY, type);
-    particlePools_[i].push_back(newParticle);
-}
-
-void FluidSystem::SpawnParticle_c(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, f32 veloX,
-                                  f32 veloY, FluidType type) {
-    int i = (int)type;
-    FluidParticle newParticle(posX, posY, scaleX, scaleY, rot, veloX, veloY, type);
+    FluidParticle newParticle(posX, posY, scaleX, scaleY, rot, type);
     particlePools_[i].push_back(newParticle);
 }

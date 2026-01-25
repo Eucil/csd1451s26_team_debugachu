@@ -10,18 +10,20 @@ struct FluidParticle {
 
     Transform transform_; //  <--- posX, posY, scaleX, scaleY, rotA, worldMtx
 
-    AEVec2 velocity_;
-
     FluidType type_; //  <--- can be water, lava, wtv
+
+    RigidBody2D physics_; //  <--- mass, gravity, drag, veloX, veloY
 
     // --------------------- Constructors / Destructors --------------------- //
 
-    //* 1.   Default Particle
+    //* 1.   Default Particle (Water)
     FluidParticle(f32 posX, f32 posY, FluidType type);
 
-    //* 2.   Custom Particle
-    FluidParticle(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, f32 veloX, f32 veloY,
-                  FluidType type);
+    //* 2.   Lava Particle
+    //  make a constructor that takes in new velocity,mass etc for lava particles
+   
+    //* 3.   Custom Particle
+    FluidParticle(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, FluidType type);
 };
 
 class FluidSystem {
@@ -30,23 +32,20 @@ private:
 
     // particles[0] holds Water, particles[1] holds Lava, etc.
     std::vector<FluidParticle>
-        particlePools_[(int)FluidType::Count]; //  <--- stores all live particles
+        particlePools_[static_cast<int>(FluidType::Count)]; //  <--- stores all live particles
 
     // graphic configs for each particle type
-    Graphics graphicsConfigs_[(int)FluidType::Count]; // <--- mesh, texture, layer
+    Graphics graphicsConfigs_[static_cast<int>(FluidType::Count)]; // <--- mesh, texture, layer
 
     // colour configs (r,g,b,alpha)
-    f32 colorConfigs_[(int)FluidType::Count][10]; // [Type][RGBA]
+    f32 colorConfigs_[static_cast<int>(FluidType::Count)][10]; // [Type][RGBA]
 
-    //  this
-    AEVec2 transformConfigs_[(int)FluidType::Count];
+    //  config values for  posX, posY, scaleX, scaleY, velocityX, velocityY, rotRad
+    //  f32 transformConfigs_[(int)FluidType::Count][7]; <---- DO I EVEN NEED THIS
 
-    // physics configs for each particle type
-    // note: im storing it here as there is no point in having every particle store the same
-    //       gravity, acceleration, etc value and making the cpu have to fetch these values
-    //       every single time in an iterator loop.
-    RigidBody2D physicsConfigs_[(
-        int)FluidType::Count]; //  <--- mass, velocity, acceleration, forces, gravityScale
+    // physics configs for mass, gravity, drag, velocityX, velocityY
+
+    // CONVERT ALL TS TO READ CONFIGS FROM TEXT FILES
 
 public:
     // --------------------- Constructors / Destructors --------------------- //
@@ -80,9 +79,8 @@ public:
     void SetTypePhysics(f32 mass, f32 gravity, FluidType type);
 
     // ------------------------- Utility Methods --------------------------- //
-    void SpawnParticle_d(f32 posX, f32 posY, FluidType type);
 
-    void SpawnParticle_c(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, f32 veloX, f32 veloY,
+    void SpawnParticle(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot,
                          FluidType type);
 
     int GetParticleCount(FluidType type);
