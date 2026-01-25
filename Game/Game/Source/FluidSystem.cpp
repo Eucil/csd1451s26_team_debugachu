@@ -122,6 +122,11 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         //p.transform_.pos_.x += p.physics_.velocityX_ * dt;
         p.transform_.pos_.y += p.physics_.velocityY_ * dt;
 
+
+
+
+
+        // FAKE WALLS (BOUNDARY)
         if (p.transform_.pos_.x < -800.0f) {
             p.transform_.pos_.x = -800.0f;
         }

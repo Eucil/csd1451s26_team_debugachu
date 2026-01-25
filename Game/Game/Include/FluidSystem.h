@@ -2,17 +2,26 @@
 #include "AEEngine.h"
 #include "Components.h"
 #include <vector>
-enum class FluidType { Water, Lava, Count };
 
+// Enum class for fluid types (1 byte is enough for 256 types)
+enum class FluidType : uint8_t 
+{ 
+    Water,
+    Lava,
+    Count 
+}; 
+
+
+//** figure out how to make this 64 bytes idk for fun so that it fits in cache lines better
 struct FluidParticle {
 
     // ----------------------------- Components ----------------------------- //
 
     Transform transform_; //  <--- posX, posY, scaleX, scaleY, rotA, worldMtx
 
-    FluidType type_; //  <--- can be water, lava, wtv
-
     RigidBody2D physics_; //  <--- mass, gravity, drag, veloX, veloY
+
+    FluidType type_; //  <--- water, lava, etc
 
     // --------------------- Constructors / Destructors --------------------- //
 
@@ -38,14 +47,14 @@ private:
     Graphics graphicsConfigs_[static_cast<int>(FluidType::Count)]; // <--- mesh, texture, layer
 
     // colour configs (r,g,b,alpha)
-    f32 colorConfigs_[static_cast<int>(FluidType::Count)][10]; // [Type][RGBA]
+    f32 colorConfigs_[static_cast<int>(FluidType::Count)][4]; // [Type][RGBA]
 
     //  config values for  posX, posY, scaleX, scaleY, velocityX, velocityY, rotRad
     //  f32 transformConfigs_[(int)FluidType::Count][7]; <---- DO I EVEN NEED THIS
 
     // physics configs for mass, gravity, drag, velocityX, velocityY
 
-    // CONVERT ALL TS TO READ CONFIGS FROM TEXT FILES
+    //** CONVERT ALL TS TO READ CONFIGS FROM TEXT FILES
 
 public:
     // --------------------- Constructors / Destructors --------------------- //
