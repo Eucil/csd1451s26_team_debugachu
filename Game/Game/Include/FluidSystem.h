@@ -3,36 +3,52 @@
 #include "Components.h"
 #include <vector>
 
-// Enum class for fluid types (1 byte is enough for 256 types)
-enum class FluidType : uint8_t 
+
+enum class FluidType 
 { 
+    // Allignment: 4 bytes
+    // Size: 4 bytes
     Water,
     Lava,
     Count 
 }; 
 
 
-//** figure out how to make this 64 bytes idk for fun so that it fits in cache lines better
 struct FluidParticle {
 
     // ----------------------------- Components ----------------------------- //
+    // Allignment: 4 bytes
+    // Size: 80 bytes
 
-    Transform transform_; //  <--- posX, posY, scaleX, scaleY, rotA, worldMtx
+
+    Transform transform_; //  <--- posX, posY, scaleX, scaleY, rotA, worldMtx, radius
+
 
     RigidBody2D physics_; //  <--- mass, gravity, drag, veloX, veloY
 
-    FluidType type_; //  <--- water, lava, etc
+
+    FluidType type_; //  <--- water, lava, etc    
+                     // currently only being used for identifying the particle type for setters/getters
+
 
     // --------------------- Constructors / Destructors --------------------- //
 
+
+    // NOTE: There is NO WAY to change any of the values in the components 
+    // so set it properly within the constructor!!!!
+
+
     //* 1.   Default Particle (Water)
     FluidParticle(f32 posX, f32 posY, FluidType type);
+
 
     //* 2.   Lava Particle
     //  make a constructor that takes in new velocity,mass etc for lava particles
    
     //* 3.   Custom Particle
-    FluidParticle(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, FluidType type);
+    FluidParticle(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, f32 rad, FluidType type);
+
+
 };
 
 class FluidSystem {
@@ -40,8 +56,7 @@ private:
     // ----------------------------- Components ----------------------------- //
 
     // particles[0] holds Water, particles[1] holds Lava, etc.
-    std::vector<FluidParticle>
-        particlePools_[static_cast<int>(FluidType::Count)]; //  <--- stores all live particles
+    std::vector<FluidParticle> particlePools_[static_cast<int>(FluidType::Count)]; //  <--- stores all live particles
 
     // graphic configs for each particle type
     Graphics graphicsConfigs_[static_cast<int>(FluidType::Count)]; // <--- mesh, texture, layer
@@ -49,8 +64,8 @@ private:
     // colour configs (r,g,b,alpha)
     f32 colorConfigs_[static_cast<int>(FluidType::Count)][4]; // [Type][RGBA]
 
-    //  config values for  posX, posY, scaleX, scaleY, velocityX, velocityY, rotRad
-    //  f32 transformConfigs_[(int)FluidType::Count][7]; <---- DO I EVEN NEED THIS
+    //  config values for  posX, posY, scaleX, scaleY, velocityX, velocityY, rotRad, radius
+    f32 transformConfigs_[(int)FluidType::Count][7]; // <----- use later on if needed
 
     // physics configs for mass, gravity, drag, velocityX, velocityY
 
@@ -67,9 +82,9 @@ public:
 
     void UpdateTransforms(std::vector<FluidParticle>& particlePool);
 
-    void UpdateCollision();
+    void UpdateCollision(std::vector<FluidParticle>& particlePool, f32 dt);
 
-    void UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt, FluidType type);
+    void UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt);
 
     void UpdateMain(f32 dt);
 
@@ -84,12 +99,14 @@ public:
     // usage: fluidSys1.SetTypeColor(FluidType::Water, 0.0f, 0.0f, 1.0f, 1.0f);
     void SetTypeColor(f32 r, f32 g, f32 b, f32 a, FluidType type);
 
-    //
-    void SetTypePhysics(f32 mass, f32 gravity, FluidType type);
+    void SetTypeGraphics(AEGfxVertexList* mesh_, AEGfxTexture* texture_, u32 layer_, FluidType type);
+
+    void SetTypeTransform(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rotRad, f32 radius, FluidType type);
 
     // ------------------------- Utility Methods --------------------------- //
+    void SpawnParticle(f32 posX, f32 posY, FluidType type);
 
-    void SpawnParticle(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot,
+    void SpawnParticle(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, f32 rad,
                          FluidType type);
 
     int GetParticleCount(FluidType type);

@@ -54,7 +54,7 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
         f32 worldY = (900.0f / 2.0f) - (f32)mouseY;
 
         // the particle contains all the values stated below
-        fluidSystem.SpawnParticle(worldX, worldY, 20.0f, 20.0f, 0.0f, FluidType::Water);
+        fluidSystem.SpawnParticle(worldX, worldY, FluidType::Water);
     }
 
     // Update functions

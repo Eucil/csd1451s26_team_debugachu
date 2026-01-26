@@ -7,6 +7,7 @@ struct Transform {
     AEVec2 scale_{1.0f, 1.0f};
     f32 rotationRad_{0.0f};
     AEMtx33 worldMtx_{};
+    f32 radius_{0.0f};
 };
 
 struct Graphics {
@@ -19,8 +20,7 @@ struct RigidBody2D {
     f32 mass_{1.0f}; 
     f32 gravity_{-1000.0f}; 
     f32 drag_{0.0f}; 
-    f32 velocityX_{0.0f}; 
-    f32 velocityY_{0.0f};
+    AEVec2 velocity_{0.0f, 0.0f}; 
     // AEVec2 acceleration_{0.0f, 0.0f};
     // AEVec2 forces_{0.0f, 0.0f};
 };
