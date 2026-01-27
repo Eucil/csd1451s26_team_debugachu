@@ -23,7 +23,7 @@ FluidParticle::FluidParticle(f32 posX, f32 posY, FluidType type) {
     // uesd for physics
     switch (type) {
     case FluidType::Water:
-        transform_.radius_ = 20.0f;
+        transform_.radius_ = 10.0f;
         break;
     case FluidType::Lava:
         transform_.radius_ = 10.0f;
@@ -90,7 +90,7 @@ void FluidSystem::Initialize() {
     //**InitializePhysics();
 
     // Set colors for each particle type
-    SetTypeColor(0.0f, 0.5f, 1.0f, 0.8f, FluidType ::Water);
+    SetTypeColor(0.0f, 0.5f, 1.0f, 1.0f, FluidType ::Water);
     SetTypeColor(1.0f, 0.2f, 0.0f, 1.0f, FluidType::Lava);
 }
 
@@ -144,33 +144,49 @@ void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 
 
 
     }
+    // ---------------------------------------------------- //
+    // PROBLEM 1: COLLISION (Particle vs Particle)
+    // ---------------------------------------------------- //
+    // 
+    // Currently, the particles are able to fall straight to the floor and bounce back up just like in real life.
+    // However, the particles lack collision and pass through one another. 
+    // Hence, we need to implement particle-particle collision.
 
-    // COLLISION: Particle vs Particle
     size_t count = particlePool.size();
 
+    // O(n^2) collision detection
     // Currently, we are checking one particle (p1) against every other particle     <---- (bad, slow and we should replace this later!!!!!)
     // For example, particle in particlePool[0] is checked against all other particles in the pool
+    // 
+    // This means that all the calculations below are done N * (N-1) / 2 times per frame, where N = number of particles.
+    // So particleA checks against particleB, particleC, particleD, ...
+    // then particleB checks against particleC, particleD, ...
     for (size_t i = 0; i < count; ++i) {
         for (size_t j = i + 1; j < count; ++j) {
             FluidParticle& p1 = particlePool[i];
             FluidParticle& p2 = particlePool[j];
 
-            // Calculate distance squared between p1 and p2
+            // Calculate distance between p1 and p2 (this is our direction vector from p1 to p2)
             f32 dx = p1.transform_.pos_.x - p2.transform_.pos_.x;
             f32 dy = p1.transform_.pos_.y - p2.transform_.pos_.y;
 
             f32 radius = p1.transform_.radius_;  // <--- collider radius / 
 
             // minDist refers to the MINIMUM distance from center of p1 to center of p2 before collision occurs
+
             f32 minDist = radius * 2.0f;
 
             // distSq refers to the ACTUAL distance from center of p1 to center of p2 squared
+            // (this is the magnitude of the direction vector from p1 to p2 and thus the length it)
             f32 distSq = dx * dx + dy * dy;
+
+            // f32 dist = sqrtf(distSq); <-  // Minor OPTIMISATION: Only calculate square root if COLLISION DETECTED!!
+          
 
             // If actual distance < minimum distance = COLLISION DETECTED
             if (distSq < minDist * minDist) {
 
-                // Used for calculations later on
+                // Only calculate square root when collision is detected
                 f32 dist = sqrtf(distSq);
 
                 // Prevent division by zero if dist is extremely small
@@ -179,8 +195,12 @@ void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 
                 }
 
 
-                // Use the distance between p2 and p1 to form a normalised vector
+                // Use the distance between p2 and p1 to calculate a unit vector (normalised vector)
+                // this means that for every unit of distance, posx and posy changes by nx, ny.
+                // So any calculations involving moving posX and posY should be multiplied by nx and ny.
+                // 
                 // (so that diagonal movement is the same as horizontal/vertical movement)
+                // (this is equivalent to normal vector = (1/ magnitude) * direction vector)
                 f32 nx = dx / dist;
                 f32 ny = dy / dist;
 
@@ -195,42 +215,96 @@ void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 
 
                 // EFFECT 3. Simple Particle Repulsion
                 // 
-                // Resolve the collision by pushing them apart based on the overlap amount
+                // Resolve the collision by pushing them apart based on the amount of overlap calculated above
                 // 
-                // We multiply it by half since we want to move both particles equally.
-                // For example, (p1 gets half moveX to the left, p2 gets half moveX in opposite direction)
+                // We multiply it by 0.4f to 0.5f since we want to move both particles equally.
+                // For example, if 0.5f is used,
+                // p1 gets half of moveX to the left, p2 gets half of moveX to the right
+                // 
+                // In this case, moveX and moveY acts just like velocity except it is calculated based on how much they overlap.
                 // 
                 // ADJUST the multiplier value to change how strongly they repel each other (original: 0.5f)
                 // 
-                // We multiply it by ny and nx in order to apply the right amount of force in each axis because
+                // REMEMBER: nx,ny is a UNIT VECTOR of the DIRECTION VECTOR from p1 to p2 and moveX and Y are just like velocity!!
+                //           We multiply it by ny and nx in order to apply the right amount of force in each axis.
+                //           Without nx,ny, the particles would only move in the x direction or y direction only.
+                //           nx,ny guides the movement in the correct direction. 
+                // 
+                //           For example,
+                //           nx = 1.0, ny = 0.0:        move only in x direction
+                //           nx = 0.0, ny = 1.0:        move only in y direction
+                //           nx = 0.707, ny = 0.707:    move diagonally (45 degrees)
+                // 
                 // nx = dx / dist, which is equivalent to the normalised x direction vector from p1 to p2.
                 // ny = dy / dist, which is equivalent to the normalised y direction vector from p1 to p2.
+
 
                 f32 moveX = nx * (overlap * 0.4f);
                 f32 moveY = ny * (overlap * 0.4f);
 
 
 
+                // EFFECT 4. Weighted Particle Movement Based on Vertical Position
+                // 
+                // If P1 is below P2, P1 is supporting weight. Thus, P1 should move LESS.
+                if (p1.transform_.pos_.y < p2.transform_.pos_.y) {
+                    p1.physics_.mass_ = 0.2f;
+                    p2.physics_.mass_ = 0.6f;
+                } else {
+                    p1.physics_.mass_ = 0.6f;
+                    p2.physics_.mass_ = 0.2f;
+                }
 
-
-
-
-
-
-                // Apply the calculated movement to both particles directly to transform_ so that they
+                // Apply the calculated movement to both particles directly to transform_.pos so that they
                 // stop colliding instantly
-                p1.transform_.pos_.x += moveX;
-                p1.transform_.pos_.y += moveY;
-                p2.transform_.pos_.x -= moveX;
-                p2.transform_.pos_.y -= moveY;
+                p1.transform_.pos_.x += moveX * p1.physics_.mass_;
+                p1.transform_.pos_.y += moveY * p1.physics_.mass_;
+                p2.transform_.pos_.x -= moveX * p2.physics_.mass_;
+                p2.transform_.pos_.y -= moveY * p2.physics_.mass_;
+
+                // ---------------------------------------------------- //
+                // PROBLEM 2: INFINITE COLLISION LOOP
+                // ---------------------------------------------------- //
+                /*
+                *   Okay, now that we have resolved particle-particle collision by pushing them apart, we have also
+                *   unfortunately introduced a new problem:
+                *
+                *   When particle A pushes particle B away to the right, particle B's velocity is still the same as before.
+                *   (p1.physics_.velocity_.x and y is unchanged).
+                * 
+                * 
+                *   Hence, 
+                *   If velocity was initially positive in the x axis, it continues moving to the right and colliding into particle C, 
+                *   causing particle C to do the same thing.
+                *   If velocity was initially negative in the x axis, it continues moving to the left and colliding into particle B again,
+                *   and thus, a never ending infinite collision loop is created.
+                */
 
 
 
+                //  EFFECT 5. Velocity Resolution Upon Collision (Impulse)
+                //
+                // Upon collision, we should calculate the relative difference in velocity between the two particles
+                // For example, if relativeVX > 0, it means p1 is moving faster than p2 in the x axis
+                f32 relativeVX = p1.physics_.velocity_.x - p2.physics_.velocity_.x;
+                f32 relativeVY = p1.physics_.velocity_.y - p2.physics_.velocity_.y;
+
+                // Now we multiply by nx,ny to give them the correct "direction" again.
+                f32 velAlongNormalX = relativeVX * nx;
+                f32 velAlongNormalY = relativeVY * ny;
+
+                if (velAlongNormalX + velAlongNormalY < 0.0f) {
+                    // An impulse is composed of two distinct phases: Compression and Restitution
+                    // The value below 
+
+                    f32 e = 0.0f;
+
+                    f32 restitution = 1.0f; // <--- BOUNCINESS FACTOR (original: 0.5f)
+
+                }
 
 
-
-
-                // EFFECT X. Simple Particle Velocity Damping (remove if effect is deemed miniscule)
+                // EFFECT X. Simple Particle Velocity Damping (remove if effect cannot be seen anymore)
                 //
                 p1.physics_.velocity_.x *= 0.99f;
                 p1.physics_.velocity_.y *= 0.99f;
@@ -241,11 +315,6 @@ void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 
 
 
 
-
-    for (auto& p : particlePool) 
-    {
-
-    }
 
 
 }   
