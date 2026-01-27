@@ -14,6 +14,7 @@
     <ClCompile Include="Source\States\Level1.cpp" />
     <ClCompile Include="Source\Main.cpp" />
     <ClCompile Include="Source\States\MainMenu.cpp" />
+    <ClCompile Include="Source\Terrain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />
@@ -24,6 +25,7 @@
     <ClInclude Include="Include\GameStateManager.h" />
     <ClInclude Include="Include\States\Level1.h" />
     <ClInclude Include="Include\States\MainMenu.h" />
+    <ClInclude Include="Include\Terrain.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
