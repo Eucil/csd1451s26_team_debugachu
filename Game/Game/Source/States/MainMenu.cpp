@@ -52,7 +52,7 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
 
             // RESET TIMER: Set this to how fast you want water to flow
             // Original: 0.005f;
-        	spawn_timer = 0.05f; 
+        	spawn_timer = 0.005f; 
             // Spawn WATER at mouse position
             s32 mouseX, mouseY;
             AEInputGetCursorPosition(&mouseX, &mouseY);
@@ -64,6 +64,8 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
 
             // the particle spawns at the values shown below, including its FluidType
             fluidSystem.SpawnParticle(worldX, worldY, FluidType::Water);
+            s32 size = fluidSystem.GetParticleCount(FluidType::Water);
+            std::cout << size << '\n';
 
 		}
 
