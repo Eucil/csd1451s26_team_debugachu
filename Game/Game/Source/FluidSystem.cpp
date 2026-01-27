@@ -273,9 +273,13 @@ void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 
 
 
                     f32 repulsion = 0.0f;
+                    
+                    // If overlap is small, use weaker repulsion
                     if (overlap < radius * 0.2f) {
                         repulsion = 0.2f;
-                    } else {
+                    }
+                    // If overlap is large, use stronger repulsion
+                    else {
                         repulsion = 0.5f;
                     }
                    
@@ -322,9 +326,9 @@ void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 
                     f32 velAlongNormalY = relativeVY * ny;
 
                     if (velAlongNormalX + velAlongNormalY < 0.0f) {
-                        // An impulse is composed of two distinct phases: Compression and
-                        // Restitution The value below represents the coefficient of restitution
-                        // (bounciness)                                     
+                        // An impulse is composed of two distinct phases: Compression and Restitution.
+                        // We have already implemented "Compression" above via repulsion.
+                        // The value below represents the coefficient of restitution (bounciness)                                
 
                         f32 restitution = -1.03f; // Original: -1.05f;
 
@@ -394,8 +398,12 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
 // This function affects ALL particles (used after all other sub-Update functions)
 void FluidSystem::UpdateMain(f32 dt) {
     
-    if (dt > 0.016f)
+    // clamp dt to a maximum value to avoid instability
+    // For example, if there is a lag spike, dt could be very high and cause particles to teleport
+    // Hence, we set it to 0.016f (60 FPS) max
+    if (dt > 0.016f) {
         dt = 0.016f;
+    }
     const int subSteps = 4;
     f32 subDt = dt / (f32)subSteps;
 
@@ -405,9 +413,7 @@ void FluidSystem::UpdateMain(f32 dt) {
             if (particlePools_[i].empty())
                 continue;
             UpdatePhysics(particlePools_[i], subDt);
-            UpdateCollision(particlePools_[i], subDt);
-
-            
+            UpdateCollision(particlePools_[i], subDt);  
         }
     }
 
