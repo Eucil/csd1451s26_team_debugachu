@@ -12,40 +12,54 @@
 
 // @todo incomplete, should set physics as well
 FluidParticle::FluidParticle(f32 posX, f32 posY, FluidType type) {
+    // used for drawing
     transform_.pos_ = {posX, posY};
     transform_.scale_ = {1.0f, 1.0f};
     transform_.rotationRad_ = 0.0f;
 
+    // misc
+    type_ = type;
 
+    // uesd for physics
     switch (type) {
     case FluidType::Water:
-        type_ = FluidType::Water;
         transform_.radius_ = 20.0f;
+        break;
     case FluidType::Lava:
-        type_ = FluidType::Lava;
         transform_.radius_ = 10.0f;
+        break;
     default:
-        type_ = FluidType::Water;
         transform_.radius_ = 20.0f;
+        break;
     }
-    transform_.scale_ = {transform_.radius_, transform_.radius_};
+
+    // Multiply scale by 2.0f coz radius is radius (not diameter)
+    transform_.scale_ = {transform_.radius_ * 2.0f, transform_.radius_ * 2.0f};
 }
 
 // @todo incomplete, should set physics as well
 FluidParticle::FluidParticle(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, f32 rad, FluidType type) {
+
+    // used for drawing
     transform_.pos_ = {posX, posY};
     transform_.scale_ = {scaleX, scaleY};
     transform_.rotationRad_ = rot;
+
+    // used for physics
     transform_.radius_ = rad;
 
+    // misc
+    type_ = type;
     switch (type) {
     case FluidType::Water:
-        type_ = FluidType::Water;
+        break;
     case FluidType::Lava:
-        type_ = FluidType::Lava;
+        break;
     default:
-        type_ = FluidType::Water;
+        break;
     }
+
+
 }
 
 // ==========================================
@@ -105,9 +119,7 @@ void FluidSystem::UpdateTransforms(std::vector<FluidParticle>& particlePool) {
 // REPLACE this with new collision system later on
 void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 dt) { 
 
-
-
-    // PSEUDO PHYSICS 1. Simple Wall Collisions 
+    // EFFECT 1. Simple Wall Collisions 
     for (auto& p : particlePool) {
 
         // If particle goes beyond left wall, set its position back to the wall
@@ -123,7 +135,9 @@ void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 
         if (p.transform_.pos_.y < -400.0f) {
             p.transform_.pos_.y = -400.0f;
 
-            // Simple bounce/friction
+            // EFFECT 2: Simple bounce/friction
+            //
+            // We half the velocity upon collision with the floor to simulate energy loss
             p.physics_.velocity_.y *= -0.5f; 
         }
 
@@ -134,7 +148,7 @@ void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 
     // COLLISION: Particle vs Particle
     size_t count = particlePool.size();
 
-    // Currently, we are checking one particle against every other particle (bad and we should replace this later!!!!!)
+    // Currently, we are checking one particle (p1) against every other particle     <---- (bad, slow and we should replace this later!!!!!)
     // For example, particle in particlePool[0] is checked against all other particles in the pool
     for (size_t i = 0; i < count; ++i) {
         for (size_t j = i + 1; j < count; ++j) {
@@ -144,82 +158,95 @@ void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 
             // Calculate distance squared between p1 and p2
             f32 dx = p1.transform_.pos_.x - p2.transform_.pos_.x;
             f32 dy = p1.transform_.pos_.y - p2.transform_.pos_.y;
+
+            f32 radius = p1.transform_.radius_;  // <--- collider radius / 
+
+            // minDist refers to the MINIMUM distance from center of p1 to center of p2 before collision occurs
+            f32 minDist = radius * 2.0f;
+
+            // distSq refers to the ACTUAL distance from center of p1 to center of p2 squared
             f32 distSq = dx * dx + dy * dy;
 
-            f32 radius = p1.transform_.radius_; // Replace with p1.collider.radius if you have it
-            f32 minDist = radius * 2.0f;
-        }
-    }
-
-
-
-    // OPTIMISATION: STOPS VERY SLOW PARTICLES
-    // If the particle is moving very slowly, we just stop it completely to save calculations 
-    // while also preventing "ghost jittering" on the floor.
-    for (auto& p : particlePool) 
-    {
-        if ((p.physics_.velocity_.x * p.physics_.velocity_.x) +
-            (p.physics_.velocity_.y * p.physics_.velocity_.y) <  1.99f) {
-
-            p.physics_.velocity_.x = 0.0f;
-            p.physics_.velocity_.y = 0.0f;
-        }
-    }
-
-    
-    // TRASH but maybe useful CODE:
-    /*
-    * size_t count = particlePool.size();
-    for (size_t i = 0; i < count; ++i) {
-        for (size_t j = i + 1; j < count; ++j) {
-            FluidParticle& p1 = particlePool[i];
-            FluidParticle& p2 = particlePool[j];
-
-            // Calculate distance squared (avoid sqrt for performance checks)
-            f32 dx = p1.transform_.pos_.x - p2.transform_.pos_.x;
-            f32 dy = p1.transform_.pos_.y - p2.transform_.pos_.y;
-            f32 distSq = dx*dx + dy*dy;
-
-            // Assuming all particles have the same radius for now
-            f32 radius = 10.0f; // Replace with p1.collider.radius if you have it
-            f32 minDist = radius * 2.0f;
-
+            // If actual distance < minimum distance = COLLISION DETECTED
             if (distSq < minDist * minDist) {
-                // COLLISION DETECTED
+
+                // Used for calculations later on
                 f32 dist = sqrtf(distSq);
-                
-                // Prevent division by zero
-                if (dist < 0.0001f) dist = 0.0001f; 
 
-                // Calculate how much they overlap
-                f32 overlap = minDist - dist;
+                // Prevent division by zero if dist is extremely small
+                if (dist < 0.0001f) {
+                    dist = 0.0001f;
+                }
 
-                // Normalized vector pointing from p2 to p1
+
+                // Use the distance between p2 and p1 to form a normalised vector
+                // (so that diagonal movement is the same as horizontal/vertical movement)
                 f32 nx = dx / dist;
                 f32 ny = dy / dist;
 
-                // Resolve: Push them apart (half the overlap each)
-                f32 moveX = nx * (overlap * 0.5f);
-                f32 moveY = ny * (overlap * 0.5f);
 
+                // We now calculate how much the two particles overlap when they collide
+                //
+                // REMEMBER: distSq = dx * dx + dy * dy, 
+                //           minDist = radius * 2.0f,
+                //           dist = sqrtf(distSq).
+                f32 overlap = minDist - dist;
+
+
+                // EFFECT 3. Simple Particle Repulsion
+                // 
+                // Resolve the collision by pushing them apart based on the overlap amount
+                // 
+                // We multiply it by half since we want to move both particles equally.
+                // For example, (p1 gets half moveX to the left, p2 gets half moveX in opposite direction)
+                // 
+                // ADJUST the multiplier value to change how strongly they repel each other (original: 0.5f)
+                // 
+                // We multiply it by ny and nx in order to apply the right amount of force in each axis because
+                // nx = dx / dist, which is equivalent to the normalised x direction vector from p1 to p2.
+                // ny = dy / dist, which is equivalent to the normalised y direction vector from p1 to p2.
+
+                f32 moveX = nx * (overlap * 0.4f);
+                f32 moveY = ny * (overlap * 0.4f);
+
+
+
+
+
+
+
+
+
+                // Apply the calculated movement to both particles directly to transform_ so that they
+                // stop colliding instantly
                 p1.transform_.pos_.x += moveX;
                 p1.transform_.pos_.y += moveY;
                 p2.transform_.pos_.x -= moveX;
                 p2.transform_.pos_.y -= moveY;
+
+
+
+
+
+
+
+                // EFFECT X. Simple Particle Velocity Damping (remove if effect is deemed miniscule)
+                //
+                p1.physics_.velocity_.x *= 0.99f;
+                p1.physics_.velocity_.y *= 0.99f;
+
             }
         }
     }
-    * 
-    * 
-    * 
-    * 
-    * 
-    // DAMPING VALUE:
-    // mimics air resistance, slows down particles over time
-    p.vx *= 0.999f;
-    p.vy *= 0.999f;
 
-    */
+
+
+
+    for (auto& p : particlePool) 
+    {
+
+    }
+
 
 }   
 
@@ -233,10 +260,10 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
 
     for (auto& p : particlePool) {
 
-        // PSEUDO-PHYSICS:
-        // velocity accumulates over time under constant acceleration which in this case is gravity,
-        // multiply by dt to make the simulation frame rate independent, then update position based
-        // on velocity
+        // EFFECT 1: Gravity
+        // 
+        // Applies gravity to the particle's velocity.
+        // We multiply by dt to make the simulation frame rate independent, then update position
         p.physics_.velocity_.y += gravity * dt;
 
 
@@ -249,10 +276,27 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
 
         // GLOBAL FUNCTION
         // Updates Position after UpdateCollision and main physics calculations within UpdatePhysics has been done.
+        p.transform_.pos_.x += p.physics_.velocity_.x * dt; 
         p.transform_.pos_.y += p.physics_.velocity_.y * dt;
 
+
+        // OPTIMISATION: STOPS VERY SLOW PARTICLES
+        // 
+        // If the particle is moving very slowly, we set velocity to 0 to stop it completely to 
+        // save calculations while also preventing "ghost jittering" on the floor. 
+        // 
+        // 1.99f refers to the THRESHOLD (1.41f) velocity squared.
+        // For example, if the particle is moving slower than 1.41 units per second, stop it completely.
+        //
+        // NOTE: 1.99f is a MAGIC NUMBER, it was chosen coz if the particle is moving at less than (1 pixel, 1 pixel) velocity,
+        //       it is considered miniscule.
+        if ((p.physics_.velocity_.x * p.physics_.velocity_.x) +
+           (p.physics_.velocity_.y * p.physics_.velocity_.y) <
+            1.99f) {
+            p.physics_.velocity_.x = 0.0f;
+            p.physics_.velocity_.y = 0.0f;
+        }
     }
-    
 }
 
 // This function affects ALL particles (used after all other sub-Update functions)

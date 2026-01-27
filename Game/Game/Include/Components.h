@@ -19,7 +19,6 @@ struct Graphics {
 struct RigidBody2D {
     f32 mass_{1.0f}; 
     f32 gravity_{-1000.0f}; 
-    f32 drag_{0.0f}; 
     AEVec2 velocity_{0.0f, 0.0f}; 
     // AEVec2 acceleration_{0.0f, 0.0f};
     // AEVec2 forces_{0.0f, 0.0f};

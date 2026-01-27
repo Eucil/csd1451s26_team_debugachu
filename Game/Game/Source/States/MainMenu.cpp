@@ -43,18 +43,32 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
     }
 
     // Press M1 to spawn particles
-    if (AEInputCheckTriggered(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
-        s32 mouseX, mouseY;
-        AEInputGetCursorPosition(&mouseX, &mouseY);
-        // Spawn WATER at mouse position
+    if (AEInputCheckCurr(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
+        // STATIC VARIABLE: Keeps its value between function calls
+        // We use this to count down time
+        static f32 spawn_timer = 0.0f;
+        spawn_timer -= dt32;
+        if (spawn_timer <= 0.0f) {
 
-        // convert mouse coordinates to world coordinates.
-        // (mouse coords start at top left while world coords start in the center)
-        f32 worldX = (f32)mouseX - (1600.0f / 2.0f);
-        f32 worldY = (900.0f / 2.0f) - (f32)mouseY;
+            // RESET TIMER: Set this to how fast you want water to flow
+            // Original: 0.005f;
+        	spawn_timer = 0.05f; 
+            // Spawn WATER at mouse position
+            s32 mouseX, mouseY;
+            AEInputGetCursorPosition(&mouseX, &mouseY);
 
-        // the particle contains all the values stated below
-        fluidSystem.SpawnParticle(worldX, worldY, FluidType::Water);
+            // convert mouse coordinates to world coordinates.
+            // (mouse coords start at top left while world coords start in the center)
+            f32 worldX = (f32)mouseX - (1600.0f / 2.0f);
+            f32 worldY = (900.0f / 2.0f) - (f32)mouseY;
+
+            // the particle spawns at the values shown below, including its FluidType
+            fluidSystem.SpawnParticle(worldX, worldY, FluidType::Water);
+
+		}
+
+
+
     }
 
     // Update functions
