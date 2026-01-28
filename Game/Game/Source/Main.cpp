@@ -21,7 +21,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     printf("Hello, World\n");
 
     GameStateManager GSM;
-    GSM.init(StateId::MainMenu);
+    GSM.init(StateId::Level2);
 
     // Game Loop
     while (GSM.currentState_ != StateId::Quit) {

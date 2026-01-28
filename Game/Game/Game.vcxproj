@@ -14,6 +14,7 @@
     <ClCompile Include="Source\FluidSystem.cpp" />
     <ClCompile Include="Source\States\Level1.cpp" />
     <ClCompile Include="Source\Main.cpp" />
+    <ClCompile Include="Source\States\Level2.cpp" />
     <ClCompile Include="Source\States\MainMenu.cpp" />
     <ClCompile Include="Source\Utils.cpp" />
   </ItemGroup>
@@ -26,6 +27,7 @@
     <ClInclude Include="Include\FluidSystem.h" />
     <ClInclude Include="Include\GameStateManager.h" />
     <ClInclude Include="Include\States\Level1.h" />
+    <ClInclude Include="Include\States\Level2.h" />
     <ClInclude Include="Include\States\MainMenu.h" />
     <ClInclude Include="Include\Utils.h" />
   </ItemGroup>

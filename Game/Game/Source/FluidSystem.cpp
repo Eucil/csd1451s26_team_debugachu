@@ -9,64 +9,29 @@
 // ==========================================
 // FluidParticle
 // ==========================================
-
 // @todo incomplete, should set physics as well
-FluidParticle::FluidParticle(f32 posX, f32 posY, FluidType type) {
+FluidParticle::FluidParticle(f32 posX, f32 posY, f32 radius, FluidType type) {
+
     // used for drawing
     transform_.pos_ = {posX, posY};
-    transform_.scale_ = {1.0f, 1.0f};
-    transform_.rotationRad_ = 0.0f;
-
-    // misc
-    type_ = type;
-
-    // uesd for physics
-    switch (type) {
-    case FluidType::Water:
-        transform_.radius_ = 6.5f;
-        break;
-    case FluidType::Lava:
-        transform_.radius_ = 10.0f;
-        break;
-    default:
-        transform_.radius_ = 20.0f;
-        break;
-    }
 
     // Multiply scale by 2.0f coz radius is radius (not diameter)
-    // Multiply by another 1.2f to draw it bigger than the collider
-    transform_.scale_ = {transform_.radius_ * 2.0f * 1.3f, transform_.radius_ * 2.0f * 1.3f};
-}
 
-// @todo incomplete, should set physics as well
-FluidParticle::FluidParticle(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, f32 rad, FluidType type) {
+    transform_.scale_ = {radius * 2.0f, radius * 2.0f};
+    transform_.rotationRad_ = 0.0f;
 
-    // used for drawing
-    transform_.pos_ = {posX, posY};
-    transform_.scale_ = {scaleX, scaleY};
-    transform_.rotationRad_ = rot;
-
-    // used for physics
-    transform_.radius_ = rad;
+    // used for collision / physics
+    // Adjust the multiplier before radius to change how close the particle is able to collide
+    // Thus, we indirectly change the "draw" size as well
+    collider_.radius_ = 0.7f * radius;
 
     // misc
     type_ = type;
-    switch (type) {
-    case FluidType::Water:
-        break;
-    case FluidType::Lava:
-        break;
-    default:
-        break;
-    }
-
-
 }
 
 // ==========================================
 // FluidSystem
 // ==========================================
-
 
 // UPDATE (MAYBE BROKEN)
 void FluidSystem::InitializeMesh() {
@@ -75,7 +40,7 @@ void FluidSystem::InitializeMesh() {
     AEGfxVertexList* circleMesh = CreateCircleMesh(20);
 
     // Assign circle mesh to all particle types
-    for (int i = 0; i < (int)FluidType::Count; ++i) {
+    for (int i{0}; i < static_cast<int>(FluidType::Count); ++i) {
         if (circleMesh != nullptr) {
             graphicsConfigs_[i].mesh_ = circleMesh;
         }
@@ -87,8 +52,11 @@ void FluidSystem::Initialize() {
     // Initialize particle mesh
     InitializeMesh();
 
-    // Initialize matri
-    //**InitializePhysics();
+    // Reduces memory reallocation
+    int typeCount{static_cast<int>(FluidType::Count)};
+    for (int i{0}; i < typeCount; i++) {
+        particlePools_[i].reserve(1000);
+    }
 
     // Set colors for each particle type
     SetTypeColor(0.0f, 0.5f, 1.0f, 1.0f, FluidType ::Water);
@@ -118,69 +86,71 @@ void FluidSystem::UpdateTransforms(std::vector<FluidParticle>& particlePool) {
 }
 
 // REPLACE this with new collision system later on
-void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 dt) { 
+void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 dt) {
+
+    // No. of particles
+    size_t count = particlePool.size();
+    // No. of types
+    s32 typeCount{static_cast<int>(FluidType::Count)};
 
     // ================================================ //
-    // EFFECT 1. Simple Wall Collisions 
+    // EFFECT 1. Simple Wall Collisions
     // ================================================ //
 
     for (auto& p : particlePool) {
 
         // If particle goes beyond left wall, set its position back to the wall
-        if (p.transform_.pos_.x > 300.0f) {
-			p.transform_.pos_.x = 300.0f;
+        if (p.transform_.pos_.x > 800.0f) {
+            p.transform_.pos_.x = 800.0f;
             p.physics_.velocity_.x *= -0.5f;
-		}
+        }
         // If particle goes beyond right wall, set its position back to the wall
-        if (p.transform_.pos_.x < -300.0f) {
-            p.transform_.pos_.x = -300.0f;
+        if (p.transform_.pos_.x < -800.0f) {
+            p.transform_.pos_.x = -800.0f;
             p.physics_.velocity_.x *= -0.5f;
         }
         // If particle goes beyond the floor, set its position back to the floor
-        if (p.transform_.pos_.y < -200.0f) {
-            p.transform_.pos_.y = -200.0f;
+        if (p.transform_.pos_.y < -450.0f) {
+            p.transform_.pos_.y = -450.0f;
             // ================================================ //
             // EFFECT 2: Simple bounce/friction
             // ================================================ //
-            // 
+            //
             // When particle hits the floor, reverse its velocity and reduce it by half
             // If velocity is HIGH, we bounce it back up
             if (p.physics_.velocity_.y < -20.0f) {
                 p.physics_.velocity_.y *= -0.5f;
             } else {
                 // If velocity is too small, stop dead
-                p.physics_.velocity_.y *= -0.2f; 
+                p.physics_.velocity_.y *= -0.2f;
             }
         }
-
-
-
     }
     // ================================================ //
     // PROBLEM 1: COLLISION (Particle vs Particle)
     // ================================================ //
-    // 
-    // Currently, the particles are able to fall straight to the floor and bounce back up just like in real life.
-    // However, the particles lack collision and pass through one another. 
-    // Hence, we need to implement particle-particle collision.
-
-    size_t count = particlePool.size();
+    //
+    // Currently, the particles are able to fall straight to the floor and bounce back up just like
+    // in real life. However, the particles lack collision and pass through one another. Hence, we
+    // need to implement particle-particle collision.
 
     // O(n^2) collision detection
-    // Currently, we are checking one particle (p1) against every other particle     <---- (bad, slow and we should replace this later!!!!!)
-    // For example, particle in particlePool[0] is checked against all other particles in the pool
-    // 
-    // This means that all the calculations below are done N * (N-1) / 2 times per frame, where N = number of particles.
-    // So particleA checks against particleB, particleC, particleD, ...
-    // then particleB checks against particleC, particleD, ...
-
+    // Currently, we are checking one particle (p1) against every other particle     <---- (bad,
+    // slow and we should replace this later!!!!!) For example, particle in particlePool[0] is
+    // checked against all other particles in the pool
+    //
+    // This means that all the calculations below are done N * (N-1) / 2 times per frame, where N =
+    // number of particles. So particleA checks against particleB, particleC, particleD, ... then
+    // particleB checks against particleC, particleD, ...
 
     // Runs the collision solver multiple times to improve stability
-    // For example, even after one iteration of collision resolution, 
+    // For example, even after one iteration of collision resolution,
     // some particles may still be overlapping slightly.
     int solverIterations = 2;
+    std::cout << count << '\n';
     for (int iter = 0; iter < solverIterations; ++iter) {
         for (size_t i = 0; i < count; ++i) {
+
             for (size_t j = i + 1; j < count; ++j) {
                 FluidParticle& p1 = particlePool[i];
                 FluidParticle& p2 = particlePool[j];
@@ -188,27 +158,22 @@ void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 
                 // Calculate distance between p1 and p2 (this is our direction vector from p1 to p2)
                 f32 dx = p1.transform_.pos_.x - p2.transform_.pos_.x;
                 f32 dy = p1.transform_.pos_.y - p2.transform_.pos_.y;
-                
-
 
                 // ================================================ //
                 // EFFECT 3: JITTER FIX FOR VERTICAL STACKS
                 // ================================================ //
-                // 
+                //
                 // If dx is extremely small (meaning that particles are vertically aligned),
                 // we add a tiny amount of random noise to dx.
                 if (std::abs(dx) < 0.001f) {
                     // Generate a tiny random float between -0.05 and 0.05
-                    f32 noise = ((i * 12345) % 100) * 0.001f - 0.05f;
+                    f32 noise = ((i * 12345) % 100) * 0.001f - 0.5f;
                     dx += noise;
                 }
-
-                f32 radius = p1.transform_.radius_; // <--- collider radius /
-
                 // minDist refers to the MINIMUM distance from center of p1 to center of p2 before
                 // collision occurs
 
-                f32 minDist = radius * 2.0f;
+                f32 minDist = p1.collider_.radius_ + p2.collider_.radius_;
 
                 // distSq refers to the ACTUAL distance from center of p1 to center of p2 squared
                 // (this is the magnitude of the direction vector from p1 to p2 and thus the length
@@ -246,22 +211,21 @@ void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 
                     //           dist = sqrtf(distSq).
                     f32 overlap = minDist - dist;
 
-
                     // ================================================ //
                     // EFFECT 4. Particle Repulsion
                     // ================================================ //
-                    // 
+                    //
                     // Resolve the collision by pushing them apart based on the amount of overlap
                     // calculated above
                     //
                     // We multiply it by 0.2f to 0.5f since we want to move both particles equally.
-                    // 
-                    // For example, 
+                    //
+                    // For example,
                     // If 0.5f is used,
-                    // the particles resolve collision instantly as p1 gets half of moveX to the left, p2 gets half of moveX to the right
-                    // If 0.2f is used, 
-                    // the particles act more like liquid and "squish" against each other before separating fully.
-                    // 
+                    // the particles resolve collision instantly as p1 gets half of moveX to the
+                    // left, p2 gets half of moveX to the right If 0.2f is used, the particles act
+                    // more like liquid and "squish" against each other before separating fully.
+                    //
                     //
                     // In this case, moveX and moveY acts just like velocity except it is calculated
                     // based on how much they overlap.
@@ -285,18 +249,16 @@ void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 
                     // p1 to p2. ny = dy / dist, which is equivalent to the normalised y direction
                     // vector from p1 to p2.
 
-
                     f32 repulsion = 0.0f;
-                    
+
                     // If overlap is small, use weaker repulsion
-                    if (overlap < radius * 0.2f) {
+                    if (overlap < (p1.collider_.radius_ + p2.collider_.radius_) / 2 * 0.2f) {
                         repulsion = 0.2f;
                     }
                     // If overlap is large, use stronger repulsion
                     else {
                         repulsion = 0.5f;
                     }
-                   
 
                     f32 moveX = nx * (overlap * repulsion);
                     f32 moveY = ny * (overlap * repulsion);
@@ -327,11 +289,10 @@ void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 
                      * infinite collision loop is created.
                      */
 
-
                     // =========================================================== //
                     //  EFFECT 5. Velocity Resolution Upon Collision (Impulse)
                     // =========================================================== //
-                    // 
+                    //
                     // Upon collision, we should calculate the relative difference in velocity
                     // between the two particles For example, if relativeVX > 0, it means p1 is
                     // moving faster than p2 in the x axis
@@ -345,19 +306,21 @@ void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 
                     if (velAlongNormalX + velAlongNormalY < 0.0f) {
 
                         // Restitution determines the "Bounciness" of the collision.
-                        // It calculates how much relative velocity is preserved or lost after impact. 
-                        // 
+                        // It calculates how much relative velocity is preserved or lost after
+                        // impact.
+                        //
                         // The variable 'restitution' is composed of two ideas:
-                        // 
-                        //   1. A change in direction (-): We must reverse velocity to push particles APART,
+                        //
+                        //   1. A change in direction (-): We must reverse velocity to push
+                        //   particles APART,
                         //      similar to how in real life a ball changes direction upon collision.
-                        // 
+                        //
                         //   2. Magnitude :  Amount of energy conserved.
-                        // 
-                        // -1.0f  : Perfectly Inelastic 
+                        //
+                        // -1.0f  : Perfectly Inelastic
                         //          Particles stop dead upon collision. No bounce energy is added.
                         //          Best for: Calm water, heavy fluids, stable stacks.
-                        // -2.0f  : Perfectly Elastic 
+                        // -2.0f  : Perfectly Elastic
                         //          Particles bounce back with 100% of their original speed.
                         //          Best for: Billiards, Pong. Bad for fluids (never settles).
 
@@ -369,66 +332,59 @@ void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 
                         p2.physics_.velocity_.x -= j * nx;
                         p2.physics_.velocity_.y -= j * ny;
                     }
-
                 }
             }
         }
     }
-
-
-
-
-
-
-}   
-
+}
 
 // Sub-function, called under UpdateMain(), AFTER UpdateCollision
 void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt) {
 
     //  load new constants with config values
     f32 mass = particlePool[0].physics_.mass_;
-    f32 gravity = particlePool[0].physics_.gravity_ ;
-
+    f32 gravity = particlePool[0].physics_.gravity_;
 
     for (auto& p : particlePool) {
 
         // ================================================ //
         // EFFECT 1: Gravity
-        // ================================================ // 
-        // 
+        // ================================================ //
+        //
         // Applies gravity to the particle's velocity.
         // We multiply by dt to make the simulation frame rate independent, then update position
         p.physics_.velocity_.y += gravity * dt;
-
 
         // Add a tiny random kick to every particle.
         // This prevents them from ever stacking perfectly still.
         f32 noiseX = ((rand() % 100) / 50.0f) - 1.0f; // Range -1.0 to 1.0
         f32 noiseY = ((rand() % 100) / 50.0f) - 1.0f; // Range -1.0 to 1.0
 
-        p.physics_.velocity_.x += noiseX  * dt * 3.0f;
-        p.physics_.velocity_.y += noiseY  * dt * 3.0f;
+        p.physics_.velocity_.x += noiseX * dt * 3.0f;
+        p.physics_.velocity_.y += noiseY * dt * 3.0f;
 
         // GLOBAL FUNCTION
-        // Updates Position after UpdateCollision and main physics calculations within UpdatePhysics has been done.
-        p.transform_.pos_.x += p.physics_.velocity_.x * dt; 
+        // Updates Position after UpdateCollision and main physics calculations within UpdatePhysics
+        // has been done.
+        p.transform_.pos_.x += p.physics_.velocity_.x * dt;
         p.transform_.pos_.y += p.physics_.velocity_.y * dt;
 
         // ================================================ //
         // OPTIMISATION: STOPS VERY SLOW PARTICLES
-        // ================================================ // 
-        // 
-        // If the particle is moving very slowly, we set velocity to 0 to stop it completely to 
-        // save calculations while also preventing "ghost jittering" on the floor. 
-        // 
-        // 1.99f refers to the THRESHOLD (1.41f) velocity squared.
-        // For example, if the particle is moving slower than 1.41 units per second, stop it completely.
+        // ================================================ //
         //
-        // NOTE: 1.99f is a MAGIC NUMBER, it was chosen coz if the particle is moving at less than (1 pixel, 1 pixel) velocity,
+        // If the particle is moving very slowly, we set velocity to 0 to stop it completely to
+        // save calculations while also preventing "ghost jittering" on the floor.
+        //
+        // 1.99f refers to the THRESHOLD (1.41f) velocity squared.
+        // For example, if the particle is moving slower than 1.41 units per second, stop it
+        // completely.
+        //
+        // NOTE: 1.99f is a MAGIC NUMBER, it was chosen coz if the particle is moving at less than
+        // (1 pixel, 1 pixel) velocity,
         //       it is considered miniscule.
         if ((p.physics_.velocity_.x * p.physics_.velocity_.x) +
-           (p.physics_.velocity_.y * p.physics_.velocity_.y) <
+                (p.physics_.velocity_.y * p.physics_.velocity_.y) <
             1.99f) {
             p.physics_.velocity_.x = 0.0f;
             p.physics_.velocity_.y = 0.0f;
@@ -441,7 +397,7 @@ void FluidSystem::UpdateMain(f32 dt) {
     // ================================================ //
     // OPTIMISATION: DT CLAMPING
     // ================================================ //
-    // 
+    //
     // We clamp dt to a maximum value to avoid instability
     // For example, if there is a lag spike, dt could be very high and cause particles to teleport
     // Hence, we set it to 0.016f (60 FPS) max
@@ -451,15 +407,17 @@ void FluidSystem::UpdateMain(f32 dt) {
     // ================================================ //
     // OPTIMISATION: SUB-STEPS FOR STABILITY
     // ================================================ //
-    // 
+    //
     // How?
     // We divide the dt into smaller chunks and run the physics and collision multiple times
-    // 
+    //
     // Assume gravity = -1000. Without the substep, it would be -1000 * 0.016 = -16 units per frame
-    // This results in -16 units per frame movement, which the collision solver has to resolve all at once.
-    // 
-    // Now assume gravity = -1000 with a substep of 4. With the substep, each subDt = 0.004f = -4 units per sub-frame.
-    // This means that the collision solver only has to resolve -4 units of movement per sub-frame,
+    // This results in -16 units per frame movement, which the collision solver has to resolve all
+    // at once.
+    //
+    // Now assume gravity = -1000 with a substep of 4. With the substep, each subDt = 0.004f = -4
+    // units per sub-frame. This means that the collision solver only has to resolve -4 units of
+    // movement per sub-frame,
     const int subSteps = 4;
     f32 subDt = dt / (f32)subSteps;
 
@@ -469,26 +427,19 @@ void FluidSystem::UpdateMain(f32 dt) {
             if (particlePools_[i].empty())
                 continue;
             UpdatePhysics(particlePools_[i], subDt);
-            UpdateCollision(particlePools_[i], subDt);  
+            UpdateCollision(particlePools_[i], subDt);
         }
     }
-
 
     for (int i = 0; i < (int)FluidType::Count; i++) {
 
         // Skip empty pools to save time/performance
         if (particlePools_[i].empty()) {
             continue;
-        } 
-        else {
+        } else {
             // Update the graphics matrix
             UpdateTransforms(particlePools_[i]);
         }
-
-
-
-
-
     }
 }
 
@@ -579,53 +530,32 @@ void FluidSystem::Free() {
 }
 
 void FluidSystem::SetTypeColor(f32 r, f32 g, f32 b, f32 a, FluidType type) {
-    
+
     int i = (int)type;
 
     // The configs here refers to colorConfigs_ stored in FluidSystem
-    colorConfigs_[i][0] = r; 
+    colorConfigs_[i][0] = r;
     colorConfigs_[i][1] = g;
     colorConfigs_[i][2] = b;
     colorConfigs_[i][3] = a;
 }
 
 void FluidSystem::SetTypeGraphics(AEGfxVertexList* mesh, AEGfxTexture* texture, u32 layer,
-    FluidType type) {
-    
+                                  FluidType type) {
+
     int i = (int)type;
 
     // The configs here refers to graphicsConfigs_ stored in FluidSystem
     // mesh, texture, layer refer to pointers declared within the file that calls this function
-	graphicsConfigs_[i].mesh_ = mesh;  
-	graphicsConfigs_[i].texture_ = texture;
-	graphicsConfigs_[i].layer_ = layer;
-
-}
-
-void FluidSystem::SetTypeTransform(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rotRad, f32 radius, FluidType type) {
-	
-	int i = (int)type;
-
-	// The configs here refers to transformConfigs_ stored in FluidSystem
-    transformConfigs_[i][0] = posX;
-    transformConfigs_[i][1] = posY;
-    transformConfigs_[i][2] = scaleX;
-    transformConfigs_[i][3] = scaleY;
-    transformConfigs_[i][4] = rotRad;
-    transformConfigs_[i][5] = radius;
+    graphicsConfigs_[i].mesh_ = mesh;
+    graphicsConfigs_[i].texture_ = texture;
+    graphicsConfigs_[i].layer_ = layer;
 }
 
 int FluidSystem::GetParticleCount(FluidType type) { return particlePools_[(int)type].size(); }
 
-void FluidSystem::SpawnParticle(f32 posX, f32 posY, FluidType type) {
+void FluidSystem::SpawnParticle(f32 posX, f32 posY, f32 radius, FluidType type) {
     int i = (int)type;
-    FluidParticle newParticle(posX, posY, type);
-    particlePools_[i].push_back(newParticle);
-}
-
-
-void FluidSystem::SpawnParticle(f32 posX, f32 posY, f32 scaleX, f32 scaleY, f32 rot, f32 rad, FluidType type) {
-    int i = (int)type;
-    FluidParticle newParticle(posX, posY, scaleX, scaleY, rot, rad, type);
+    FluidParticle newParticle(posX, posY, radius, type);
     particlePools_[i].push_back(newParticle);
 }
