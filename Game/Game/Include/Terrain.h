@@ -13,6 +13,7 @@ class Cell {
 public:
     Transform transform_;
     Graphics graphics_;
+    Collider2D colliders_[3];
 
 private:
 };
@@ -26,6 +27,8 @@ public:
 
     void initCellsGraphics();
 
+    void initCellsCollider();
+
     void updateTerrain();
 
     void destroyAtMouse(f32 radius);
@@ -35,6 +38,8 @@ public:
     static void createMeshLibrary();
 
     static void freeMeshLibrary();
+
+    static void createColliderLibrary();
 
 private:
     TerrainMaterial terrainMaterial_;
@@ -53,7 +58,9 @@ private:
 
     f32 threshold_{1.0f};
 
-    static AEGfxVertexList* meshLibrary_[16]; // There are 16 possible meshes
+    static AEGfxVertexList* meshLibrary_[16];  // There are 16 possible meshes
+    static Collider2D colliderLibrary_[16][3]; // There are 16 possible colliders, [3] as each cell
+                                               // uses 1, 2, or 3 colliders
 
     f32 halfWidth_;
     f32 halfHeight_;

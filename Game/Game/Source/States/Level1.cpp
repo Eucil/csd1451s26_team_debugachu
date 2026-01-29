@@ -23,9 +23,14 @@ void InitializeLevel1() {
 
     dirt.initCellsTransform();
     dirt.initCellsGraphics();
+    dirt.createColliderLibrary();
+    dirt.initCellsCollider();
     dirt.updateTerrain();
+
     stone.initCellsTransform();
     stone.initCellsGraphics();
+    stone.createColliderLibrary();
+    stone.initCellsCollider();
     stone.updateTerrain();
 }
 

@@ -6,6 +6,8 @@
 #include <AEEngine.h>
 
 AEGfxVertexList* Terrain::meshLibrary_[16]{nullptr}; // There are 16 possible meshes
+Collider2D Terrain::colliderLibrary_[16][3]{}; // There are 16 possible colliders, [3] as each cell
+                                               // uses 1, 2, or 3 colliders
 
 Terrain::Terrain(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows, u32 cellCols,
                  u32 cellSize)
@@ -63,6 +65,30 @@ void Terrain::initCellsGraphics() {
                 index |= 1;
 
             cells_[r * kCellCols_ + c].graphics_.mesh_ = meshLibrary_[index];
+        }
+    }
+}
+
+void Terrain::initCellsCollider() {
+    for (u32 r{0}; r < kCellRows_; ++r) {
+        for (u32 c{0}; c < kCellCols_; ++c) {
+            // Determine collider case (TL=8, TR=4, BR=2, BL=1)
+            u32 index{0};
+            if (nodes_[(r + 1) * kNodeCols_ + c] >= threshold_)
+                index |= 8;
+            if (nodes_[(r + 1) * kNodeCols_ + c + 1] >= threshold_)
+                index |= 4;
+            if (nodes_[r * kNodeCols_ + c + 1] >= threshold_)
+                index |= 2;
+            if (nodes_[r * kNodeCols_ + c] >= threshold_)
+                index |= 1;
+
+            Cell& cell = cells_[r * kCellCols_ + c];
+
+            // Assign the collider shape from the library
+            for (u32 i{0}; i < 3; ++i) {
+                cell.colliders_[i] = colliderLibrary_[index][i];
+            }
         }
     }
 }
@@ -245,6 +271,208 @@ void Terrain::createMeshLibrary() {
 void Terrain::freeMeshLibrary() {
     for (auto& mesh : meshLibrary_) {
         AEGfxMeshFree(mesh);
+    }
+}
+
+void Terrain::createColliderLibrary() {
+
+    // Corners
+    constexpr f32 xLeft{-0.5f}, xRight{0.5f}, yBottom{-0.5f}, yTop{0.5f};
+
+    // Midpoints
+    constexpr f32 xMiddle{0.0f}, yMiddle{0.0f};
+
+    for (u32 i{0}; i < 16; ++i) {
+        // Reset all to empty first
+        for (u32 j{0}; j < 3; ++j) {
+            colliderLibrary_[i][j].colliderShape_ = ColliderShape::Empty;
+        }
+
+        u32 colliderCount{0};
+
+        switch (i) {
+        case 0:
+            break;
+
+        case 1: // BL
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xLeft, yBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xMiddle,
+                                                                                    yBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yMiddle};
+            break;
+
+        case 2: // BR
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight,
+                                                                                    yBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xRight,
+                                                                                    yMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xMiddle,
+                                                                                    yBottom};
+            break;
+
+        case 3: // BL and BR (Bottom rectangle)
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Box;
+            colliderLibrary_[i][colliderCount].shapeData_.box_.offset_ = {0.0f, -0.25f};
+            colliderLibrary_[i][colliderCount].shapeData_.box_.size_ = {1.0f, 0.5f};
+            break;
+
+        case 4: // TR
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xMiddle, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xRight,
+                                                                                    yMiddle};
+            break;
+
+        case 5: // BL and TR
+            // BL
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xLeft, yBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xMiddle,
+                                                                                    yBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yMiddle};
+            colliderCount++;
+            // TR
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xMiddle, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xRight,
+                                                                                    yMiddle};
+            break;
+
+        case 6: // BR and TR (Right rectangle)
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Box;
+            colliderLibrary_[i][colliderCount].shapeData_.box_.offset_ = {0.25f, 0.0f};
+            colliderLibrary_[i][colliderCount].shapeData_.box_.size_ = {0.5f, 1.0f};
+            break;
+
+        case 7: // BL, BR, and TR
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xLeft, yBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xRight,
+                                                                                    yBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yMiddle};
+            colliderCount++;
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight,
+                                                                                    yBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xRight, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yMiddle};
+            colliderCount++;
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xMiddle, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yMiddle};
+            break;
+
+        case 8: // TL
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xLeft, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xLeft, yMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xMiddle, yTop};
+            break;
+
+        case 9: // BL and TL (Left rectangle)
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Box;
+            colliderLibrary_[i][colliderCount].shapeData_.box_.offset_ = {-0.25f, 0.0f};
+            colliderLibrary_[i][colliderCount].shapeData_.box_.size_ = {0.5f, 1.0f};
+            break;
+
+        case 10: // BR and TL
+            // BR
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight,
+                                                                                    yBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xRight,
+                                                                                    yMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xMiddle,
+                                                                                    yBottom};
+            colliderCount++;
+            // TL
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xLeft, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xLeft, yMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xMiddle, yTop};
+            break;
+
+        case 11: // BL, BR, and TL
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xLeft, yBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xRight,
+                                                                                    yBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yTop};
+            colliderCount++;
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight,
+                                                                                    yBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xRight,
+                                                                                    yMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yTop};
+            colliderCount++;
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight,
+                                                                                    yMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xMiddle, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yTop};
+            break;
+
+        case 12: // TR and TL (Top rectangle)
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Box;
+            colliderLibrary_[i][colliderCount].shapeData_.box_.offset_ = {0.0f, 0.25f};
+            colliderLibrary_[i][colliderCount].shapeData_.box_.size_ = {1.0f, 0.5f};
+            colliderCount++;
+            break;
+
+        case 13: // BL, TR, and TL
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xLeft, yBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xMiddle,
+                                                                                    yBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yTop};
+            colliderCount++;
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xMiddle,
+                                                                                    yBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xRight,
+                                                                                    yMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yTop};
+            colliderCount++;
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight,
+                                                                                    yMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xRight, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yTop};
+            break;
+
+        case 14: // BR, TR, and TL
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xMiddle,
+                                                                                    yBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xRight,
+                                                                                    yBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yMiddle};
+            colliderCount++;
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight,
+                                                                                    yBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xRight, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yMiddle};
+            colliderCount++;
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xLeft, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yMiddle};
+            break;
+
+        case 15: // Full square
+            colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Box;
+            colliderLibrary_[i][colliderCount].shapeData_.box_.offset_ = {0.0f, 0.0f};
+            colliderLibrary_[i][colliderCount].shapeData_.box_.size_ = {1.0f, 1.0f};
+            colliderCount++;
+            break;
+        }
     }
 }
 
