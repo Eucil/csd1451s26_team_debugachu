@@ -23,11 +23,27 @@ struct RigidBody2D {
     f32 gravityScale_{0.0f};
 };
 
-enum class ColliderShape { Circle, Box };
+enum class ColliderShape { Empty, Circle, Box, Triangle };
+
+struct CircleColliderData {
+    AEVec2 offset_;
+    f32 radius;
+};
+
+struct BoxColliderData {
+    AEVec2 offset_;
+    AEVec2 size_;
+};
+
+struct TriangleColliderData {
+    AEVec2 vertices_[3];
+};
 
 struct Collider2D {
-    ColliderShape colliderShape_{ColliderShape::Circle};
-    AEVec2 offset_{0.0f, 0.0f};
-    f32 radius_{1.0f};        // for circle
-    AEVec2 size_{1.0f, 1.0f}; // for box
+    ColliderShape colliderShape_{ColliderShape::Empty};
+    union {
+        CircleColliderData circle_;
+        BoxColliderData box_;
+        TriangleColliderData triangle_;
+    } shapeData_{};
 };
