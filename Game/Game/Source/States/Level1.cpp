@@ -10,6 +10,8 @@
 static Terrain dirt(TerrainMaterial::Dirt, {0.0f, 0.0f}, 48, 96, 16);
 static Terrain stone(TerrainMaterial::Stone, {0.0f, 0.0f}, 48, 96, 16);
 
+#include "Components.h"
+
 void LoadLevel1() {
     // Todo
     std::cout << "Load level 1\n";

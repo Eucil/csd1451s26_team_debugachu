@@ -26,6 +26,12 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
         GSM.nextState_ = StateId::Level1;
     }
 
+    // Press 2 to go to level 2
+    if (AEInputCheckTriggered(AEVK_2) || 0 == AESysDoesWindowExist()) {
+        std::cout << "2 triggered\n";
+        GSM.nextState_ = StateId::Level2;
+    }
+
     // Press R to restart
     if (AEInputCheckTriggered(AEVK_R) || 0 == AESysDoesWindowExist()) {
         std::cout << "R triggered\n";

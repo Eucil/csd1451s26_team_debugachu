@@ -3,9 +3,10 @@
 #include <AEEngine.h>
 
 #include "States/Level1.h"
+#include "States/Level2.h"
 #include "States/MainMenu.h"
 
-enum class StateId { Quit, Next, Restart, MainMenu, Level1 };
+enum class StateId { Quit, Next, Restart, MainMenu, Level1, Level2 };
 
 class GameState {
 public:
@@ -44,6 +45,14 @@ public:
             fpDraw_ = DrawLevel1;
             fpFree_ = FreeLevel1;
             fpUnload_ = UnloadLevel1;
+            break;
+        case StateId::Level2:
+            fpLoad_ = LoadLevel2;
+            fpInitialize_ = InitializeLevel2;
+            fpUpdate_ = UpdateLevel2;
+            fpDraw_ = DrawLevel2;
+            fpFree_ = FreeLevel2;
+            fpUnload_ = UnloadLevel2;
             break;
         }
     }
