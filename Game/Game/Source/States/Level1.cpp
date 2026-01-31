@@ -14,7 +14,8 @@ void LoadLevel1() {
     // Todo
     std::cout << "Load level 1\n";
 
-    dirt.createMeshLibrary();
+    Terrain::createMeshLibrary();
+    Terrain::createColliderLibrary();
 }
 
 void InitializeLevel1() {
@@ -23,13 +24,11 @@ void InitializeLevel1() {
 
     dirt.initCellsTransform();
     dirt.initCellsGraphics();
-    dirt.createColliderLibrary();
     dirt.initCellsCollider();
     dirt.updateTerrain();
 
     stone.initCellsTransform();
     stone.initCellsGraphics();
-    stone.createColliderLibrary();
     stone.initCellsCollider();
     stone.updateTerrain();
 }
@@ -74,6 +73,5 @@ void UnloadLevel1() {
     // Todo
     std::cout << "Unload level 1\n";
 
-    dirt.freeMeshLibrary();
-    stone.freeMeshLibrary();
+    Terrain::freeMeshLibrary();
 }
