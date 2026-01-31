@@ -39,6 +39,11 @@ public:
 
     s32 particlesCollected_{0};
 
+    // TODO
+    // Shift variables to private later on if needed
+    // Make use of direction to determine where the water should come out of
+    // Use draw texture instead
+
     void Initialize();
 
     void SetupStartPoint(AEVec2 pos, AEVec2 scale, StartEndType type, GoalDirection direction);

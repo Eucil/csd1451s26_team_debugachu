@@ -392,6 +392,21 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
     }
 }
 
+void FluidSystem::UpdatePortalIframes(f32 dt, std::vector<FluidParticle>& particlePool) {
+    // Loop through all particles in the current pool
+    for (auto& p : particlePool) {
+        // If the particle is in iframe, reduce the iframe timer
+        if (p.portal_iframe_) {
+            p.portal_iframe_timer_ -= dt;
+            // If the timer reaches zero, disable iframe
+            if (p.portal_iframe_timer_ <= 0.0f) {
+                p.portal_iframe_ = false;
+                p.portal_iframe_timer_ = p.portal_iframe_maxduration_;
+            }
+        }
+    }
+}
+
 // This function affects ALL particles (used after all other sub-Update functions)
 void FluidSystem::UpdateMain(f32 dt) {
     // ================================================ //
@@ -439,6 +454,7 @@ void FluidSystem::UpdateMain(f32 dt) {
         } else {
             // Update the graphics matrix
             UpdateTransforms(particlePools_[i]);
+            UpdatePortalIframes(dt, particlePools_[i]);
         }
     }
 }

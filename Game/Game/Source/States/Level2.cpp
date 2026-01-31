@@ -12,8 +12,11 @@
 
 #include "StartEndPoint.h"
 
+#include "PortalSystem.h"
+
 static FluidSystem fluidSystem;
 static StartEndPoint startEndPointSystem;
+static PortalSystem portalSystem;
 
 void LoadLevel2() {
     // Todo
@@ -25,11 +28,18 @@ void InitializeLevel2() {
     std::cout << "Initialize level 2\n";
     fluidSystem.Initialize();
     startEndPointSystem.Initialize();
+    portalSystem.Initialize();
 
     startEndPointSystem.SetupStartPoint({-700.0f, 300.0f}, {100.0f, 100.0f}, StartEndType::Pipe,
                                         GoalDirection::Down);
     startEndPointSystem.SetupEndPoint({700.0f, -300.0f}, {100.0f, 100.0f}, StartEndType::Flower,
                                       GoalDirection::Up);
+
+    portalSystem.SetupPortal({-700.0f, -300.0f}, {175.0f, 100.0f}, 0.f);
+    portalSystem.SetupPortal({700.0f, 300.0f}, {100.0f, 100.0f}, 225.f);
+
+    portalSystem.SetupPortal({300.0f, -300.0f}, {100.0f, 100.0f}, 0.f);
+    portalSystem.SetupPortal({700.0f, 0.0f}, {100.0f, 100.0f}, 270.f);
 }
 
 void UpdateLevel2(GameStateManager& GSM, f32 deltaTime) {
@@ -89,6 +99,7 @@ void UpdateLevel2(GameStateManager& GSM, f32 deltaTime) {
 
     fluidSystem.UpdateMain(dt32);
     startEndPointSystem.Update(dt32, fluidSystem.GetParticlePool(FluidType::Water));
+    portalSystem.Update(dt32, fluidSystem.GetParticlePool(FluidType::Water));
 
     if (startEndPointSystem.CheckWinCondition(fluidSystem.particleMaxCount)) {
         std::cout << "WIN\n ";
@@ -100,6 +111,7 @@ void DrawLevel2() {
     // std::cout << "Draw level 2\n";
     fluidSystem.DrawColor();
     startEndPointSystem.DrawColor();
+    portalSystem.DrawColor();
 }
 
 void FreeLevel2() {
@@ -107,6 +119,7 @@ void FreeLevel2() {
     std::cout << "Free level 2\n";
     fluidSystem.Free();
     startEndPointSystem.Free();
+    portalSystem.Free();
 }
 
 void UnloadLevel2() {
