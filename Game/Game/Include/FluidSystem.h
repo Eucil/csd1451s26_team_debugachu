@@ -27,6 +27,10 @@ struct FluidParticle {
         type_; //  <--- water, lava, etc
                // currently only being used for identifying the particle type for setters/getters
 
+    bool portal_iframe_{false};           // <--- to prevent immediate re-teleportation
+    f32 portal_iframe_timer_{0.2f};       // <--- timer for portal iframe
+    f32 portal_iframe_maxduration_{0.2f}; // <--- duration of portal iframe in seconds
+
     // --------------------- Constructors / Destructors --------------------- //
 
     // NOTE: There is NO WAY to change any of the values in the components
@@ -58,6 +62,7 @@ private:
     //** CONVERT ALL TS TO READ CONFIGS FROM TEXT FILES
 
 public:
+    s32 particleMaxCount{300};
     // --------------------- Constructors / Destructors --------------------- //
 
     // ------------------------- Basic Methods --------------------------- //
@@ -71,6 +76,8 @@ public:
     void UpdateCollision(std::vector<FluidParticle>& particlePool, f32 dt);
 
     void UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt);
+
+    void UpdatePortalIframes(f32 dt, std::vector<FluidParticle>& particlePool);
 
     void UpdateMain(f32 dt);
 
@@ -92,4 +99,6 @@ public:
     void SpawnParticle(f32 posX, f32 posY, f32 radius, FluidType type);
 
     int GetParticleCount(FluidType type);
+
+    std::vector<FluidParticle>& GetParticlePool(FluidType type);
 };

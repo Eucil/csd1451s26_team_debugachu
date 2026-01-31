@@ -10,7 +10,13 @@
 
 #include "FluidSystem.h"
 
+#include "StartEndPoint.h"
+
+#include "PortalSystem.h"
+
 static FluidSystem fluidSystem;
+static StartEndPoint startEndPointSystem;
+static PortalSystem portalSystem;
 
 void LoadLevel2() {
     // Todo
@@ -21,11 +27,24 @@ void InitializeLevel2() {
     // Todo
     std::cout << "Initialize level 2\n";
     fluidSystem.Initialize();
+    startEndPointSystem.Initialize();
+    portalSystem.Initialize();
+
+    startEndPointSystem.SetupStartPoint({-700.0f, 300.0f}, {100.0f, 100.0f}, StartEndType::Pipe,
+                                        GoalDirection::Down);
+    startEndPointSystem.SetupEndPoint({700.0f, -300.0f}, {100.0f, 100.0f}, StartEndType::Flower,
+                                      GoalDirection::Up);
+
+    portalSystem.SetupPortal({-700.0f, -300.0f}, {175.0f, 100.0f}, 0.f);
+    portalSystem.SetupPortal({700.0f, 300.0f}, {100.0f, 100.0f}, 225.f);
+
+    portalSystem.SetupPortal({300.0f, -300.0f}, {100.0f, 100.0f}, 0.f);
+    portalSystem.SetupPortal({700.0f, 0.0f}, {100.0f, 100.0f}, 270.f);
 }
 
 void UpdateLevel2(GameStateManager& GSM, f32 deltaTime) {
     // Todo
-    std::cout << "Update level 2\n";
+    // std::cout << "Update level 2\n";
 
     f64 dt64 = AEFrameRateControllerGetFrameTime();
     f32 dt32 = (f32)dt64;
@@ -42,47 +61,65 @@ void UpdateLevel2(GameStateManager& GSM, f32 deltaTime) {
         GSM.nextState_ = StateId::Restart;
     }
     if (AEInputCheckCurr(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
-        // STATIC VARIABLE: Keeps its value between function calls
-        // We use this to count down time
-        static f32 spawn_timer = 0.0f;
-        spawn_timer -= dt32;
-        if (spawn_timer <= 0.0f) {
 
-            // RESET TIMER: Set this to how fast you want water to flow
-            // Original: 0.005f;
-            spawn_timer = 0.005f;
-            // Spawn WATER at mouse position
-            s32 mouseX, mouseY;
-            AEInputGetCursorPosition(&mouseX, &mouseY);
+        startEndPointSystem.CheckMouseClick();
 
-            // convert mouse coordinates to world coordinates.
-            // (mouse coords start at top left while world coords start in the center)
-            f32 worldX = (f32)mouseX - (1600.0f / 2.0f);
-            f32 worldY = (900.0f / 2.0f) - (f32)mouseY;
+    } else if (AEInputCheckReleased(AEVK_LBUTTON)) {
 
-            // the particle spawns at the values shown below, including its FluidType
-            f32 noise = ((static_cast<int>(AERandFloat() * 12345) % 100)) * 0.001f - 0.1f;
+        startEndPointSystem.ResetIframe();
+    }
 
-            f32 randRadius = 13.0f - (noise * 100.0f);
+    for (auto& startPoint : startEndPointSystem.startPoints_) {
+        if (startPoint.release_water_) {
+            static f32 spawn_timer = 0.0f;
+            spawn_timer -= dt32;
+            if (spawn_timer <= 0.0f) {
 
-            fluidSystem.SpawnParticle(worldX, worldY, randRadius, FluidType::Water);
-            s32 size = fluidSystem.GetParticleCount(FluidType::Water);
-            std::cout << size << '\n';
+                // RESET TIMER: Set this to how fast you want water to flow
+                // Original: 0.005f;
+                spawn_timer = 0.025f;
+
+                // the particle spawns at the values shown below, including its FluidType
+                f32 noise = ((static_cast<int>(AERandFloat() * 12345) % 100)) * 0.001f - 0.1f;
+
+                f32 randRadius = 13.0f - (noise * 100.0f);
+
+                f32 x_offset = startPoint.transform_.pos_.x +
+                               AERandFloat() * startPoint.transform_.scale_.x -
+                               (startPoint.transform_.scale_.x / 2.f);
+                AEVec2 position = {x_offset, startPoint.transform_.pos_.y -
+                                                 (startPoint.transform_.scale_.y / 2.f) -
+                                                 (randRadius)};
+
+                fluidSystem.SpawnParticle(position.x, position.y, randRadius, FluidType::Water);
+                s32 size = fluidSystem.GetParticleCount(FluidType::Water);
+            }
         }
     }
+
     fluidSystem.UpdateMain(dt32);
+    startEndPointSystem.Update(dt32, fluidSystem.GetParticlePool(FluidType::Water));
+    portalSystem.Update(dt32, fluidSystem.GetParticlePool(FluidType::Water));
+
+    if (startEndPointSystem.CheckWinCondition(fluidSystem.particleMaxCount)) {
+        std::cout << "WIN\n ";
+    }
 }
 
 void DrawLevel2() {
     // Todo
-    std::cout << "Draw level 2\n";
+    // std::cout << "Draw level 2\n";
     fluidSystem.DrawColor();
+    startEndPointSystem.DrawColor();
+    portalSystem.DrawColor();
 }
 
 void FreeLevel2() {
     // Todo
     std::cout << "Free level 2\n";
     fluidSystem.Free();
+    startEndPointSystem.Free();
+    portalSystem.Free();
 }
 
 void UnloadLevel2() {
