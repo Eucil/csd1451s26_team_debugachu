@@ -559,3 +559,7 @@ void FluidSystem::SpawnParticle(f32 posX, f32 posY, f32 radius, FluidType type) 
     FluidParticle newParticle(posX, posY, radius, type);
     particlePools_[i].push_back(newParticle);
 }
+
+std::vector<FluidParticle>& FluidSystem::GetParticlePool(FluidType type) {
+    return particlePools_[(int)type];
+}

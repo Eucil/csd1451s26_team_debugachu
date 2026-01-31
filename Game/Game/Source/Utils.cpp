@@ -3,6 +3,8 @@
 #include "Utils.h"
 
 AEGfxVertexList* CreateCircleMesh(f32 slices) {
+    AEGfxMeshStart();
+
     // 1. Constants
     f32 radius = 0.5f; // <--- DO NOT CHANGE THIS RADIUS
     f32 angle_step = (3.14159265f * 2.0f) / (f32)slices;
@@ -33,5 +35,21 @@ AEGfxVertexList* CreateCircleMesh(f32 slices) {
                     bx, by, 0xFFFFFFFF, bu, bv          // Point B
         );
     }
+    return AEGfxMeshEnd();
+}
+
+AEGfxVertexList* CreateRectMesh() {
+    AEGfxMeshStart();
+
+    // This shape has 2 triangles that makes up a square
+    // Color parameters represent colours as ARGB
+    // UV coordinates to read from loaded textures
+    AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f, 0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 1.0f, -0.5f,
+                0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
+
+    AEGfxTriAdd(0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 1.0f, 0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f, -0.5f,
+                0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
+
+    // Saving the rect mesh
     return AEGfxMeshEnd();
 }

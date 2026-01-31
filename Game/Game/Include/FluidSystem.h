@@ -58,6 +58,7 @@ private:
     //** CONVERT ALL TS TO READ CONFIGS FROM TEXT FILES
 
 public:
+    s32 particleMaxCount{300};
     // --------------------- Constructors / Destructors --------------------- //
 
     // ------------------------- Basic Methods --------------------------- //
@@ -92,4 +93,6 @@ public:
     void SpawnParticle(f32 posX, f32 posY, f32 radius, FluidType type);
 
     int GetParticleCount(FluidType type);
+
+    std::vector<FluidParticle>& GetParticlePool(FluidType type);
 };
