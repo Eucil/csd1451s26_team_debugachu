@@ -24,7 +24,7 @@ StartEnd::StartEnd() {
 
     // Set collider
     collider_.colliderShape_ = ColliderShape::Box;
-    collider_.size_ = {1.f, 1.f};
+    collider_.shapeData_.box_.size_ = {1.f, 1.f};
 
     // Set object type
     type_ = {StartEndType::Pipe};
@@ -51,7 +51,7 @@ StartEnd::StartEnd(AEVec2 pos, AEVec2 scale, StartEndType type, GoalDirection di
 
     // Set collider
     collider_.colliderShape_ = ColliderShape::Box;
-    collider_.size_ = scale;
+    collider_.shapeData_.box_.size_ = scale;
 
     // Set object type
     type_ = type;
@@ -85,8 +85,8 @@ void StartEndPoint::SetupEndPoint(AEVec2 pos, AEVec2 scale, StartEndType type,
 bool StartEndPoint::CollisionCheckWithWater(StartEnd startend, FluidParticle particle) {
     // Circle to Rectangle Collision Detection
     // Find the closest point to the circle within the rectangle
-    f32 rect_half_width = startend.collider_.size_.x / 2.0f;
-    f32 rect_half_height = startend.collider_.size_.y / 2.0f;
+    f32 rect_half_width = startend.collider_.shapeData_.box_.size_.x / 2.0f;
+    f32 rect_half_height = startend.collider_.shapeData_.box_.size_.y / 2.0f;
     f32 closest_x =
         fmaxf(startend.transform_.pos_.x - rect_half_width,
               fminf(particle.transform_.pos_.x, startend.transform_.pos_.x + rect_half_width));
@@ -98,7 +98,7 @@ bool StartEndPoint::CollisionCheckWithWater(StartEnd startend, FluidParticle par
     f32 distance_y = particle.transform_.pos_.y - closest_y;
     // If the distance is less than the circle's radius, an intersection occurs
     f32 distance_squared = (distance_x * distance_x) + (distance_y * distance_y);
-    f32 radius = particle.collider_.radius_;
+    f32 radius = particle.collider_.shapeData_.circle_.radius;
 
     return distance_squared < (radius * radius);
 }
@@ -178,8 +178,8 @@ void StartEndPoint::CheckMouseClick() {
     // Use mouse pos to check collision with start point
     // Check by checking if mouse pos falls within the start point's collider box
     for (auto& startPoint : startPoints_) {
-        f32 rect_half_width = startPoint.collider_.size_.x / 2.0f;
-        f32 rect_half_height = startPoint.collider_.size_.y / 2.0f;
+        f32 rect_half_width = startPoint.collider_.shapeData_.box_.size_.x / 2.0f;
+        f32 rect_half_height = startPoint.collider_.shapeData_.box_.size_.y / 2.0f;
         if (mouse_x >= (startPoint.transform_.pos_.x - rect_half_width) &&
             mouse_x <= (startPoint.transform_.pos_.x + rect_half_width) &&
             mouse_y >= (startPoint.transform_.pos_.y - rect_half_height) &&

@@ -24,7 +24,7 @@ Portal::Portal() {
 
     // Set collider
     collider_.colliderShape_ = ColliderShape::Box;
-    collider_.size_ = {1.f, 1.f};
+    collider_.shapeData_.box_.size_ = {1.f, 1.f};
 
     red = 0.0f;
     green = 0.0f;
@@ -50,8 +50,8 @@ Portal::Portal(AEVec2 pos, AEVec2 scale, f32 rotationDeg) {
 
     // Set collider
     collider_.colliderShape_ = ColliderShape::Box;
-    collider_.size_.x = scale.x * 0.9f;
-    collider_.size_.y = scale.y * 0.9f;
+    collider_.shapeData_.box_.size_.x = scale.x * 0.9f;
+    collider_.shapeData_.box_.size_.y = scale.y * 0.9f;
 
     red = AERandFloat();
     green = AERandFloat();
@@ -106,8 +106,8 @@ bool PortalSystem::CollisionCheckWithWater(Portal portal, FluidParticle particle
     f32 local_y = translated_x * sin_angle + translated_y * cos_angle;
 
     // Find the closest point to the circle within the rectangle
-    f32 rect_half_width = portal.collider_.size_.x / 2.0f;
-    f32 rect_half_height = portal.collider_.size_.y / 2.0f;
+    f32 rect_half_width = portal.collider_.shapeData_.box_.size_.x / 2.0f;
+    f32 rect_half_height = portal.collider_.shapeData_.box_.size_.y / 2.0f;
     f32 closest_x = fmaxf(-rect_half_width, fminf(local_x, rect_half_width));
     f32 closest_y = fmaxf(-rect_half_height, fminf(local_y, rect_half_height));
 
@@ -116,7 +116,7 @@ bool PortalSystem::CollisionCheckWithWater(Portal portal, FluidParticle particle
     f32 distance_y = local_y - closest_y;
     // If the distance is less than the circle's radius, an intersection occurs
     f32 distance_squared = (distance_x * distance_x) + (distance_y * distance_y);
-    f32 radius = particle.collider_.radius_;
+    f32 radius = particle.collider_.shapeData_.circle_.radius;
 
     return distance_squared < (radius * radius);
 }
