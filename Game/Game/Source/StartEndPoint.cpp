@@ -188,6 +188,7 @@ void StartEndPoint::CheckMouseClick() {
             std::cout << "Mouse is over start point!\n";
             startPoint.release_water_ = !startPoint.release_water_;
             startPoint.release_water_iframe_ = true;
+            break;
         }
     }
 }

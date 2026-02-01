@@ -31,7 +31,8 @@ private:
     // graphic configs for each StartEnd type
     Graphics graphicsConfigs_;
 
-    bool delete_portal{false};
+    bool click_iframe{false};
+    f32 rotation_value = 0.0f;
 
 public:
     void Initialize();
@@ -51,4 +52,8 @@ public:
     void CheckMouseClick();
 
     void ResetIframe();
+
+    void RotatePortal();
+
+    f32 GetRotationValue();
 };

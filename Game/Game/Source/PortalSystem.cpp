@@ -66,8 +66,7 @@ void PortalSystem::Initialize() {
     graphicsConfigs_.mesh_ = rectMesh;
 
     current_portal_ = nullptr;
-
-    delete_portal = {false};
+    click_iframe = false;
 }
 
 void PortalSystem::SetupPortal(AEVec2 pos, AEVec2 scale, f32 rotationDeg) {
@@ -124,10 +123,11 @@ bool PortalSystem::CollisionCheckWithWater(Portal portal, FluidParticle particle
 void PortalSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
 
     // Look for unlinked portals to set to current_portal_
-    if (current_portal_ != nullptr) {
+    if (current_portal_ == nullptr) {
         for (auto& portal : portal_vec) {
             if (portal->linked_portal_ == nullptr) {
                 current_portal_ = portal;
+                std::cout << "Found unlinked portal to set as current_portal_\n";
                 break;
             }
         }
@@ -213,6 +213,59 @@ void PortalSystem::Free() {
     current_portal_ = nullptr;
 }
 
-void PortalSystem::CheckMouseClick() {}
+void PortalSystem::CheckMouseClick() {
+    if (click_iframe) {
+        return;
+    }
+    // Get mouse position
+    s32 mouse_x = 0, mouse_y = 0;
+    AEInputGetCursorPosition(&mouse_x, &mouse_y);
+    mouse_x -= AEGfxGetWindowWidth() / 2;
+    mouse_y = (AEGfxGetWindowHeight() / 2) - mouse_y;
 
-void PortalSystem::ResetIframe() {}
+    // Use mouse pos to check collision with portal
+    // Check by checking if mouse pos falls within the portal's collider box
+    // If it collides with a portal, delete portal and return
+    for (auto portal = portal_vec.begin(); portal != portal_vec.end();) {
+        Portal* currentPortal = *portal;
+        f32 rect_half_width = currentPortal->collider_.shapeData_.box_.size_.x / 2.0f;
+        f32 rect_half_height = currentPortal->collider_.shapeData_.box_.size_.y / 2.0f;
+        if (mouse_x >= (currentPortal->transform_.pos_.x - rect_half_width) &&
+            mouse_x <= (currentPortal->transform_.pos_.x + rect_half_width) &&
+            mouse_y >= (currentPortal->transform_.pos_.y - rect_half_height) &&
+            mouse_y <= (currentPortal->transform_.pos_.y + rect_half_height)) {
+            std::cout << "Mouse is over portal!\n";
+            // Remove portal
+            if (currentPortal->linked_portal_ != nullptr) {
+                currentPortal->linked_portal_->linked_portal_ = nullptr;
+                currentPortal->linked_portal_ = nullptr;
+            }
+            portal = portal_vec.erase(portal);
+            if (currentPortal == current_portal_) {
+                current_portal_ = nullptr;
+            }
+            delete currentPortal;
+            click_iframe = true;
+            return;
+        } else {
+            ++portal;
+        }
+    }
+    // Else setup new portal at mouse position
+    AEVec2 portal_pos = {static_cast<f32>(mouse_x), static_cast<f32>(mouse_y)};
+    AEVec2 portal_scale = {30.0f, 60.0f};
+    SetupPortal(portal_pos, portal_scale, rotation_value);
+    click_iframe = true;
+}
+
+void PortalSystem::ResetIframe() { click_iframe = false; }
+
+void PortalSystem::RotatePortal() {
+    rotation_value += 45.0f;
+    if (rotation_value > 360.0f) {
+        rotation_value = 0.0f;
+    }
+    std::cout << "Portal rotation set to " << rotation_value << " degrees\n";
+}
+
+f32 PortalSystem::GetRotationValue() { return rotation_value; }

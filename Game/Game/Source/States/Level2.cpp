@@ -68,6 +68,15 @@ void UpdateLevel2(GameStateManager& GSM, f32 deltaTime) {
 
         startEndPointSystem.ResetIframe();
     }
+    if (AEInputCheckTriggered(AEVK_RBUTTON) || 0 == AESysDoesWindowExist()) {
+        portalSystem.CheckMouseClick();
+        std::cout << "Right mouse button clicked\n";
+    } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
+        portalSystem.ResetIframe();
+    }
+    if (AEInputCheckTriggered(AEVK_MBUTTON)) {
+        portalSystem.RotatePortal();
+    }
 
     for (auto& startPoint : startEndPointSystem.startPoints_) {
         if (startPoint.release_water_) {
