@@ -3,25 +3,12 @@
 #include "Components.h"
 #include <vector>
 
-enum class FluidType {
-    // Allignment: 4 bytes
-    // Size: 4 bytes
-    Water,
-    Lava,
-    Count
-};
+enum class FluidType { Water, Lava, Count };
 
 struct FluidParticle {
-
-    // ----------------------------- Components ----------------------------- //
-    // Allignment: 4 bytes
-    // Size: 80 bytes
-
-    Transform transform_; //  <--- posX, posY, scaleX, scaleY, rotA, worldMtx
-
-    RigidBody2D physics_; //  <--- mass, gravity, drag, veloX, veloY
-
-    Collider2D collider_; //  <--- radius
+    Transform transform_;
+    RigidBody2D physics_;
+    Collider2D collider_;
 
     FluidType
         type_; //  <--- water, lava, etc
@@ -35,11 +22,6 @@ struct FluidParticle {
 
     // NOTE: There is NO WAY to change any of the values in the components
     // so set it properly within the constructor!!!!
-
-    //* 1.   Lava Particle
-    //  make a constructor that takes in new velocity,mass etc for lava particles
-
-    //* 2.   Custom Particle
     FluidParticle(f32 posX, f32 posY, f32 radius, FluidType type);
 };
 
@@ -52,14 +34,9 @@ private:
         particlePools_[static_cast<int>(FluidType::Count)]; //  <--- stores all live particles
 
     // graphic configs for each particle type
-    Graphics graphicsConfigs_[static_cast<int>(FluidType::Count)]; // <--- mesh, texture, layer
+    Graphics graphicsConfigs_[static_cast<int>(FluidType::Count)];
 
-    // colour configs (r,g,b,alpha)
     f32 colorConfigs_[static_cast<int>(FluidType::Count)][4]; // [Type][RGBA]
-
-    // physics configs for mass, gravity, drag, velocityX, velocityY
-
-    //** CONVERT ALL TS TO READ CONFIGS FROM TEXT FILES
 
 public:
     s32 particleMaxCount{300};

@@ -11,22 +11,15 @@
 // ==========================================
 // @todo incomplete, should set physics as well
 FluidParticle::FluidParticle(f32 posX, f32 posY, f32 radius, FluidType type) {
-
-    // used for drawing
     transform_.pos_ = {posX, posY};
-
-    // Multiply scale by 2.0f coz radius is radius (not diameter)
-
-    transform_.scale_ = {radius * 2.0f, radius * 2.0f};
+    transform_.scale_ = {radius * 2.0f,
+                         radius * 2.0f}; // Multiply by 2.0f as scale represents diameter
     transform_.rotationRad_ = 0.0f;
 
-    // used for collision / physics
-    // Adjust the multiplier before radius to change how close the particle is able to collide
-    // Thus, we indirectly change the "draw" size as well
     collider_.colliderShape_ = ColliderShape::Circle;
-    collider_.shapeData_.circle_.radius = 0.7f * radius;
+    collider_.shapeData_.circle_.radius =
+        radius * 0.7f; // * 0.7f so that collider is smaller than mesh
 
-    // misc
     type_ = type;
 }
 
@@ -36,11 +29,9 @@ FluidParticle::FluidParticle(f32 posX, f32 posY, f32 radius, FluidType type) {
 
 // UPDATE (MAYBE BROKEN)
 void FluidSystem::InitializeMesh() {
-
-    // CreateCircleMesh(number of slices);
     AEGfxVertexList* circleMesh = CreateCircleMesh(20);
 
-    // Assign circle mesh to all particle types
+    // Assign circle mesh to each particle type
     for (int i{0}; i < static_cast<int>(FluidType::Count); ++i) {
         if (circleMesh != nullptr) {
             graphicsConfigs_[i].mesh_ = circleMesh;
@@ -49,8 +40,6 @@ void FluidSystem::InitializeMesh() {
 }
 
 void FluidSystem::Initialize() {
-
-    // Initialize particle mesh
     InitializeMesh();
 
     // Reduces memory reallocation
@@ -59,13 +48,9 @@ void FluidSystem::Initialize() {
         particlePools_[i].reserve(1000);
     }
 
-    // Set colors for each particle type
     SetTypeColor(0.0f, 0.5f, 1.0f, 1.0f, FluidType ::Water);
     SetTypeColor(1.0f, 0.2f, 0.0f, 1.0f, FluidType::Lava);
 }
-
-// Sets the mesh-matrices for every single INDIVIDUAL particle in the
-// specified particle pool.
 
 // Sub-function, called under UpdateMain()
 void FluidSystem::UpdateTransforms(std::vector<FluidParticle>& particlePool) {
@@ -89,9 +74,7 @@ void FluidSystem::UpdateTransforms(std::vector<FluidParticle>& particlePool) {
 // REPLACE this with new collision system later on
 void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 dt) {
 
-    // No. of particles
     size_t count = particlePool.size();
-    // No. of types
     s32 typeCount{static_cast<int>(FluidType::Count)};
 
     // ================================================ //
@@ -130,25 +113,15 @@ void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 
     // ================================================ //
     // PROBLEM 1: COLLISION (Particle vs Particle)
     // ================================================ //
-    //
-    // Currently, the particles are able to fall straight to the floor and bounce back up just like
-    // in real life. However, the particles lack collision and pass through one another. Hence, we
-    // need to implement particle-particle collision.
 
-    // O(n^2) collision detection
-    // Currently, we are checking one particle (p1) against every other particle     <---- (bad,
-    // slow and we should replace this later!!!!!) For example, particle in particlePool[0] is
-    // checked against all other particles in the pool
-    //
-    // This means that all the calculations below are done N * (N-1) / 2 times per frame, where N =
-    // number of particles. So particleA checks against particleB, particleC, particleD, ... then
-    // particleB checks against particleC, particleD, ...
+    // Time complexity: O(n^2)
 
     // Runs the collision solver multiple times to improve stability
     // For example, even after one iteration of collision resolution,
     // some particles may still be overlapping slightly.
     int solverIterations = 2;
     std::cout << count << '\n';
+
     for (int iter = 0; iter < solverIterations; ++iter) {
         for (size_t i = 0; i < count; ++i) {
 
@@ -171,23 +144,16 @@ void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 
                     f32 noise = ((i * 12345) % 100) * 0.001f - 0.5f;
                     dx += noise;
                 }
-                // minDist refers to the MINIMUM distance from center of p1 to center of p2 before
-                // collision occurs
 
+                // Calculate minimum distance between p1 and p2 for collision to occur
                 f32 minDist =
                     p1.collider_.shapeData_.circle_.radius + p2.collider_.shapeData_.circle_.radius;
 
-                // distSq refers to the ACTUAL distance from center of p1 to center of p2 squared
-                // (this is the magnitude of the direction vector from p1 to p2 and thus the length
-                // it)
+                // Calculate squared distance from p1 to p2
                 f32 distSq = dx * dx + dy * dy;
 
-                // f32 dist = sqrtf(distSq); <-  // Minor OPTIMISATION: Only calculate square root
-                // if COLLISION DETECTED!!
-
-                // If actual distance < minimum distance = COLLISION DETECTED
+                // Check for collision
                 if (distSq < minDist * minDist) {
-
                     // Only calculate square root when collision is detected
                     f32 dist = sqrtf(distSq);
 
@@ -196,21 +162,12 @@ void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 
                         dist = 0.0001f;
                     }
 
-                    // Use the distance between p2 and p1 to calculate a unit vector (normalised
-                    // vector) this means that for every unit of distance, posx and posy changes by
-                    // nx, ny. So any calculations involving moving posX and posY should be
-                    // multiplied by nx and ny.
-                    //
-                    // (so that diagonal movement is the same as horizontal/vertical movement)
-                    // (this is equivalent to normal vector = (1/ magnitude) * direction vector)
+                    // Calculate unit vector
+                    // Any calculations involving moving posX and posY should be multiplied by nx
+                    // and ny
                     f32 nx = dx / dist;
                     f32 ny = dy / dist;
 
-                    // We now calculate how much the two particles overlap when they collide
-                    //
-                    // REMEMBER: distSq = dx * dx + dy * dy,
-                    //           minDist = radius * 2.0f,
-                    //           dist = sqrtf(distSq).
                     f32 overlap = minDist - dist;
 
                     // ================================================ //
@@ -493,8 +450,6 @@ void FluidSystem::DrawColor() {
     }
 }
 void FluidSystem::DrawTexture() {
-
-    // texture mode
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 
     // Loops through (0) Water, (1) Lava, ...
@@ -505,7 +460,6 @@ void FluidSystem::DrawTexture() {
             continue;
         }
 
-        // get texture from current fluidsystem texture ptr
         AEGfxTextureSet(graphicsConfigs_[i].texture_, 0, 0);
 
         AEGfxSetColorToMultiply(colorConfigs_[i][0],  //  <-- r
@@ -516,25 +470,25 @@ void FluidSystem::DrawTexture() {
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(colorConfigs_[i][3]);
 
-        // draw according to the particles' transform matrix
-        for (auto& p : particlePools_[i]) { // <-- p = current particle being looped
+        // Loop through each particle
+        for (auto& p : particlePools_[i]) {
             AEGfxSetTransform(p.transform_.worldMtx_.m);
             AEGfxMeshDraw(graphicsConfigs_[i].mesh_, AE_GFX_MDM_TRIANGLES);
         }
     }
 }
 void FluidSystem::Free() {
-    // free the mesh once and then set the rest
+    // Free the mesh once and then set the rest
     if (graphicsConfigs_[0].mesh_ != nullptr) {
         AEGfxMeshFree(graphicsConfigs_[0].mesh_);
     }
 
-    // nullify all mesh pointers so we don't accidentally use dead memory
+    // Nullify all mesh pointers so we don't accidentally use dead memory
     for (int i = 0; i < (int)FluidType::Count; ++i) {
         graphicsConfigs_[i].mesh_ = nullptr;
     }
 
-    // free textures
+    // Free textures
     for (int i = 0; i < (int)FluidType::Count; ++i) {
         if (graphicsConfigs_[i].texture_ != nullptr) {
             AEGfxTextureUnload(
@@ -543,17 +497,15 @@ void FluidSystem::Free() {
         }
     }
 
-    // empty the vectors
+    // Empty the particle pool
     for (int i = 0; i < (int)FluidType::Count; ++i) {
         particlePools_[i].clear();
     }
 }
 
 void FluidSystem::SetTypeColor(f32 r, f32 g, f32 b, f32 a, FluidType type) {
-
     int i = (int)type;
 
-    // The configs here refers to colorConfigs_ stored in FluidSystem
     colorConfigs_[i][0] = r;
     colorConfigs_[i][1] = g;
     colorConfigs_[i][2] = b;
@@ -562,11 +514,8 @@ void FluidSystem::SetTypeColor(f32 r, f32 g, f32 b, f32 a, FluidType type) {
 
 void FluidSystem::SetTypeGraphics(AEGfxVertexList* mesh, AEGfxTexture* texture, u32 layer,
                                   FluidType type) {
-
     int i = (int)type;
 
-    // The configs here refers to graphicsConfigs_ stored in FluidSystem
-    // mesh, texture, layer refer to pointers declared within the file that calls this function
     graphicsConfigs_[i].mesh_ = mesh;
     graphicsConfigs_[i].texture_ = texture;
     graphicsConfigs_[i].layer_ = layer;
