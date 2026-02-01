@@ -27,18 +27,6 @@ FluidParticle::FluidParticle(f32 posX, f32 posY, f32 radius, FluidType type) {
 // FluidSystem
 // ==========================================
 
-// UPDATE (MAYBE BROKEN)
-void FluidSystem::InitializeMesh() {
-    AEGfxVertexList* circleMesh = CreateCircleMesh(20);
-
-    // Assign circle mesh to each particle type
-    for (int i{0}; i < static_cast<int>(FluidType::Count); ++i) {
-        if (circleMesh != nullptr) {
-            graphicsConfigs_[i].mesh_ = circleMesh;
-        }
-    }
-}
-
 void FluidSystem::Initialize() {
     InitializeMesh();
 
@@ -52,28 +40,184 @@ void FluidSystem::Initialize() {
     SetTypeColor(1.0f, 0.2f, 0.0f, 1.0f, FluidType::Lava);
 }
 
-// Sub-function, called under UpdateMain()
+// This function affects ALL particles (used after all other sub-Update functions)
+void FluidSystem::UpdateMain(f32 dt) {
+    // ================================================ //
+    // OPTIMISATION: DT CLAMPING
+    // ================================================ //
+    //
+    // We clamp dt to a maximum value to avoid instability
+    // For example, if there is a lag spike, dt could be very high and cause particles to teleport
+    // Hence, we set it to 0.016f (60 FPS) max
+    if (dt > 0.016f) {
+        dt = 0.016f;
+    }
+    // ================================================ //
+    // OPTIMISATION: SUB-STEPS FOR STABILITY
+    // ================================================ //
+    //
+    // How?
+    // We divide the dt into smaller chunks and run the physics and collision multiple times
+    //
+    // Assume gravity = -1000. Without the substep, it would be -1000 * 0.016 = -16 units per frame
+    // This results in -16 units per frame movement, which the collision solver has to resolve all
+    // at once.
+    //
+    // Now assume gravity = -1000 with a substep of 4. With the substep, each subDt = 0.004f = -4
+    // units per sub-frame. This means that the collision solver only has to resolve -4 units of
+    // movement per sub-frame,
+    const int subSteps = 4;
+    f32 subDt = dt / (f32)subSteps;
+
+    // run the simulation substep number of times per frame
+    for (int s = 0; s < subSteps; s++) {
+        for (int i = 0; i < (int)FluidType::Count; i++) {
+            if (particlePools_[i].empty())
+                continue;
+            UpdatePhysics(particlePools_[i], subDt);
+            UpdateCollision(particlePools_[i], subDt);
+        }
+    }
+
+    for (int i = 0; i < (int)FluidType::Count; i++) {
+
+        // Skip empty pools to save time/performance
+        if (particlePools_[i].empty()) {
+            continue;
+        } else {
+            // Update the graphics matrix
+            UpdateTransforms(particlePools_[i]);
+            UpdatePortalIframes(dt, particlePools_[i]);
+        }
+    }
+}
+
+void FluidSystem::DrawColor() {
+
+    // color render mode
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+
+    // Loops through (0) Water, (1) Lava, ...
+    for (int i = 0; i < (int)FluidType::Count; ++i) {
+
+        // if particle pool is empty, completely skip this pool
+        if (particlePools_[i].empty()) {
+            continue;
+        }
+        // set colour
+        AEGfxSetColorToMultiply(colorConfigs_[i][0],  //  <-- r
+                                colorConfigs_[i][1],  //  <-- g
+                                colorConfigs_[i][2],  //  <-- b
+                                colorConfigs_[i][3]); //  <-- alpha
+
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(colorConfigs_[i][3]);
+
+        // draw according to the particles' transform matrix
+        for (auto& p : particlePools_[i]) { // <-- p = current particle being looped
+
+            AEGfxSetTransform(p.transform_.worldMtx_.m);
+            AEGfxMeshDraw(graphicsConfigs_[i].mesh_, AE_GFX_MDM_TRIANGLES);
+        }
+    }
+}
+
+void FluidSystem::DrawTexture() {
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+
+    // Loops through (0) Water, (1) Lava, ...
+    for (int i = 0; i < (int)FluidType::Count; ++i) {
+
+        // if particle pool is empty, completely skip this pool
+        if (particlePools_[i].empty()) {
+            continue;
+        }
+
+        AEGfxTextureSet(graphicsConfigs_[i].texture_, 0, 0);
+
+        AEGfxSetColorToMultiply(colorConfigs_[i][0],  //  <-- r
+                                colorConfigs_[i][1],  //  <-- g
+                                colorConfigs_[i][2],  //  <-- b
+                                colorConfigs_[i][3]); //  <-- alpha
+
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(colorConfigs_[i][3]);
+
+        // Loop through each particle
+        for (auto& p : particlePools_[i]) {
+            AEGfxSetTransform(p.transform_.worldMtx_.m);
+            AEGfxMeshDraw(graphicsConfigs_[i].mesh_, AE_GFX_MDM_TRIANGLES);
+        }
+    }
+}
+
+void FluidSystem::Free() {
+    // Free the mesh once and then set the rest
+    if (graphicsConfigs_[0].mesh_ != nullptr) {
+        AEGfxMeshFree(graphicsConfigs_[0].mesh_);
+    }
+
+    // Nullify all mesh pointers so we don't accidentally use dead memory
+    for (int i = 0; i < (int)FluidType::Count; ++i) {
+        graphicsConfigs_[i].mesh_ = nullptr;
+    }
+
+    // Free textures
+    for (int i = 0; i < (int)FluidType::Count; ++i) {
+        if (graphicsConfigs_[i].texture_ != nullptr) {
+            AEGfxTextureUnload(
+                graphicsConfigs_[i].texture_); // Or AEGfxTextureFree depending on version
+            graphicsConfigs_[i].texture_ = nullptr;
+        }
+    }
+
+    // Empty the particle pool
+    for (int i = 0; i < (int)FluidType::Count; ++i) {
+        particlePools_[i].clear();
+    }
+}
+
+void FluidSystem::SpawnParticle(f32 posX, f32 posY, f32 radius, FluidType type) {
+    int i = (int)type;
+    FluidParticle newParticle(posX, posY, radius, type);
+    particlePools_[i].push_back(newParticle);
+}
+
+int FluidSystem::GetParticleCount(FluidType type) { return particlePools_[(int)type].size(); }
+
+std::vector<FluidParticle>& FluidSystem::GetParticlePool(FluidType type) {
+    return particlePools_[(int)type];
+}
+
+// UPDATE (MAYBE BROKEN)
+void FluidSystem::InitializeMesh() {
+    AEGfxVertexList* circleMesh = CreateCircleMesh(20);
+
+    // Assign circle mesh to each particle type
+    for (int i{0}; i < static_cast<int>(FluidType::Count); ++i) {
+        if (circleMesh != nullptr) {
+            graphicsConfigs_[i].mesh_ = circleMesh;
+        }
+    }
+}
+
 void FluidSystem::UpdateTransforms(std::vector<FluidParticle>& particlePool) {
 
     for (auto& p : particlePool) {
 
         AEMtx33 scale, rot, trans;
 
-        // Takes scale, rotation, position FROM THE PARTICLE ITSELF
         AEMtx33Scale(&scale, p.transform_.scale_.x, p.transform_.scale_.y);
         AEMtx33Rot(&rot, p.transform_.rotationRad_);
         AEMtx33Trans(&trans, p.transform_.pos_.x, p.transform_.pos_.y);
 
-        // Concatenate 1: Scale -> Rotate -> Store
-        // Concatenate 2: Store -> Translate -> Store
+        // worldMtx = trans * rot * scale
         AEMtx33Concat(&p.transform_.worldMtx_, &rot, &scale);
         AEMtx33Concat(&p.transform_.worldMtx_, &trans, &p.transform_.worldMtx_);
     }
 }
 
-// REPLACE this with new collision system later on
 void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 dt) {
-
     size_t count = particlePool.size();
     s32 typeCount{static_cast<int>(FluidType::Count)};
 
@@ -299,7 +443,6 @@ void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 
     }
 }
 
-// Sub-function, called under UpdateMain(), AFTER UpdateCollision
 void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt) {
 
     //  load new constants with config values
@@ -368,141 +511,6 @@ void FluidSystem::UpdatePortalIframes(f32 dt, std::vector<FluidParticle>& partic
     }
 }
 
-// This function affects ALL particles (used after all other sub-Update functions)
-void FluidSystem::UpdateMain(f32 dt) {
-    // ================================================ //
-    // OPTIMISATION: DT CLAMPING
-    // ================================================ //
-    //
-    // We clamp dt to a maximum value to avoid instability
-    // For example, if there is a lag spike, dt could be very high and cause particles to teleport
-    // Hence, we set it to 0.016f (60 FPS) max
-    if (dt > 0.016f) {
-        dt = 0.016f;
-    }
-    // ================================================ //
-    // OPTIMISATION: SUB-STEPS FOR STABILITY
-    // ================================================ //
-    //
-    // How?
-    // We divide the dt into smaller chunks and run the physics and collision multiple times
-    //
-    // Assume gravity = -1000. Without the substep, it would be -1000 * 0.016 = -16 units per frame
-    // This results in -16 units per frame movement, which the collision solver has to resolve all
-    // at once.
-    //
-    // Now assume gravity = -1000 with a substep of 4. With the substep, each subDt = 0.004f = -4
-    // units per sub-frame. This means that the collision solver only has to resolve -4 units of
-    // movement per sub-frame,
-    const int subSteps = 4;
-    f32 subDt = dt / (f32)subSteps;
-
-    // run the simulation substep number of times per frame
-    for (int s = 0; s < subSteps; s++) {
-        for (int i = 0; i < (int)FluidType::Count; i++) {
-            if (particlePools_[i].empty())
-                continue;
-            UpdatePhysics(particlePools_[i], subDt);
-            UpdateCollision(particlePools_[i], subDt);
-        }
-    }
-
-    for (int i = 0; i < (int)FluidType::Count; i++) {
-
-        // Skip empty pools to save time/performance
-        if (particlePools_[i].empty()) {
-            continue;
-        } else {
-            // Update the graphics matrix
-            UpdateTransforms(particlePools_[i]);
-            UpdatePortalIframes(dt, particlePools_[i]);
-        }
-    }
-}
-
-void FluidSystem::DrawColor() {
-
-    // color render mode
-    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-
-    // Loops through (0) Water, (1) Lava, ...
-    for (int i = 0; i < (int)FluidType::Count; ++i) {
-
-        // if particle pool is empty, completely skip this pool
-        if (particlePools_[i].empty()) {
-            continue;
-        }
-        // set colour
-        AEGfxSetColorToMultiply(colorConfigs_[i][0],  //  <-- r
-                                colorConfigs_[i][1],  //  <-- g
-                                colorConfigs_[i][2],  //  <-- b
-                                colorConfigs_[i][3]); //  <-- alpha
-
-        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxSetTransparency(colorConfigs_[i][3]);
-
-        // draw according to the particles' transform matrix
-        for (auto& p : particlePools_[i]) { // <-- p = current particle being looped
-
-            AEGfxSetTransform(p.transform_.worldMtx_.m);
-            AEGfxMeshDraw(graphicsConfigs_[i].mesh_, AE_GFX_MDM_TRIANGLES);
-        }
-    }
-}
-void FluidSystem::DrawTexture() {
-    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-
-    // Loops through (0) Water, (1) Lava, ...
-    for (int i = 0; i < (int)FluidType::Count; ++i) {
-
-        // if particle pool is empty, completely skip this pool
-        if (particlePools_[i].empty()) {
-            continue;
-        }
-
-        AEGfxTextureSet(graphicsConfigs_[i].texture_, 0, 0);
-
-        AEGfxSetColorToMultiply(colorConfigs_[i][0],  //  <-- r
-                                colorConfigs_[i][1],  //  <-- g
-                                colorConfigs_[i][2],  //  <-- b
-                                colorConfigs_[i][3]); //  <-- alpha
-
-        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxSetTransparency(colorConfigs_[i][3]);
-
-        // Loop through each particle
-        for (auto& p : particlePools_[i]) {
-            AEGfxSetTransform(p.transform_.worldMtx_.m);
-            AEGfxMeshDraw(graphicsConfigs_[i].mesh_, AE_GFX_MDM_TRIANGLES);
-        }
-    }
-}
-void FluidSystem::Free() {
-    // Free the mesh once and then set the rest
-    if (graphicsConfigs_[0].mesh_ != nullptr) {
-        AEGfxMeshFree(graphicsConfigs_[0].mesh_);
-    }
-
-    // Nullify all mesh pointers so we don't accidentally use dead memory
-    for (int i = 0; i < (int)FluidType::Count; ++i) {
-        graphicsConfigs_[i].mesh_ = nullptr;
-    }
-
-    // Free textures
-    for (int i = 0; i < (int)FluidType::Count; ++i) {
-        if (graphicsConfigs_[i].texture_ != nullptr) {
-            AEGfxTextureUnload(
-                graphicsConfigs_[i].texture_); // Or AEGfxTextureFree depending on version
-            graphicsConfigs_[i].texture_ = nullptr;
-        }
-    }
-
-    // Empty the particle pool
-    for (int i = 0; i < (int)FluidType::Count; ++i) {
-        particlePools_[i].clear();
-    }
-}
-
 void FluidSystem::SetTypeColor(f32 r, f32 g, f32 b, f32 a, FluidType type) {
     int i = (int)type;
 
@@ -519,16 +527,4 @@ void FluidSystem::SetTypeGraphics(AEGfxVertexList* mesh, AEGfxTexture* texture, 
     graphicsConfigs_[i].mesh_ = mesh;
     graphicsConfigs_[i].texture_ = texture;
     graphicsConfigs_[i].layer_ = layer;
-}
-
-int FluidSystem::GetParticleCount(FluidType type) { return particlePools_[(int)type].size(); }
-
-void FluidSystem::SpawnParticle(f32 posX, f32 posY, f32 radius, FluidType type) {
-    int i = (int)type;
-    FluidParticle newParticle(posX, posY, radius, type);
-    particlePools_[i].push_back(newParticle);
-}
-
-std::vector<FluidParticle>& FluidSystem::GetParticlePool(FluidType type) {
-    return particlePools_[(int)type];
 }
