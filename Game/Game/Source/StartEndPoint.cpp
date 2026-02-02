@@ -56,6 +56,9 @@ StartEnd::StartEnd(AEVec2 pos, AEVec2 scale, StartEndType type, GoalDirection di
     // Set object type
     type_ = type;
     direction_ = direction;
+
+    release_water_ = {false};
+    release_water_iframe_ = {false};
 }
 
 void StartEndPoint::Initialize() {
@@ -68,7 +71,6 @@ void StartEndPoint::Initialize() {
             graphicsConfigs_[i].mesh_ = rectMesh;
         }
     }
-
     particlesCollected_ = {0};
 }
 
@@ -166,6 +168,9 @@ void StartEndPoint::Free() {
             graphicsConfigs_[i].texture_ = nullptr;
         }
     }
+
+    startPoints_.clear();
+    endPoint_ = StartEnd();
 }
 
 void StartEndPoint::CheckMouseClick() {

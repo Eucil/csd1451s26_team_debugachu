@@ -28,8 +28,8 @@ struct FluidParticle {
                // currently only being used for identifying the particle type for setters/getters
 
     bool portal_iframe_{false};            // <--- to prevent immediate re-teleportation
-    f32 portal_iframe_timer_{0.05f};       // <--- timer for portal iframe
-    f32 portal_iframe_maxduration_{0.05f}; // <--- duration of portal iframe in seconds
+    f32 portal_iframe_timer_{0.15f};       // <--- timer for portal iframe
+    f32 portal_iframe_maxduration_{0.15f}; // <--- duration of portal iframe in seconds
 
     // --------------------- Constructors / Destructors --------------------- //
 

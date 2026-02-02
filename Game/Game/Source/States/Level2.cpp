@@ -78,7 +78,7 @@ void UpdateLevel2(GameStateManager& GSM, f32 deltaTime) {
         portalSystem.RotatePortal();
     }
 
-    for (auto& startPoint : startEndPointSystem.startPoints_) {
+    for (auto startPoint : startEndPointSystem.startPoints_) {
         if (startPoint.release_water_) {
             static f32 spawn_timer = 0.0f;
             spawn_timer -= dt32;
