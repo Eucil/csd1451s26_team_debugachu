@@ -41,6 +41,26 @@ public:
 
     static void createColliderLibrary();
 
+    u32 getCellRows() { return kCellRows_; }
+
+    u32 getCellCols() { return kCellCols_; }
+
+    u32 getCellSize() { return kCellSize_; }
+
+    AEVec2 getBottomLeftPos() { return bottomLeftPos_; }
+
+    std::vector<Cell>& getCells() { return cells_; }
+
+    static void createDebugColliderMeshes();
+    void renderCollidersDebug() const;
+
+    // Level 1 generation function
+    static Terrain Level1Dirt(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
+                              u32 cellCols, u32 cellSize);
+
+    static Terrain Level1Stone(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
+                               u32 cellCols, u32 cellSize);
+
 private:
     TerrainMaterial terrainMaterial_;
 
@@ -69,4 +89,7 @@ private:
     void destroyTerrain(f32 worldX, f32 worldY);
 
     void destroyTerrainRadius(f32 worldX, f32 worldY, f32 radius);
+
+    static AEGfxVertexList* debugTriMesh_;
+    static AEGfxVertexList* debugBoxMesh_;
 };

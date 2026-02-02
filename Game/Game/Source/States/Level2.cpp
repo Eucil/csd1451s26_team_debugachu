@@ -26,6 +26,7 @@ void LoadLevel2() {
 void InitializeLevel2() {
     // Todo
     std::cout << "Initialize level 2\n";
+
     fluidSystem.Initialize();
     startEndPointSystem.Initialize();
     portalSystem.Initialize();
@@ -46,9 +47,6 @@ void UpdateLevel2(GameStateManager& GSM, f32 deltaTime) {
     // Todo
     // std::cout << "Update level 2\n";
 
-    f64 dt64 = AEFrameRateControllerGetFrameTime();
-    f32 dt32 = (f32)dt64;
-
     // Press Q to go to main menu
     if (AEInputCheckTriggered(AEVK_Q) || 0 == AESysDoesWindowExist()) {
         std::cout << "Q triggered\n";
@@ -60,6 +58,7 @@ void UpdateLevel2(GameStateManager& GSM, f32 deltaTime) {
         std::cout << "R triggered\n";
         GSM.nextState_ = StateId::Restart;
     }
+
     if (AEInputCheckCurr(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
 
         startEndPointSystem.CheckMouseClick();
@@ -81,7 +80,7 @@ void UpdateLevel2(GameStateManager& GSM, f32 deltaTime) {
     for (auto startPoint : startEndPointSystem.startPoints_) {
         if (startPoint.release_water_) {
             static f32 spawn_timer = 0.0f;
-            spawn_timer -= dt32;
+            spawn_timer -= deltaTime;
             if (spawn_timer <= 0.0f) {
 
                 // RESET TIMER: Set this to how fast you want water to flow
@@ -106,9 +105,9 @@ void UpdateLevel2(GameStateManager& GSM, f32 deltaTime) {
         }
     }
 
-    fluidSystem.UpdateMain(dt32);
-    startEndPointSystem.Update(dt32, fluidSystem.GetParticlePool(FluidType::Water));
-    portalSystem.Update(dt32, fluidSystem.GetParticlePool(FluidType::Water));
+    fluidSystem.UpdateMain(deltaTime);
+    startEndPointSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
+    portalSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
 
     if (startEndPointSystem.CheckWinCondition(fluidSystem.particleMaxCount)) {
         std::cout << "WIN\n ";

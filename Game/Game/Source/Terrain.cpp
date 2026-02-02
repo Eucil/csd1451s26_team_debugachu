@@ -8,6 +8,8 @@
 AEGfxVertexList* Terrain::meshLibrary_[16]{nullptr}; // There are 16 possible meshes
 Collider2D Terrain::colliderLibrary_[16][3]{}; // There are 16 possible colliders, [3] as each cell
                                                // uses 1, 2, or 3 colliders
+AEGfxVertexList* Terrain::debugTriMesh_{nullptr};
+AEGfxVertexList* Terrain::debugBoxMesh_{nullptr};
 
 Terrain::Terrain(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows, u32 cellCols,
                  u32 cellSize)
@@ -35,6 +37,70 @@ Terrain::Terrain(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cel
             nodes_[r * kNodeCols_ + c] = static_cast<f32>(dist(gen));
         }
     }
+}
+
+Terrain Terrain::Level1Dirt(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
+                            u32 cellCols, u32 cellSize) {
+    Terrain t(terrainMaterial, centerPosition, cellRows, cellCols, cellSize);
+
+    // Fill everything with dirt
+    for (u32 r = 0; r < t.kNodeRows_; ++r) {
+        for (u32 c = 0; c < t.kNodeCols_; ++c) {
+            t.nodes_[r * t.kNodeCols_ + c] = 1.0f;
+        }
+    }
+
+    // Hole dimensions in CELLS (width x height)
+    const u32 holeCellsW = 12;
+    const u32 holeCellsH = 7;
+
+    auto carveHoleCells = [&](u32 cellX, u32 cellY) {
+        // Clear (W+1)x(H+1) NODES to remove WxH CELLS
+        for (u32 ny = cellY; ny <= cellY + holeCellsH; ++ny) {
+            for (u32 nx = cellX; nx <= cellX + holeCellsW; ++nx) {
+                if (nx < t.kNodeCols_ && ny < t.kNodeRows_) {
+                    t.nodes_[ny * t.kNodeCols_ + nx] = 0.0f;
+                }
+            }
+        }
+    };
+
+    // Top-left hole (10x5 cells)
+    const u32 topLeftCellX = 0;
+    const u32 topLeftCellY = (cellRows > holeCellsH) ? (cellRows - holeCellsH) : 0;
+    carveHoleCells(topLeftCellX, topLeftCellY);
+
+    // Bottom-right hole (10x5 cells)
+    const u32 bottomRightCellX = (cellCols > holeCellsW) ? (cellCols - holeCellsW) : 0;
+    const u32 bottomRightCellY = 0;
+    carveHoleCells(bottomRightCellX, bottomRightCellY);
+
+    return t;
+}
+
+Terrain Terrain::Level1Stone(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
+                             u32 cellCols, u32 cellSize) {
+    Terrain t(terrainMaterial, centerPosition, cellRows, cellCols, cellSize);
+
+    const u32 borderCells = 3;
+
+    for (u32 r = 0; r < t.kNodeRows_; ++r) {
+        for (u32 c = 0; c < t.kNodeCols_; ++c) {
+
+            // "3 cells thick" border in node-grid space.
+            // For safety with nodes = cells+1, use borderCells as thickness.
+            const bool inLeft = (c < borderCells);
+            const bool inRight = (c >= (t.kNodeCols_ - borderCells));
+            const bool inBottom = (r < borderCells);
+            const bool inTop = (r >= (t.kNodeRows_ - borderCells));
+
+            const bool isBorder = inLeft || inRight || inBottom || inTop;
+
+            t.nodes_[r * t.kNodeCols_ + c] = isBorder ? 1.0f : 0.0f;
+        }
+    }
+
+    return t;
 }
 
 void Terrain::initCellsTransform() {
@@ -495,6 +561,7 @@ void Terrain::destroyTerrain(f32 worldX, f32 worldY) {
         // Update meshes
         initCellsGraphics(); // Unoptimal as all cells are being updated
         updateTerrain();
+        initCellsCollider();
     }
 }
 
@@ -517,7 +584,96 @@ void Terrain::destroyTerrainRadius(f32 worldX, f32 worldY, f32 radius) {
     }
 
     if (changed) {
+        std::cout << "terrain modified----------------------------\n";
         initCellsGraphics();
         updateTerrain();
+        initCellsCollider();
     }
+}
+
+void Terrain::createDebugColliderMeshes() {
+    // A thin "filled line" thickness in local space.
+    // After scaling by cellSize (e.g. 32), this becomes visible.
+    constexpr f32 t = 0.03f;
+    constexpr u32 color = 0xFF00FFFF; // cyan (ARGB or ABGR depending on engine; tweak if needed)
+
+    // -------- Triangle mesh (unit right-triangle placeholder) --------
+    // We'll use this mesh by rebuilding per-triangle? No: we can just draw triangles
+    // directly by creating a mesh per collider OR we can prebuild a generic triangle and
+    // ignore vertices. Since your triangles differ per case, we won't use a single tri mesh
+    // for all. So keep debugTriMesh_ unused or omit it. We'll render triangle colliders by
+    // building a mesh on the fly.
+    debugTriMesh_ = nullptr;
+
+    // -------- Box outline mesh (centered square outline) --------
+    // This mesh draws an outline around [-0.5..0.5] square using 4 thin rectangles.
+    // We'll scale it later per collider size by temporarily scaling via transform if
+    // needed, but easiest: build per box collider on the fly too (since sizes vary: 1x1,
+    // 1x0.5, 0.5x1). So similarly, we can skip this library too.
+    debugBoxMesh_ = nullptr;
+}
+
+void Terrain::renderCollidersDebug() const {
+    // Debug render state
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(0.35f); // semi-transparent so you can see terrain under it
+    AEGfxSetColorToAdd(0, 0, 0, 0);
+    AEGfxSetColorToMultiply(0.0f, 1.0f, 1.0f, 1.0f); // cyan tint (multiply)
+
+    const u32 color = 0xFF00FFFF; // per-vertex color (format may vary; if odd, change)
+
+    for (const Cell& cell : cells_) {
+        // Use the same transform as terrain rendering
+        AEMtx33 m = cell.transform_.worldMtx_; // makes a non-const copy
+        AEGfxSetTransform(m.m);
+        AEGfxTextureSet(nullptr, 0.0f, 0.0f); // no texture
+
+        for (u32 i = 0; i < 3; ++i) {
+            const Collider2D& col = cell.colliders_[i];
+
+            if (col.colliderShape_ == ColliderShape::Empty) {
+                continue;
+            }
+
+            if (col.colliderShape_ == ColliderShape::Box) {
+                // Box is defined by offset_ (local) and size_ (local, relative to cell)
+                const AEVec2 o = col.shapeData_.box_.offset_;
+                const AEVec2 s = col.shapeData_.box_.size_;
+
+                const f32 hx = s.x * 0.5f;
+                const f32 hy = s.y * 0.5f;
+
+                const f32 x0 = o.x - hx;
+                const f32 x1 = o.x + hx;
+                const f32 y0 = o.y - hy;
+                const f32 y1 = o.y + hy;
+
+                // Build and draw a rectangle (two triangles) in local space
+                AEGfxMeshStart();
+                AEGfxTriAdd(x0, y0, color, 0, 0, x1, y0, color, 0, 0, x0, y1, color, 0, 0);
+
+                AEGfxTriAdd(x1, y0, color, 0, 0, x1, y1, color, 0, 0, x0, y1, color, 0, 0);
+
+                AEGfxVertexList* mesh = AEGfxMeshEnd();
+                AEGfxMeshDraw(mesh, AE_GFX_MDM_TRIANGLES);
+                AEGfxMeshFree(mesh);
+            } else if (col.colliderShape_ == ColliderShape::Triangle) {
+                const AEVec2 v0 = col.shapeData_.triangle_.vertices_[0];
+                const AEVec2 v1 = col.shapeData_.triangle_.vertices_[1];
+                const AEVec2 v2 = col.shapeData_.triangle_.vertices_[2];
+
+                AEGfxMeshStart();
+                AEGfxTriAdd(v0.x, v0.y, color, 0, 0, v1.x, v1.y, color, 0, 0, v2.x, v2.y, color, 0,
+                            0);
+
+                AEGfxVertexList* mesh = AEGfxMeshEnd();
+                AEGfxMeshDraw(mesh, AE_GFX_MDM_TRIANGLES);
+                AEGfxMeshFree(mesh);
+            }
+        }
+    }
+
+    // restore transparency if needed by your pipeline (optional)
+    AEGfxSetTransparency(1.0f);
 }

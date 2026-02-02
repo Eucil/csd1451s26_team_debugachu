@@ -26,6 +26,7 @@
     <None Include="Docs\Standards.md" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\CollisionSystem.h" />
     <ClInclude Include="Include\Components.h" />
     <ClInclude Include="Include\FluidSystem.h" />
     <ClInclude Include="Include\GameStateManager.h" />
