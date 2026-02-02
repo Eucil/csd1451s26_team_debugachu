@@ -13,7 +13,10 @@
 #include "Terrain.h"
 
 // static Terrain dirt(TerrainMaterial::Dirt, {0.0f, 0.0f}, 48, 96, 16);
-static Terrain dirt(TerrainMaterial::Dirt, {0.0f, -200.0f}, 20, 40, 32);
+static Terrain dirt = Terrain::Level1Dirt(TerrainMaterial::Dirt, {0.0f, 0.0f}, 45, 80, 20);
+static Terrain stone = Terrain::Level1Stone(TerrainMaterial::Stone, {0.0f, 0.0f}, 45, 80, 20);
+
+// static Terrain dirt(TerrainMaterial::Dirt, {0.0f, -200.0f}, 20, 40, 32);
 // static Terrain stone(TerrainMaterial::Stone, {0.0f, 0.0f}, 48, 96, 16);
 
 static FluidSystem fluidSystem;
@@ -24,7 +27,7 @@ static bool debug_mode_level1 = false;
 
 void LoadLevel1() {
     // Todo
-    std::cout << "Load level 1\n";
+    // std::cout << "Load level 1\n";
 
     Terrain::createMeshLibrary();
     Terrain::createColliderLibrary();
@@ -32,17 +35,17 @@ void LoadLevel1() {
 
 void InitializeLevel1() {
     // Todo
-    std::cout << "Initialize level 1\n";
+    // std::cout << "Initialize level 1\n";
 
     dirt.initCellsTransform();
     dirt.initCellsGraphics();
     dirt.initCellsCollider();
     dirt.updateTerrain();
 
-    // stone.initCellsTransform();
-    // stone.initCellsGraphics();
-    // stone.initCellsCollider();
-    // stone.updateTerrain();
+    stone.initCellsTransform();
+    stone.initCellsGraphics();
+    stone.initCellsCollider();
+    stone.updateTerrain();
 
     // Fluid, start end point, portals
     fluidSystem.Initialize();
@@ -63,7 +66,7 @@ void InitializeLevel1() {
 
 void UpdateLevel1(GameStateManager& GSM, f32 deltaTime) {
     // Todo
-    std::cout << "Update level 1\n";
+    // std::cout << "Update level 1\n";
 
     // Press Q to go to main menu
     if (AEInputCheckTriggered(AEVK_Q) || 0 == AESysDoesWindowExist()) {
@@ -109,7 +112,7 @@ void UpdateLevel1(GameStateManager& GSM, f32 deltaTime) {
                 f32 noise = ((static_cast<int>(AERandFloat() * 12345) % 100)) * 0.001f - 0.1f;
 
                 // f32 randRadius = 13.0f - (noise * 100.0f);
-                f32 randRadius = 10.0f;
+                f32 randRadius = 5.0f;
 
                 f32 x_offset = startPoint.transform_.pos_.x +
                                AERandFloat() * startPoint.transform_.scale_.x -
@@ -126,6 +129,7 @@ void UpdateLevel1(GameStateManager& GSM, f32 deltaTime) {
 
     // fluidSystem.UpdateMain(deltaTime);
     fluidSystem.UpdateMain(deltaTime, dirt);
+    fluidSystem.UpdateMain(deltaTime, stone);
     startEndPointSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
     portalSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
 
@@ -139,7 +143,7 @@ void UpdateLevel1(GameStateManager& GSM, f32 deltaTime) {
 
 void DrawLevel1() {
     // Todo
-    std::cout << "Draw level 1\n";
+    // std::cout << "Draw level 1\n";
 
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
@@ -150,12 +154,12 @@ void DrawLevel1() {
     dirt.renderTerrain();
     if (debug_mode_level1)
         dirt.renderCollidersDebug(); // add this line
-    //  stone.renderTerrain();
+    stone.renderTerrain();
 }
 
 void FreeLevel1() {
     // Todo
-    std::cout << "Free level 1\n";
+    // std::cout << "Free level 1\n";
 
     fluidSystem.Free();
     startEndPointSystem.Free();
@@ -164,7 +168,7 @@ void FreeLevel1() {
 
 void UnloadLevel1() {
     // Todo
-    std::cout << "Unload level 1\n";
+    // std::cout << "Unload level 1\n";
 
     Terrain::freeMeshLibrary();
 }

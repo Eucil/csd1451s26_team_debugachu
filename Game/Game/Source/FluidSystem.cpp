@@ -265,7 +265,7 @@ void FluidSystem::UpdateCollision(std::vector<FluidParticle>& particlePool, f32 
     // For example, even after one iteration of collision resolution,
     // some particles may still be overlapping slightly.
     int solverIterations = 2;
-    std::cout << count << '\n';
+    // std::cout << count << '\n';
 
     for (int iter = 0; iter < solverIterations; ++iter) {
         for (size_t i = 0; i < count; ++i) {

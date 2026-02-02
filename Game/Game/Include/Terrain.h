@@ -52,8 +52,14 @@ public:
     std::vector<Cell>& getCells() { return cells_; }
 
     static void createDebugColliderMeshes();
-    static void freeDebugColliderMeshes();
     void renderCollidersDebug() const;
+
+    // Level 1 generation function
+    static Terrain Level1Dirt(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
+                              u32 cellCols, u32 cellSize);
+
+    static Terrain Level1Stone(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
+                               u32 cellCols, u32 cellSize);
 
 private:
     TerrainMaterial terrainMaterial_;

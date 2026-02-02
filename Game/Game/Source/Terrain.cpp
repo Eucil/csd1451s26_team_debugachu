@@ -39,6 +39,43 @@ Terrain::Terrain(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cel
     }
 }
 
+Terrain Terrain::Level1Dirt(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
+                            u32 cellCols, u32 cellSize) {
+    Terrain t(terrainMaterial, centerPosition, cellRows, cellCols, cellSize);
+
+    for (u32 r = 0; r < t.kNodeRows_; ++r) {
+        for (u32 c = 0; c < t.kNodeCols_; ++c) {
+            t.nodes_[r * t.kNodeCols_ + c] = 1.0f; // solid everywhere
+        }
+    }
+    return t;
+}
+
+Terrain Terrain::Level1Stone(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
+                             u32 cellCols, u32 cellSize) {
+    Terrain t(terrainMaterial, centerPosition, cellRows, cellCols, cellSize);
+
+    const u32 borderCells = 3;
+
+    for (u32 r = 0; r < t.kNodeRows_; ++r) {
+        for (u32 c = 0; c < t.kNodeCols_; ++c) {
+
+            // "3 cells thick" border in node-grid space.
+            // For safety with nodes = cells+1, use borderCells as thickness.
+            const bool inLeft = (c < borderCells);
+            const bool inRight = (c >= (t.kNodeCols_ - borderCells));
+            const bool inBottom = (r < borderCells);
+            const bool inTop = (r >= (t.kNodeRows_ - borderCells));
+
+            const bool isBorder = inLeft || inRight || inBottom || inTop;
+
+            t.nodes_[r * t.kNodeCols_ + c] = isBorder ? 1.0f : 0.0f;
+        }
+    }
+
+    return t;
+}
+
 void Terrain::initCellsTransform() {
     for (u32 r{0}; r < kCellRows_; ++r) {
         for (u32 c{0}; c < kCellCols_; ++c) {
@@ -534,18 +571,18 @@ void Terrain::createDebugColliderMeshes() {
     constexpr u32 color = 0xFF00FFFF; // cyan (ARGB or ABGR depending on engine; tweak if needed)
 
     // -------- Triangle mesh (unit right-triangle placeholder) --------
-    // We'll use this mesh by rebuilding per-triangle? No: we can just draw triangles directly
-    // by creating a mesh per collider OR we can prebuild a generic triangle and ignore vertices.
-    // Since your triangles differ per case, we won't use a single tri mesh for all.
-    // So keep debugTriMesh_ unused or omit it. We'll render triangle colliders by building a mesh
-    // on the fly.
+    // We'll use this mesh by rebuilding per-triangle? No: we can just draw triangles
+    // directly by creating a mesh per collider OR we can prebuild a generic triangle and
+    // ignore vertices. Since your triangles differ per case, we won't use a single tri mesh
+    // for all. So keep debugTriMesh_ unused or omit it. We'll render triangle colliders by
+    // building a mesh on the fly.
     debugTriMesh_ = nullptr;
 
     // -------- Box outline mesh (centered square outline) --------
     // This mesh draws an outline around [-0.5..0.5] square using 4 thin rectangles.
-    // We'll scale it later per collider size by temporarily scaling via transform if needed,
-    // but easiest: build per box collider on the fly too (since sizes vary: 1x1, 1x0.5, 0.5x1).
-    // So similarly, we can skip this library too.
+    // We'll scale it later per collider size by temporarily scaling via transform if
+    // needed, but easiest: build per box collider on the fly too (since sizes vary: 1x1,
+    // 1x0.5, 0.5x1). So similarly, we can skip this library too.
     debugBoxMesh_ = nullptr;
 }
 
