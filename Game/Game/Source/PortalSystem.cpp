@@ -171,11 +171,10 @@ void PortalSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
                 particle.transform_.pos_.y =
                     portal->linked_portal_->transform_.pos_.y + adjusted_pos_y;
 
+                const f32 popBoost = 50.0f;
                 f32 speed = AEVec2Length(&particle.physics_.velocity_);
-                particle.physics_.velocity_.x =
-                    speed * AECos(portal->linked_portal_->transform_.rotationRad_);
-                particle.physics_.velocity_.y =
-                    speed * AESin(portal->linked_portal_->transform_.rotationRad_);
+                particle.physics_.velocity_.x = speed * cosExit + (popBoost * cosExit);
+                particle.physics_.velocity_.y = speed * sinExit + (popBoost * sinExit);
 
                 //  Activate iframe to prevent immediate re-teleportation
                 particle.portal_iframe_ = true;

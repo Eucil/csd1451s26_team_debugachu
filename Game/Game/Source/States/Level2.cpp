@@ -4,47 +4,53 @@
 
 #include <AEEngine.h>
 
-#include "GameStateManager.h"
-
+#include "CollisionSystem.h"
 #include "Components.h"
-
 #include "FluidSystem.h"
-
-#include "StartEndPoint.h"
-
+#include "GameStateManager.h"
 #include "PortalSystem.h"
+#include "StartEndPoint.h"
+#include "Terrain.h"
+
+static Terrain* dirt = nullptr;
+static Terrain* stone = nullptr;
 
 static FluidSystem fluidSystem;
 static StartEndPoint startEndPointSystem;
 static PortalSystem portalSystem;
 
 void LoadLevel2() {
-    // Todo
-    std::cout << "Load level 2\n";
+    // std::cout << "Load level 2\n";
+    Terrain::createMeshLibrary();
+    Terrain::createColliderLibrary();
 }
 
 void InitializeLevel2() {
-    // Todo
-    std::cout << "Initialize level 2\n";
+    // std::cout << "Initialize level 2\n";
+    dirt = Terrain::Level2Dirt(TerrainMaterial::Dirt, {0.0f, 0.0f}, 45, 80, 20);
+    stone = Terrain::Level2Stone(TerrainMaterial::Stone, {0.0f, 0.0f}, 45, 80, 20);
+
+    dirt->initCellsTransform();
+    dirt->initCellsGraphics();
+    dirt->initCellsCollider();
+    dirt->updateTerrain();
+
+    stone->initCellsTransform();
+    stone->initCellsGraphics();
+    stone->initCellsCollider();
+    stone->updateTerrain();
 
     fluidSystem.Initialize();
     startEndPointSystem.Initialize();
     portalSystem.Initialize();
 
-    startEndPointSystem.SetupStartPoint({-700.0f, 300.0f}, {100.0f, 100.0f}, StartEndType::Pipe,
+    startEndPointSystem.SetupStartPoint({-650.0f, 400.0f}, {50.0f, 50.0f}, StartEndType::Pipe,
                                         GoalDirection::Down);
-    startEndPointSystem.SetupEndPoint({700.0f, -300.0f}, {100.0f, 100.0f}, StartEndType::Flower,
+    startEndPointSystem.SetupEndPoint({650.0f, -400.0f}, {50.0f, 50.0f}, StartEndType::Flower,
                                       GoalDirection::Up);
-
-    portalSystem.SetupPortal({-700.0f, -300.0f}, {175.0f, 100.0f}, 0.f);
-    portalSystem.SetupPortal({700.0f, 300.0f}, {100.0f, 100.0f}, 225.f);
-
-    portalSystem.SetupPortal({300.0f, -300.0f}, {100.0f, 100.0f}, 0.f);
-    portalSystem.SetupPortal({700.0f, 0.0f}, {100.0f, 100.0f}, 270.f);
 }
 
 void UpdateLevel2(GameStateManager& GSM, f32 deltaTime) {
-    // Todo
     // std::cout << "Update level 2\n";
 
     // Press Q to go to main menu
@@ -59,7 +65,11 @@ void UpdateLevel2(GameStateManager& GSM, f32 deltaTime) {
         GSM.nextState_ = StateId::Restart;
     }
 
-    if (AEInputCheckCurr(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
+    if (AEInputCheckCurr(AEVK_LBUTTON)) {
+        dirt->destroyAtMouse(20.0f);
+    }
+
+    if (AEInputCheckTriggered(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
 
         startEndPointSystem.CheckMouseClick();
 
@@ -67,9 +77,9 @@ void UpdateLevel2(GameStateManager& GSM, f32 deltaTime) {
 
         startEndPointSystem.ResetIframe();
     }
+
     if (AEInputCheckTriggered(AEVK_RBUTTON) || 0 == AESysDoesWindowExist()) {
         portalSystem.CheckMouseClick();
-        std::cout << "Right mouse button clicked\n";
     } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
         portalSystem.ResetIframe();
     }
@@ -77,7 +87,7 @@ void UpdateLevel2(GameStateManager& GSM, f32 deltaTime) {
         portalSystem.RotatePortal();
     }
 
-    for (auto startPoint : startEndPointSystem.startPoints_) {
+    for (auto& startPoint : startEndPointSystem.startPoints_) {
         if (startPoint.release_water_) {
             static f32 spawn_timer = 0.0f;
             spawn_timer -= deltaTime;
@@ -90,7 +100,8 @@ void UpdateLevel2(GameStateManager& GSM, f32 deltaTime) {
                 // the particle spawns at the values shown below, including its FluidType
                 f32 noise = ((static_cast<int>(AERandFloat() * 12345) % 100)) * 0.001f - 0.1f;
 
-                f32 randRadius = 13.0f - (noise * 100.0f);
+                // f32 randRadius = 13.0f - (noise * 100.0f);
+                f32 randRadius = 5.0f;
 
                 f32 x_offset = startPoint.transform_.pos_.x +
                                AERandFloat() * startPoint.transform_.scale_.x -
@@ -105,9 +116,14 @@ void UpdateLevel2(GameStateManager& GSM, f32 deltaTime) {
         }
     }
 
-    fluidSystem.UpdateMain(deltaTime);
+    // fluidSystem.UpdateMain(deltaTime);
+    fluidSystem.UpdateMain(deltaTime, *dirt);
+    fluidSystem.UpdateMain(deltaTime, *stone);
     startEndPointSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
     portalSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
+
+    // Terrain to fluid collision
+    // CollisionSystem::terrainToFluidCollision(dirt, fluidSystem);
 
     if (startEndPointSystem.CheckWinCondition(fluidSystem.particleMaxCount)) {
         std::cout << "WIN\n ";
@@ -115,22 +131,30 @@ void UpdateLevel2(GameStateManager& GSM, f32 deltaTime) {
 }
 
 void DrawLevel2() {
-    // Todo
     // std::cout << "Draw level 2\n";
+    AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
+
     fluidSystem.DrawColor();
     startEndPointSystem.DrawColor();
     portalSystem.DrawColor();
+
+    dirt->renderTerrain();
+    stone->renderTerrain();
 }
 
 void FreeLevel2() {
-    // Todo
-    std::cout << "Free level 2\n";
+    // std::cout << "Free level 2\n";
     fluidSystem.Free();
     startEndPointSystem.Free();
     portalSystem.Free();
+
+    delete dirt;
+    dirt = nullptr;
+    delete stone;
+    stone = nullptr;
 }
 
 void UnloadLevel2() {
-    // Todo
-    std::cout << "Unload level 2\n";
+    // std::cout << "Unload level 2\n";
+    Terrain::freeMeshLibrary();
 }

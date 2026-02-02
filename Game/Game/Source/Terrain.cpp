@@ -39,70 +39,6 @@ Terrain::Terrain(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cel
     }
 }
 
-Terrain Terrain::Level1Dirt(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
-                            u32 cellCols, u32 cellSize) {
-    Terrain t(terrainMaterial, centerPosition, cellRows, cellCols, cellSize);
-
-    // Fill everything with dirt
-    for (u32 r = 0; r < t.kNodeRows_; ++r) {
-        for (u32 c = 0; c < t.kNodeCols_; ++c) {
-            t.nodes_[r * t.kNodeCols_ + c] = 1.0f;
-        }
-    }
-
-    // Hole dimensions in CELLS (width x height)
-    const u32 holeCellsW = 12;
-    const u32 holeCellsH = 7;
-
-    auto carveHoleCells = [&](u32 cellX, u32 cellY) {
-        // Clear (W+1)x(H+1) NODES to remove WxH CELLS
-        for (u32 ny = cellY; ny <= cellY + holeCellsH; ++ny) {
-            for (u32 nx = cellX; nx <= cellX + holeCellsW; ++nx) {
-                if (nx < t.kNodeCols_ && ny < t.kNodeRows_) {
-                    t.nodes_[ny * t.kNodeCols_ + nx] = 0.0f;
-                }
-            }
-        }
-    };
-
-    // Top-left hole (10x5 cells)
-    const u32 topLeftCellX = 0;
-    const u32 topLeftCellY = (cellRows > holeCellsH) ? (cellRows - holeCellsH) : 0;
-    carveHoleCells(topLeftCellX, topLeftCellY);
-
-    // Bottom-right hole (10x5 cells)
-    const u32 bottomRightCellX = (cellCols > holeCellsW) ? (cellCols - holeCellsW) : 0;
-    const u32 bottomRightCellY = 0;
-    carveHoleCells(bottomRightCellX, bottomRightCellY);
-
-    return t;
-}
-
-Terrain Terrain::Level1Stone(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
-                             u32 cellCols, u32 cellSize) {
-    Terrain t(terrainMaterial, centerPosition, cellRows, cellCols, cellSize);
-
-    const u32 borderCells = 3;
-
-    for (u32 r = 0; r < t.kNodeRows_; ++r) {
-        for (u32 c = 0; c < t.kNodeCols_; ++c) {
-
-            // "3 cells thick" border in node-grid space.
-            // For safety with nodes = cells+1, use borderCells as thickness.
-            const bool inLeft = (c < borderCells);
-            const bool inRight = (c >= (t.kNodeCols_ - borderCells));
-            const bool inBottom = (r < borderCells);
-            const bool inTop = (r >= (t.kNodeRows_ - borderCells));
-
-            const bool isBorder = inLeft || inRight || inBottom || inTop;
-
-            t.nodes_[r * t.kNodeCols_ + c] = isBorder ? 1.0f : 0.0f;
-        }
-    }
-
-    return t;
-}
-
 void Terrain::initCellsTransform() {
     for (u32 r{0}; r < kCellRows_; ++r) {
         for (u32 c{0}; c < kCellCols_; ++c) {
@@ -676,4 +612,139 @@ void Terrain::renderCollidersDebug() const {
 
     // restore transparency if needed by your pipeline (optional)
     AEGfxSetTransparency(1.0f);
+}
+
+Terrain* Terrain::Level1Dirt(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
+                             u32 cellCols, u32 cellSize) {
+    Terrain* t = new Terrain(terrainMaterial, centerPosition, cellRows, cellCols, cellSize);
+
+    // Fill everything with dirt
+    for (u32 r = 0; r < t->kNodeRows_; ++r) {
+        for (u32 c = 0; c < t->kNodeCols_; ++c) {
+            t->nodes_[r * t->kNodeCols_ + c] = 1.0f;
+        }
+    }
+
+    // Hole dimensions in CELLS (width x height)
+    const u32 holeCellsW = 12;
+    const u32 holeCellsH = 7;
+
+    auto carveHoleCells = [&](u32 cellX, u32 cellY) {
+        // Clear (W+1)x(H+1) NODES to remove WxH CELLS
+        for (u32 ny = cellY; ny <= cellY + holeCellsH; ++ny) {
+            for (u32 nx = cellX; nx <= cellX + holeCellsW; ++nx) {
+                if (nx < t->kNodeCols_ && ny < t->kNodeRows_) {
+                    t->nodes_[ny * t->kNodeCols_ + nx] = 0.0f;
+                }
+            }
+        }
+    };
+
+    // Top-left hole (10x5 cells)
+    const u32 topLeftCellX = 0;
+    const u32 topLeftCellY = (cellRows > holeCellsH) ? (cellRows - holeCellsH) : 0;
+    carveHoleCells(topLeftCellX, topLeftCellY);
+
+    // Bottom-right hole (10x5 cells)
+    const u32 bottomRightCellX = (cellCols > holeCellsW) ? (cellCols - holeCellsW) : 0;
+    const u32 bottomRightCellY = 0;
+    carveHoleCells(bottomRightCellX, bottomRightCellY);
+
+    return t;
+}
+
+Terrain* Terrain::Level1Stone(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
+                              u32 cellCols, u32 cellSize) {
+    Terrain* t = new Terrain(terrainMaterial, centerPosition, cellRows, cellCols, cellSize);
+
+    const u32 borderCells = 3;
+
+    for (u32 r = 0; r < t->kNodeRows_; ++r) {
+        for (u32 c = 0; c < t->kNodeCols_; ++c) {
+
+            // "3 cells thick" border in node-grid space.
+            // For safety with nodes = cells+1, use borderCells as thickness.
+            const bool inLeft = (c < borderCells);
+            const bool inRight = (c >= (t->kNodeCols_ - borderCells));
+            const bool inBottom = (r < borderCells);
+            const bool inTop = (r >= (t->kNodeRows_ - borderCells));
+
+            const bool isBorder = inLeft || inRight || inBottom || inTop;
+
+            t->nodes_[r * t->kNodeCols_ + c] = isBorder ? 1.0f : 0.0f;
+        }
+    }
+
+    return t;
+}
+
+Terrain* Terrain::Level2Dirt(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
+                             u32 cellCols, u32 cellSize) {
+    Terrain* t = new Terrain(terrainMaterial, centerPosition, cellRows, cellCols, cellSize);
+
+    // Fill everything with dirt
+    for (u32 r = 0; r < t->kNodeRows_; ++r) {
+        for (u32 c = 0; c < t->kNodeCols_; ++c) {
+            t->nodes_[r * t->kNodeCols_ + c] = 1.0f;
+        }
+    }
+
+    // Hole dimensions in CELLS (width x height)
+    const u32 holeCellsW = 12;
+    const u32 holeCellsH = 7;
+
+    auto carveHoleCells = [&](u32 cellX, u32 cellY) {
+        // Clear (W+1)x(H+1) NODES to remove WxH CELLS
+        for (u32 ny = cellY; ny <= cellY + holeCellsH; ++ny) {
+            for (u32 nx = cellX; nx <= cellX + holeCellsW; ++nx) {
+                if (nx < t->kNodeCols_ && ny < t->kNodeRows_) {
+                    t->nodes_[ny * t->kNodeCols_ + nx] = 0.0f;
+                }
+            }
+        }
+    };
+
+    // Top-left hole (10x5 cells)
+    const u32 topLeftCellX = 0;
+    const u32 topLeftCellY = (cellRows > holeCellsH) ? (cellRows - holeCellsH) : 0;
+    carveHoleCells(topLeftCellX, topLeftCellY);
+
+    // Bottom-right hole (10x5 cells)
+    const u32 bottomRightCellX = (cellCols > holeCellsW) ? (cellCols - holeCellsW) : 0;
+    const u32 bottomRightCellY = 0;
+    carveHoleCells(bottomRightCellX, bottomRightCellY);
+
+    return t;
+}
+
+Terrain* Terrain::Level2Stone(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
+                              u32 cellCols, u32 cellSize) {
+    Terrain* t = new Terrain(terrainMaterial, centerPosition, cellRows, cellCols, cellSize);
+
+    const u32 borderCells = 3;
+    const u32 centerRows = 3; // thickness of center stone band (rows)
+
+    const u32 centerR = t->kNodeRows_ / 2;
+    const u32 half = centerRows / 2;
+    const u32 centerStart = (centerR > half) ? (centerR - half) : 0;
+    const u32 centerEnd = (std::min)(t->kNodeRows_ - 1, centerR + (centerRows - 1 - half));
+
+    for (u32 r = 0; r < t->kNodeRows_; ++r) {
+        for (u32 c = 0; c < t->kNodeCols_; ++c) {
+
+            // 3-cells-thick border
+            const bool inLeft = (c < borderCells);
+            const bool inRight = (c >= (t->kNodeCols_ - borderCells));
+            const bool inBottom = (r < borderCells);
+            const bool inTop = (r >= (t->kNodeRows_ - borderCells));
+            const bool isBorder = inLeft || inRight || inBottom || inTop;
+
+            // 3-rows-thick center horizontal band
+            const bool isCenterBand = (r >= centerStart && r <= centerEnd);
+
+            t->nodes_[r * t->kNodeCols_ + c] = (isBorder || isCenterBand) ? 1.0f : 0.0f;
+        }
+    }
+
+    return t;
 }
