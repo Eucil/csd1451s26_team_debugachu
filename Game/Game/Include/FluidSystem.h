@@ -1,6 +1,7 @@
 #pragma once
 #include "AEEngine.h"
 #include "Components.h"
+#include "Terrain.h"
 #include <vector>
 
 enum class FluidType { Water, Lava, Count };
@@ -31,6 +32,8 @@ public:
     void Initialize();
 
     void UpdateMain(f32 dt);
+
+    void UpdateMain(f32 dt, Terrain& terrain);
 
     void DrawColor();
 

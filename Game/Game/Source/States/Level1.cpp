@@ -20,6 +20,8 @@ static FluidSystem fluidSystem;
 static StartEndPoint startEndPointSystem;
 static PortalSystem portalSystem;
 
+static bool debug_mode_level1 = false;
+
 void LoadLevel1() {
     // Todo
     std::cout << "Load level 1\n";
@@ -75,6 +77,11 @@ void UpdateLevel1(GameStateManager& GSM, f32 deltaTime) {
         GSM.nextState_ = StateId::Restart;
     }
 
+    // Press R to restart
+    if (AEInputCheckTriggered(AEVK_D) || 0 == AESysDoesWindowExist()) {
+        debug_mode_level1 = !debug_mode_level1;
+    }
+
     if (AEInputCheckCurr(AEVK_LBUTTON)) {
         dirt.destroyAtMouse(20.0f);
     }
@@ -117,12 +124,13 @@ void UpdateLevel1(GameStateManager& GSM, f32 deltaTime) {
         }
     }
 
-    fluidSystem.UpdateMain(deltaTime);
+    // fluidSystem.UpdateMain(deltaTime);
+    fluidSystem.UpdateMain(deltaTime, dirt);
     startEndPointSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
     portalSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
 
     // Terrain to fluid collision
-    CollisionSystem::terrainToFluidCollision(dirt, fluidSystem);
+    // CollisionSystem::terrainToFluidCollision(dirt, fluidSystem);
 
     if (startEndPointSystem.CheckWinCondition(fluidSystem.particleMaxCount)) {
         std::cout << "WIN\n ";
@@ -140,7 +148,9 @@ void DrawLevel1() {
     portalSystem.DrawColor();
 
     dirt.renderTerrain();
-    // stone.renderTerrain();
+    if (debug_mode_level1)
+        dirt.renderCollidersDebug(); // add this line
+    //  stone.renderTerrain();
 }
 
 void FreeLevel1() {

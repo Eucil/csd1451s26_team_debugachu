@@ -51,6 +51,10 @@ public:
 
     std::vector<Cell>& getCells() { return cells_; }
 
+    static void createDebugColliderMeshes();
+    static void freeDebugColliderMeshes();
+    void renderCollidersDebug() const;
+
 private:
     TerrainMaterial terrainMaterial_;
 
@@ -79,4 +83,7 @@ private:
     void destroyTerrain(f32 worldX, f32 worldY);
 
     void destroyTerrainRadius(f32 worldX, f32 worldY, f32 radius);
+
+    static AEGfxVertexList* debugTriMesh_;
+    static AEGfxVertexList* debugBoxMesh_;
 };

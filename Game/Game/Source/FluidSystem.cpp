@@ -1,5 +1,6 @@
 #include "AEEngine.h"
 
+#include "CollisionSystem.h"
 #include "FluidSystem.h"
 #include "Utils.h"
 
@@ -527,4 +528,41 @@ void FluidSystem::SetTypeGraphics(AEGfxVertexList* mesh, AEGfxTexture* texture, 
     graphicsConfigs_[i].mesh_ = mesh;
     graphicsConfigs_[i].texture_ = texture;
     graphicsConfigs_[i].layer_ = layer;
+}
+
+void FluidSystem::UpdateMain(f32 dt, Terrain& terrain) {
+    // DT clamp
+    if (dt > 0.016f) {
+        dt = 0.016f;
+    }
+
+    // Substeps
+    const int subSteps = 4;
+    const f32 subDt = dt / (f32)subSteps;
+
+    for (int s = 0; s < subSteps; s++) {
+        for (int i = 0; i < (int)FluidType::Count; i++) {
+            if (particlePools_[i].empty())
+                continue;
+
+            // 1) integrate
+            UpdatePhysics(particlePools_[i], subDt);
+
+            // 2) particle-particle + walls
+            UpdateCollision(particlePools_[i], subDt);
+
+            // 3) NEW: terrain collision inside the same substep
+            // This prevents deep penetration -> "teleport" corrections.
+            CollisionSystem::terrainToFluidCollision(terrain, *this);
+        }
+    }
+
+    // Final per-frame updates
+    for (int i = 0; i < (int)FluidType::Count; i++) {
+        if (particlePools_[i].empty()) {
+            continue;
+        }
+        UpdateTransforms(particlePools_[i]);
+        UpdatePortalIframes(dt, particlePools_[i]);
+    }
 }
