@@ -52,16 +52,16 @@ void InitializeLevel1() {
     startEndPointSystem.Initialize();
     portalSystem.Initialize();
 
-    startEndPointSystem.SetupStartPoint({-500.0f, 300.0f}, {100.0f, 100.0f}, StartEndType::Pipe,
+    startEndPointSystem.SetupStartPoint({-650.0f, 400.0f}, {50.0f, 50.0f}, StartEndType::Pipe,
                                         GoalDirection::Down);
-    startEndPointSystem.SetupEndPoint({700.0f, -300.0f}, {100.0f, 100.0f}, StartEndType::Flower,
+    startEndPointSystem.SetupEndPoint({650.0f, -400.0f}, {50.0f, 50.0f}, StartEndType::Flower,
                                       GoalDirection::Up);
 
-    portalSystem.SetupPortal({-700.0f, -300.0f}, {175.0f, 100.0f}, 0.f);
-    portalSystem.SetupPortal({700.0f, 300.0f}, {100.0f, 100.0f}, 225.f);
+    // portalSystem.SetupPortal({-700.0f, -300.0f}, {175.0f, 100.0f}, 0.f);
+    // portalSystem.SetupPortal({700.0f, 300.0f}, {100.0f, 100.0f}, 225.f);
 
-    portalSystem.SetupPortal({300.0f, -300.0f}, {100.0f, 100.0f}, 0.f);
-    portalSystem.SetupPortal({700.0f, 0.0f}, {100.0f, 100.0f}, 270.f);
+    // portalSystem.SetupPortal({300.0f, -300.0f}, {100.0f, 100.0f}, 0.f);
+    // portalSystem.SetupPortal({700.0f, 0.0f}, {100.0f, 100.0f}, 270.f);
 }
 
 void UpdateLevel1(GameStateManager& GSM, f32 deltaTime) {
@@ -106,7 +106,7 @@ void UpdateLevel1(GameStateManager& GSM, f32 deltaTime) {
 
                 // RESET TIMER: Set this to how fast you want water to flow
                 // Original: 0.005f;
-                spawn_timer = 0.5f;
+                spawn_timer = 0.025f;
 
                 // the particle spawns at the values shown below, including its FluidType
                 f32 noise = ((static_cast<int>(AERandFloat() * 12345) % 100)) * 0.001f - 0.1f;
