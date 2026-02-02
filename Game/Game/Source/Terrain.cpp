@@ -495,6 +495,7 @@ void Terrain::destroyTerrain(f32 worldX, f32 worldY) {
         // Update meshes
         initCellsGraphics(); // Unoptimal as all cells are being updated
         updateTerrain();
+        initCellsCollider();
     }
 }
 
@@ -517,7 +518,9 @@ void Terrain::destroyTerrainRadius(f32 worldX, f32 worldY, f32 radius) {
     }
 
     if (changed) {
+        std::cout << "terrain modified----------------------------\n";
         initCellsGraphics();
         updateTerrain();
+        initCellsCollider();
     }
 }

@@ -4,13 +4,21 @@
 
 #include <AEEngine.h>
 
+#include "CollisionSystem.h"
+#include "Components.h"
+#include "FluidSystem.h"
 #include "GameStateManager.h"
+#include "PortalSystem.h"
+#include "StartEndPoint.h"
 #include "Terrain.h"
 
-static Terrain dirt(TerrainMaterial::Dirt, {0.0f, 0.0f}, 48, 96, 16);
-static Terrain stone(TerrainMaterial::Stone, {0.0f, 0.0f}, 48, 96, 16);
+// static Terrain dirt(TerrainMaterial::Dirt, {0.0f, 0.0f}, 48, 96, 16);
+static Terrain dirt(TerrainMaterial::Dirt, {0.0f, -200.0f}, 20, 40, 32);
+// static Terrain stone(TerrainMaterial::Stone, {0.0f, 0.0f}, 48, 96, 16);
 
-#include "Components.h"
+static FluidSystem fluidSystem;
+static StartEndPoint startEndPointSystem;
+static PortalSystem portalSystem;
 
 void LoadLevel1() {
     // Todo
@@ -29,10 +37,26 @@ void InitializeLevel1() {
     dirt.initCellsCollider();
     dirt.updateTerrain();
 
-    stone.initCellsTransform();
-    stone.initCellsGraphics();
-    stone.initCellsCollider();
-    stone.updateTerrain();
+    // stone.initCellsTransform();
+    // stone.initCellsGraphics();
+    // stone.initCellsCollider();
+    // stone.updateTerrain();
+
+    // Fluid, start end point, portals
+    fluidSystem.Initialize();
+    startEndPointSystem.Initialize();
+    portalSystem.Initialize();
+
+    startEndPointSystem.SetupStartPoint({-500.0f, 300.0f}, {100.0f, 100.0f}, StartEndType::Pipe,
+                                        GoalDirection::Down);
+    startEndPointSystem.SetupEndPoint({700.0f, -300.0f}, {100.0f, 100.0f}, StartEndType::Flower,
+                                      GoalDirection::Up);
+
+    portalSystem.SetupPortal({-700.0f, -300.0f}, {175.0f, 100.0f}, 0.f);
+    portalSystem.SetupPortal({700.0f, 300.0f}, {100.0f, 100.0f}, 225.f);
+
+    portalSystem.SetupPortal({300.0f, -300.0f}, {100.0f, 100.0f}, 0.f);
+    portalSystem.SetupPortal({700.0f, 0.0f}, {100.0f, 100.0f}, 270.f);
 }
 
 void UpdateLevel1(GameStateManager& GSM, f32 deltaTime) {
@@ -54,6 +78,55 @@ void UpdateLevel1(GameStateManager& GSM, f32 deltaTime) {
     if (AEInputCheckCurr(AEVK_LBUTTON)) {
         dirt.destroyAtMouse(20.0f);
     }
+
+    if (AEInputCheckCurr(AEVK_RBUTTON) || 0 == AESysDoesWindowExist()) {
+
+        startEndPointSystem.CheckMouseClick();
+
+    } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
+
+        startEndPointSystem.ResetIframe();
+    }
+
+    for (auto& startPoint : startEndPointSystem.startPoints_) {
+        if (startPoint.release_water_) {
+            static f32 spawn_timer = 0.0f;
+            spawn_timer -= deltaTime;
+            if (spawn_timer <= 0.0f) {
+
+                // RESET TIMER: Set this to how fast you want water to flow
+                // Original: 0.005f;
+                spawn_timer = 0.5f;
+
+                // the particle spawns at the values shown below, including its FluidType
+                f32 noise = ((static_cast<int>(AERandFloat() * 12345) % 100)) * 0.001f - 0.1f;
+
+                // f32 randRadius = 13.0f - (noise * 100.0f);
+                f32 randRadius = 10.0f;
+
+                f32 x_offset = startPoint.transform_.pos_.x +
+                               AERandFloat() * startPoint.transform_.scale_.x -
+                               (startPoint.transform_.scale_.x / 2.f);
+                AEVec2 position = {x_offset, startPoint.transform_.pos_.y -
+                                                 (startPoint.transform_.scale_.y / 2.f) -
+                                                 (randRadius)};
+
+                fluidSystem.SpawnParticle(position.x, position.y, randRadius, FluidType::Water);
+                s32 size = fluidSystem.GetParticleCount(FluidType::Water);
+            }
+        }
+    }
+
+    fluidSystem.UpdateMain(deltaTime);
+    startEndPointSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
+    portalSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
+
+    // Terrain to fluid collision
+    CollisionSystem::terrainToFluidCollision(dirt, fluidSystem);
+
+    if (startEndPointSystem.CheckWinCondition(fluidSystem.particleMaxCount)) {
+        std::cout << "WIN\n ";
+    }
 }
 
 void DrawLevel1() {
@@ -62,13 +135,21 @@ void DrawLevel1() {
 
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
+    fluidSystem.DrawColor();
+    startEndPointSystem.DrawColor();
+    portalSystem.DrawColor();
+
     dirt.renderTerrain();
-    stone.renderTerrain();
+    // stone.renderTerrain();
 }
 
 void FreeLevel1() {
     // Todo
     std::cout << "Free level 1\n";
+
+    fluidSystem.Free();
+    startEndPointSystem.Free();
+    portalSystem.Free();
 }
 
 void UnloadLevel1() {

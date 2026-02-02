@@ -41,6 +41,16 @@ public:
 
     static void createColliderLibrary();
 
+    u32 getCellRows() { return kCellRows_; }
+
+    u32 getCellCols() { return kCellCols_; }
+
+    u32 getCellSize() { return kCellSize_; }
+
+    AEVec2 getBottomLeftPos() { return bottomLeftPos_; }
+
+    std::vector<Cell>& getCells() { return cells_; }
+
 private:
     TerrainMaterial terrainMaterial_;
 
