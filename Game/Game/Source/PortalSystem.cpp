@@ -65,6 +65,7 @@ void PortalSystem::Initialize() {
     rectMesh = CreateRectMesh();
     graphicsConfigs_.mesh_ = rectMesh;
 
+    rotation_value = 0.0f;
     current_portal_ = nullptr;
     click_iframe = false;
 }

@@ -1,6 +1,8 @@
 #include "States/MainMenu.h"
 
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 
 #include <AEEngine.h>
 
@@ -11,6 +13,7 @@
 #include "PortalSystem.h"
 #include "StartEndPoint.h"
 #include "Terrain.h"
+#include "UISystem.h"
 
 static Terrain* dirt = nullptr;
 static Terrain* stone = nullptr;
@@ -19,10 +22,17 @@ static FluidSystem fluidSystem;
 static StartEndPoint startEndPointSystem;
 static PortalSystem portalSystem;
 
+static Text rotationText;
+static s8 font;
+
 void LoadLevel2() {
     // std::cout << "Load level 2\n";
     Terrain::createMeshLibrary();
     Terrain::createColliderLibrary();
+
+    // Setup texts
+    rotationText = Text(0.7f, 0.95f, "");
+    font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 12);
 }
 
 void InitializeLevel2() {
@@ -122,9 +132,6 @@ void UpdateLevel2(GameStateManager& GSM, f32 deltaTime) {
     startEndPointSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
     portalSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
 
-    // Terrain to fluid collision
-    // CollisionSystem::terrainToFluidCollision(dirt, fluidSystem);
-
     if (startEndPointSystem.CheckWinCondition(fluidSystem.particleMaxCount)) {
         std::cout << "WIN\n ";
     }
@@ -136,10 +143,16 @@ void DrawLevel2() {
 
     fluidSystem.DrawColor();
     startEndPointSystem.DrawColor();
-    portalSystem.DrawColor();
 
     dirt->renderTerrain();
     stone->renderTerrain();
+    portalSystem.DrawColor();
+
+    rotationText.text_ =
+        "Portal Rotation:" + std::to_string(static_cast<s32>(portalSystem.GetRotationValue()));
+    const char* rotationStr = rotationText.text_.c_str();
+    AEGfxPrint(font, rotationStr, rotationText.pos_x_, rotationText.pos_y_, 1.f, 1.f, 1.f, 1.f,
+               1.f);
 }
 
 void FreeLevel2() {
@@ -157,4 +170,5 @@ void FreeLevel2() {
 void UnloadLevel2() {
     // std::cout << "Unload level 2\n";
     Terrain::freeMeshLibrary();
+    AEGfxDestroyFont(font);
 }
