@@ -113,7 +113,7 @@ void StartEndPoint::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
             if (CollisionCheckWithWater(startPoint, particle)) {
                 // Handle collision with start point
                 // For example, you can reset the particle's position or apply some effect
-                std::cout << "Particle collided with start point!\n";
+                // std::cout << "Particle collided with start point!\n";
             }
         }
     }
@@ -122,7 +122,7 @@ void StartEndPoint::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
     for (auto particleIt = particlePool.begin(); particleIt != particlePool.end();) {
         if (CollisionCheckWithWater(endPoint_, *particleIt)) {
             // Handle collision with end point
-            std::cout << "Particle collided with end point! Removing particle.\n";
+            // std::cout << "Particle collided with end point! Removing particle.\n";
             particlesCollected_++;
             // Remove this particle from the pool
             particleIt = particlePool.erase(particleIt); // Erase returns the next valid iterator
@@ -190,7 +190,7 @@ void StartEndPoint::CheckMouseClick() {
             mouse_y >= (startPoint.transform_.pos_.y - rect_half_height) &&
             mouse_y <= (startPoint.transform_.pos_.y + rect_half_height) &&
             startPoint.release_water_iframe_ == false) {
-            std::cout << "Mouse is over start point!\n";
+            // std::cout << "Mouse is over start point!\n";
             startPoint.release_water_ = !startPoint.release_water_;
             startPoint.release_water_iframe_ = true;
             break;

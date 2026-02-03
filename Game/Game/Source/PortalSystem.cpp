@@ -128,7 +128,7 @@ void PortalSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
         for (auto& portal : portal_vec) {
             if (portal->linked_portal_ == nullptr) {
                 current_portal_ = portal;
-                std::cout << "Found unlinked portal to set as current_portal_\n";
+                // std::cout << "Found unlinked portal to set as current_portal_\n";
                 break;
             }
         }
@@ -234,8 +234,8 @@ void PortalSystem::CheckMouseClick() {
             mouse_x <= (currentPortal->transform_.pos_.x + rect_half_width) &&
             mouse_y >= (currentPortal->transform_.pos_.y - rect_half_height) &&
             mouse_y <= (currentPortal->transform_.pos_.y + rect_half_height)) {
-            std::cout << "Mouse is over portal!\n";
-            // Remove portal
+            // std::cout << "Mouse is over portal!\n";
+            //  Remove portal
             if (currentPortal->linked_portal_ != nullptr) {
                 currentPortal->linked_portal_->linked_portal_ = nullptr;
                 currentPortal->linked_portal_ = nullptr;

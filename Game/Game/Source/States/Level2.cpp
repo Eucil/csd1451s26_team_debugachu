@@ -31,7 +31,7 @@ void LoadLevel2() {
     Terrain::createColliderLibrary();
 
     // Setup texts
-    rotationText = Text(0.7f, 0.95f, "");
+    rotationText = Text(0.7f, 0.9f, "");
     font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 12);
 }
 
