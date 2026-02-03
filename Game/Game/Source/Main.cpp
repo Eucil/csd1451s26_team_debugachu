@@ -14,7 +14,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     AESysInit(hInstance, nCmdShow, 1600, 900, 1, 60, false, nullptr);
 
-    AESysSetWindowTitle("Game!");
+    AESysSetWindowTitle("Water The Plant");
 
     AESysReset();
 
