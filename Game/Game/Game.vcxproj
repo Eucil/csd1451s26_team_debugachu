@@ -36,6 +36,7 @@
     <ClInclude Include="Include\States\Level2.h" />
     <ClInclude Include="Include\States\MainMenu.h" />
     <ClInclude Include="Include\Terrain.h" />
+    <ClInclude Include="Include\UISystem.h" />
     <ClInclude Include="Include\Utils.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
