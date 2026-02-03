@@ -19,6 +19,9 @@
     <Filter Include="Configuration Files">
       <UniqueIdentifier>{9f94010a-d33a-4c52-bfef-e4701664309f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Font Files">
+      <UniqueIdentifier>{afc5211e-7e83-441a-a3a9-3ff546fe8f93}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Main.cpp">
@@ -88,5 +91,16 @@
     <ClInclude Include="Include\PortalSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Include\CollisionSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\UISystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="..\Assets\Fonts\PressStart2P-Regular.ttf">
+      <Filter>Resource Files\Font Files</Filter>
+    </Font>
   </ItemGroup>
 </Project>

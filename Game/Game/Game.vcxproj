@@ -39,6 +39,9 @@
     <ClInclude Include="Include\UISystem.h" />
     <ClInclude Include="Include\Utils.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Font Include="..\Assets\Fonts\PressStart2P-Regular.ttf" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
