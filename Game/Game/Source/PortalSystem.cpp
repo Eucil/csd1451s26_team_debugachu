@@ -134,7 +134,8 @@ void PortalSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
         }
     }
 
-    // Check collision for each portal with each water particle
+    // Check
+    // for each portal with each water particle
     for (auto& portal : portal_vec) {
         // Skip if portal is not linked
         if (portal->linked_portal_ == nullptr) {

@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\CollisionSystem.cpp" />
     <ClCompile Include="Source\FluidSystem.cpp" />
     <ClCompile Include="Source\PortalSystem.cpp" />
     <ClCompile Include="Source\StartEndPoint.cpp" />
