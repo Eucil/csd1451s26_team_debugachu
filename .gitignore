@@ -16,3 +16,5 @@
 bin
 Debug
 Release
+!**/lib/Debug/
+!**/lib/Release/
