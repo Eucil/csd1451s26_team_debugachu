@@ -33,6 +33,8 @@ public:
 
     void destroyAtMouse(f32 radius);
 
+    void buildAtMouse(f32 radius);
+
     void renderTerrain();
 
     static void createMeshLibrary();
@@ -67,6 +69,13 @@ public:
     static Terrain* Level2Stone(TerrainMaterial terrainMaterial, AEVec2 centerPosition,
                                 u32 cellRows, u32 cellCols, u32 cellSize);
 
+    // Generic Level generation function
+    static Terrain* Dirt(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
+                         u32 cellCols, u32 cellSize);
+
+    static Terrain* Stone(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
+                          u32 cellCols, u32 cellSize);
+
 private:
     TerrainMaterial terrainMaterial_;
 
@@ -95,6 +104,8 @@ private:
     void destroyTerrain(f32 worldX, f32 worldY);
 
     void destroyTerrainRadius(f32 worldX, f32 worldY, f32 radius);
+
+    void buildTerrainRadius(f32 worldX, f32 worldY, f32 radius);
 
     static AEGfxVertexList* debugTriMesh_;
     static AEGfxVertexList* debugBoxMesh_;

@@ -123,6 +123,17 @@ void Terrain::destroyAtMouse(f32 radius) {
     destroyTerrainRadius(worldX, worldY, radius);
 }
 
+void Terrain::buildAtMouse(f32 radius) {
+    s32 screenX, screenY;
+    AEInputGetCursorPosition(&screenX, &screenY);
+
+    // Convert screen to world coordinates
+    f32 worldX{static_cast<f32>(screenX) - (AEGfxGetWindowWidth() / 2.0f)};
+    f32 worldY{(AEGfxGetWindowHeight() / 2.0f) - static_cast<f32>(screenY)};
+
+    buildTerrainRadius(worldX, worldY, radius);
+}
+
 void Terrain::renderTerrain() {
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
@@ -527,6 +538,32 @@ void Terrain::destroyTerrainRadius(f32 worldX, f32 worldY, f32 radius) {
     }
 }
 
+void Terrain::buildTerrainRadius(f32 worldX, f32 worldY, f32 radius) {
+    bool changed{false};
+
+    for (u32 r{0}; r < kNodeRows_; ++r) {
+        for (u32 c{0}; c < kNodeCols_; ++c) {
+            f32 nodeWorldX = bottomLeftPos_.x + (c * kCellSize_);
+            f32 nodeWorldY = bottomLeftPos_.y + (r * kCellSize_);
+
+            // Pythagorean distance check
+            f32 dx = nodeWorldX - worldX;
+            f32 dy = nodeWorldY - worldY;
+            if ((dx * dx + dy * dy) <= (radius * radius)) {
+                nodes_[r * kNodeCols_ + c] = 1.0f;
+                changed = true;
+            }
+        }
+    }
+
+    if (changed) {
+        // std::cout << "terrain modified----------------------------\n";
+        initCellsGraphics();
+        updateTerrain();
+        initCellsCollider();
+    }
+}
+
 void Terrain::createDebugColliderMeshes() {
     // A thin "filled line" thickness in local space.
     // After scaling by cellSize (e.g. 32), this becomes visible.
@@ -743,6 +780,34 @@ Terrain* Terrain::Level2Stone(TerrainMaterial terrainMaterial, AEVec2 centerPosi
             const bool isCenterBand = (r >= centerStart && r <= centerEnd);
 
             t->nodes_[r * t->kNodeCols_ + c] = (isBorder || isCenterBand) ? 1.0f : 0.0f;
+        }
+    }
+
+    return t;
+}
+
+Terrain* Terrain::Dirt(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
+                       u32 cellCols, u32 cellSize) {
+    Terrain* t = new Terrain(terrainMaterial, centerPosition, cellRows, cellCols, cellSize);
+
+    // Fill everything with air (empty)
+    for (u32 r = 0; r < t->kNodeRows_; ++r) {
+        for (u32 c = 0; c < t->kNodeCols_; ++c) {
+            t->nodes_[r * t->kNodeCols_ + c] = 0.0f;
+        }
+    }
+
+    return t;
+}
+
+Terrain* Terrain::Stone(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
+                        u32 cellCols, u32 cellSize) {
+    Terrain* t = new Terrain(terrainMaterial, centerPosition, cellRows, cellCols, cellSize);
+
+    // Fill everything with air (empty)
+    for (u32 r = 0; r < t->kNodeRows_; ++r) {
+        for (u32 c = 0; c < t->kNodeCols_; ++c) {
+            t->nodes_[r * t->kNodeCols_ + c] = 0.0f;
         }
     }
 
