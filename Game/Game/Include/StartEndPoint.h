@@ -21,6 +21,8 @@ struct StartEnd {
     bool release_water_{false};
     bool release_water_iframe_{false};
 
+    bool active_{true};
+
     StartEnd();
     StartEnd(AEVec2 pos, AEVec2 scale, StartEndType type, GoalDirection direction);
 };
@@ -35,6 +37,7 @@ private:
 public:
     // Can have multiple start points but only one end point
     std::vector<StartEnd> startPoints_;
+    std::vector<int> free_start_point_indices_;
     StartEnd endPoint_ = {};
 
     s32 particlesCollected_{0};
@@ -46,9 +49,11 @@ public:
 
     void Initialize();
 
-    void SetupStartPoint(AEVec2 pos, AEVec2 scale, StartEndType type, GoalDirection direction);
+    void SetupPoint(AEVec2 pos, AEVec2 scale, StartEndType type, GoalDirection direction);
 
-    void SetupEndPoint(AEVec2 pos, AEVec2 scale, StartEndType type, GoalDirection direction);
+    void SpawnAtMousePos(StartEndType type, GoalDirection direction);
+
+    void DeleteAtMousePos();
 
     bool CollisionCheckWithWater(StartEnd startend, FluidParticle particle);
 

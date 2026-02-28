@@ -39,15 +39,8 @@ void LoadLevel3() {
     rotationText = Text(0.7f, 0.9f, "");
     font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 12);
 
-    std::ifstream level_file("Assets/Levels/Level_3/Map.json");
-    if (!level_file.good()) {
-        std::ofstream outfile("Assets/Levels/Level_3/Map.json"); // Creates the file
-        if (outfile) {
-            std::cout << "File created.\n";
-        } else {
-            std::cout << "Failed to create file.\n";
-        }
-    }
+    levelManager.makeFilePath();
+    levelManager.makeLevelFile();
 
     u32 height{}, width{};
 }
@@ -90,21 +83,42 @@ void UpdateLevel3(GameStateManager& GSM, f32 deltaTime) {
     // Keyboard/Mouse inputs for level editor and gameplay
     // If in editor mode, edit level
     if (levelManager.getLevelEditorMode()) {
-        if (AEInputCheckCurr(AEVK_LBUTTON)) {
-            if (levelManager.getBuildMode()) {
-                if (levelManager.getCurrentGameBlock() == GameBlock::Dirt) {
+        if (!levelManager.getDisplayBuilderContainer()) {
+
+            switch (levelManager.getCurrentGameBlock()) {
+            case GameBlock::Dirt:
+                if (AEInputCheckCurr(AEVK_LBUTTON)) {
                     dirt->buildAtMouse(20.0f);
-                } else if (levelManager.getCurrentGameBlock() == GameBlock::Stone) {
-                    stone->buildAtMouse(20.0f);
-                }
-            } else {
-                if (levelManager.getCurrentGameBlock() == GameBlock::Dirt) {
+                } else if (AEInputCheckCurr(AEVK_RBUTTON)) {
                     dirt->destroyAtMouse(20.0f);
-                } else if (levelManager.getCurrentGameBlock() == GameBlock::Stone) {
+                }
+                break;
+            case GameBlock::Stone:
+                if (AEInputCheckCurr(AEVK_LBUTTON)) {
+                    stone->buildAtMouse(20.0f);
+                } else if (AEInputCheckCurr(AEVK_RBUTTON)) {
                     stone->destroyAtMouse(20.0f);
                 }
+                break;
+            case GameBlock::StartPoint:
+                if (AEInputCheckReleased(AEVK_LBUTTON)) {
+                    startEndPointSystem.SpawnAtMousePos(StartEndType::Pipe, GoalDirection::Down);
+                } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
+                    startEndPointSystem.DeleteAtMousePos();
+                }
+                break;
+            case GameBlock::EndPoint:
+                if (AEInputCheckReleased(AEVK_LBUTTON)) {
+                    startEndPointSystem.SpawnAtMousePos(StartEndType::Flower, GoalDirection::Up);
+                } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
+                    startEndPointSystem.DeleteAtMousePos();
+                }
+                break;
+            default:
+                break;
             }
         }
+
     } else {
         // Else do inputs for gameplay instead
         if (AEInputCheckCurr(AEVK_LBUTTON)) {

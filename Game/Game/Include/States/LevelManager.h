@@ -2,6 +2,7 @@
 
 #include "UISystem.h"
 #include <AEEngine.h>
+#include <filesystem>
 #include <vector>
 
 enum class Levels {
@@ -11,7 +12,7 @@ enum class Levels {
     Level_3,
 };
 
-enum class GameBlock { Dirt, Stone, StartPoint, EndPoint, Portal, None };
+enum class GameBlock { Dirt, Stone, StartPoint, EndPoint, None };
 
 class LevelManager {
 public:
@@ -21,10 +22,9 @@ public:
     void setLevelEditorMode(bool mode);
     Levels getCurrentLevel() const;
     void SetCurrentLevel(Levels level);
-    bool getBuildMode() const;
-    void setBuildMode(bool mode);
     GameBlock getCurrentGameBlock() const;
     void setCurrentGameBlock(GameBlock block);
+    bool getDisplayBuilderContainer() const;
 
     void updateEditorButtonPosition();
     void updateContainerPosition();
@@ -34,9 +34,12 @@ public:
     void renderLevelEditorUI();
     void freeLevelEditor();
 
+    bool makeFilePath();
+    bool makeLevelFile();
+    bool getLevelData();
+
 private:
     bool level_editor_mode_;
-    bool build_mode_;
     Levels current_level_;
     GameBlock current_gameblock_;
 

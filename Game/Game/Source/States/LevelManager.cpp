@@ -1,12 +1,13 @@
 #include "States/LevelManager.h"
 #include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <json/json.h>
 
 LevelManager levelManager;
 
 void LevelManager::init() {
     level_editor_mode_ = true;
-    build_mode_ = true;
     current_level_ = Levels::Level_0;
     current_gameblock_ = GameBlock::None;
 
@@ -29,13 +30,11 @@ Levels LevelManager::getCurrentLevel() const { return current_level_; }
 
 void LevelManager::SetCurrentLevel(Levels level) { current_level_ = level; }
 
-bool LevelManager::getBuildMode() const { return build_mode_; }
-
-void LevelManager::setBuildMode(bool mode) { build_mode_ = mode; }
-
 GameBlock LevelManager::getCurrentGameBlock() const { return current_gameblock_; }
 
 void LevelManager::setCurrentGameBlock(GameBlock block) { current_gameblock_ = block; }
+
+bool LevelManager::getDisplayBuilderContainer() const { return display_builder_container_; }
 
 void LevelManager::updateEditorButtonPosition() {
     // Update builder button position
@@ -120,14 +119,12 @@ void LevelManager::updateLevelEditor() {
         return;
     }
 
-    // If builder button is clicked, toggle builder container
-    if (AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
-        if (builder_button.OnClick()) {
-            display_builder_container_ = !display_builder_container_;
-            updateEditorButtonPosition();
-            updateContainerPosition();
-            updateInnerButtonPosition();
-        }
+    // If Tab is pressed, toggle builder container
+    if (AEInputCheckReleased(AEVK_TAB) || 0 == AESysDoesWindowExist()) {
+        display_builder_container_ = !display_builder_container_;
+        updateEditorButtonPosition();
+        updateContainerPosition();
+        updateInnerButtonPosition();
     }
 
     // Check if any button in the button pool is clicked
@@ -167,3 +164,57 @@ void LevelManager::freeLevelEditor() {
         buttonPool[i].UnloadMesh();
     }
 }
+
+bool LevelManager::makeFilePath() {
+    std::filesystem::path p("Assets/Levels/Level_4");
+
+    if (std::filesystem::exists(p)) {
+        std::cout << "Path exists\n";
+    } else {
+        std::cout << "Path does not exist\n";
+        std::cout << "Creating directory...\n";
+        if (std::filesystem::create_directories(p)) {
+            std::cout << "Directory created successfully\n";
+        } else {
+            std::cout << "Failed to create directory\n";
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool LevelManager::makeLevelFile() {
+    // check if file exists, if not create file
+    std::filesystem::path filePath = "Assets/Levels/Level_4/Map.json";
+
+    if (std::filesystem::exists(filePath)) {
+        std::cout << "File exists\n";
+    } else {
+        std::cout << "File does not exist\n";
+        std::cout << "Creating file...\n";
+        std::ofstream outfile(filePath); // Creates the file
+        if (outfile) {
+            std::cout << "File created successfully\n";
+
+            // Write some default value to file
+            Json::Value root;
+            root["width"] = 45;
+            root["height"] = 80;
+            root["tileSize"] = 20;
+
+            // Builder is use for file configuration
+            Json::StreamWriterBuilder builder;
+            builder["indentation"] = "  "; // pretty print
+            // Writer is used to write the json value to file
+            std::unique_ptr<Json::StreamWriter> jsonWriter(builder.newStreamWriter());
+            jsonWriter->write(root, &outfile);
+        } else {
+            std::cout << "Failed to create file\n";
+            return false;
+        }
+    }
+    return true;
+}
+
+bool LevelManager::getLevelData() { return true; }

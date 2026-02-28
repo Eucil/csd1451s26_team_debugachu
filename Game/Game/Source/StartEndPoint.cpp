@@ -9,7 +9,7 @@
 StartEnd::StartEnd() {
     // Set up transform
     transform_.pos_ = {0.0f, 0.0f};
-    transform_.scale_ = {1.f, 1.f};
+    transform_.scale_ = {0.f, 0.f};
     transform_.rotationRad_ = {0.0f};
 
     // Set up world matrix
@@ -31,6 +31,7 @@ StartEnd::StartEnd() {
     direction_ = {GoalDirection::Up};
     release_water_ = false;
     release_water_iframe_ = {false};
+    active_ = {false};
 }
 
 StartEnd::StartEnd(AEVec2 pos, AEVec2 scale, StartEndType type, GoalDirection direction) {
@@ -74,14 +75,65 @@ void StartEndPoint::Initialize() {
     particlesCollected_ = {0};
 }
 
-void StartEndPoint::SetupStartPoint(AEVec2 pos, AEVec2 scale, StartEndType type,
-                                    GoalDirection direction) {
-    startPoints_.emplace_back(pos, scale, type, direction);
+void StartEndPoint::SetupPoint(AEVec2 pos, AEVec2 scale, StartEndType type,
+                               GoalDirection direction) {
+    if (type == StartEndType::Pipe) {
+        if (free_start_point_indices_.empty()) {
+            // No free indices, add new start point
+            startPoints_.emplace_back(pos, scale, type, direction);
+        } else {
+            // Reuse a free index
+            int index = free_start_point_indices_.back();
+            free_start_point_indices_.pop_back();
+            startPoints_[index] = StartEnd(pos, scale, type, direction);
+        }
+    } else if (type == StartEndType::Flower) {
+        endPoint_ = StartEnd(pos, scale, type, direction);
+    }
 }
 
-void StartEndPoint::SetupEndPoint(AEVec2 pos, AEVec2 scale, StartEndType type,
-                                  GoalDirection direction) {
-    endPoint_ = StartEnd(pos, scale, type, direction);
+void StartEndPoint::SpawnAtMousePos(StartEndType type, GoalDirection direction) {
+    // Get mouse position
+    s32 mouse_x = 0, mouse_y = 0;
+    AEInputGetCursorPosition(&mouse_x, &mouse_y);
+    mouse_x -= AEGfxGetWindowWidth() / 2;
+    mouse_y = (AEGfxGetWindowHeight() / 2) - mouse_y;
+    AEVec2 pos = {static_cast<f32>(mouse_x), static_cast<f32>(mouse_y)};
+    AEVec2 scale = {50.0f, 50.0f};
+
+    SetupPoint(pos, scale, type, direction);
+}
+
+void StartEndPoint::DeleteAtMousePos() {
+    // Get mouse position
+    s32 mouse_x = 0, mouse_y = 0;
+    AEInputGetCursorPosition(&mouse_x, &mouse_y);
+    mouse_x -= AEGfxGetWindowWidth() / 2;
+    mouse_y = (AEGfxGetWindowHeight() / 2) - mouse_y;
+    // Check if mouse is over any start point
+    for (size_t i = 0; i < startPoints_.size(); ++i) {
+        auto& startPoint = startPoints_[i];
+        f32 rect_half_width = startPoint.collider_.shapeData_.box_.size_.x / 2.0f;
+        f32 rect_half_height = startPoint.collider_.shapeData_.box_.size_.y / 2.0f;
+        if (mouse_x >= (startPoint.transform_.pos_.x - rect_half_width) &&
+            mouse_x <= (startPoint.transform_.pos_.x + rect_half_width) &&
+            mouse_y >= (startPoint.transform_.pos_.y - rect_half_height) &&
+            mouse_y <= (startPoint.transform_.pos_.y + rect_half_height)) {
+            // Mark this index as free and remove the start point
+            free_start_point_indices_.push_back(static_cast<int>(i));
+            startPoints_[i] = StartEnd();
+            return;
+        }
+    }
+    // Check if mouse is over end point
+    f32 rect_half_width = endPoint_.collider_.shapeData_.box_.size_.x / 2.0f;
+    f32 rect_half_height = endPoint_.collider_.shapeData_.box_.size_.y / 2.0f;
+    if (mouse_x >= (endPoint_.transform_.pos_.x - rect_half_width) &&
+        mouse_x <= (endPoint_.transform_.pos_.x + rect_half_width) &&
+        mouse_y >= (endPoint_.transform_.pos_.y - rect_half_height) &&
+        mouse_y <= (endPoint_.transform_.pos_.y + rect_half_height)) {
+        endPoint_ = StartEnd();
+    }
 }
 
 bool StartEndPoint::CollisionCheckWithWater(StartEnd startend, FluidParticle particle) {
@@ -109,6 +161,9 @@ void StartEndPoint::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
 
     // Check collision for each start/end point with each water particle
     for (auto& startPoint : startPoints_) {
+        if (startPoint.active_ == false) {
+            continue;
+        }
         for (auto& particle : particlePool) {
             if (CollisionCheckWithWater(startPoint, particle)) {
                 // Handle collision with start point
