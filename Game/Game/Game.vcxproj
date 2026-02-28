@@ -20,6 +20,7 @@
     <ClCompile Include="Source\States\Level2.cpp" />
     <ClCompile Include="Source\States\Level3.cpp" />
     <ClCompile Include="Source\States\LevelManager.cpp" />
+    <ClCompile Include="Source\States\LevelSelector.cpp" />
     <ClCompile Include="Source\States\MainMenu.cpp" />
     <ClCompile Include="Source\Terrain.cpp" />
     <ClCompile Include="Source\Utils.cpp" />
@@ -39,6 +40,7 @@
     <ClInclude Include="Include\States\Level2.h" />
     <ClInclude Include="Include\States\Level3.h" />
     <ClInclude Include="Include\States\LevelManager.h" />
+    <ClInclude Include="Include\States\LevelSelector.h" />
     <ClInclude Include="Include\States\MainMenu.h" />
     <ClInclude Include="Include\Terrain.h" />
     <ClInclude Include="Include\UISystem.h" />

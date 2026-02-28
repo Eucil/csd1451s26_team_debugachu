@@ -53,6 +53,8 @@ public:
 
     std::vector<Cell>& getCells() { return cells_; }
 
+    std::vector<f32>& getNodes() { return nodes_; }
+
     static void createDebugColliderMeshes();
     void renderCollidersDebug() const;
 

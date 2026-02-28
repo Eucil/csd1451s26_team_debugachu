@@ -5,9 +5,10 @@
 #include "States/Level1.h"
 #include "States/Level2.h"
 #include "States/Level3.h"
+#include "States/LevelSelector.h"
 #include "States/MainMenu.h"
 
-enum class StateId { Quit, Next, Restart, MainMenu, Level1, Level2, Level3 };
+enum class StateId { Quit, Next, Restart, MainMenu, LevelSelector, Level1, Level2, Level3 };
 
 class GameState {
 public:
@@ -38,6 +39,14 @@ public:
             fpDraw_ = DrawMainMenu;
             fpFree_ = FreeMainMenu;
             fpUnload_ = UnloadMainMenu;
+            break;
+        case StateId::LevelSelector:
+            fpLoad_ = LoadLevelSelector;
+            fpInitialize_ = InitializeLevelSelector;
+            fpUpdate_ = UpdateLevelSelector;
+            fpDraw_ = DrawLevelSelector;
+            fpFree_ = FreeLevelSelector;
+            fpUnload_ = UnloadLevelSelector;
             break;
         case StateId::Level1:
             fpLoad_ = LoadLevel1;

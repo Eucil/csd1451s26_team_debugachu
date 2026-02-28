@@ -8,9 +8,15 @@ LevelManager levelManager;
 
 void LevelManager::init() {
     level_editor_mode_ = true;
-    current_level_ = Levels::Level_0;
+    current_level_ = 0;
     current_gameblock_ = GameBlock::None;
 
+    // Initialize level vector with 3 levels for testing
+    for (int i = 0; i < 3; ++i) {
+        level_vec_.push_back(i);
+    }
+
+    // Setup Editor UI
     builder_button = Button(AEVec2{775.0f, 350.0f}, AEVec2{50.0f, 50.0f});
     builder_container = Button(AEVec2{0.0f, 0.0f}, container_scale_);
     // Set container position relative to button
@@ -21,14 +27,16 @@ void LevelManager::init() {
 
     buttonPool.resize(static_cast<int>(GameBlock::None));
     updateInnerButtonPosition();
+
+    root = Json::Value();
 }
 bool LevelManager::getLevelEditorMode() const { return level_editor_mode_; }
 
-void LevelManager::setLevelEditorMode(bool mode) { level_editor_mode_ = mode; }
+void LevelManager::setLevelEditorMode() { level_editor_mode_ = !level_editor_mode_; }
 
-Levels LevelManager::getCurrentLevel() const { return current_level_; }
+int LevelManager::getCurrentLevel() const { return current_level_; }
 
-void LevelManager::SetCurrentLevel(Levels level) { current_level_ = level; }
+void LevelManager::SetCurrentLevel(int level) { current_level_ = level; }
 
 GameBlock LevelManager::getCurrentGameBlock() const { return current_gameblock_; }
 
@@ -165,15 +173,16 @@ void LevelManager::freeLevelEditor() {
     }
 }
 
-bool LevelManager::makeFilePath() {
-    std::filesystem::path p("Assets/Levels/Level_4");
+bool LevelManager::makeFilePath(int level) {
+    std::string levelPath = "Assets/Levels/Level_" + std::to_string(level);
+    std::filesystem::path filepath(levelPath);
 
-    if (std::filesystem::exists(p)) {
+    if (std::filesystem::exists(filepath)) {
         std::cout << "Path exists\n";
     } else {
         std::cout << "Path does not exist\n";
         std::cout << "Creating directory...\n";
-        if (std::filesystem::create_directories(p)) {
+        if (std::filesystem::create_directories(filepath)) {
             std::cout << "Directory created successfully\n";
         } else {
             std::cout << "Failed to create directory\n";
@@ -184,9 +193,10 @@ bool LevelManager::makeFilePath() {
     return true;
 }
 
-bool LevelManager::makeLevelFile() {
+bool LevelManager::makeLevelFile(int level) {
     // check if file exists, if not create file
-    std::filesystem::path filePath = "Assets/Levels/Level_4/Map.json";
+    std::string levelPath = "Assets/Levels/Level_" + std::to_string(level) + "/Map.json";
+    std::filesystem::path filePath(levelPath);
 
     if (std::filesystem::exists(filePath)) {
         std::cout << "File exists\n";
@@ -199,9 +209,9 @@ bool LevelManager::makeLevelFile() {
 
             // Write some default value to file
             Json::Value root;
-            root["width"] = 45;
-            root["height"] = 80;
-            root["tileSize"] = 20;
+            root["width"] = 0;
+            root["height"] = 0;
+            root["tileSize"] = 0;
 
             // Builder is use for file configuration
             Json::StreamWriterBuilder builder;
@@ -218,3 +228,66 @@ bool LevelManager::makeLevelFile() {
 }
 
 bool LevelManager::getLevelData() { return true; }
+
+void LevelManager::saveMapInfo(int width, int height, int tilesize) {
+    root["Map"]["width"] = width;
+    root["Map"]["height"] = height;
+    root["Map"]["tileSize"] = tilesize;
+}
+void LevelManager::saveTerrainInfo(std::vector<float> nodes, std::string terrainType) {
+    Json::Value terrainJson(Json::arrayValue);
+    for (size_t i = 0; i < nodes.size(); ++i) {
+        terrainJson.append(nodes[i]);
+    }
+    root["Terrain"][terrainType] = terrainJson;
+}
+void LevelManager::saveStartEndInfo(std::vector<StartEnd> startPoints, StartEnd endPoint) {
+    Json::Value startPointsJson_array(Json::arrayValue);
+    for (const auto& startPoint : startPoints) {
+        Json::Value startPointJson;
+        startPointJson["posX"] = startPoint.transform_.pos_.x;
+        startPointJson["posY"] = startPoint.transform_.pos_.y;
+        startPointJson["scaleX"] = startPoint.transform_.scale_.x;
+        startPointJson["scaleY"] = startPoint.transform_.scale_.y;
+        startPointJson["rotation"] = startPoint.transform_.rotationRad_;
+        startPointJson["type"] = static_cast<int>(startPoint.type_);
+        startPointJson["direction"] = static_cast<int>(startPoint.direction_);
+        startPointsJson_array.append(startPointJson);
+    }
+    root["Objects"]["startPoints"] = startPointsJson_array;
+
+    Json::Value endPointJson;
+    endPointJson["posX"] = endPoint.transform_.pos_.x;
+    endPointJson["posY"] = endPoint.transform_.pos_.y;
+    endPointJson["scaleX"] = endPoint.transform_.scale_.x;
+    endPointJson["scaleY"] = endPoint.transform_.scale_.y;
+    endPointJson["rotation"] = endPoint.transform_.rotationRad_;
+    endPointJson["type"] = static_cast<int>(endPoint.type_);
+    endPointJson["direction"] = static_cast<int>(endPoint.direction_);
+    root["Objects"]["endPoint"] = endPointJson;
+}
+void LevelManager::writeToFile(int level) {
+    std::string levelPath = "Assets/Levels/Level_" + std::to_string(level) + "/Map.json";
+    std::filesystem::path filePath(levelPath);
+    if (!std::filesystem::exists(filePath)) {
+        std::cout << "File does not exist\n";
+        return;
+    }
+
+    // Builder is use for file configuration
+    Json::StreamWriterBuilder builder;
+    builder["indentation"] = "  ";
+    builder["emitUTF8"] = true; // Writer is used to write the json value to file
+    builder["sortKeys"] = false;
+    std::unique_ptr<Json::StreamWriter> jsonWriter(builder.newStreamWriter());
+    std::ofstream outfile(filePath);
+    if (outfile) {
+        jsonWriter->write(root, &outfile);
+        std::cout << "File saved successfully\n";
+    } else {
+        std::cout << "Failed to open file for writing\n";
+    }
+
+    // Clear root after writing to file to prevent accidental reuse
+    root.clear();
+}

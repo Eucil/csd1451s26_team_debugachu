@@ -28,6 +28,8 @@ static PortalSystem portalSystem;
 static Text rotationText;
 static s8 font;
 
+static int height, width, tileSize;
+
 void LoadLevel3() {
     // std::cout << "Load level 3\n";
     Terrain::createMeshLibrary();
@@ -39,16 +41,16 @@ void LoadLevel3() {
     rotationText = Text(0.7f, 0.9f, "");
     font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 12);
 
-    levelManager.makeFilePath();
-    levelManager.makeLevelFile();
+    levelManager.makeFilePath(3);
+    levelManager.makeLevelFile(3);
 
-    u32 height{}, width{};
+    height = {45}, width = {80}, tileSize = {20};
 }
 
 void InitializeLevel3() {
     // std::cout << "Initialize level 3\n";
-    dirt = Terrain::Dirt(TerrainMaterial::Dirt, {0.0f, 0.0f}, 45, 80, 20);
-    stone = Terrain::Stone(TerrainMaterial::Stone, {0.0f, 0.0f}, 45, 80, 20);
+    dirt = Terrain::Dirt(TerrainMaterial::Dirt, {0.0f, 0.0f}, height, width, tileSize);
+    stone = Terrain::Stone(TerrainMaterial::Stone, {0.0f, 0.0f}, height, width, tileSize);
 
     dirt->initCellsTransform();
     dirt->initCellsGraphics();
@@ -83,6 +85,7 @@ void UpdateLevel3(GameStateManager& GSM, f32 deltaTime) {
     // Keyboard/Mouse inputs for level editor and gameplay
     // If in editor mode, edit level
     if (levelManager.getLevelEditorMode()) {
+        // Inputs to build level
         if (!levelManager.getDisplayBuilderContainer()) {
 
             switch (levelManager.getCurrentGameBlock()) {
@@ -117,6 +120,15 @@ void UpdateLevel3(GameStateManager& GSM, f32 deltaTime) {
             default:
                 break;
             }
+        }
+        // Inputs to save level
+        if (AEInputCheckReleased(AEVK_S)) {
+            levelManager.saveMapInfo(width, height, tileSize);
+            levelManager.saveTerrainInfo(dirt->getNodes(), "Dirt");
+            levelManager.saveTerrainInfo(stone->getNodes(), "Stone");
+            levelManager.saveStartEndInfo(startEndPointSystem.startPoints_,
+                                          startEndPointSystem.endPoint_);
+            levelManager.writeToFile(3);
         }
 
     } else {
