@@ -53,3 +53,13 @@ AEGfxVertexList* CreateRectMesh() {
     // Saving the rect mesh
     return AEGfxMeshEnd();
 }
+
+AEVec2 GetMouseWorldPos() {
+    s32 mouse_x = 0, mouse_y = 0;
+    AEInputGetCursorPosition(&mouse_x, &mouse_y);
+    AEVec2 worldPos{};
+    worldPos.x = (f32)mouse_x - (AEGfxGetWindowWidth() / 2.0f);
+    worldPos.y = (AEGfxGetWindowHeight() / 2.0f) - (f32)mouse_y;
+
+    return worldPos;
+}

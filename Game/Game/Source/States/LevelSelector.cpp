@@ -40,6 +40,9 @@ void LoadLevelSelector() {
 void InitializeLevelSelector() {
     // Todo
     // std::cout << "Initialize main menu\n";
+    levelManager.init();
+    std::cout << "Level Editor Mode: " << (levelManager.getLevelEditorMode() ? "ON" : "OFF")
+              << "\n";
 }
 
 void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {

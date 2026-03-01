@@ -47,11 +47,16 @@ public:
     // Number of levels
     std::vector<int> level_vec_;
 
+    // For preview placement
+    f32 brush_radius_ = 20.0f;
+    void DrawBrushPreview(TerrainMaterial terrainType);
+
 private:
     bool level_editor_mode_{false};
     int current_level_{0};
     GameBlock current_gameblock_{GameBlock::None};
 
+    // For level editor UI
     AEVec2 container_scale_ = {300.0f, 300.0f};
     bool display_builder_container_ = false;
     // Builder button is the parent container for builder container
@@ -60,6 +65,10 @@ private:
     Button builder_container;
     std::vector<Button> buttonPool;
 
+    // Brush mesh
+    AEGfxVertexList* circleMesh = nullptr;
+
+    // For saving and reading level data
     Json::Value savingRoot{};
     Json::Value readingRoot{};
 };

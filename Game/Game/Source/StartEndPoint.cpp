@@ -95,11 +95,8 @@ void StartEndPoint::SetupPoint(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndT
 
 void StartEndPoint::SpawnAtMousePos(StartEndType type, GoalDirection direction) {
     // Get mouse position
-    s32 mouse_x = 0, mouse_y = 0;
-    AEInputGetCursorPosition(&mouse_x, &mouse_y);
-    mouse_x -= AEGfxGetWindowWidth() / 2;
-    mouse_y = (AEGfxGetWindowHeight() / 2) - mouse_y;
-    AEVec2 pos = {static_cast<f32>(mouse_x), static_cast<f32>(mouse_y)};
+    AEVec2 mousePos = GetMouseWorldPos();
+    AEVec2 pos = {static_cast<f32>(mousePos.x), static_cast<f32>(mousePos.y)};
     AEVec2 scale = {50.0f, 50.0f};
     f32 rotation = 0.0f;
 
@@ -108,10 +105,9 @@ void StartEndPoint::SpawnAtMousePos(StartEndType type, GoalDirection direction) 
 
 void StartEndPoint::DeleteAtMousePos() {
     // Get mouse position
-    s32 mouse_x = 0, mouse_y = 0;
-    AEInputGetCursorPosition(&mouse_x, &mouse_y);
-    mouse_x -= AEGfxGetWindowWidth() / 2;
-    mouse_y = (AEGfxGetWindowHeight() / 2) - mouse_y;
+    AEVec2 mousePos = GetMouseWorldPos();
+    f32 mouse_x = static_cast<f32>(mousePos.x);
+    f32 mouse_y = static_cast<f32>(mousePos.y);
     // Check if mouse is over any start point
     for (size_t i = 0; i < startPoints_.size(); ++i) {
         auto& startPoint = startPoints_[i];
@@ -209,6 +205,35 @@ void StartEndPoint::DrawColor() {
 
 void StartEndPoint::DrawTexture() {}
 
+void StartEndPoint::DrawColorPreview(StartEndType type) {
+    // Set transform matrix based on mouse position
+    AEVec2 mousePos = GetMouseWorldPos();
+
+    // Set up world matrix
+    AEMtx33 scale_mtx, rot_mtx, trans_mtx, world_mtx;
+
+    AEMtx33Scale(&scale_mtx, startendScale_.x, startendScale_.y);
+    AEMtx33Rot(&rot_mtx, 0.0f);
+    AEMtx33Trans(&trans_mtx, mousePos.x, mousePos.y);
+
+    AEMtx33Concat(&world_mtx, &rot_mtx, &scale_mtx);
+    AEMtx33Concat(&world_mtx, &trans_mtx, &world_mtx);
+
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(0.5f);
+    switch (type) {
+    case StartEndType::Pipe:
+        AEGfxSetColorToMultiply(0.5f, 0.5f, 0.5f, 0.5f); // Grey color for start point preview
+        break;
+    case StartEndType::Flower:
+        AEGfxSetColorToMultiply(1.0f, 0.0f, 0.0f, 1.0f); // Red color for end point preview
+        break;
+    }
+    AEGfxSetTransform(world_mtx.m);
+    AEGfxMeshDraw(graphicsConfigs_[static_cast<int>(type)].mesh_, AE_GFX_MDM_TRIANGLES);
+}
+
 void StartEndPoint::Free() {
 
     AEGfxMeshFree(rectMesh);
@@ -232,10 +257,9 @@ void StartEndPoint::Free() {
 
 void StartEndPoint::CheckMouseClick() {
     // Get mouse position
-    s32 mouse_x = 0, mouse_y = 0;
-    AEInputGetCursorPosition(&mouse_x, &mouse_y);
-    mouse_x -= AEGfxGetWindowWidth() / 2;
-    mouse_y = (AEGfxGetWindowHeight() / 2) - mouse_y;
+    AEVec2 mousePos = GetMouseWorldPos();
+    f32 mouse_x = static_cast<f32>(mousePos.x);
+    f32 mouse_y = static_cast<f32>(mousePos.y);
 
     // Use mouse pos to check collision with start point
     // Check by checking if mouse pos falls within the start point's collider box

@@ -36,8 +36,6 @@ void LoadLevel3() {
     Terrain::createMeshLibrary();
     Terrain::createColliderLibrary();
 
-    levelManager.init();
-
     // Setup texts
     rotationText = Text(0.7f, 0.9f, "");
     font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 12);
@@ -106,20 +104,20 @@ void UpdateLevel3(GameStateManager& GSM, f32 deltaTime) {
     if (levelManager.getLevelEditorMode()) {
         // Inputs to build level
         if (!levelManager.getDisplayBuilderContainer()) {
-
+            f32 brush_size = levelManager.brush_radius_;
             switch (levelManager.getCurrentGameBlock()) {
             case GameBlock::Dirt:
                 if (AEInputCheckCurr(AEVK_LBUTTON)) {
-                    dirt->buildAtMouse(20.0f);
+                    dirt->buildAtMouse(brush_size);
                 } else if (AEInputCheckCurr(AEVK_RBUTTON)) {
-                    dirt->destroyAtMouse(20.0f);
+                    dirt->destroyAtMouse(brush_size);
                 }
                 break;
             case GameBlock::Stone:
                 if (AEInputCheckCurr(AEVK_LBUTTON)) {
-                    stone->buildAtMouse(20.0f);
+                    stone->buildAtMouse(brush_size);
                 } else if (AEInputCheckCurr(AEVK_RBUTTON)) {
-                    stone->destroyAtMouse(20.0f);
+                    stone->destroyAtMouse(brush_size);
                 }
                 break;
             case GameBlock::StartPoint:
@@ -153,11 +151,7 @@ void UpdateLevel3(GameStateManager& GSM, f32 deltaTime) {
     } else {
         // Else do inputs for gameplay instead
         if (AEInputCheckCurr(AEVK_LBUTTON)) {
-            if (levelManager.getCurrentGameBlock() == GameBlock::Dirt) {
-                dirt->destroyAtMouse(20.0f);
-            } else if (levelManager.getCurrentGameBlock() == GameBlock::Stone) {
-                stone->destroyAtMouse(20.0f);
-            }
+            dirt->destroyAtMouse(20.0f);
         }
 
         if (AEInputCheckTriggered(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
@@ -234,6 +228,22 @@ void DrawLevel3() {
 
     if (levelManager.getLevelEditorMode()) {
         levelManager.renderLevelEditorUI();
+        switch (levelManager.getCurrentGameBlock()) {
+        case GameBlock::Dirt:;
+            levelManager.DrawBrushPreview(TerrainMaterial::Dirt);
+            break;
+        case GameBlock::Stone:
+            levelManager.DrawBrushPreview(TerrainMaterial::Stone);
+            break;
+        case GameBlock::StartPoint:
+            startEndPointSystem.DrawColorPreview(StartEndType::Pipe);
+            break;
+        case GameBlock::EndPoint:
+            startEndPointSystem.DrawColorPreview(StartEndType::Flower);
+            break;
+        default:
+            break;
+        }
     }
 
     rotationText.text_ =

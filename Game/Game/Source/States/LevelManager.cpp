@@ -7,7 +7,7 @@
 LevelManager levelManager;
 
 void LevelManager::init() {
-    level_editor_mode_ = true;
+    level_editor_mode_ = false;
     current_level_ = 0;
     current_gameblock_ = GameBlock::None;
 
@@ -27,6 +27,9 @@ void LevelManager::init() {
 
     buttonPool.resize(static_cast<int>(GameBlock::None));
     updateInnerButtonPosition();
+
+    // Setup brush preview
+    circleMesh = CreateCircleMesh(20);
 
     savingRoot = Json::Value();
     readingRoot = Json::Value();
@@ -140,6 +143,23 @@ void LevelManager::updateLevelEditor() {
             }
         }
     }
+
+    // Get scroll input for brush size adjustment
+    s32 scroll_input{};
+    AEInputMouseWheelDelta(&scroll_input);
+    if (scroll_input > 0) {
+        brush_radius_ += 5.0f; // Increase brush size
+        if (brush_radius_ > 100.0f) {
+            brush_radius_ = 100.0f; // Cap maximum brush size
+        }
+        std::cout << "Scroll up detected. Brush radius: " << brush_radius_ << "\n";
+    } else if (scroll_input < 0) {
+        brush_radius_ -= 5.0f; // Decrease brush size
+        if (brush_radius_ < 20.0f) {
+            brush_radius_ = 20.0f; // Cap minimum brush size
+        }
+        std::cout << "Scroll down detected. Brush radius: " << brush_radius_ << "\n";
+    }
 }
 
 void LevelManager::renderLevelEditorUI() {
@@ -164,6 +184,8 @@ void LevelManager::renderLevelEditorUI() {
 void LevelManager::freeLevelEditor() {
     builder_button.UnloadMesh();
     builder_container.UnloadMesh();
+    AEGfxMeshFree(circleMesh);
+
     for (int i = 0; i < static_cast<int>(GameBlock::None); ++i) {
         buttonPool[i].UnloadMesh();
     }
@@ -382,4 +404,33 @@ void LevelManager::parseStartEndInfo(StartEndPoint& startEndPointSystem) {
     } else {
         std::cout << "Objects info not found in JSON\n";
     }
+}
+
+void LevelManager::DrawBrushPreview(TerrainMaterial terrainType) {
+    AEVec2 mousePos = GetMouseWorldPos();
+
+    // Set up world matrix
+    AEMtx33 scale_mtx, rot_mtx, trans_mtx, world_mtx;
+
+    AEMtx33Scale(&scale_mtx, brush_radius_ * 2, brush_radius_ * 2);
+    AEMtx33Rot(&rot_mtx, 0.0f);
+    AEMtx33Trans(&trans_mtx, mousePos.x, mousePos.y);
+
+    AEMtx33Concat(&world_mtx, &rot_mtx, &scale_mtx);
+    AEMtx33Concat(&world_mtx, &trans_mtx, &world_mtx);
+
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(0.5f);
+    switch (terrainType) {
+    case TerrainMaterial::Dirt:
+        AEGfxSetColorToMultiply(0.545f, 0.271f, 0.075f, 1.0f); // Brown color for dirt preview
+        break;
+    case TerrainMaterial::Stone:
+        AEGfxSetColorToMultiply(0.5f, 0.5f, 0.5f, 1.0f); // Gray color for stone preview
+        break;
+    }
+
+    AEGfxSetTransform(world_mtx.m);
+    AEGfxMeshDraw(circleMesh, AE_GFX_MDM_TRIANGLES);
 }
