@@ -42,6 +42,10 @@
   <ItemGroup>
     <Font Include="..\Assets\Fonts\PressStart2P-Regular.ttf" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\Assets\Textures\terrain_dirt.png" />
+    <Image Include="..\Assets\Textures\terrain_stone.png" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>

@@ -22,6 +22,9 @@
     <Filter Include="Resource Files\Font Files">
       <UniqueIdentifier>{afc5211e-7e83-441a-a3a9-3ff546fe8f93}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Texture Files">
+      <UniqueIdentifier>{bd5ed9b4-3f21-461d-813f-46e4bc6b4bd2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Main.cpp">
@@ -102,5 +105,13 @@
     <Font Include="..\Assets\Fonts\PressStart2P-Regular.ttf">
       <Filter>Resource Files\Font Files</Filter>
     </Font>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\Assets\Textures\terrain_dirt.png">
+      <Filter>Resource Files\Texture Files</Filter>
+    </Image>
+    <Image Include="..\Assets\Textures\terrain_stone.png">
+      <Filter>Resource Files\Texture Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>
