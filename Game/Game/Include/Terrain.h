@@ -20,8 +20,8 @@ private:
 
 class Terrain {
 public:
-    Terrain(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows, u32 cellCols,
-            u32 cellSize);
+    Terrain(TerrainMaterial terrainMaterial, AEGfxTexture* pTex, AEVec2 centerPosition,
+            u32 cellRows, u32 cellCols, u32 cellSize);
 
     void initCellsTransform();
 
@@ -55,22 +55,24 @@ public:
     void renderCollidersDebug() const;
 
     // Level 1 generation function
-    static Terrain* Level1Dirt(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
-                               u32 cellCols, u32 cellSize);
+    static Terrain* Level1Dirt(TerrainMaterial terrainMaterial, AEGfxTexture* pTex,
+                               AEVec2 centerPosition, u32 cellRows, u32 cellCols, u32 cellSize);
 
-    static Terrain* Level1Stone(TerrainMaterial terrainMaterial, AEVec2 centerPosition,
-                                u32 cellRows, u32 cellCols, u32 cellSize);
+    static Terrain* Level1Stone(TerrainMaterial terrainMaterial, AEGfxTexture* pTex,
+                                AEVec2 centerPosition, u32 cellRows, u32 cellCols, u32 cellSize);
     // Level 2 generation function
-    static Terrain* Level2Dirt(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
-                               u32 cellCols, u32 cellSize);
+    static Terrain* Level2Dirt(TerrainMaterial terrainMaterial, AEGfxTexture* pTex,
+                               AEVec2 centerPosition, u32 cellRows, u32 cellCols, u32 cellSize);
 
-    static Terrain* Level2Stone(TerrainMaterial terrainMaterial, AEVec2 centerPosition,
-                                u32 cellRows, u32 cellCols, u32 cellSize);
+    static Terrain* Level2Stone(TerrainMaterial terrainMaterial, AEGfxTexture* pTex,
+                                AEVec2 centerPosition, u32 cellRows, u32 cellCols, u32 cellSize);
 
 private:
     TerrainMaterial terrainMaterial_;
 
     Transform transform_; // Position represents the centre of the terrain
+
+    Graphics graphics_; // Only for AEGfxTexture* texture_
 
     const u32 kCellRows_;
     const u32 kCellCols_;

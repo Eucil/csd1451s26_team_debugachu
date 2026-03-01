@@ -14,6 +14,8 @@
 
 static Terrain* dirt = nullptr;
 static Terrain* stone = nullptr;
+static AEGfxTexture* pTerrainDirtTex{nullptr};
+static AEGfxTexture* pTerrainStoneTex{nullptr};
 
 static FluidSystem fluidSystem;
 static StartEndPoint startEndPointSystem;
@@ -26,12 +28,16 @@ void LoadLevel1() {
 
     Terrain::createMeshLibrary();
     Terrain::createColliderLibrary();
+
+    pTerrainDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
+    pTerrainStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
 }
 
 void InitializeLevel1() {
     // std::cout << "Initialize level 1\n";
-    dirt = Terrain::Level1Dirt(TerrainMaterial::Dirt, {0.0f, 0.0f}, 45, 80, 20);
-    stone = Terrain::Level1Stone(TerrainMaterial::Stone, {0.0f, 0.0f}, 45, 80, 20);
+    dirt = Terrain::Level1Dirt(TerrainMaterial::Dirt, pTerrainDirtTex, {0.0f, 0.0f}, 45, 80, 20);
+    stone =
+        Terrain::Level1Stone(TerrainMaterial::Stone, pTerrainStoneTex, {0.0f, 0.0f}, 45, 80, 20);
 
     dirt->initCellsTransform();
     dirt->initCellsGraphics();
