@@ -48,9 +48,9 @@ void InitializeLevel1() {
     startEndPointSystem.Initialize();
     portalSystem.Initialize();
 
-    startEndPointSystem.SetupPoint({-650.0f, 400.0f}, {50.0f, 50.0f}, StartEndType::Pipe,
+    startEndPointSystem.SetupPoint({-650.0f, 400.0f}, {50.0f, 50.0f}, 0.0f, StartEndType::Pipe,
                                    GoalDirection::Down);
-    startEndPointSystem.SetupPoint({650.0f, -400.0f}, {50.0f, 50.0f}, StartEndType::Flower,
+    startEndPointSystem.SetupPoint({650.0f, -400.0f}, {50.0f, 50.0f}, 0.0f, StartEndType::Flower,
                                    GoalDirection::Up);
 }
 

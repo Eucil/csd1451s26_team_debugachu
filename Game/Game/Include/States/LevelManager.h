@@ -32,11 +32,17 @@ public:
 
     bool makeFilePath(int level);
     bool makeLevelFile(int level);
-    bool getLevelData();
+
+    // Functions for saving level data to JSON
     void saveMapInfo(int width, int height, int tilesize);
     void saveTerrainInfo(std::vector<float> nodes, std::string terrainType);
     void saveStartEndInfo(std::vector<StartEnd> startPoints, StartEnd endPoint);
     void writeToFile(int level);
+    // Functions for reading level data from JSON
+    bool getLevelData(int level);
+    void parseMapInfo(int& width, int& height, int& tilesize);
+    void parseTerrainInfo(std::vector<float>& nodes, std::string terrainType);
+    void parseStartEndInfo(StartEndPoint& startEndPointSystem);
 
     // Number of levels
     std::vector<int> level_vec_;
@@ -54,7 +60,8 @@ private:
     Button builder_container;
     std::vector<Button> buttonPool;
 
-    Json::Value root{};
+    Json::Value savingRoot{};
+    Json::Value readingRoot{};
 };
 
 extern LevelManager levelManager;

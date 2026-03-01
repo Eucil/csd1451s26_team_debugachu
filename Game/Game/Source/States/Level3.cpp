@@ -29,6 +29,7 @@ static Text rotationText;
 static s8 font;
 
 static int height, width, tileSize;
+static bool fileExist;
 
 void LoadLevel3() {
     // std::cout << "Load level 3\n";
@@ -44,27 +45,45 @@ void LoadLevel3() {
     levelManager.makeFilePath(3);
     levelManager.makeLevelFile(3);
 
-    height = {45}, width = {80}, tileSize = {20};
+    if (levelManager.getLevelData(3)) {
+        levelManager.parseMapInfo(width, height, tileSize);
+        fileExist = true;
+    } else {
+        std::cout << "Failed to load level data\n";
+        std::cout << "Using default values\n";
+        width = 80;
+        height = 45;
+        tileSize = 20;
+        fileExist = false;
+    }
 }
 
 void InitializeLevel3() {
     // std::cout << "Initialize level 3\n";
+    fluidSystem.Initialize();
+    startEndPointSystem.Initialize();
+    if (fileExist) {
+        levelManager.parseStartEndInfo(startEndPointSystem);
+    }
+    portalSystem.Initialize();
+
     dirt = Terrain::Dirt(TerrainMaterial::Dirt, {0.0f, 0.0f}, height, width, tileSize);
     stone = Terrain::Stone(TerrainMaterial::Stone, {0.0f, 0.0f}, height, width, tileSize);
-
+    if (fileExist) {
+        levelManager.parseTerrainInfo(dirt->getNodes(), "Dirt");
+    }
     dirt->initCellsTransform();
     dirt->initCellsGraphics();
     dirt->initCellsCollider();
     dirt->updateTerrain();
 
+    if (fileExist) {
+        levelManager.parseTerrainInfo(stone->getNodes(), "Stone");
+    }
     stone->initCellsTransform();
     stone->initCellsGraphics();
     stone->initCellsCollider();
     stone->updateTerrain();
-
-    fluidSystem.Initialize();
-    startEndPointSystem.Initialize();
-    portalSystem.Initialize();
 }
 
 void UpdateLevel3(GameStateManager& GSM, f32 deltaTime) {

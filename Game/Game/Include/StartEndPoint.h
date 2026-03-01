@@ -24,7 +24,7 @@ struct StartEnd {
     bool active_{true};
 
     StartEnd();
-    StartEnd(AEVec2 pos, AEVec2 scale, StartEndType type, GoalDirection direction);
+    StartEnd(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndType type, GoalDirection direction);
 };
 
 class StartEndPoint {
@@ -49,7 +49,8 @@ public:
 
     void Initialize();
 
-    void SetupPoint(AEVec2 pos, AEVec2 scale, StartEndType type, GoalDirection direction);
+    void SetupPoint(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndType type,
+                    GoalDirection direction);
 
     void SpawnAtMousePos(StartEndType type, GoalDirection direction);
 

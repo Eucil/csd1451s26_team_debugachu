@@ -28,7 +28,8 @@ void LevelManager::init() {
     buttonPool.resize(static_cast<int>(GameBlock::None));
     updateInnerButtonPosition();
 
-    root = Json::Value();
+    savingRoot = Json::Value();
+    readingRoot = Json::Value();
 }
 bool LevelManager::getLevelEditorMode() const { return level_editor_mode_; }
 
@@ -53,9 +54,6 @@ void LevelManager::updateEditorButtonPosition() {
         builder_button.transform_.pos_.x = 775.0f;
     }
 
-    // std::cout << "Button pos: (" << builder_button.transform_.pos_.x << ", "
-    //           << builder_button.transform_.pos_.y << ")\n";
-
     builder_button.UpdateTransform();
 }
 
@@ -68,8 +66,6 @@ void LevelManager::updateContainerPosition() {
 
     container_pos.y = builder_button.transform_.pos_.y - (container_scale_.y / 2) +
                       (builder_button.transform_.scale_.y / 2);
-
-    // std::cout << "Container pos: (" << container_pos.x << ", " << container_pos.y << ")\n";
 
     builder_container.transform_.pos_ = container_pos;
 
@@ -227,19 +223,17 @@ bool LevelManager::makeLevelFile(int level) {
     return true;
 }
 
-bool LevelManager::getLevelData() { return true; }
-
 void LevelManager::saveMapInfo(int width, int height, int tilesize) {
-    root["Map"]["width"] = width;
-    root["Map"]["height"] = height;
-    root["Map"]["tileSize"] = tilesize;
+    savingRoot["Map"]["width"] = width;
+    savingRoot["Map"]["height"] = height;
+    savingRoot["Map"]["tileSize"] = tilesize;
 }
 void LevelManager::saveTerrainInfo(std::vector<float> nodes, std::string terrainType) {
     Json::Value terrainJson(Json::arrayValue);
     for (size_t i = 0; i < nodes.size(); ++i) {
         terrainJson.append(nodes[i]);
     }
-    root["Terrain"][terrainType] = terrainJson;
+    savingRoot["Terrain"][terrainType] = terrainJson;
 }
 void LevelManager::saveStartEndInfo(std::vector<StartEnd> startPoints, StartEnd endPoint) {
     Json::Value startPointsJson_array(Json::arrayValue);
@@ -254,7 +248,7 @@ void LevelManager::saveStartEndInfo(std::vector<StartEnd> startPoints, StartEnd 
         startPointJson["direction"] = static_cast<int>(startPoint.direction_);
         startPointsJson_array.append(startPointJson);
     }
-    root["Objects"]["startPoints"] = startPointsJson_array;
+    savingRoot["Objects"]["startPoints"] = startPointsJson_array;
 
     Json::Value endPointJson;
     endPointJson["posX"] = endPoint.transform_.pos_.x;
@@ -264,7 +258,7 @@ void LevelManager::saveStartEndInfo(std::vector<StartEnd> startPoints, StartEnd 
     endPointJson["rotation"] = endPoint.transform_.rotationRad_;
     endPointJson["type"] = static_cast<int>(endPoint.type_);
     endPointJson["direction"] = static_cast<int>(endPoint.direction_);
-    root["Objects"]["endPoint"] = endPointJson;
+    savingRoot["Objects"]["endPoint"] = endPointJson;
 }
 void LevelManager::writeToFile(int level) {
     std::string levelPath = "Assets/Levels/Level_" + std::to_string(level) + "/Map.json";
@@ -282,12 +276,110 @@ void LevelManager::writeToFile(int level) {
     std::unique_ptr<Json::StreamWriter> jsonWriter(builder.newStreamWriter());
     std::ofstream outfile(filePath);
     if (outfile) {
-        jsonWriter->write(root, &outfile);
+        jsonWriter->write(savingRoot, &outfile);
         std::cout << "File saved successfully\n";
     } else {
         std::cout << "Failed to open file for writing\n";
     }
 
     // Clear root after writing to file to prevent accidental reuse
-    root.clear();
+    savingRoot.clear();
+}
+
+bool LevelManager::getLevelData(int level) {
+    // Clear previously read data to prevent accidental reuse
+    readingRoot = Json::Value();
+
+    std::string filePath = "Assets/Levels/Level_" + std::to_string(level) + "/Map.json";
+    std::ifstream file(filePath);
+    if (!file.is_open()) {
+        std::cout << "Failed to open file: " << filePath << "\n";
+        return false;
+    }
+
+    Json::CharReaderBuilder builder;
+    builder["collectComments"] = false;
+    JSONCPP_STRING errs;
+
+    bool parsingSuccessful = Json::parseFromStream(builder, file, &readingRoot, &errs);
+    if (!parsingSuccessful) {
+        std::cout << "Failed to parse JSON: " << errs << "\n";
+        return false;
+    }
+
+    return true;
+}
+
+void LevelManager::parseMapInfo(int& width, int& height, int& tilesize) {
+    if (readingRoot.isMember("Map")) {
+        std::cout << "Parsing map info...\n";
+        width = readingRoot["Map"]["width"].asInt();
+        height = readingRoot["Map"]["height"].asInt();
+        tilesize = readingRoot["Map"]["tileSize"].asInt();
+    } else {
+        std::cout << "Map info not found in JSON\n";
+    }
+}
+void LevelManager::parseTerrainInfo(std::vector<float>& nodes, std::string terrainType) {
+    if (!readingRoot.isMember("Terrain")) {
+        std::cout << "Terrain info not found in JSON\n";
+        return;
+    }
+    const Json::Value& terrain = readingRoot["Terrain"];
+    if (!terrain.isMember(terrainType)) {
+        std::cout << "Terrain type '" << terrainType << "' not found in JSON\n";
+        return;
+    }
+    const Json::Value& nodeArray = terrain[terrainType];
+    if (!nodeArray.isArray()) {
+        std::cout << "Terrain[" << terrainType << "] is not an array\n";
+        return;
+    }
+
+    // Debug: sizes
+    std::cout << "Terrain '" << terrainType << "': nodeArray size = " << nodeArray.size()
+              << ", nodes.size() = " << nodes.size() << "\n";
+
+    Json::ArrayIndex count = nodeArray.size();
+    for (Json::ArrayIndex i = 0; i < count; ++i) {
+        nodes[i] = nodeArray[i].asFloat();
+    }
+}
+void LevelManager::parseStartEndInfo(StartEndPoint& startEndPointSystem) {
+
+    if (readingRoot.isMember("Objects")) {
+        const Json::Value& objects = readingRoot["Objects"];
+        // Parse start points
+        if (objects.isMember("startPoints")) {
+            std::cout << "Parsing start points info...\n";
+            const Json::Value& startPointsJson = objects["startPoints"];
+            for (Json::ArrayIndex i = 0; i < startPointsJson.size(); ++i) {
+                AEVec2 pos{startPointsJson[i]["posX"].asFloat(),
+                           startPointsJson[i]["posY"].asFloat()};
+                AEVec2 scale{startPointsJson[i]["scaleX"].asFloat(),
+                             startPointsJson[i]["scaleY"].asFloat()};
+                f32 rotationRad_ = startPointsJson[i]["rotation"].asFloat();
+                auto type = static_cast<StartEndType>(startPointsJson[i]["type"].asInt());
+                auto dir = static_cast<GoalDirection>(startPointsJson[i]["direction"].asInt());
+                startEndPointSystem.SetupPoint(pos, scale, rotationRad_, type, dir);
+            }
+        } else {
+            std::cout << "Start points not found in JSON\n";
+        }
+        // Parse end point
+        if (objects.isMember("endPoint")) {
+            std::cout << "Parsing end point info...\n";
+            const Json::Value& endPointJson = objects["endPoint"];
+            AEVec2 pos{endPointJson["posX"].asFloat(), endPointJson["posY"].asFloat()};
+            AEVec2 scale{endPointJson["scaleX"].asFloat(), endPointJson["scaleY"].asFloat()};
+            f32 rotationRad_ = endPointJson["rotation"].asFloat();
+            auto type = static_cast<StartEndType>(endPointJson["type"].asInt());
+            auto dir = static_cast<GoalDirection>(endPointJson["direction"].asInt());
+            startEndPointSystem.SetupPoint(pos, scale, rotationRad_, type, dir);
+        } else {
+            std::cout << "End point not found in JSON\n";
+        }
+    } else {
+        std::cout << "Objects info not found in JSON\n";
+    }
 }

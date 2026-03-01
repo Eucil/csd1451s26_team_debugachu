@@ -34,11 +34,12 @@ StartEnd::StartEnd() {
     active_ = {false};
 }
 
-StartEnd::StartEnd(AEVec2 pos, AEVec2 scale, StartEndType type, GoalDirection direction) {
+StartEnd::StartEnd(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndType type,
+                   GoalDirection direction) {
     // Set up transform
     transform_.pos_ = pos;
     transform_.scale_ = scale;
-    transform_.rotationRad_ = 0.0f;
+    transform_.rotationRad_ = rotation;
 
     // Set up world matrix
     AEMtx33 scale_mtx, rot_mtx, trans_mtx;
@@ -75,20 +76,20 @@ void StartEndPoint::Initialize() {
     particlesCollected_ = {0};
 }
 
-void StartEndPoint::SetupPoint(AEVec2 pos, AEVec2 scale, StartEndType type,
+void StartEndPoint::SetupPoint(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndType type,
                                GoalDirection direction) {
     if (type == StartEndType::Pipe) {
         if (free_start_point_indices_.empty()) {
             // No free indices, add new start point
-            startPoints_.emplace_back(pos, scale, type, direction);
+            startPoints_.emplace_back(pos, scale, rotation, type, direction);
         } else {
             // Reuse a free index
             int index = free_start_point_indices_.back();
             free_start_point_indices_.pop_back();
-            startPoints_[index] = StartEnd(pos, scale, type, direction);
+            startPoints_[index] = StartEnd(pos, scale, rotation, type, direction);
         }
     } else if (type == StartEndType::Flower) {
-        endPoint_ = StartEnd(pos, scale, type, direction);
+        endPoint_ = StartEnd(pos, scale, rotation, type, direction);
     }
 }
 
@@ -100,8 +101,9 @@ void StartEndPoint::SpawnAtMousePos(StartEndType type, GoalDirection direction) 
     mouse_y = (AEGfxGetWindowHeight() / 2) - mouse_y;
     AEVec2 pos = {static_cast<f32>(mouse_x), static_cast<f32>(mouse_y)};
     AEVec2 scale = {50.0f, 50.0f};
+    f32 rotation = 0.0f;
 
-    SetupPoint(pos, scale, type, direction);
+    SetupPoint(pos, scale, rotation, type, direction);
 }
 
 void StartEndPoint::DeleteAtMousePos() {
