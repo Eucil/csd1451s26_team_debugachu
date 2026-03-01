@@ -40,8 +40,7 @@ void LoadLevel3() {
     rotationText = Text(0.7f, 0.9f, "");
     font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 12);
 
-    levelManager.makeFilePath(3);
-    levelManager.makeLevelFile(3);
+    levelManager.initEditorUI();
 
     if (levelManager.getLevelData(3)) {
         levelManager.parseMapInfo(width, height, tileSize);
@@ -271,4 +270,5 @@ void UnloadLevel3() {
     AEGfxDestroyFont(font);
 
     levelManager.freeLevelEditor();
+    levelManager.SetCurrentLevel(0);
 }

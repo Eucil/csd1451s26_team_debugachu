@@ -10,12 +10,9 @@ void LevelManager::init() {
     level_editor_mode_ = false;
     current_level_ = 0;
     current_gameblock_ = GameBlock::None;
+}
 
-    // Initialize level vector with 3 levels for testing
-    for (int i = 0; i < 3; ++i) {
-        level_vec_.push_back(i);
-    }
-
+void LevelManager::initEditorUI() {
     // Setup Editor UI
     builder_button = Button(AEVec2{775.0f, 350.0f}, AEVec2{50.0f, 50.0f});
     builder_container = Button(AEVec2{0.0f, 0.0f}, container_scale_);
@@ -34,6 +31,7 @@ void LevelManager::init() {
     savingRoot = Json::Value();
     readingRoot = Json::Value();
 }
+
 bool LevelManager::getLevelEditorMode() const { return level_editor_mode_; }
 
 void LevelManager::setLevelEditorMode() { level_editor_mode_ = !level_editor_mode_; }
@@ -227,9 +225,7 @@ bool LevelManager::makeLevelFile(int level) {
 
             // Write some default value to file
             Json::Value root;
-            root["width"] = 0;
-            root["height"] = 0;
-            root["tileSize"] = 0;
+            root["None"];
 
             // Builder is use for file configuration
             Json::StreamWriterBuilder builder;
@@ -329,7 +325,20 @@ bool LevelManager::getLevelData(int level) {
         return false;
     }
 
+    if (readingRoot.isMember("None")) {
+        std::cout << "File is empty\n";
+        return false;
+    }
+
     return true;
+}
+
+void LevelManager::checkLevelData() {
+    // Loop through and check if level is playable by calling getLevelData for each
+    for (int i = 1; i <= static_cast<int>(Level::None); ++i) {
+        playableLevels[i - 1] = getLevelData(i);
+        std::cout << "Level " << i << " playable: " << playableLevels[i - 1] << "\n";
+    }
 }
 
 void LevelManager::parseMapInfo(int& width, int& height, int& tilesize) {

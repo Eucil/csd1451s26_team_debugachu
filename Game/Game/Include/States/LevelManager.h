@@ -8,11 +8,14 @@
 #include <json/json.h>
 #include <vector>
 
+enum class Level { Level1, Level2, Level3, None };
+
 enum class GameBlock { Dirt, Stone, StartPoint, EndPoint, None };
 
 class LevelManager {
 public:
     void init();
+    void initEditorUI();
 
     bool getLevelEditorMode() const;
     void setLevelEditorMode();
@@ -40,12 +43,13 @@ public:
     void writeToFile(int level);
     // Functions for reading level data from JSON
     bool getLevelData(int level);
+    void checkLevelData();
     void parseMapInfo(int& width, int& height, int& tilesize);
     void parseTerrainInfo(std::vector<float>& nodes, std::string terrainType);
     void parseStartEndInfo(StartEndPoint& startEndPointSystem);
 
-    // Number of levels
-    std::vector<int> level_vec_;
+    // Array of bool to store which level is playable
+    bool playableLevels[static_cast<int>(Level::None)];
 
     // For preview placement
     f32 brush_radius_ = 20.0f;

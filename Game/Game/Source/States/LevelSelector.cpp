@@ -8,41 +8,40 @@
 #include "GameStateManager.h"
 #include "UISystem.h"
 
-static Button level1Button;
-static Button level2Button;
-static Button level3Button;
-static Text level1Text;
-static Text level2Text;
-static Text level3Text;
 static s8 font;
+
+static std::vector<Button> buttonPool;
+static std::vector<Text> textPool;
 
 void LoadLevelSelector() {
     // Todo
-    // std::cout << "Load main menu\n";
-
-    // Setup buttons
-    level1Button = Button(AEVec2{0.0f, 200.0f}, AEVec2{400.0f, 200.0f});
-    level2Button = Button(AEVec2{0.0f, -100.0f}, AEVec2{400.0f, 200.0f});
-    level3Button = Button(AEVec2{0.0f, -300.0f}, AEVec2{400.0f, 200.0f});
-
-    level1Button.SetupMesh();
-    level2Button.SetupMesh();
-    level3Button.SetupMesh();
+    // std::cout << "Load Level Selector\n";
+    font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
 
     // Setup texts
-    level1Text = Text(-0.2f, 0.4f, "Level 1");
-    level2Text = Text(-0.2f, -0.3f, "Level 2");
-    level3Text = Text(-0.2f, -0.7f, "Level 3");
+    f32 x_offset = 0.025f;
+    f32 y_offset = 0.05f;
 
-    font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
+    for (int i{}; i < static_cast<int>(Level::None); ++i) {
+        // Push back button and text
+        Button tempButton = Button(AEVec2{-600.f + (300.f * i), 200.0f}, AEVec2{200.0f, 150.0f});
+        tempButton.SetupMesh();
+        buttonPool.push_back(tempButton);
+        Text tempText =
+            Text(tempButton.transform_.pos_.x / 800.f - x_offset,
+                 tempButton.transform_.pos_.y / 450.f - y_offset, std::to_string(i + 1));
+        textPool.push_back(tempText);
+    }
 }
 
 void InitializeLevelSelector() {
     // Todo
-    // std::cout << "Initialize main menu\n";
+    // std::cout << "Initialize Level Selector\n";
     levelManager.init();
     std::cout << "Level Editor Mode: " << (levelManager.getLevelEditorMode() ? "ON" : "OFF")
               << "\n";
+
+    levelManager.checkLevelData();
 }
 
 void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
@@ -65,36 +64,37 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
     }
 
     if (AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
-        if (level1Button.OnClick()) {
-            std::cout << "Level1 button clicked\n";
-            GSM.nextState_ = StateId::Level1;
-        }
-        if (level2Button.OnClick()) {
-            std::cout << "Level2 button clicked\n";
-            GSM.nextState_ = StateId::Level2;
-        }
-        if (level3Button.OnClick()) {
-            std::cout << "Level3 button clicked\n";
-            GSM.nextState_ = StateId::Level3;
+        for (int i = 0; i < static_cast<int>(Level::None); ++i) {
+            // Only allow level selection if the level is playable or if level editor mode is
+            // enabled
+            if ((buttonPool)[i].OnClick() &&
+                (levelManager.playableLevels[i] || levelManager.getLevelEditorMode())) {
+                std::cout << "Level " << (i + 1) << " button clicked\n";
+                levelManager.SetCurrentLevel(i + 1);
+                GSM.nextState_ = static_cast<StateId>(static_cast<int>(StateId::Level1) + i);
+                break;
+            }
         }
     }
 }
 
 void DrawLevelSelector() {
     // Todo
-    // std::cout << "Draw main menu\n";
+    // std::cout << "Draw Level Selector\n";
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
-    level1Button.DrawColor(0.0f, 1.0f, 0.0f); // Green
-    level2Button.DrawColor(1.0f, 0.0f, 0.0f); // Red
-    level3Button.DrawColor(0.0f, 0.0f, 1.0f); // Blue
+    for (int i = 0; i < static_cast<int>(Level::None); ++i) {
+        if (levelManager.playableLevels[i]) {
+            buttonPool[i].DrawColor(0.0f, 1.0f, 0.0f);
+        } else {
+            buttonPool[i].DrawColor(0.5f, 0.5f, 0.5f);
+        }
+    }
 
-    const char* level1Str = level1Text.text_.c_str();
-    AEGfxPrint(font, level1Str, level1Text.pos_x_, level1Text.pos_y_, 1.f, 1.f, 1.f, 1.f, 1.f);
-    const char* level2Str = level2Text.text_.c_str();
-    AEGfxPrint(font, level2Str, level2Text.pos_x_, level2Text.pos_y_, 1.f, 1.f, 1.f, 1.f, 1.f);
-    const char* level3Str = level3Text.text_.c_str();
-    AEGfxPrint(font, level3Str, level3Text.pos_x_, level3Text.pos_y_, 1.f, 1.f, 1.f, 1.f, 1.f);
+    for (int i = 0; i < static_cast<int>(Level::None); ++i) {
+        const char* textStr = textPool[i].text_.c_str();
+        AEGfxPrint(font, textStr, textPool[i].pos_x_, textPool[i].pos_y_, 1.f, 1.f, 1.f, 1.f, 1.f);
+    }
 }
 
 void FreeLevelSelector() {
@@ -105,8 +105,11 @@ void FreeLevelSelector() {
 void UnloadLevelSelector() {
     // Todo
     // std::cout << "Unload main menu\n";
-    level1Button.UnloadMesh();
-    level2Button.UnloadMesh();
-    level3Button.UnloadMesh();
+    for (int i = 0; i < static_cast<int>(Level::None); ++i) {
+        buttonPool[i].UnloadMesh();
+    }
+
+    buttonPool.clear();
+    textPool.clear();
     AEGfxDestroyFont(font);
 }
