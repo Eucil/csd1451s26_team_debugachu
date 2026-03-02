@@ -259,5 +259,5 @@ void UnloadMainMenu() {
     // Free fonts
     AEGfxDestroyFont(titleFont);
     AEGfxDestroyFont(buttonFont);
-    // AEGfxDestroyFont(font); // If you kept the original font
+    // AEGfxDestroyFont(font); //
 }
