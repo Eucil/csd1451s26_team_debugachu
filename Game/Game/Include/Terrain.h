@@ -58,26 +58,6 @@ public:
     static void createDebugColliderMeshes();
     void renderCollidersDebug() const;
 
-    // Level 1 generation function
-    static Terrain* Level1Dirt(TerrainMaterial terrainMaterial, AEGfxTexture* pTex,
-                               AEVec2 centerPosition, u32 cellRows, u32 cellCols, u32 cellSize);
-
-    static Terrain* Level1Stone(TerrainMaterial terrainMaterial, AEGfxTexture* pTex,
-                                AEVec2 centerPosition, u32 cellRows, u32 cellCols, u32 cellSize);
-    // Level 2 generation function
-    static Terrain* Level2Dirt(TerrainMaterial terrainMaterial, AEGfxTexture* pTex,
-                               AEVec2 centerPosition, u32 cellRows, u32 cellCols, u32 cellSize);
-
-    static Terrain* Level2Stone(TerrainMaterial terrainMaterial, AEGfxTexture* pTex,
-                                AEVec2 centerPosition, u32 cellRows, u32 cellCols, u32 cellSize);
-
-    // Generic Level generation function
-    static Terrain* Dirt(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
-                         u32 cellCols, u32 cellSize);
-
-    static Terrain* Stone(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
-                          u32 cellCols, u32 cellSize);
-
 private:
     TerrainMaterial terrainMaterial_;
 

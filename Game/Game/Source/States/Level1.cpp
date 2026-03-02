@@ -35,9 +35,8 @@ void LoadLevel1() {
 
 void InitializeLevel1() {
     // std::cout << "Initialize level 1\n";
-    dirt = Terrain::Level1Dirt(TerrainMaterial::Dirt, pTerrainDirtTex, {0.0f, 0.0f}, 45, 80, 20);
-    stone =
-        Terrain::Level1Stone(TerrainMaterial::Stone, pTerrainStoneTex, {0.0f, 0.0f}, 45, 80, 20);
+    dirt = new Terrain(TerrainMaterial::Dirt, pTerrainDirtTex, {0.0f, 0.0f}, 45, 80, 20);
+    stone = new Terrain(TerrainMaterial::Stone, pTerrainStoneTex, {0.0f, 0.0f}, 45, 80, 20);
 
     dirt->initCellsTransform();
     dirt->initCellsGraphics();
@@ -169,4 +168,6 @@ void UnloadLevel1() {
     // std::cout << "Unload level 1\n";
 
     Terrain::freeMeshLibrary();
+    AEGfxTextureUnload(pTerrainDirtTex);
+    AEGfxTextureUnload(pTerrainStoneTex);
 }

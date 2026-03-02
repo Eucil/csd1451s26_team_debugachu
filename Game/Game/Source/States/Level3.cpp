@@ -20,6 +20,8 @@
 
 static Terrain* dirt = nullptr;
 static Terrain* stone = nullptr;
+static AEGfxTexture* pTerrainDirtTex{nullptr};
+static AEGfxTexture* pTerrainStoneTex{nullptr};
 
 static FluidSystem fluidSystem;
 static StartEndPoint startEndPointSystem;
@@ -35,6 +37,9 @@ void LoadLevel3() {
     // std::cout << "Load level 3\n";
     Terrain::createMeshLibrary();
     Terrain::createColliderLibrary();
+
+    pTerrainDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
+    pTerrainStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
 
     // Setup texts
     rotationText = Text(0.7f, 0.9f, "");
@@ -64,8 +69,10 @@ void InitializeLevel3() {
     }
     portalSystem.Initialize();
 
-    dirt = Terrain::Dirt(TerrainMaterial::Dirt, {0.0f, 0.0f}, height, width, tileSize);
-    stone = Terrain::Stone(TerrainMaterial::Stone, {0.0f, 0.0f}, height, width, tileSize);
+    dirt =
+        new Terrain(TerrainMaterial::Dirt, pTerrainDirtTex, {0.0f, 0.0f}, height, width, tileSize);
+    stone = new Terrain(TerrainMaterial::Stone, pTerrainStoneTex, {0.0f, 0.0f}, height, width,
+                        tileSize);
     if (fileExist) {
         levelManager.parseTerrainInfo(dirt->getNodes(), "Dirt");
     }
@@ -268,6 +275,9 @@ void UnloadLevel3() {
     // std::cout << "Unload level 2\n";
     Terrain::freeMeshLibrary();
     AEGfxDestroyFont(font);
+
+    AEGfxTextureUnload(pTerrainDirtTex);
+    AEGfxTextureUnload(pTerrainStoneTex);
 
     levelManager.freeLevelEditor();
     levelManager.SetCurrentLevel(0);
