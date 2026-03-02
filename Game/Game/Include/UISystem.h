@@ -19,6 +19,12 @@ public:
         transform_.rotationRad_ = 0.0f;
 
         // Set up world matrix
+        UpdateTransform();
+    }
+
+    void SetupMesh() { graphics_.mesh_ = CreateRectMesh(); }
+
+    void UpdateTransform() {
         AEMtx33 scale_mtx, rot_mtx, trans_mtx;
 
         AEMtx33Scale(&scale_mtx, transform_.scale_.x, transform_.scale_.y);
@@ -28,8 +34,6 @@ public:
         AEMtx33Concat(&transform_.worldMtx_, &rot_mtx, &scale_mtx);
         AEMtx33Concat(&transform_.worldMtx_, &trans_mtx, &transform_.worldMtx_);
     }
-
-    void SetupMesh() { graphics_.mesh_ = CreateRectMesh(); }
 
     void DrawColor(f32 r, f32 g, f32 b) {
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);

@@ -9,7 +9,7 @@
 StartEnd::StartEnd() {
     // Set up transform
     transform_.pos_ = {0.0f, 0.0f};
-    transform_.scale_ = {1.f, 1.f};
+    transform_.scale_ = {0.f, 0.f};
     transform_.rotationRad_ = {0.0f};
 
     // Set up world matrix
@@ -31,13 +31,15 @@ StartEnd::StartEnd() {
     direction_ = {GoalDirection::Up};
     release_water_ = false;
     release_water_iframe_ = {false};
+    active_ = {false};
 }
 
-StartEnd::StartEnd(AEVec2 pos, AEVec2 scale, StartEndType type, GoalDirection direction) {
+StartEnd::StartEnd(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndType type,
+                   GoalDirection direction) {
     // Set up transform
     transform_.pos_ = pos;
     transform_.scale_ = scale;
-    transform_.rotationRad_ = 0.0f;
+    transform_.rotationRad_ = rotation;
 
     // Set up world matrix
     AEMtx33 scale_mtx, rot_mtx, trans_mtx;
@@ -74,14 +76,62 @@ void StartEndPoint::Initialize() {
     particlesCollected_ = {0};
 }
 
-void StartEndPoint::SetupStartPoint(AEVec2 pos, AEVec2 scale, StartEndType type,
-                                    GoalDirection direction) {
-    startPoints_.emplace_back(pos, scale, type, direction);
+void StartEndPoint::SetupPoint(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndType type,
+                               GoalDirection direction) {
+    if (type == StartEndType::Pipe) {
+        if (free_start_point_indices_.empty()) {
+            // No free indices, add new start point
+            startPoints_.emplace_back(pos, scale, rotation, type, direction);
+        } else {
+            // Reuse a free index
+            int index = free_start_point_indices_.back();
+            free_start_point_indices_.pop_back();
+            startPoints_[index] = StartEnd(pos, scale, rotation, type, direction);
+        }
+    } else if (type == StartEndType::Flower) {
+        endPoint_ = StartEnd(pos, scale, rotation, type, direction);
+    }
 }
 
-void StartEndPoint::SetupEndPoint(AEVec2 pos, AEVec2 scale, StartEndType type,
-                                  GoalDirection direction) {
-    endPoint_ = StartEnd(pos, scale, type, direction);
+void StartEndPoint::SpawnAtMousePos(StartEndType type, GoalDirection direction) {
+    // Get mouse position
+    AEVec2 mousePos = GetMouseWorldPos();
+    AEVec2 pos = {static_cast<f32>(mousePos.x), static_cast<f32>(mousePos.y)};
+    AEVec2 scale = {50.0f, 50.0f};
+    f32 rotation = 0.0f;
+
+    SetupPoint(pos, scale, rotation, type, direction);
+}
+
+void StartEndPoint::DeleteAtMousePos() {
+    // Get mouse position
+    AEVec2 mousePos = GetMouseWorldPos();
+    f32 mouse_x = static_cast<f32>(mousePos.x);
+    f32 mouse_y = static_cast<f32>(mousePos.y);
+    // Check if mouse is over any start point
+    for (size_t i = 0; i < startPoints_.size(); ++i) {
+        auto& startPoint = startPoints_[i];
+        f32 rect_half_width = startPoint.collider_.shapeData_.box_.size_.x / 2.0f;
+        f32 rect_half_height = startPoint.collider_.shapeData_.box_.size_.y / 2.0f;
+        if (mouse_x >= (startPoint.transform_.pos_.x - rect_half_width) &&
+            mouse_x <= (startPoint.transform_.pos_.x + rect_half_width) &&
+            mouse_y >= (startPoint.transform_.pos_.y - rect_half_height) &&
+            mouse_y <= (startPoint.transform_.pos_.y + rect_half_height)) {
+            // Mark this index as free and remove the start point
+            free_start_point_indices_.push_back(static_cast<int>(i));
+            startPoints_[i] = StartEnd();
+            return;
+        }
+    }
+    // Check if mouse is over end point
+    f32 rect_half_width = endPoint_.collider_.shapeData_.box_.size_.x / 2.0f;
+    f32 rect_half_height = endPoint_.collider_.shapeData_.box_.size_.y / 2.0f;
+    if (mouse_x >= (endPoint_.transform_.pos_.x - rect_half_width) &&
+        mouse_x <= (endPoint_.transform_.pos_.x + rect_half_width) &&
+        mouse_y >= (endPoint_.transform_.pos_.y - rect_half_height) &&
+        mouse_y <= (endPoint_.transform_.pos_.y + rect_half_height)) {
+        endPoint_ = StartEnd();
+    }
 }
 
 bool StartEndPoint::CollisionCheckWithWater(StartEnd startend, FluidParticle particle) {
@@ -109,6 +159,9 @@ void StartEndPoint::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
 
     // Check collision for each start/end point with each water particle
     for (auto& startPoint : startPoints_) {
+        if (startPoint.active_ == false) {
+            continue;
+        }
         for (auto& particle : particlePool) {
             if (CollisionCheckWithWater(startPoint, particle)) {
                 // Handle collision with start point
@@ -152,6 +205,35 @@ void StartEndPoint::DrawColor() {
 
 void StartEndPoint::DrawTexture() {}
 
+void StartEndPoint::DrawColorPreview(StartEndType type) {
+    // Set transform matrix based on mouse position
+    AEVec2 mousePos = GetMouseWorldPos();
+
+    // Set up world matrix
+    AEMtx33 scale_mtx, rot_mtx, trans_mtx, world_mtx;
+
+    AEMtx33Scale(&scale_mtx, startendScale_.x, startendScale_.y);
+    AEMtx33Rot(&rot_mtx, 0.0f);
+    AEMtx33Trans(&trans_mtx, mousePos.x, mousePos.y);
+
+    AEMtx33Concat(&world_mtx, &rot_mtx, &scale_mtx);
+    AEMtx33Concat(&world_mtx, &trans_mtx, &world_mtx);
+
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(0.5f);
+    switch (type) {
+    case StartEndType::Pipe:
+        AEGfxSetColorToMultiply(0.5f, 0.5f, 0.5f, 0.5f); // Grey color for start point preview
+        break;
+    case StartEndType::Flower:
+        AEGfxSetColorToMultiply(1.0f, 0.0f, 0.0f, 1.0f); // Red color for end point preview
+        break;
+    }
+    AEGfxSetTransform(world_mtx.m);
+    AEGfxMeshDraw(graphicsConfigs_[static_cast<int>(type)].mesh_, AE_GFX_MDM_TRIANGLES);
+}
+
 void StartEndPoint::Free() {
 
     AEGfxMeshFree(rectMesh);
@@ -175,10 +257,9 @@ void StartEndPoint::Free() {
 
 void StartEndPoint::CheckMouseClick() {
     // Get mouse position
-    s32 mouse_x = 0, mouse_y = 0;
-    AEInputGetCursorPosition(&mouse_x, &mouse_y);
-    mouse_x -= AEGfxGetWindowWidth() / 2;
-    mouse_y = (AEGfxGetWindowHeight() / 2) - mouse_y;
+    AEVec2 mousePos = GetMouseWorldPos();
+    f32 mouse_x = static_cast<f32>(mousePos.x);
+    f32 mouse_y = static_cast<f32>(mousePos.y);
 
     // Use mouse pos to check collision with start point
     // Check by checking if mouse pos falls within the start point's collider box

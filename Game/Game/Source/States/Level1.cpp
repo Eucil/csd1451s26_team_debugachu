@@ -48,10 +48,10 @@ void InitializeLevel1() {
     startEndPointSystem.Initialize();
     portalSystem.Initialize();
 
-    startEndPointSystem.SetupStartPoint({-650.0f, 400.0f}, {50.0f, 50.0f}, StartEndType::Pipe,
-                                        GoalDirection::Down);
-    startEndPointSystem.SetupEndPoint({650.0f, -400.0f}, {50.0f, 50.0f}, StartEndType::Flower,
-                                      GoalDirection::Up);
+    startEndPointSystem.SetupPoint({-650.0f, 400.0f}, {50.0f, 50.0f}, 0.0f, StartEndType::Pipe,
+                                   GoalDirection::Down);
+    startEndPointSystem.SetupPoint({650.0f, -400.0f}, {50.0f, 50.0f}, 0.0f, StartEndType::Flower,
+                                   GoalDirection::Up);
 }
 
 void UpdateLevel1(GameStateManager& GSM, f32 deltaTime) {
@@ -121,7 +121,9 @@ void UpdateLevel1(GameStateManager& GSM, f32 deltaTime) {
     startEndPointSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
     portalSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
 
-    // Terrain to fluid collision
+    // Terrain to fluid
+    //
+    //
     // CollisionSystem::terrainToFluidCollision(dirt, fluidSystem);
 
     if (startEndPointSystem.CheckWinCondition(fluidSystem.particleMaxCount)) {
