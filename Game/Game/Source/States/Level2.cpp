@@ -121,7 +121,7 @@ void UpdateLevel2(GameStateManager& GSM, f32 deltaTime) {
                                                  (randRadius)};
 
                 fluidSystem.SpawnParticle(position.x, position.y, randRadius, FluidType::Water);
-                s32 size = fluidSystem.GetParticleCount(FluidType::Water);
+                u32 size = fluidSystem.GetParticleCount(FluidType::Water);
             }
         }
     }

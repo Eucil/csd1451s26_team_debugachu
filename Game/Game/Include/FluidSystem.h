@@ -44,7 +44,7 @@ public:
     // ------------------------- Utility Methods --------------------------- //
     void SpawnParticle(f32 posX, f32 posY, f32 radius, FluidType type);
 
-    int GetParticleCount(FluidType type);
+    u32 GetParticleCount(FluidType type);
 
     std::vector<FluidParticle>& GetParticlePool(FluidType type);
 
@@ -61,9 +61,10 @@ private:
 
     void InitializeMesh();
 
-    void UpdateTransforms(std::vector<FluidParticle>& particlePool);
+    void SetTypeGraphics(AEGfxVertexList* mesh_, AEGfxTexture* texture_, u32 layer_,
+                           FluidType type);
 
-    void UpdateCollision(std::vector<FluidParticle>& particlePool, f32 dt);
+    void UpdateTransforms(std::vector<FluidParticle>& particlePool);
 
     void UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt);
 
@@ -71,6 +72,5 @@ private:
 
     void SetTypeColor(f32 r, f32 g, f32 b, f32 a, FluidType type);
 
-    void SetTypeGraphics(AEGfxVertexList* mesh_, AEGfxTexture* texture_, u32 layer_,
-                         FluidType type);
+
 };

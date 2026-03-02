@@ -132,7 +132,7 @@ void FluidSystem::SpawnParticle(f32 posX, f32 posY, f32 radius, FluidType type) 
     particlePools_[i].push_back(newParticle);
 }
 
-int FluidSystem::GetParticleCount(FluidType type) { return particlePools_[(int)type].size(); }
+u32 FluidSystem::GetParticleCount(FluidType type) { return particlePools_[(u32)type].size(); }
 
 std::vector<FluidParticle>& FluidSystem::GetParticlePool(FluidType type) {
     return particlePools_[(int)type];
@@ -143,7 +143,7 @@ void FluidSystem::InitializeMesh() {
     AEGfxVertexList* circleMesh = CreateCircleMesh(20);
 
     // Assign circle mesh to each particle type
-    for (int i{0}; i < static_cast<int>(FluidType::Count); ++i) {
+    for (int i = 0; i < static_cast<int>(FluidType::Count); ++i) {
         if (circleMesh != nullptr) {
             graphicsConfigs_[i].mesh_ = circleMesh;
         }
@@ -260,15 +260,18 @@ void FluidSystem::UpdateMain(f32 dt, Terrain& terrain) {
 
     for (int s = 0; s < subSteps; s++) {
 
-        CollisionSystem::terrainToFluidCollision(terrain, *this);
-
         for (int i = 0; i < (int)FluidType::Count; i++) {
             if (particlePools_[i].empty())
                 continue;
 
-            // 1) integrate
+            // Physicss
             UpdatePhysics(particlePools_[i], subDt);
         }
+
+        // Collision
+        CollisionSystem::terrainToFluidCollision(terrain, *this);
+
+
     }
 
     // Final per-frame updates
