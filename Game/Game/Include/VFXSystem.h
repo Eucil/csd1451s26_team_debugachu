@@ -1,5 +1,7 @@
+#pragma once
 #include "AEEngine.h"
 #include "Components.h"
+#include "Utils.h"
 #include <vector>
 enum class VFXType {
     DirtBurst,
@@ -11,6 +13,8 @@ struct VFXParticle {
 
     VFXType type_{VFXType::DirtBurst};
 
+    // since vfxparticles dont collide with one another, have no change in physics, short lifetime,
+    // they should be lightweight and thus we shouldnt use Components.h components.
     AEVec2 pos_{0.0f, 0.0f};
     AEVec2 vel_{0.0f, 0.0f};
 
@@ -26,32 +30,40 @@ struct VFXParticle {
     bool active_{false}; // Used for object pooling
 };
 
+struct EmitterConfig {
+    int spawnCount_{0}; // How many particles to spawn per burst
+    f32 minLife_{0.0f}, maxLife_{0.0f};
+    f32 minSpeed_{0.0f}, maxSpeed_{0.0f};
+    f32 minScale_{1.0f}, maxScale_{1.0f};
+    f32 r_{1.0f}, g_{1.0f}, b_{1.0f}, a_{1.0f};
+};
+
 struct ParticleEmitter {
     bool active_{false};
-    VFXType type_;
+    VFXType type_{VFXType::DirtBurst};
+    AEVec2 pos_{0.0f, 0.0f};
+    f32 emitterLifeTime_{0.0f}; // Timer for how long the emitter stays alive.
 
-    AEVec2 pos_;
-
-    // Timer for how long the emitter stays alive.
-    // (If 0, it's an instant "burst" like breaking dirt. If > 0, it's continuous like a torch).
-    f32 emitterLifeTime_{0.0f};
-
-    // Spawn rules
-    int spawnCount_{0};       // How many particles to spawn per burst
-    f32 minLife_, maxLife_;   // Randomize particle lifetimes
-    f32 minSpeed_, maxSpeed_; // Randomize explosion force
-    f32 minScale_, maxScale_;
+    EmitterConfig config_;
 };
 
 class VFXSystem {
 public:
+    f32 vfxSpawnTimer_{0.0f};
+
     void Initialize(u32 maxParticles = 800, u32 maxEmitters = 20);
 
     void Update(f32 dt);
 
     void Draw();
 
-    void SpawnVFX(AEVec2 position, int particleCount);
+    void Free();
+
+    void SetEmitterConfig(VFXType type, const EmitterConfig& config);
+
+    void SetGraphicsConfig(VFXType type, const Graphics& gfxConfig);
+
+    void SpawnVFX(VFXType type, AEVec2 position);
 
 private:
     std::vector<VFXParticle> vfxParticlePool_[static_cast<int>(VFXType::Count)];
@@ -60,15 +72,13 @@ private:
 
     Graphics graphicsConfigs_[static_cast<int>(VFXType::Count)];
 
-    // u32 activeParticleCount_{0};
+    EmitterConfig emitterConfigs_[static_cast<int>(VFXType::Count)];
 
-    void InitializeGFXConfigs();
+    void InitializeEmitter(ParticleEmitter& emitter, VFXType type, AEVec2 pos);
 
     ParticleEmitter* GetFreeEmitter();
 
     VFXParticle* GetFreeParticle(VFXType type);
 
-    // void ConfigureEmitter(ParticleEmitter& emitter, VFXType type, AEVec2 pos);
-
-    // void SpawnParticles(ParticleEmitter& emitter);
+    void SpawnParticles(ParticleEmitter& emitter);
 };

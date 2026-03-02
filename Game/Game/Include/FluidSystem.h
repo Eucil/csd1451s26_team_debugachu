@@ -53,6 +53,8 @@ private:
 
     RigidBody2D physicsConfigs_[static_cast<int>(FluidType::Count)];
 
+    void InitializeColor(f32 r, f32 g, f32 b, f32 a, FluidType type);
+
     void InitializeGraphics(AEGfxVertexList* mesh_, AEGfxTexture* texture_, u32 layer_,
                             FluidType type);
 
@@ -63,6 +65,4 @@ private:
     void UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt);
 
     void UpdatePortalIframes(f32 dt, std::vector<FluidParticle>& particlePool);
-
-    void InitializeColor(f32 r, f32 g, f32 b, f32 a, FluidType type);
 };

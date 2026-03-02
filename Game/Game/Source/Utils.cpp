@@ -1,6 +1,5 @@
-#include "AEEngine.h"
-
 #include "Utils.h"
+#include "AEEngine.h"
 
 AEGfxVertexList* CreateCircleMesh(f32 slices) {
     AEGfxMeshStart();
@@ -52,4 +51,14 @@ AEGfxVertexList* CreateRectMesh() {
 
     // Saving the rect mesh
     return AEGfxMeshEnd();
+}
+
+AEVec2 GetMouseWorldPos() {
+    s32 screenX, screenY;
+    AEInputGetCursorPosition(&screenX, &screenY);
+
+    f32 worldX = static_cast<f32>(screenX) - (AEGfxGetWindowWidth() / 2.0f);
+    f32 worldY = (AEGfxGetWindowHeight() / 2.0f) - static_cast<f32>(screenY);
+
+    return {worldX, worldY};
 }

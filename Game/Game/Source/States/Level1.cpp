@@ -11,6 +11,9 @@
 #include "PortalSystem.h"
 #include "StartEndPoint.h"
 #include "Terrain.h"
+#include "VFXSystem.h"
+
+#include "VFXConfigs.h" // <--- temporary
 
 static Terrain* dirt = nullptr;
 static Terrain* stone = nullptr;
@@ -18,8 +21,11 @@ static Terrain* stone = nullptr;
 static FluidSystem fluidSystem;
 static StartEndPoint startEndPointSystem;
 static PortalSystem portalSystem;
+static VFXSystem vfxSystem;
 
 static bool debug_mode_level1 = false;
+
+static void UpdateInputPolling(GameStateManager& GSM, f32 deltaTime);
 
 void LoadLevel1() {
     // std::cout << "Load level 1\n";
@@ -52,39 +58,15 @@ void InitializeLevel1() {
                                         GoalDirection::Down);
     startEndPointSystem.SetupEndPoint({650.0f, -400.0f}, {50.0f, 50.0f}, StartEndType::Flower,
                                       GoalDirection::Up);
+
+    vfxSystem.Initialize(800, 20);
+    LoadGlobalVFXConfigs(vfxSystem); // <-- change this to read from a json instead
 }
 
 void UpdateLevel1(GameStateManager& GSM, f32 deltaTime) {
     // std::cout << "Update level 1\n";
 
-    // Press Q to go to main menu
-    if (AEInputCheckTriggered(AEVK_Q) || 0 == AESysDoesWindowExist()) {
-        std::cout << "Q triggered\n";
-        GSM.nextState_ = StateId::MainMenu;
-    }
-
-    // Press R to restart
-    if (AEInputCheckTriggered(AEVK_R) || 0 == AESysDoesWindowExist()) {
-        std::cout << "R triggered\n";
-        GSM.nextState_ = StateId::Restart;
-    }
-
-    if (AEInputCheckTriggered(AEVK_D) || 0 == AESysDoesWindowExist()) {
-        debug_mode_level1 = !debug_mode_level1;
-    }
-
-    if (AEInputCheckCurr(AEVK_LBUTTON)) {
-        dirt->destroyAtMouse(20.0f);
-    }
-
-    if (AEInputCheckTriggered(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
-
-        startEndPointSystem.CheckMouseClick();
-
-    } else if (AEInputCheckReleased(AEVK_LBUTTON)) {
-
-        startEndPointSystem.ResetIframe();
-    }
+    UpdateInputPolling(GSM, deltaTime);
 
     for (auto& startPoint : startEndPointSystem.startPoints_) {
         if (startPoint.release_water_) {
@@ -92,7 +74,7 @@ void UpdateLevel1(GameStateManager& GSM, f32 deltaTime) {
             spawn_timer -= deltaTime;
             if (spawn_timer <= 0.0f) {
 
-                // RESET TIMER: Set this to how fast you want water to flow
+                // RESET TIMER: Set this to how fast you want water to spawn
                 // Original: 0.005f;
                 spawn_timer = 0.025f;
 
@@ -120,6 +102,8 @@ void UpdateLevel1(GameStateManager& GSM, f32 deltaTime) {
     startEndPointSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
     portalSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
 
+    vfxSystem.Update(deltaTime);
+
     // Terrain to fluid
     //
     //
@@ -143,6 +127,8 @@ void DrawLevel1() {
     if (debug_mode_level1)
         dirt->renderCollidersDebug();
     stone->renderTerrain();
+
+    vfxSystem.Draw();
 }
 
 void FreeLevel1() {
@@ -151,6 +137,7 @@ void FreeLevel1() {
     fluidSystem.Free();
     startEndPointSystem.Free();
     portalSystem.Free();
+    vfxSystem.Free();
 
     delete dirt;
     dirt = nullptr;
@@ -162,4 +149,44 @@ void UnloadLevel1() {
     // std::cout << "Unload level 1\n";
 
     Terrain::freeMeshLibrary();
+}
+
+void UpdateInputPolling(GameStateManager& GSM, f32 deltaTime) {
+    // Press Q to go to main menu
+    if (AEInputCheckTriggered(AEVK_Q) || 0 == AESysDoesWindowExist()) {
+        std::cout << "Q triggered\n";
+        GSM.nextState_ = StateId::MainMenu;
+    }
+
+    // Press R to restart
+    if (AEInputCheckTriggered(AEVK_R) || 0 == AESysDoesWindowExist()) {
+        std::cout << "R triggered\n";
+        GSM.nextState_ = StateId::Restart;
+    }
+
+    if (AEInputCheckTriggered(AEVK_D) || 0 == AESysDoesWindowExist()) {
+        debug_mode_level1 = !debug_mode_level1;
+    }
+
+    if (AEInputCheckCurr(AEVK_LBUTTON)) {
+        dirt->destroyAtMouse(20.0f);
+
+        vfxSystem.vfxSpawnTimer_ -= deltaTime;
+        if (vfxSystem.vfxSpawnTimer_ <= 0.0f) {
+
+            vfxSystem.SpawnVFX(VFXType::DirtBurst, GetMouseWorldPos());
+
+            vfxSystem.vfxSpawnTimer_ = 0.1f;
+        }
+    } else {
+        vfxSystem.vfxSpawnTimer_ = 0.0f;
+    }
+    if (AEInputCheckTriggered(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
+
+        startEndPointSystem.CheckMouseClick();
+
+    } else if (AEInputCheckReleased(AEVK_LBUTTON)) {
+
+        startEndPointSystem.ResetIframe();
+    }
 }

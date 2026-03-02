@@ -10,3 +10,5 @@ meshPtr;
 AEGfxVertexList* CreateCircleMesh(f32 slices);
 
 AEGfxVertexList* CreateRectMesh();
+
+AEVec2 GetMouseWorldPos();
