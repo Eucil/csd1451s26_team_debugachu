@@ -11,13 +11,15 @@ Collider2D Terrain::colliderLibrary_[16][3]{}; // There are 16 possible collider
 AEGfxVertexList* Terrain::debugTriMesh_{nullptr};
 AEGfxVertexList* Terrain::debugBoxMesh_{nullptr};
 
-Terrain::Terrain(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows, u32 cellCols,
-                 u32 cellSize)
+Terrain::Terrain(TerrainMaterial terrainMaterial, AEGfxTexture* pTex, AEVec2 centerPosition,
+                 u32 cellRows, u32 cellCols, u32 cellSize)
     : terrainMaterial_(terrainMaterial), kCellRows_(cellRows), kCellCols_(cellCols),
       kCellSize_(cellSize), kNodeRows_(kCellRows_ + 1), kNodeCols_(kCellCols_ + 1),
       cells_(kCellRows_ * kCellCols_), nodes_(kNodeRows_ * kNodeCols_) {
 
     transform_.pos_ = centerPosition;
+
+    graphics_.texture_ = pTex;
 
     // Random generator
     std::random_device rd;
@@ -135,11 +137,13 @@ void Terrain::buildAtMouse(f32 radius) {
 }
 
 void Terrain::renderTerrain() {
-    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
     AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(1.0f);
 
+    /*
     // Set the color of the cell
     if (terrainMaterial_ == TerrainMaterial::Dirt) {
         AEGfxSetColorToMultiply(0.59f, 0.39f, 0.29f, 1.0f);
@@ -155,14 +159,35 @@ void Terrain::renderTerrain() {
         AEGfxTextureSet(cell.graphics_.texture_, 0.0f, 0.0f);
         AEGfxMeshDraw(cell.graphics_.mesh_, AE_GFX_MDM_TRIANGLES);
     }
+    */
+
+    for (u32 y{0}; y < kCellRows_; ++y) {
+        for (u32 x{0}; x < kCellCols_; ++x) {
+            Cell& cell{cells_[y * kCellCols_ + x]};
+
+            AEGfxSetTransform(cell.transform_.worldMtx_.m);
+            AEGfxTextureSet(graphics_.texture_, x * (1.0f / 16.0f), y * -(1.0f / 16.0f));
+            AEGfxMeshDraw(cell.graphics_.mesh_, AE_GFX_MDM_TRIANGLES);
+        }
+    }
 }
 
 void Terrain::createMeshLibrary() {
-    // Corners
+    // Corners (Positions)
     constexpr f32 xLeft{-0.5f}, xRight{0.5f}, yBottom{-0.5f}, yTop{0.5f};
 
-    // Midpoints
+    // Corners (Texture coordinates)
+    constexpr f32 xTexLeft{xLeft * (1.0f / 16.0f) + (1 / 16.0f * 2.0f)};
+    constexpr f32 xTexRight{xRight * (1.0f / 16.0f) + (1 / 16.0f * 2.0f)};
+    constexpr f32 yTexBottom{yBottom * -(1.0f / 16.0f) + (1 / 16.0f * 2.0f)};
+    constexpr f32 yTexTop{yTop * -(1.0f / 16.0f) + (1 / 16.0f * 2.0f)};
+
+    // Midpoints (Positions)
     constexpr f32 xMiddle{0.0f}, yMiddle{0.0f};
+
+    // Midpoints (Texture coordinates)
+    constexpr f32 xTexMiddle{xMiddle * (1.0f / 16.0f) + (1 / 16.0f * 2.0f)};
+    constexpr f32 yTexMiddle{yMiddle * -(1.0f / 16.0f) + (1 / 16.0f * 2.0f)};
 
     u32 color{0xFFFFFFFF};
 
@@ -173,108 +198,108 @@ void Terrain::createMeshLibrary() {
             break; // Empty
 
         case 1: // BL
-            AEGfxTriAdd(xLeft, yBottom, color, 0, 0, xMiddle, yBottom, color, 0, 0, xLeft, yMiddle,
-                        color, 0, 0);
+            AEGfxTriAdd(xLeft, yBottom, color, xTexLeft, yTexBottom, xMiddle, yBottom, color,
+                        xTexMiddle, yTexBottom, xLeft, yMiddle, color, xTexLeft, yTexMiddle);
             break;
 
         case 2: // BR
-            AEGfxTriAdd(xRight, yBottom, color, 0, 0, xRight, yMiddle, color, 0, 0, xMiddle,
-                        yBottom, color, 0, 0);
+            AEGfxTriAdd(xRight, yBottom, color, xTexRight, yTexBottom, xRight, yMiddle, color,
+                        xTexRight, yTexMiddle, xMiddle, yBottom, color, xTexMiddle, yTexBottom);
             break;
 
         case 3: // BL and BR (Bottom rectangle)
-            AEGfxTriAdd(xLeft, yBottom, color, 0, 0, xRight, yBottom, color, 0, 0, xLeft, yMiddle,
-                        color, 0, 0);
-            AEGfxTriAdd(xRight, yBottom, color, 0, 0, xRight, yMiddle, color, 0, 0, xLeft, yMiddle,
-                        color, 0, 0);
+            AEGfxTriAdd(xLeft, yBottom, color, xTexLeft, yTexBottom, xRight, yBottom, color,
+                        xTexRight, yTexBottom, xLeft, yMiddle, color, xTexLeft, yTexMiddle);
+            AEGfxTriAdd(xRight, yBottom, color, xTexRight, yTexBottom, xRight, yMiddle, color,
+                        xTexRight, yTexMiddle, xLeft, yMiddle, color, xTexLeft, yTexMiddle);
             break;
 
         case 4: // TR
-            AEGfxTriAdd(xRight, yTop, color, 0, 0, xMiddle, yTop, color, 0, 0, xRight, yMiddle,
-                        color, 0, 0);
+            AEGfxTriAdd(xRight, yTop, color, xTexRight, yTexTop, xMiddle, yTop, color, xTexMiddle,
+                        yTexTop, xRight, yMiddle, color, xTexRight, yTexMiddle);
             break;
 
         case 5: // BL and TR
-            AEGfxTriAdd(xLeft, yBottom, color, 0, 0, xMiddle, yBottom, color, 0, 0, xLeft, yMiddle,
-                        color, 0, 0);
-            AEGfxTriAdd(xRight, yTop, color, 0, 0, xMiddle, yTop, color, 0, 0, xRight, yMiddle,
-                        color, 0, 0);
+            AEGfxTriAdd(xLeft, yBottom, color, xTexLeft, yTexBottom, xMiddle, yBottom, color,
+                        xTexMiddle, yTexBottom, xLeft, yMiddle, color, xTexLeft, yTexMiddle);
+            AEGfxTriAdd(xRight, yTop, color, xTexRight, yTexTop, xMiddle, yTop, color, xTexMiddle,
+                        yTexTop, xRight, yMiddle, color, xTexRight, yTexMiddle);
             break;
 
         case 6: // BR and TR (Right rectangle)
-            AEGfxTriAdd(xMiddle, yBottom, color, 0, 0, xRight, yBottom, color, 0, 0, xMiddle, yTop,
-                        color, 0, 0);
-            AEGfxTriAdd(xRight, yBottom, color, 0, 0, xRight, yTop, color, 0, 0, xMiddle, yTop,
-                        color, 0, 0);
+            AEGfxTriAdd(xMiddle, yBottom, color, xTexMiddle, yTexBottom, xRight, yBottom, color,
+                        xTexRight, yTexBottom, xMiddle, yTop, color, xTexMiddle, yTexTop);
+            AEGfxTriAdd(xRight, yBottom, color, xTexRight, yTexBottom, xRight, yTop, color,
+                        xTexRight, yTexTop, xMiddle, yTop, color, xTexMiddle, yTexTop);
             break;
 
         case 7: // BL, BR, and TR
-            AEGfxTriAdd(xLeft, yBottom, color, 0, 0, xRight, yBottom, color, 0, 0, xLeft, yMiddle,
-                        color, 0, 0);
-            AEGfxTriAdd(xRight, yBottom, color, 0, 0, xRight, yTop, color, 0, 0, xLeft, yMiddle,
-                        color, 0, 0);
-            AEGfxTriAdd(xRight, yTop, color, 0, 0, xMiddle, yTop, color, 0, 0, xLeft, yMiddle,
-                        color, 0, 0);
+            AEGfxTriAdd(xLeft, yBottom, color, xTexLeft, yTexBottom, xRight, yBottom, color,
+                        xTexRight, yTexBottom, xLeft, yMiddle, color, xTexLeft, yTexMiddle);
+            AEGfxTriAdd(xRight, yBottom, color, xTexRight, yTexBottom, xRight, yTop, color,
+                        xTexRight, yTexTop, xLeft, yMiddle, color, xTexLeft, yTexMiddle);
+            AEGfxTriAdd(xRight, yTop, color, xTexRight, yTexTop, xMiddle, yTop, color, xTexMiddle,
+                        yTexTop, xLeft, yMiddle, color, xTexLeft, yTexMiddle);
             break;
 
         case 8: // TL
-            AEGfxTriAdd(xLeft, yTop, color, 0, 0, xLeft, yMiddle, color, 0, 0, xMiddle, yTop, color,
-                        0, 0);
+            AEGfxTriAdd(xLeft, yTop, color, xTexLeft, yTexTop, xLeft, yMiddle, color, xTexLeft,
+                        yTexMiddle, xMiddle, yTop, color, xTexMiddle, yTexTop);
             break;
 
         case 9: // BL and TL (Left rectangle)
-            AEGfxTriAdd(xLeft, yBottom, color, 0, 0, xMiddle, yBottom, color, 0, 0, xLeft, yTop,
-                        color, 0, 0);
-            AEGfxTriAdd(xMiddle, yBottom, color, 0, 0, xMiddle, yTop, color, 0, 0, xLeft, yTop,
-                        color, 0, 0);
+            AEGfxTriAdd(xLeft, yBottom, color, xTexLeft, yTexBottom, xMiddle, yBottom, color,
+                        xTexMiddle, yTexBottom, xLeft, yTop, color, xTexLeft, yTexTop);
+            AEGfxTriAdd(xMiddle, yBottom, color, xTexMiddle, yTexBottom, xMiddle, yTop, color,
+                        xTexMiddle, yTexTop, xLeft, yTop, color, xTexLeft, yTexTop);
             break;
 
         case 10: // BR and TL
-            AEGfxTriAdd(xRight, yBottom, color, 0, 0, xRight, yMiddle, color, 0, 0, xMiddle,
-                        yBottom, color, 0, 0);
-            AEGfxTriAdd(xLeft, yTop, color, 0, 0, xLeft, yMiddle, color, 0, 0, xMiddle, yTop, color,
-                        0, 0);
+            AEGfxTriAdd(xRight, yBottom, color, xTexRight, yTexBottom, xRight, yMiddle, color,
+                        xTexRight, yTexMiddle, xMiddle, yBottom, color, xTexMiddle, yTexBottom);
+            AEGfxTriAdd(xLeft, yTop, color, xTexLeft, yTexTop, xLeft, yMiddle, color, xTexLeft,
+                        yTexMiddle, xMiddle, yTop, color, xTexMiddle, yTexTop);
             break;
 
         case 11: // BL, BR, and TL
-            AEGfxTriAdd(xLeft, yBottom, color, 0, 0, xRight, yBottom, color, 0, 0, xLeft, yTop,
-                        color, 0, 0);
-            AEGfxTriAdd(xRight, yBottom, color, 0, 0, xRight, yMiddle, color, 0, 0, xLeft, yTop,
-                        color, 0, 0);
-            AEGfxTriAdd(xRight, yMiddle, color, 0, 0, xMiddle, yTop, color, 0, 0, xLeft, yTop,
-                        color, 0, 0);
+            AEGfxTriAdd(xLeft, yBottom, color, xTexLeft, yTexBottom, xRight, yBottom, color,
+                        xTexRight, yTexBottom, xLeft, yTop, color, xTexLeft, yTexTop);
+            AEGfxTriAdd(xRight, yBottom, color, xTexRight, yTexBottom, xRight, yMiddle, color,
+                        xTexRight, yTexMiddle, xLeft, yTop, color, xTexLeft, yTexTop);
+            AEGfxTriAdd(xRight, yMiddle, color, xTexRight, yTexMiddle, xMiddle, yTop, color,
+                        xTexMiddle, yTexTop, xLeft, yTop, color, xTexLeft, yTexTop);
             break;
 
         case 12: // TR and TL (Top rectangle)
-            AEGfxTriAdd(xLeft, yMiddle, color, 0, 0, xRight, yMiddle, color, 0, 0, xLeft, yTop,
-                        color, 0, 0);
-            AEGfxTriAdd(xRight, yMiddle, color, 0, 0, xRight, yTop, color, 0, 0, xLeft, yTop, color,
-                        0, 0);
+            AEGfxTriAdd(xLeft, yMiddle, color, xTexLeft, yTexMiddle, xRight, yMiddle, color,
+                        xTexRight, yTexMiddle, xLeft, yTop, color, xTexLeft, yTexTop);
+            AEGfxTriAdd(xRight, yMiddle, color, xTexRight, yTexMiddle, xRight, yTop, color,
+                        xTexRight, yTexTop, xLeft, yTop, color, xTexLeft, yTexTop);
             break;
 
         case 13: // BL, TR, and TL
-            AEGfxTriAdd(xLeft, yBottom, color, 0, 0, xMiddle, yBottom, color, 0, 0, xLeft, yTop,
-                        color, 0, 0);
-            AEGfxTriAdd(xMiddle, yBottom, color, 0, 0, xRight, yMiddle, color, 0, 0, xLeft, yTop,
-                        color, 0, 0);
-            AEGfxTriAdd(xRight, yMiddle, color, 0, 0, xRight, yTop, color, 0, 0, xLeft, yTop, color,
-                        0, 0);
+            AEGfxTriAdd(xLeft, yBottom, color, xTexLeft, yTexBottom, xMiddle, yBottom, color,
+                        xTexMiddle, yTexBottom, xLeft, yTop, color, xTexLeft, yTexTop);
+            AEGfxTriAdd(xMiddle, yBottom, color, xTexMiddle, yTexBottom, xRight, yMiddle, color,
+                        xTexRight, yTexMiddle, xLeft, yTop, color, xTexLeft, yTexTop);
+            AEGfxTriAdd(xRight, yMiddle, color, xTexRight, yTexMiddle, xRight, yTop, color,
+                        xTexRight, yTexTop, xLeft, yTop, color, xTexLeft, yTexTop);
             break;
 
         case 14: // BR, TR, and TL
-            AEGfxTriAdd(xMiddle, yBottom, color, 0, 0, xRight, yBottom, color, 0, 0, xLeft, yMiddle,
-                        color, 0, 0);
-            AEGfxTriAdd(xRight, yBottom, color, 0, 0, xRight, yTop, color, 0, 0, xLeft, yMiddle,
-                        color, 0, 0);
-            AEGfxTriAdd(xRight, yTop, color, 0, 0, xLeft, yTop, color, 0, 0, xLeft, yMiddle, color,
-                        0, 0);
+            AEGfxTriAdd(xMiddle, yBottom, color, xTexMiddle, yTexBottom, xRight, yBottom, color,
+                        xTexRight, yTexBottom, xLeft, yMiddle, color, xTexLeft, yTexMiddle);
+            AEGfxTriAdd(xRight, yBottom, color, xTexRight, yTexBottom, xRight, yTop, color,
+                        xTexRight, yTexTop, xLeft, yMiddle, color, xTexLeft, yTexMiddle);
+            AEGfxTriAdd(xRight, yTop, color, xTexRight, yTexTop, xLeft, yTop, color, xTexLeft,
+                        yTexTop, xLeft, yMiddle, color, xTexLeft, yTexMiddle);
             break;
 
         case 15: // Full square
-            AEGfxTriAdd(xLeft, yBottom, color, 0, 0, xRight, yBottom, color, 0, 0, xLeft, yTop,
-                        color, 0, 0);
-            AEGfxTriAdd(xRight, yBottom, color, 0, 0, xRight, yTop, color, 0, 0, xLeft, yTop, color,
-                        0, 0);
+            AEGfxTriAdd(xLeft, yBottom, color, xTexLeft, yTexBottom, xRight, yBottom, color,
+                        xTexRight, yTexBottom, xLeft, yTop, color, xTexLeft, yTexTop);
+            AEGfxTriAdd(xRight, yBottom, color, xTexRight, yTexBottom, xRight, yTop, color,
+                        xTexRight, yTexTop, xLeft, yTop, color, xTexLeft, yTexTop);
             break;
         }
         meshLibrary_[i] = AEGfxMeshEnd();
@@ -651,9 +676,9 @@ void Terrain::renderCollidersDebug() const {
     AEGfxSetTransparency(1.0f);
 }
 
-Terrain* Terrain::Level1Dirt(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
-                             u32 cellCols, u32 cellSize) {
-    Terrain* t = new Terrain(terrainMaterial, centerPosition, cellRows, cellCols, cellSize);
+Terrain* Terrain::Level1Dirt(TerrainMaterial terrainMaterial, AEGfxTexture* pTex,
+                             AEVec2 centerPosition, u32 cellRows, u32 cellCols, u32 cellSize) {
+    Terrain* t = new Terrain(terrainMaterial, pTex, centerPosition, cellRows, cellCols, cellSize);
 
     // Fill everything with dirt
     for (u32 r = 0; r < t->kNodeRows_; ++r) {
@@ -690,9 +715,9 @@ Terrain* Terrain::Level1Dirt(TerrainMaterial terrainMaterial, AEVec2 centerPosit
     return t;
 }
 
-Terrain* Terrain::Level1Stone(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
-                              u32 cellCols, u32 cellSize) {
-    Terrain* t = new Terrain(terrainMaterial, centerPosition, cellRows, cellCols, cellSize);
+Terrain* Terrain::Level1Stone(TerrainMaterial terrainMaterial, AEGfxTexture* pTex,
+                              AEVec2 centerPosition, u32 cellRows, u32 cellCols, u32 cellSize) {
+    Terrain* t = new Terrain(terrainMaterial, pTex, centerPosition, cellRows, cellCols, cellSize);
 
     const u32 borderCells = 3;
 
@@ -715,9 +740,9 @@ Terrain* Terrain::Level1Stone(TerrainMaterial terrainMaterial, AEVec2 centerPosi
     return t;
 }
 
-Terrain* Terrain::Level2Dirt(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
-                             u32 cellCols, u32 cellSize) {
-    Terrain* t = new Terrain(terrainMaterial, centerPosition, cellRows, cellCols, cellSize);
+Terrain* Terrain::Level2Dirt(TerrainMaterial terrainMaterial, AEGfxTexture* pTex,
+                             AEVec2 centerPosition, u32 cellRows, u32 cellCols, u32 cellSize) {
+    Terrain* t = new Terrain(terrainMaterial, pTex, centerPosition, cellRows, cellCols, cellSize);
 
     // Fill everything with dirt
     for (u32 r = 0; r < t->kNodeRows_; ++r) {
@@ -754,9 +779,9 @@ Terrain* Terrain::Level2Dirt(TerrainMaterial terrainMaterial, AEVec2 centerPosit
     return t;
 }
 
-Terrain* Terrain::Level2Stone(TerrainMaterial terrainMaterial, AEVec2 centerPosition, u32 cellRows,
-                              u32 cellCols, u32 cellSize) {
-    Terrain* t = new Terrain(terrainMaterial, centerPosition, cellRows, cellCols, cellSize);
+Terrain* Terrain::Level2Stone(TerrainMaterial terrainMaterial, AEGfxTexture* pTex,
+                              AEVec2 centerPosition, u32 cellRows, u32 cellCols, u32 cellSize) {
+    Terrain* t = new Terrain(terrainMaterial, pTex, centerPosition, cellRows, cellCols, cellSize);
 
     const u32 borderCells = 3;
     const u32 centerRows = 3; // thickness of center stone band (rows)

@@ -17,6 +17,8 @@
 
 static Terrain* dirt = nullptr;
 static Terrain* stone = nullptr;
+static AEGfxTexture* pTerrainDirtTex{nullptr};
+static AEGfxTexture* pTerrainStoneTex{nullptr};
 
 static FluidSystem fluidSystem;
 static StartEndPoint startEndPointSystem;
@@ -30,6 +32,9 @@ void LoadLevel2() {
     Terrain::createMeshLibrary();
     Terrain::createColliderLibrary();
 
+    pTerrainDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
+    pTerrainStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
+
     // Setup texts
     rotationText = Text(0.7f, 0.9f, "");
     font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 12);
@@ -37,8 +42,9 @@ void LoadLevel2() {
 
 void InitializeLevel2() {
     // std::cout << "Initialize level 2\n";
-    dirt = Terrain::Level2Dirt(TerrainMaterial::Dirt, {0.0f, 0.0f}, 45, 80, 20);
-    stone = Terrain::Level2Stone(TerrainMaterial::Stone, {0.0f, 0.0f}, 45, 80, 20);
+    dirt = Terrain::Level2Dirt(TerrainMaterial::Dirt, pTerrainDirtTex, {0.0f, 0.0f}, 45, 80, 20);
+    stone =
+        Terrain::Level2Stone(TerrainMaterial::Stone, pTerrainStoneTex, {0.0f, 0.0f}, 45, 80, 20);
 
     dirt->initCellsTransform();
     dirt->initCellsGraphics();
