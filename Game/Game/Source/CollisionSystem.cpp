@@ -206,6 +206,11 @@ bool CollisionSystem::resolveCircleVsTriangle(const AEVec2& circleCenter, f32 ra
 
         closest = (d0 < d1) ? ((d0 < d2) ? c0 : c2) : ((d1 < d2) ? c1 : c2);
     }
+    // We need this else statement in the event where the particle gets stuck inside the terrain,
+    // causing the normalVec to default to (0,1), causing it to go upwards when the closest exit is
+    // on the right.
+    else {
+    }
 
     const AEVec2 d = vSub(circleCenter, closest);
     const f32 distSq = vLenSq(d);
