@@ -16,7 +16,7 @@ struct VFXParticle {
 
     f32 scale_{1.0f};
     f32 rotationRad_{0.0f};
-    f32 rotationSpeed_{0.0f}; 
+    f32 rotationSpeed_{0.0f};
 
     f32 r_{1.0f}, g_{1.0f}, b_{1.0f}, a_{1.0f};
 
@@ -51,17 +51,16 @@ public:
 
     void Draw();
 
-    void SpawnExplosion(AEVec2 position, int particleCount);
+    void SpawnVFX(AEVec2 position, int particleCount);
 
 private:
-
     std::vector<VFXParticle> vfxParticlePool_[static_cast<int>(VFXType::Count)];
 
     std::vector<ParticleEmitter> vfxEmitters_;
 
     Graphics graphicsConfigs_[static_cast<int>(VFXType::Count)];
 
-    //u32 activeParticleCount_{0};
+    // u32 activeParticleCount_{0};
 
     void InitializeGFXConfigs();
 
@@ -69,8 +68,7 @@ private:
 
     VFXParticle* GetFreeParticle(VFXType type);
 
-    void ConfigureEmitter(ParticleEmitter& emitter, VFXType type, AEVec2 pos);
+    // void ConfigureEmitter(ParticleEmitter& emitter, VFXType type, AEVec2 pos);
 
-    void SpawnParticles(ParticleEmitter& emitter);
-
+    // void SpawnParticles(ParticleEmitter& emitter);
 };
