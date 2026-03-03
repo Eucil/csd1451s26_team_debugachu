@@ -33,16 +33,10 @@
     <ClCompile Include="Source\States\MainMenu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\States\Level1.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Source\FluidSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\States\Level2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Terrain.cpp">
@@ -60,7 +54,10 @@
     <ClCompile Include="Source\States\LevelManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\States\Level3.cpp">
+    <ClCompile Include="Source\States\Level.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\States\LevelSelector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -79,9 +76,6 @@
     <ClInclude Include="Include\States\MainMenu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\States\Level1.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Components.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -89,9 +83,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\Utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\States\Level2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\Terrain.h">
@@ -112,7 +103,10 @@
     <ClInclude Include="Include\States\LevelManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\States\Level3.h">
+    <ClInclude Include="Include\States\Level.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\States\LevelSelector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

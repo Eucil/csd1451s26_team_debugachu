@@ -33,7 +33,7 @@ static s8 font;
 static int height, width, tileSize;
 static bool fileExist;
 
-void LoadLevel3() {
+void LoadLevel() {
     // std::cout << "Load level 3\n";
     Terrain::createMeshLibrary();
     Terrain::createColliderLibrary();
@@ -47,7 +47,7 @@ void LoadLevel3() {
 
     levelManager.initEditorUI();
 
-    if (levelManager.getLevelData(3)) {
+    if (levelManager.getLevelData(levelManager.getCurrentLevel())) {
         levelManager.parseMapInfo(width, height, tileSize);
         fileExist = true;
     } else {
@@ -60,7 +60,7 @@ void LoadLevel3() {
     }
 }
 
-void InitializeLevel3() {
+void InitializeLevel() {
     // std::cout << "Initialize level 3\n";
     fluidSystem.Initialize();
     startEndPointSystem.Initialize();
@@ -90,7 +90,7 @@ void InitializeLevel3() {
     stone->updateTerrain();
 }
 
-void UpdateLevel3(GameStateManager& GSM, f32 deltaTime) {
+void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
     // std::cout << "Update level 3\n";
 
     // Press Q to go to main menu
@@ -151,7 +151,7 @@ void UpdateLevel3(GameStateManager& GSM, f32 deltaTime) {
             levelManager.saveTerrainInfo(stone->getNodes(), "Stone");
             levelManager.saveStartEndInfo(startEndPointSystem.startPoints_,
                                           startEndPointSystem.endPoint_);
-            levelManager.writeToFile(3);
+            levelManager.writeToFile(levelManager.getCurrentLevel());
         }
 
     } else {
@@ -221,7 +221,7 @@ void UpdateLevel3(GameStateManager& GSM, f32 deltaTime) {
     }
 }
 
-void DrawLevel3() {
+void DrawLevel() {
     // std::cout << "Draw level 2\n";
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
@@ -259,7 +259,7 @@ void DrawLevel3() {
                1.f);
 }
 
-void FreeLevel3() {
+void FreeLevel() {
     // std::cout << "Free level 2\n";
     fluidSystem.Free();
     startEndPointSystem.Free();
@@ -271,7 +271,7 @@ void FreeLevel3() {
     stone = nullptr;
 }
 
-void UnloadLevel3() {
+void UnloadLevel() {
     // std::cout << "Unload level 2\n";
     Terrain::freeMeshLibrary();
     AEGfxDestroyFont(font);

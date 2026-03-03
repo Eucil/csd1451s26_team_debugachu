@@ -8,7 +8,7 @@
 #include <json/json.h>
 #include <vector>
 
-enum class Level { Level1, Level2, Level3, None };
+enum class Level { Level1, Level2, Level3, Level4, Level5, Level6, Level7, Level8, None };
 
 enum class GameBlock { Dirt, Stone, StartPoint, EndPoint, None };
 

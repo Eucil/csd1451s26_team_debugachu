@@ -15,10 +15,8 @@
     <ClCompile Include="Source\FluidSystem.cpp" />
     <ClCompile Include="Source\PortalSystem.cpp" />
     <ClCompile Include="Source\StartEndPoint.cpp" />
-    <ClCompile Include="Source\States\Level1.cpp" />
     <ClCompile Include="Source\Main.cpp" />
-    <ClCompile Include="Source\States\Level2.cpp" />
-    <ClCompile Include="Source\States\Level3.cpp" />
+    <ClCompile Include="Source\States\Level.cpp" />
     <ClCompile Include="Source\States\LevelManager.cpp" />
     <ClCompile Include="Source\States\LevelSelector.cpp" />
     <ClCompile Include="Source\States\MainMenu.cpp" />
@@ -36,9 +34,7 @@
     <ClInclude Include="Include\GameStateManager.h" />
     <ClInclude Include="Include\PortalSystem.h" />
     <ClInclude Include="Include\StartEndPoint.h" />
-    <ClInclude Include="Include\States\Level1.h" />
-    <ClInclude Include="Include\States\Level2.h" />
-    <ClInclude Include="Include\States\Level3.h" />
+    <ClInclude Include="Include\States\Level.h" />
     <ClInclude Include="Include\States\LevelManager.h" />
     <ClInclude Include="Include\States\LevelSelector.h" />
     <ClInclude Include="Include\States\MainMenu.h" />

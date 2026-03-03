@@ -12,6 +12,7 @@ static s8 font;
 
 static std::vector<Button> buttonPool;
 static std::vector<Text> textPool;
+static Text titleText = Text(-0.4f, 0.8f, "SELECT LEVEL");
 
 void LoadLevelSelector() {
     // Todo
@@ -22,9 +23,14 @@ void LoadLevelSelector() {
     f32 x_offset = 0.025f;
     f32 y_offset = 0.05f;
 
-    for (int i{}; i < static_cast<int>(Level::None); ++i) {
+    for (int i{}, x{}, y{}; i < static_cast<int>(Level::None); ++i, ++x) {
         // Push back button and text
-        Button tempButton = Button(AEVec2{-600.f + (300.f * i), 200.0f}, AEVec2{200.0f, 150.0f});
+        if (i % 4 == 0 && i != 0) {
+            y++;
+            x = 0;
+        }
+        Button tempButton =
+            Button(AEVec2{-600.f + (400.f * x), 200.0f - (200.f * y)}, AEVec2{200.0f, 150.0f});
         tempButton.SetupMesh();
         buttonPool.push_back(tempButton);
         Text tempText =
@@ -58,9 +64,18 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
         levelManager.setLevelEditorMode();
         if (levelManager.getLevelEditorMode()) {
             std::cout << "Level editor mode enabled\n";
+            titleText.text_ = "LEVEL EDITOR MODE";
         } else {
             std::cout << "Level editor mode disabled\n";
+            titleText.text_ = "SELECT LEVEL";
         }
+    }
+
+    if (AEInputCheckTriggered(AEVK_C) || 0 == AESysDoesWindowExist()) {
+        // Add level creation logic here
+    }
+    if (AEInputCheckTriggered(AEVK_D) || 0 == AESysDoesWindowExist()) {
+        // Add level deletion logic here
     }
 
     if (AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
@@ -71,7 +86,7 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
                 (levelManager.playableLevels[i] || levelManager.getLevelEditorMode())) {
                 std::cout << "Level " << (i + 1) << " button clicked\n";
                 levelManager.SetCurrentLevel(i + 1);
-                GSM.nextState_ = static_cast<StateId>(static_cast<int>(StateId::Level1) + i);
+                GSM.nextState_ = StateId::Level;
                 break;
             }
         }
@@ -95,6 +110,9 @@ void DrawLevelSelector() {
         const char* textStr = textPool[i].text_.c_str();
         AEGfxPrint(font, textStr, textPool[i].pos_x_, textPool[i].pos_y_, 1.f, 1.f, 1.f, 1.f, 1.f);
     }
+
+    const char* titleStr = titleText.text_.c_str();
+    AEGfxPrint(font, titleStr, titleText.pos_x_, titleText.pos_y_, 1.f, 1.f, 1.f, 1.f, 1.f);
 }
 
 void FreeLevelSelector() {

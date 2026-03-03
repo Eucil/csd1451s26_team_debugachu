@@ -312,6 +312,12 @@ bool LevelManager::getLevelData(int level) {
     std::ifstream file(filePath);
     if (!file.is_open()) {
         std::cout << "Failed to open file: " << filePath << "\n";
+        // Make directory and file if they don't exist
+        if (makeFilePath(level) && makeLevelFile(level)) {
+            std::cout << "Created missing directory and file for level " << level << "\n";
+        } else {
+            std::cout << "Failed to create missing directory and file for level " << level << "\n";
+        }
         return false;
     }
 

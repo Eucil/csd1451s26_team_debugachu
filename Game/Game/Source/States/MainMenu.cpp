@@ -71,16 +71,6 @@ void InitializeMainMenu() {
 
 void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
     // Keep keyboard shortcuts for development/testing
-    if (AEInputCheckTriggered(AEVK_1) || 0 == AESysDoesWindowExist()) {
-        std::cout << "1 triggered - Going to Level 1\n";
-        GSM.nextState_ = StateId::Level1;
-    }
-
-    if (AEInputCheckTriggered(AEVK_2) || 0 == AESysDoesWindowExist()) {
-        std::cout << "2 triggered - Going to Level 2\n";
-        GSM.nextState_ = StateId::Level2;
-    }
-
     if (AEInputCheckTriggered(AEVK_R) || 0 == AESysDoesWindowExist()) {
         std::cout << "R triggered - Restart\n";
         GSM.nextState_ = StateId::Restart;

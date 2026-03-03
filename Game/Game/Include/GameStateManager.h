@@ -2,13 +2,11 @@
 
 #include <AEEngine.h>
 
-#include "States/Level1.h"
-#include "States/Level2.h"
-#include "States/Level3.h"
+#include "States/Level.h"
 #include "States/LevelSelector.h"
 #include "States/MainMenu.h"
 
-enum class StateId { Quit, Next, Restart, MainMenu, LevelSelector, Level1, Level2, Level3 };
+enum class StateId { Quit, Next, Restart, MainMenu, LevelSelector, Level };
 
 class GameState {
 public:
@@ -48,29 +46,13 @@ public:
             fpFree_ = FreeLevelSelector;
             fpUnload_ = UnloadLevelSelector;
             break;
-        case StateId::Level1:
-            fpLoad_ = LoadLevel1;
-            fpInitialize_ = InitializeLevel1;
-            fpUpdate_ = UpdateLevel1;
-            fpDraw_ = DrawLevel1;
-            fpFree_ = FreeLevel1;
-            fpUnload_ = UnloadLevel1;
-            break;
-        case StateId::Level2:
-            fpLoad_ = LoadLevel2;
-            fpInitialize_ = InitializeLevel2;
-            fpUpdate_ = UpdateLevel2;
-            fpDraw_ = DrawLevel2;
-            fpFree_ = FreeLevel2;
-            fpUnload_ = UnloadLevel2;
-            break;
-        case StateId::Level3:
-            fpLoad_ = LoadLevel3;
-            fpInitialize_ = InitializeLevel3;
-            fpUpdate_ = UpdateLevel3;
-            fpDraw_ = DrawLevel3;
-            fpFree_ = FreeLevel3;
-            fpUnload_ = UnloadLevel3;
+        case StateId::Level:
+            fpLoad_ = LoadLevel;
+            fpInitialize_ = InitializeLevel;
+            fpUpdate_ = UpdateLevel;
+            fpDraw_ = DrawLevel;
+            fpFree_ = FreeLevel;
+            fpUnload_ = UnloadLevel;
             break;
         }
     }
