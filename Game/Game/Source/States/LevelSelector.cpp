@@ -14,6 +14,12 @@ static std::vector<Button> buttonPool;
 static std::vector<Text> textPool;
 static Text titleText = Text(-0.4f, 0.8f, "SELECT LEVEL");
 
+static bool creatingLevel = false;
+static f32 width{}, height{}, tileSize{};
+static int confirmInput{}, levelInput{};
+static std::string inputStr;
+static Text inputPrompt = Text(-0.4f, -0.8f, "Width:");
+
 void LoadLevelSelector() {
     // Todo
     // std::cout << "Load Level Selector\n";
@@ -44,10 +50,10 @@ void InitializeLevelSelector() {
     // Todo
     // std::cout << "Initialize Level Selector\n";
     levelManager.init();
-    std::cout << "Level Editor Mode: " << (levelManager.getLevelEditorMode() ? "ON" : "OFF")
-              << "\n";
 
     levelManager.checkLevelData();
+
+    titleText.text_ = "SELECT LEVEL";
 }
 
 void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
@@ -60,35 +66,123 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
         GSM.nextState_ = StateId::Restart;
     }
 
-    if (AEInputCheckTriggered(AEVK_E) || 0 == AESysDoesWindowExist()) {
-        levelManager.setLevelEditorMode();
-        if (levelManager.getLevelEditorMode()) {
-            std::cout << "Level editor mode enabled\n";
-            titleText.text_ = "LEVEL EDITOR MODE";
-        } else {
+    if ((AEInputCheckTriggered(AEVK_E) || 0 == AESysDoesWindowExist()) && !creatingLevel) {
+        if (levelManager.getLevelEditorMode() == editorMode::Edit) {
+            levelManager.setLevelEditorMode(editorMode::None);
             std::cout << "Level editor mode disabled\n";
             titleText.text_ = "SELECT LEVEL";
+        } else {
+            levelManager.setLevelEditorMode(editorMode::Edit);
+            std::cout << "Level editor mode enabled\n";
+            titleText.text_ = "LEVEL EDITOR MODE";
         }
     }
 
-    if (AEInputCheckTriggered(AEVK_C) || 0 == AESysDoesWindowExist()) {
-        // Add level creation logic here
+    if ((AEInputCheckTriggered(AEVK_C) || 0 == AESysDoesWindowExist()) && !creatingLevel) {
+        if (levelManager.getLevelEditorMode() == editorMode::Create) {
+            levelManager.setLevelEditorMode(editorMode::None);
+            std::cout << "Create level mode disabled\n";
+            titleText.text_ = "SELECT LEVEL";
+        } else {
+            levelManager.setLevelEditorMode(editorMode::Create);
+            std::cout << "Create level mode enabled\n";
+            titleText.text_ = "CREATE LEVEL";
+        }
     }
-    if (AEInputCheckTriggered(AEVK_D) || 0 == AESysDoesWindowExist()) {
+    if ((AEInputCheckTriggered(AEVK_D) || 0 == AESysDoesWindowExist()) && !creatingLevel) {
         // Add level deletion logic here
+        if (levelManager.getLevelEditorMode() == editorMode::Delete) {
+            levelManager.setLevelEditorMode(editorMode::None);
+            std::cout << "Delete level mode disabled\n";
+            titleText.text_ = "SELECT LEVEL";
+        } else {
+            levelManager.setLevelEditorMode(editorMode::Delete);
+            std::cout << "Delete level mode enabled\n";
+            titleText.text_ = "DELETE LEVEL";
+        }
     }
 
-    if (AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
+    if ((AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) && !creatingLevel) {
         for (int i = 0; i < static_cast<int>(Level::None); ++i) {
-            // Only allow level selection if the level is playable or if level editor mode is
-            // enabled
-            if ((buttonPool)[i].OnClick() &&
-                (levelManager.playableLevels[i] || levelManager.getLevelEditorMode())) {
+            // Clicks for level selection and editor
+            if (buttonPool[i].OnClick()) {
                 std::cout << "Level " << (i + 1) << " button clicked\n";
-                levelManager.SetCurrentLevel(i + 1);
-                GSM.nextState_ = StateId::Level;
-                break;
+
+                // Handle level selection based on editor mode
+                switch (levelManager.getLevelEditorMode()) {
+                case editorMode::None:
+                    // If none, just play the level if it's playable
+                    if (levelManager.playableLevels[i]) {
+                        levelManager.SetCurrentLevel(i + 1);
+                        GSM.nextState_ = StateId::Level;
+                    }
+                    break;
+                case editorMode::Edit:
+                    // If edit, go to level editor with selected level
+                    levelManager.SetCurrentLevel(i + 1);
+                    GSM.nextState_ = StateId::Level;
+                    break;
+                case editorMode::Create:
+                    // If create, allow user to input width, height and tilesize before creating
+                    std::cout << "Level editor mode: Create\n";
+                    creatingLevel = true;
+                    width = 0.f;
+                    height = 0.f;
+                    tileSize = 0.f;
+                    confirmInput = 0;
+                    inputStr = "";
+                    levelInput = i + 1;
+                    break;
+                case editorMode::Delete:
+                    // If delete, delete the level data and update playable levels
+                    std::cout << "Level editor mode: Delete\n";
+                    levelManager.deleteLevelData(i + 1);
+                    levelManager.checkLevelData();
+                    break;
+                default:
+                    break;
+                }
             }
+        }
+    }
+
+    if (creatingLevel) {
+        if (AEInputCheckReleased(AEVK_Q) || 0 == AESysDoesWindowExist()) {
+            creatingLevel = false;
+            levelManager.SetCurrentLevel(0);
+            std::cout << "Cancelled level creation\n";
+        }
+        switch (confirmInput) {
+        case 0:
+            inputNumbers(inputStr);
+            inputPrompt.text_ = "Width: " + inputStr;
+            if (AEInputCheckReleased(AEVK_RETURN)) {
+                confirmInput++;
+                width = std::stof(inputStr);
+                inputStr = "";
+            }
+            break;
+        case 1:
+            inputNumbers(inputStr);
+            inputPrompt.text_ = "Height: " + inputStr;
+            if (AEInputCheckReleased(AEVK_RETURN)) {
+                confirmInput++;
+                height = std::stof(inputStr);
+                inputStr = "";
+            }
+            break;
+        case 2:
+            inputNumbers(inputStr);
+            inputPrompt.text_ = "Tile Size: " + inputStr;
+            if (AEInputCheckReleased(AEVK_RETURN)) {
+                tileSize = std::stof(inputStr);
+                levelManager.createLevelData(levelInput, width, height, tileSize);
+                creatingLevel = false;
+                levelManager.setLevelEditorMode(editorMode::None);
+                titleText.text_ = "SELECT LEVEL";
+                levelManager.checkLevelData();
+            }
+            break;
         }
     }
 }
@@ -98,6 +192,7 @@ void DrawLevelSelector() {
     // std::cout << "Draw Level Selector\n";
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
+    // Draw button with different color base on level editor mode
     for (int i = 0; i < static_cast<int>(Level::None); ++i) {
         if (levelManager.playableLevels[i]) {
             buttonPool[i].DrawColor(0.0f, 1.0f, 0.0f);
@@ -113,6 +208,12 @@ void DrawLevelSelector() {
 
     const char* titleStr = titleText.text_.c_str();
     AEGfxPrint(font, titleStr, titleText.pos_x_, titleText.pos_y_, 1.f, 1.f, 1.f, 1.f, 1.f);
+
+    if (creatingLevel) {
+        const char* inputPromptStr = inputPrompt.text_.c_str();
+        AEGfxPrint(font, inputPromptStr, inputPrompt.pos_x_, inputPrompt.pos_y_, 1.f, 1.f, 1.f, 1.f,
+                   1.f);
+    }
 }
 
 void FreeLevelSelector() {

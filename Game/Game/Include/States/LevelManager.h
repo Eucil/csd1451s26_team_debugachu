@@ -9,7 +9,7 @@
 #include <vector>
 
 enum class Level { Level1, Level2, Level3, Level4, Level5, Level6, Level7, Level8, None };
-
+enum class editorMode { Edit, Delete, Create, None };
 enum class GameBlock { Dirt, Stone, StartPoint, EndPoint, None };
 
 class LevelManager {
@@ -17,8 +17,8 @@ public:
     void init();
     void initEditorUI();
 
-    bool getLevelEditorMode() const;
-    void setLevelEditorMode();
+    editorMode getLevelEditorMode() const;
+    void setLevelEditorMode(editorMode mode);
     int getCurrentLevel() const;
     void SetCurrentLevel(int level);
     GameBlock getCurrentGameBlock() const;
@@ -32,9 +32,12 @@ public:
     void updateLevelEditor();
     void renderLevelEditorUI();
     void freeLevelEditor();
-
+    // Functions for making directory and file
     bool makeFilePath(int level);
     bool makeLevelFile(int level);
+    // Functions for deleting and create level data
+    void deleteLevelData(int level);
+    void createLevelData(int level, int width = 80, int height = 45, int tilesize = 20);
 
     // Functions for saving level data to JSON
     void saveMapInfo(int width, int height, int tilesize);
@@ -56,7 +59,7 @@ public:
     void DrawBrushPreview(TerrainMaterial terrainType);
 
 private:
-    bool level_editor_mode_{false};
+    editorMode level_editor_mode_{editorMode::None};
     int current_level_{0};
     GameBlock current_gameblock_{GameBlock::None};
 

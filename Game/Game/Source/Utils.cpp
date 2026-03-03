@@ -1,6 +1,7 @@
 #include "AEEngine.h"
 
 #include "Utils.h"
+#include <string>
 
 AEGfxVertexList* CreateCircleMesh(f32 slices) {
     AEGfxMeshStart();
@@ -62,4 +63,32 @@ AEVec2 GetMouseWorldPos() {
     worldPos.y = (AEGfxGetWindowHeight() / 2.0f) - (f32)mouse_y;
 
     return worldPos;
+}
+
+void inputNumbers(std::string& inputStr) {
+    if (AEInputCheckReleased(AEVK_1)) {
+        inputStr += "1";
+    } else if (AEInputCheckReleased(AEVK_2)) {
+        inputStr += "2";
+    } else if (AEInputCheckReleased(AEVK_3)) {
+        inputStr += "3";
+    } else if (AEInputCheckReleased(AEVK_4)) {
+        inputStr += "4";
+    } else if (AEInputCheckReleased(AEVK_5)) {
+        inputStr += "5";
+    } else if (AEInputCheckReleased(AEVK_6)) {
+        inputStr += "6";
+    } else if (AEInputCheckReleased(AEVK_7)) {
+        inputStr += "7";
+    } else if (AEInputCheckReleased(AEVK_8)) {
+        inputStr += "8";
+    } else if (AEInputCheckReleased(AEVK_9)) {
+        inputStr += "9";
+    } else if (AEInputCheckReleased(AEVK_0)) {
+        inputStr += "0";
+    } else if (AEInputCheckReleased(AEVK_BACK)) {
+        if (!inputStr.empty()) {
+            inputStr.pop_back();
+        }
+    }
 }

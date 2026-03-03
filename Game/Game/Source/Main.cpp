@@ -2,7 +2,6 @@
 
 #include <AEEngine.h>
 #include <crtdbg.h>
-#include <json/json.h>
 
 #include "GameStateManager.h"
 #include "States/LevelManager.h"
@@ -24,12 +23,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     GameStateManager GSM;
     GSM.init(StateId::MainMenu);
-
-    // jsoncpp test
-    Json::Value root;
-    root["framework"] = "JsonCpp";
-    root["version"] = 1.9;
-    std::cout << root.toStyledString() << std::endl;
 
     // Game Loop
     while (GSM.currentState_ != StateId::Quit) {

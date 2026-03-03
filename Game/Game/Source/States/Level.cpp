@@ -107,7 +107,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
 
     // Keyboard/Mouse inputs for level editor and gameplay
     // If in editor mode, edit level
-    if (levelManager.getLevelEditorMode()) {
+    if (levelManager.getLevelEditorMode() == editorMode::Edit) {
         // Inputs to build level
         if (!levelManager.getDisplayBuilderContainer()) {
             f32 brush_size = levelManager.brush_radius_;
@@ -232,7 +232,7 @@ void DrawLevel() {
     stone->renderTerrain();
     portalSystem.DrawColor();
 
-    if (levelManager.getLevelEditorMode()) {
+    if (levelManager.getLevelEditorMode() == editorMode::Edit) {
         levelManager.renderLevelEditorUI();
         switch (levelManager.getCurrentGameBlock()) {
         case GameBlock::Dirt:;

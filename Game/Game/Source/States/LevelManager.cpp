@@ -7,7 +7,7 @@
 LevelManager levelManager;
 
 void LevelManager::init() {
-    level_editor_mode_ = false;
+    level_editor_mode_ = editorMode::None;
     current_level_ = 0;
     current_gameblock_ = GameBlock::None;
 }
@@ -32,9 +32,9 @@ void LevelManager::initEditorUI() {
     readingRoot = Json::Value();
 }
 
-bool LevelManager::getLevelEditorMode() const { return level_editor_mode_; }
+editorMode LevelManager::getLevelEditorMode() const { return level_editor_mode_; }
 
-void LevelManager::setLevelEditorMode() { level_editor_mode_ = !level_editor_mode_; }
+void LevelManager::setLevelEditorMode(editorMode mode) { level_editor_mode_ = mode; }
 
 int LevelManager::getCurrentLevel() const { return current_level_; }
 
@@ -120,7 +120,7 @@ void LevelManager::updateInnerButtonPosition() {
 }
 
 void LevelManager::updateLevelEditor() {
-    if (!level_editor_mode_) {
+    if (level_editor_mode_ != editorMode::Edit) {
         return;
     }
 
@@ -162,7 +162,7 @@ void LevelManager::updateLevelEditor() {
 
 void LevelManager::renderLevelEditorUI() {
 
-    if (!level_editor_mode_) {
+    if (level_editor_mode_ != editorMode::Edit) {
         return;
     }
 
@@ -239,6 +239,37 @@ bool LevelManager::makeLevelFile(int level) {
         }
     }
     return true;
+}
+
+void LevelManager::deleteLevelData(int level) {
+    std::string levelPath = "Assets/Levels/Level_" + std::to_string(level) + "/Map.json";
+    std::filesystem::path filePath(levelPath);
+
+    // Set file to default value
+    savingRoot = Json::Value();
+    savingRoot["None"];
+
+    // Builder is use for file configuration
+    Json::StreamWriterBuilder builder;
+    builder["indentation"] = "  ";
+    builder["emitUTF8"] = true; // Writer is used to write the json value to file
+    builder["sortKeys"] = false;
+    std::unique_ptr<Json::StreamWriter> jsonWriter(builder.newStreamWriter());
+    std::ofstream outfile(filePath);
+    if (outfile) {
+        jsonWriter->write(savingRoot, &outfile);
+        std::cout << "File saved successfully\n";
+    } else {
+        std::cout << "Failed to open file for writing\n";
+    }
+
+    // Clear root after writing to file to prevent accidental reuse
+    savingRoot.clear();
+}
+
+void LevelManager::createLevelData(int level, int width, int height, int tilesize) {
+    saveMapInfo(width, height, tilesize);
+    writeToFile(level);
 }
 
 void LevelManager::saveMapInfo(int width, int height, int tilesize) {
