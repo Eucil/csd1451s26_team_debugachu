@@ -47,12 +47,13 @@ private:
     // Stores live particles
     std::vector<FluidParticle> particlePools_[static_cast<int>(FluidType::Count)];
 
-    Graphics graphicsConfigs_[static_cast<int>(FluidType::Count)];
+    // Each fluid will have 3 graphics components
+    Graphics graphicsConfigs_[static_cast<int>(FluidType::Count)][3];
 
     RigidBody2D physicsConfigs_[static_cast<int>(FluidType::Count)];
 
     void InitializeGraphics(AEGfxVertexList* mesh_, AEGfxTexture* texture_, u32 layer_, f32 red,
-                            f32 green, f32 blue, f32 alpha, FluidType type);
+                            f32 green, f32 blue, f32 alpha, FluidType type, u32 graphicsIndex);
 
     void InitializePhysics(f32 mass, f32 gravity, AEVec2 velocity, FluidType type);
 
