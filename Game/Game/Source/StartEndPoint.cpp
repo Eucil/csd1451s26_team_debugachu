@@ -261,8 +261,6 @@ void StartEndPoint::CheckMouseClick() {
     f32 mouse_x = static_cast<f32>(mousePos.x);
     f32 mouse_y = static_cast<f32>(mousePos.y);
 
-    AEVec2 mousePos = GetMouseWorldPos();
-
     // Use mouse pos to check collision with start point
     // Check by checking if mouse pos falls within the start point's collider box
     for (auto& startPoint : startPoints_) {

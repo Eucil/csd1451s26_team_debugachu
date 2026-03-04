@@ -17,6 +17,8 @@
 #include "States/LevelManager.h"
 #include "Terrain.h"
 #include "UISystem.h"
+#include "VFXConfigs.h"
+#include "VFXSystem.h"
 
 static Terrain* dirt = nullptr;
 static Terrain* stone = nullptr;
@@ -32,6 +34,8 @@ static s8 font;
 
 static int height, width, tileSize;
 static bool fileExist;
+
+static VFXSystem vfxSystem;
 
 void LoadLevel() {
     // std::cout << "Load level 3\n";
@@ -88,6 +92,9 @@ void InitializeLevel() {
     stone->initCellsGraphics();
     stone->initCellsCollider();
     stone->updateTerrain();
+
+    vfxSystem.Initialize(800, 20);
+    LoadGlobalVFXConfigs(vfxSystem); // <-- change this to read from a json instead
 }
 
 void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
@@ -158,6 +165,16 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
         // Else do inputs for gameplay instead
         if (AEInputCheckCurr(AEVK_LBUTTON)) {
             dirt->destroyAtMouse(20.0f);
+
+            vfxSystem.vfxSpawnTimer_ -= deltaTime;
+            if (vfxSystem.vfxSpawnTimer_ <= 0.0f) {
+
+                vfxSystem.SpawnVFX(VFXType::DirtBurst, GetMouseWorldPos());
+
+                vfxSystem.vfxSpawnTimer_ = 0.1f;
+            }
+        } else {
+            vfxSystem.vfxSpawnTimer_ = 0.0f;
         }
 
         if (AEInputCheckTriggered(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
@@ -209,10 +226,11 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
     }
 
     // fluidSystem.UpdateMain(deltaTime);
-    fluidSystem.UpdateMain(deltaTime, *dirt);
-    fluidSystem.UpdateMain(deltaTime, *stone);
+    fluidSystem.Update(deltaTime, *dirt);
+    fluidSystem.Update(deltaTime, *stone);
     startEndPointSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
     portalSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
+    vfxSystem.Update(deltaTime);
 
     levelManager.updateLevelEditor();
 
@@ -231,6 +249,7 @@ void DrawLevel() {
     dirt->renderTerrain();
     stone->renderTerrain();
     portalSystem.DrawColor();
+    vfxSystem.Draw();
 
     if (levelManager.getLevelEditorMode() == editorMode::Edit) {
         levelManager.renderLevelEditorUI();
@@ -264,6 +283,7 @@ void FreeLevel() {
     fluidSystem.Free();
     startEndPointSystem.Free();
     portalSystem.Free();
+    vfxSystem.Free();
 
     delete dirt;
     dirt = nullptr;
