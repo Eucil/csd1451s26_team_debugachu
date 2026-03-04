@@ -28,22 +28,17 @@ FluidParticle::FluidParticle(f32 posX, f32 posY, f32 radius, FluidType type) {
 // FluidSystem
 // ==========================================
 
-void FluidSystem::InitializeColor(f32 r, f32 g, f32 b, f32 a, FluidType type) {
-    int i = (int)type;
-
-    colorConfigs_[i][0] = r;
-    colorConfigs_[i][1] = g;
-    colorConfigs_[i][2] = b;
-    colorConfigs_[i][3] = a;
-}
-
 void FluidSystem::InitializeGraphics(AEGfxVertexList* mesh, AEGfxTexture* texture, u32 layer,
-                                     FluidType type) {
+                                     f32 red, f32 green, f32 blue, f32 alpha, FluidType type) {
     int i = (int)type;
 
     graphicsConfigs_[i].mesh_ = mesh;
     graphicsConfigs_[i].texture_ = texture;
     graphicsConfigs_[i].layer_ = layer;
+    graphicsConfigs_[i].red_ = red;
+    graphicsConfigs_[i].blue_ = blue;
+    graphicsConfigs_[i].green_ = green;
+    graphicsConfigs_[i].alpha_ = alpha;
 }
 
 void FluidSystem::InitializePhysics(f32 mass, f32 gravity, AEVec2 velocity, FluidType type) {
@@ -63,12 +58,10 @@ void FluidSystem::Initialize() {
         particlePools_[i].reserve(1000);
     }
 
-    InitializeColor(0.0f, 0.5f, 1.0f, 1.0f, FluidType::Water);
-    InitializeColor(1.0f, 0.2f, 0.0f, 1.0f, FluidType::Lava);
     InitializePhysics(1.0f, -500.0f, {0.0f, 0.0f}, FluidType::Water);
     InitializePhysics(1.0f, -200.0f, {0.0f, 0.0f}, FluidType::Lava);
-    InitializeGraphics(circlePtr, nullptr, 2, FluidType::Water);
-    InitializeGraphics(circlePtr, nullptr, 2, FluidType::Lava);
+    InitializeGraphics(circlePtr, nullptr, 2, 0.0f, 0.5f, 1.0f, 1.0f, FluidType::Water);
+    InitializeGraphics(circlePtr, nullptr, 2, 1.0f, 0.2f, 0.0f, 1.0f, FluidType::Lava);
 }
 
 void FluidSystem::UpdateTransforms(std::vector<FluidParticle>& particlePool) {
@@ -197,14 +190,13 @@ void FluidSystem::DrawColor() {
         if (particlePools_[i].empty()) {
             continue;
         }
-        // set colour
-        AEGfxSetColorToMultiply(colorConfigs_[i][0],  //  <-- r
-                                colorConfigs_[i][1],  //  <-- g
-                                colorConfigs_[i][2],  //  <-- b
-                                colorConfigs_[i][3]); //  <-- alpha
+
+        // Set color
+        AEGfxSetColorToMultiply(graphicsConfigs_[i].red_, graphicsConfigs_[i].green_,
+                                graphicsConfigs_[i].blue_, graphicsConfigs_[i].alpha_);
 
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxSetTransparency(colorConfigs_[i][3]);
+        AEGfxSetTransparency(1.0f);
 
         // draw according to the particles' transform matrix
         for (auto& p : particlePools_[i]) { // <-- p = current particle being looped
@@ -228,13 +220,12 @@ void FluidSystem::DrawTexture() {
 
         AEGfxTextureSet(graphicsConfigs_[i].texture_, 0, 0);
 
-        AEGfxSetColorToMultiply(colorConfigs_[i][0],  //  <-- r
-                                colorConfigs_[i][1],  //  <-- g
-                                colorConfigs_[i][2],  //  <-- b
-                                colorConfigs_[i][3]); //  <-- alpha
+        // Set color
+        AEGfxSetColorToMultiply(graphicsConfigs_[i].red_, graphicsConfigs_[i].green_,
+                                graphicsConfigs_[i].blue_, graphicsConfigs_[i].alpha_);
 
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxSetTransparency(colorConfigs_[i][3]);
+        AEGfxSetTransparency(1.0f);
 
         // Loop through each particle
         for (auto& p : particlePools_[i]) {
