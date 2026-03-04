@@ -26,7 +26,7 @@ void LevelManager::initEditorUI() {
     updateInnerButtonPosition();
 
     // Setup brush preview
-    circleMesh = CreateCircleMesh(20);
+    circleMesh = CreateCircleMesh(20, 0.5f);
 
     savingRoot = Json::Value();
     readingRoot = Json::Value();

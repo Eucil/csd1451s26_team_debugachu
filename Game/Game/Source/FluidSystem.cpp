@@ -55,12 +55,14 @@ void FluidSystem::InitializePhysics(f32 mass, f32 gravity, AEVec2 velocity, Flui
 
 void FluidSystem::Initialize() {
 
-    AEGfxVertexList* circlePtr = CreateCircleMesh(20);
+    AEGfxVertexList* circlePtr = CreateCircleMesh(10, 0.75f);
+
     // Reduces memory reallocation
     int typeCount{static_cast<int>(FluidType::Count)};
     for (int i{0}; i < typeCount; i++) {
         particlePools_[i].reserve(1000);
     }
+
     InitializeColor(0.0f, 0.5f, 1.0f, 1.0f, FluidType::Water);
     InitializeColor(1.0f, 0.2f, 0.0f, 1.0f, FluidType::Lava);
     InitializePhysics(1.0f, -500.0f, {0.0f, 0.0f}, FluidType::Water);
