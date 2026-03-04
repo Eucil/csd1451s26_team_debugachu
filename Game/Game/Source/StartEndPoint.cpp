@@ -261,15 +261,17 @@ void StartEndPoint::CheckMouseClick() {
     f32 mouse_x = static_cast<f32>(mousePos.x);
     f32 mouse_y = static_cast<f32>(mousePos.y);
 
+    AEVec2 mousePos = GetMouseWorldPos();
+
     // Use mouse pos to check collision with start point
     // Check by checking if mouse pos falls within the start point's collider box
     for (auto& startPoint : startPoints_) {
         f32 rect_half_width = startPoint.collider_.shapeData_.box_.size_.x / 2.0f;
         f32 rect_half_height = startPoint.collider_.shapeData_.box_.size_.y / 2.0f;
-        if (mouse_x >= (startPoint.transform_.pos_.x - rect_half_width) &&
-            mouse_x <= (startPoint.transform_.pos_.x + rect_half_width) &&
-            mouse_y >= (startPoint.transform_.pos_.y - rect_half_height) &&
-            mouse_y <= (startPoint.transform_.pos_.y + rect_half_height) &&
+        if (mousePos.x >= (startPoint.transform_.pos_.x - rect_half_width) &&
+            mousePos.x <= (startPoint.transform_.pos_.x + rect_half_width) &&
+            mousePos.y >= (startPoint.transform_.pos_.y - rect_half_height) &&
+            mousePos.y <= (startPoint.transform_.pos_.y + rect_half_height) &&
             startPoint.release_water_iframe_ == false) {
             // std::cout << "Mouse is over start point!\n";
             startPoint.release_water_ = !startPoint.release_water_;
