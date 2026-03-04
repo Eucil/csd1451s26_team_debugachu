@@ -210,7 +210,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 f32 noise = ((static_cast<int>(AERandFloat() * 12345) % 100)) * 0.001f - 0.1f;
 
                 // f32 randRadius = 13.0f - (noise * 100.0f);
-                f32 randRadius = 5.0f;
+                f32 randRadius = 7.0f;
 
                 f32 x_offset = startPoint.transform_.pos_.x +
                                AERandFloat() * startPoint.transform_.scale_.x -
