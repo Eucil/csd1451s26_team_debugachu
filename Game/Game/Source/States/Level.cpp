@@ -37,6 +37,12 @@ static bool fileExist;
 
 static VFXSystem vfxSystem;
 
+// tc added start
+static Text totalWaterText;
+static f32 totalWaterRemaining = 0.0f;
+static f32 totalWaterCapacity = 0.0f;
+// tc added end
+
 void LoadLevel() {
     // std::cout << "Load level 3\n";
     Terrain::createMeshLibrary();
@@ -48,6 +54,11 @@ void LoadLevel() {
     // Setup texts
     rotationText = Text(0.7f, 0.9f, "");
     font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 12);
+
+    // tc added start
+    startEndPointSystem.InitializeUI(font);
+    totalWaterText = Text(-0.9f, 0.9f, "Water: 0/0");
+    // tc added end
 
     levelManager.initEditorUI();
 
@@ -98,6 +109,30 @@ void InitializeLevel() {
 }
 
 void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
+    // tc added start
+    totalWaterRemaining = 0.0f;
+    totalWaterCapacity = 0.0f;
+    for (const auto& startPoint : startEndPointSystem.startPoints_) {
+        if (startPoint.active_ && startPoint.type_ == StartEndType::Pipe) {
+            totalWaterRemaining += startPoint.water_remaining_;
+            totalWaterCapacity += startPoint.water_capacity_;
+        }
+    }
+    char buffer[64];
+    snprintf(buffer, sizeof(buffer), "Water: %.0f/%.0f", totalWaterRemaining, totalWaterCapacity);
+    totalWaterText.text_ = buffer;
+
+    if (AEInputCheckTriggered(AEVK_F)) {
+        // Refill all start points
+        startEndPointSystem.RefillAllWater();
+    }
+
+    if (AEInputCheckTriggered(AEVK_G)) {
+        // Toggle infinite water for all start points
+        startEndPointSystem.ToggleInfiniteWater();
+    }
+    // tc added end
+
     // std::cout << "Update level 3\n";
 
     // Press Q to go to main menu
@@ -196,34 +231,49 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
         }
     }
 
+    // tc added start
+    //  Water spawning with limit
     for (auto& startPoint : startEndPointSystem.startPoints_) {
-        if (startPoint.release_water_) {
+        if (startPoint.release_water_ && startPoint.type_ == StartEndType::Pipe) {
             static f32 spawn_timer = 0.0f;
             spawn_timer -= deltaTime;
             if (spawn_timer <= 0.0f) {
 
-                // RESET TIMER: Set this to how fast you want water to flow
-                // Original: 0.005f;
-                spawn_timer = 0.025f;
+                // Check if there's water remaining (or infinite mode)
+                if (startPoint.water_remaining_ > 0.0f || startPoint.infinite_water_) {
 
-                // the particle spawns at the values shown below, including its FluidType
-                f32 noise = ((static_cast<int>(AERandFloat() * 12345) % 100)) * 0.001f - 0.1f;
+                    // RESET TIMER: Set this to how fast you want water to flow
+                    spawn_timer = 0.025f;
 
-                // f32 randRadius = 13.0f - (noise * 100.0f);
-                f32 randRadius = 5.0f;
+                    // Consume water (unless infinite)
+                    if (!startPoint.infinite_water_) {
+                        startPoint.water_remaining_ -= 0.5f; // Adjust consumption rate as needed
+                        if (startPoint.water_remaining_ < 0.0f) {
+                            startPoint.water_remaining_ = 0.0f;
+                            startPoint.release_water_ = false; // Auto-stop when empty
+                        }
+                    }
 
-                f32 x_offset = startPoint.transform_.pos_.x +
-                               AERandFloat() * startPoint.transform_.scale_.x -
-                               (startPoint.transform_.scale_.x / 2.f);
-                AEVec2 position = {x_offset, startPoint.transform_.pos_.y -
-                                                 (startPoint.transform_.scale_.y / 2.f) -
-                                                 (randRadius)};
+                    // Only spawn particle if there's still water
+                    if (startPoint.water_remaining_ > 0.0f || startPoint.infinite_water_) {
+                        // the particle spawns at the values shown below, including its FluidType
+                        f32 randRadius = 5.0f;
 
-                fluidSystem.SpawnParticle(position.x, position.y, randRadius, FluidType::Water);
-                s32 size = fluidSystem.GetParticleCount(FluidType::Water);
+                        f32 x_offset = startPoint.transform_.pos_.x +
+                                       AERandFloat() * startPoint.transform_.scale_.x -
+                                       (startPoint.transform_.scale_.x / 2.f);
+                        AEVec2 position = {x_offset, startPoint.transform_.pos_.y -
+                                                         (startPoint.transform_.scale_.y / 2.f) -
+                                                         (randRadius)};
+
+                        fluidSystem.SpawnParticle(position.x, position.y, randRadius,
+                                                  FluidType::Water);
+                    }
+                }
             }
         }
     }
+    // tc added end
 
     // fluidSystem.UpdateMain(deltaTime);
     fluidSystem.Update(deltaTime, *dirt);
@@ -239,6 +289,61 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
     }
 }
 
+// tc added start - Enhanced total water counter with a progress bar
+static void DrawTotalWaterBar(f32 x, f32 y, f32 remaining, f32 capacity) {
+    if (capacity <= 0.0f)
+        return;
+
+    f32 percentage = remaining / capacity;
+    if (percentage < 0.0f)
+        percentage = 0.0f;
+
+    // Bar dimensions (in screen coordinates)
+    f32 barWidth = 200.0f;
+    f32 barHeight = 20.0f;
+
+    // Convert from screen coordinates (-0.9 to 0.9 range) to world coordinates
+    f32 worldX = x * 710.0f; // Convert from -0.9 to world X
+    f32 worldY = y * 510.0f; // Convert from 0.9 to world Y
+
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+
+    // Draw background bar (gray)
+    AEMtx33 trans_mtx, scale_mtx, world_mtx;
+
+    AEMtx33Trans(&trans_mtx, worldX, worldY);
+    AEMtx33Scale(&scale_mtx, barWidth, barHeight);
+    AEMtx33Concat(&world_mtx, &trans_mtx, &scale_mtx);
+
+    AEGfxSetTransparency(0.3f);
+    AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f);
+    AEGfxSetTransform(world_mtx.m);
+
+    // Create a temporary mesh for the bar (or reuse bar_mesh from StartEndPointSystem)
+    static AEGfxVertexList* barMesh = nullptr;
+    if (!barMesh) {
+        barMesh = CreateRectMesh();
+    }
+    AEGfxMeshDraw(barMesh, AE_GFX_MDM_TRIANGLES);
+
+    // Draw fill bar (blue)
+    if (percentage > 0.0f) {
+        f32 fillWidth = barWidth * percentage;
+        f32 fillX = worldX - (barWidth - fillWidth) / 2.0f;
+
+        AEMtx33Trans(&trans_mtx, fillX, worldY);
+        AEMtx33Scale(&scale_mtx, fillWidth, barHeight);
+        AEMtx33Concat(&world_mtx, &trans_mtx, &scale_mtx);
+
+        AEGfxSetTransparency(0.8f);
+        AEGfxSetColorToMultiply(0.0f, 0.5f, 1.0f, 1.0f);
+        AEGfxSetTransform(world_mtx.m);
+        AEGfxMeshDraw(barMesh, AE_GFX_MDM_TRIANGLES);
+    }
+}
+// tc added end
+
 void DrawLevel() {
     // std::cout << "Draw level 2\n";
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
@@ -250,6 +355,16 @@ void DrawLevel() {
     stone->renderTerrain();
     portalSystem.DrawColor();
     vfxSystem.Draw();
+
+    // tc added start - Show total water counter with progress bar
+    const char* totalWaterStr = totalWaterText.text_.c_str();
+    AEGfxPrint(font, totalWaterStr, totalWaterText.pos_x_, totalWaterText.pos_y_, 1.f, 1.f, 1.f,
+               1.f, 1.f);
+
+    // progress bar below the text
+    DrawTotalWaterBar(totalWaterText.pos_x_, totalWaterText.pos_y_ - 0.05f, totalWaterRemaining,
+                      totalWaterCapacity);
+    // tc added end
 
     if (levelManager.getLevelEditorMode() == editorMode::Edit) {
         levelManager.renderLevelEditorUI();
@@ -284,6 +399,12 @@ void FreeLevel() {
     startEndPointSystem.Free();
     portalSystem.Free();
     vfxSystem.Free();
+
+    // tc added start
+    //  Free the bar mesh if it was created
+    extern AEGfxVertexList* barMesh; // If you made it global, or handle it appropriately
+    // If you made it static in the function, it will be automatically freed when the program ends
+    // tc added end
 
     delete dirt;
     dirt = nullptr;

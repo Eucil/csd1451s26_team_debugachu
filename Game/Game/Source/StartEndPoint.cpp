@@ -4,6 +4,7 @@
 #include "Utils.h"
 
 #include <cmath>
+#include <cstdio>
 #include <iostream>
 
 StartEnd::StartEnd() {
@@ -32,6 +33,12 @@ StartEnd::StartEnd() {
     release_water_ = false;
     release_water_iframe_ = {false};
     active_ = {false};
+
+    // tc added start
+    water_capacity_ = 100.0f;
+    water_remaining_ = 100.0f;
+    infinite_water_ = false;
+    // tc added end
 }
 
 StartEnd::StartEnd(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndType type,
@@ -61,6 +68,13 @@ StartEnd::StartEnd(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndType type,
 
     release_water_ = {false};
     release_water_iframe_ = {false};
+
+    // tc added start
+    active_ = true;
+    water_capacity_ = 100.0f;
+    water_remaining_ = 100.0f;
+    infinite_water_ = false;
+    // tc added end
 }
 
 void StartEndPoint::Initialize() {
@@ -75,6 +89,13 @@ void StartEndPoint::Initialize() {
     }
     particlesCollected_ = {0};
 }
+
+// tc added start
+void StartEndPoint::InitializeUI(s8 font) {
+    font_ = font;
+    bar_mesh_ = CreateRectMesh();
+}
+// tc added end
 
 void StartEndPoint::SetupPoint(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndType type,
                                GoalDirection direction) {
@@ -92,6 +113,109 @@ void StartEndPoint::SetupPoint(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndT
         endPoint_ = StartEnd(pos, scale, rotation, type, direction);
     }
 }
+
+// tc added start
+void StartEndPoint::DrawWaterIndicator(const StartEnd& startPoint, const AEVec2& screenPos) {
+    if (!bar_mesh_ || font_ == 0)
+        return;
+
+    // Calculate water percentage
+    float percentage = startPoint.water_remaining_ / startPoint.water_capacity_;
+    if (percentage < 0.0f)
+        percentage = 0.0f;
+
+    // Bar dimensions (in world units)
+    float barWidth = 80.0f;
+    float barHeight = 10.0f;
+    float barX = startPoint.transform_.pos_.x;
+    float barY = startPoint.transform_.pos_.y + 40.0f; // Position above the start point
+
+    // Draw background bar (gray)
+    AEMtx33 scale_mtx, trans_mtx, world_mtx;
+
+    AEMtx33Scale(&scale_mtx, barWidth, barHeight);
+    AEMtx33Trans(&trans_mtx, barX, barY);
+
+    // Method 1: Use AEMtx33Mult (if available)
+    // If your engine has AEMtx33Mult, use this:
+    // AEMtx33Mult(&world_mtx, &trans_mtx, &scale_mtx);
+
+    // Method 2: Use two-step concatenation (more compatible)
+    AEMtx33Identity(&world_mtx);                       // Start with identity
+    AEMtx33Concat(&world_mtx, &scale_mtx, &world_mtx); // Apply scale
+    AEMtx33Concat(&world_mtx, &trans_mtx, &world_mtx); // Apply translation
+
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(0.3f);
+    AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f);
+    AEGfxSetTransform(world_mtx.m);
+    AEGfxMeshDraw(bar_mesh_, AE_GFX_MDM_TRIANGLES);
+
+    // Draw fill bar (blue) -
+    float fillWidth = barWidth * percentage;
+    float fillX = barX - (barWidth - fillWidth) / 2.0f;
+
+    AEMtx33Trans(&trans_mtx, fillX, barY);
+    AEMtx33Scale(&world_mtx, fillWidth, barHeight);
+    AEMtx33Concat(&world_mtx, &trans_mtx, &world_mtx);
+
+    AEGfxSetTransparency(0.8f);
+    AEGfxSetColorToMultiply(0.0f, 0.5f, 1.0f, 1.0f);
+    AEGfxSetTransform(world_mtx.m);
+    AEGfxMeshDraw(bar_mesh_, AE_GFX_MDM_TRIANGLES);
+
+    // Draw text showing remaining/total
+    char buffer[32];
+    snprintf(buffer, sizeof(buffer), "%.0f/%.0f", startPoint.water_remaining_,
+             startPoint.water_capacity_);
+
+    // Simple screen coordinate conversion
+    float textX = barX / 800.0f; // Assuming half screen width is 800
+    float textY = barY / 450.0f; // Assuming half screen height is 450
+
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetTransparency(1.0f);
+    AEGfxPrint(font_, buffer, textX, textY, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+}
+
+float StartEndPoint::GetWaterRemaining(int startPointIndex) const {
+    if (startPointIndex >= 0 && startPointIndex < static_cast<int>(startPoints_.size())) {
+        return startPoints_[startPointIndex].water_remaining_;
+    }
+    return 0.0f;
+}
+
+void StartEndPoint::SetWaterRemaining(int startPointIndex, float amount) {
+    if (startPointIndex >= 0 && startPointIndex < static_cast<int>(startPoints_.size())) {
+        startPoints_[startPointIndex].water_remaining_ = amount;
+        if (startPoints_[startPointIndex].water_remaining_ >
+            startPoints_[startPointIndex].water_capacity_) {
+            startPoints_[startPointIndex].water_remaining_ =
+                startPoints_[startPointIndex].water_capacity_;
+        }
+        if (startPoints_[startPointIndex].water_remaining_ < 0.0f) {
+            startPoints_[startPointIndex].water_remaining_ = 0.0f;
+        }
+    }
+}
+
+void StartEndPoint::RefillAllWater() {
+    for (auto& startPoint : startPoints_) {
+        if (startPoint.active_ && startPoint.type_ == StartEndType::Pipe) {
+            startPoint.water_remaining_ = startPoint.water_capacity_;
+        }
+    }
+}
+
+void StartEndPoint::ToggleInfiniteWater() {
+    for (auto& startPoint : startPoints_) {
+        if (startPoint.active_ && startPoint.type_ == StartEndType::Pipe) {
+            startPoint.infinite_water_ = !startPoint.infinite_water_;
+        }
+    }
+}
+// tc added end
 
 void StartEndPoint::SpawnAtMousePos(StartEndType type, GoalDirection direction) {
     // Get mouse position
@@ -238,6 +362,13 @@ void StartEndPoint::Free() {
 
     AEGfxMeshFree(rectMesh);
     rectMesh = nullptr;
+
+    // tc added start
+    if (bar_mesh_) {
+        AEGfxMeshFree(bar_mesh_);
+        bar_mesh_ = nullptr;
+    }
+    // tc added end
 
     for (int i{}; i < (int)StartEndType::Count; ++i) {
 
