@@ -86,7 +86,23 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
                     // obtain our fluidparticle within this cell of the grid
                     FluidParticle& fluidParticleA = particlePoolA[currentFluidIndexA];
 
-                    cellToFluidParticleCollision(neighbourTerrainCell, fluidParticleA);
+
+                    // We first evaluate the current fluidParticleA against the terrain cell it is visiting.
+                    // celltoFluidParticleCollision returns the contact information of the collision which includes:
+                    // 
+                    // a bool indicating whether a collision has occurred,
+                    // the outward normal of the collidable object (triangle or square or empty)
+                    CollisionContact contact =
+                        cellToFluidParticleCollision(neighbourTerrainCell, fluidParticleA);
+
+                    if (contact.hasCollision) {
+                        pushOutAndSlide(fluidParticleA, contact.normal, contact.penetration,
+                                        fluidParticleA.collider_.shapeData_.circle_.radius);
+                    }
+
+                    // @todo code below may now be irrelevant have to check again
+                    // 
+                    //cellToFluidParticleCollision(neighbourTerrainCell, fluidParticleA);
                     if (!neighbourParticles.empty()) {
                         for (const BucketEntry& b : neighbourParticles) {
                             const auto currentFluidTypeB = b.first;
@@ -167,6 +183,55 @@ bool CollisionSystem::pointInTriangle(const AEVec2& p, const AEVec2& a, const AE
     return (u >= 0.0f && v >= 0.0f && w >= 0.0f);
 }
 
+
+CollisionContact CollisionSystem::cellToFluidParticleCollision(const Cell& cell,
+                                                               const FluidParticle& fluidParticle) {
+    
+    CollisionContact contact; 
+    
+    const AEVec2 circleCenter = vAdd(fluidParticle.transform_.pos_, fluidParticle.collider_.shapeData_.circle_.offset_);
+    const f32 radius = fluidParticle.collider_.shapeData_.circle_.radius;
+    const AEVec2 velocity = fluidParticle.physics_.velocity_; // Pass velocity for our predictive check
+
+    for (u32 i = 0; i < 3; ++i) {
+        const Collider2D& col = cell.colliders_[i];
+        if (col.colliderShape_ == ColliderShape::Empty) continue;
+
+        AEVec2 n{0.0f, 1.0f};
+        f32 penetration = 0.0f;
+        bool hit = false;
+
+        if (col.colliderShape_ == ColliderShape::Box) {
+            const AEVec2 offsetWorld{col.shapeData_.box_.offset_.x * cell.transform_.scale_.x,
+                                     col.shapeData_.box_.offset_.y * cell.transform_.scale_.y};
+            const AEVec2 boxCenter = vAdd(cell.transform_.pos_, offsetWorld);
+            const AEVec2 sizeWorld{col.shapeData_.box_.size_.x * cell.transform_.scale_.x,
+                                   col.shapeData_.box_.size_.y * cell.transform_.scale_.y};
+            const AEVec2 halfExt{sizeWorld.x * 0.5f, sizeWorld.y * 0.5f};
+
+            hit = resolveCircleVsAABB(circleCenter, radius, boxCenter, halfExt, n, penetration);
+        } 
+        else if (col.colliderShape_ == ColliderShape::Triangle) {
+            const AEVec2 v0 = localToWorldPoint(col.shapeData_.triangle_.vertices_[0], cell.transform_);
+            const AEVec2 v1 = localToWorldPoint(col.shapeData_.triangle_.vertices_[1], cell.transform_);
+            const AEVec2 v2 = localToWorldPoint(col.shapeData_.triangle_.vertices_[2], cell.transform_);
+
+            // Notice we now pass velocity into the triangle solver!
+            hit = resolveCircleVsTriangle(circleCenter, radius, velocity, v0, v1, v2, n, penetration);
+        }
+
+        if (hit) {
+            // Populate our package and return it immediately!
+            contact.hasCollision = true;
+            contact.normal = vNormalizeOr(n, AEVec2{0.0f, 1.0f});
+            contact.penetration = penetration;
+            return contact; 
+        }
+    }
+    
+    return contact; // Returns hasCollision = false if nothing was hit
+}
+
 // Narrow phase: circle vs AABB (axis-aligned box) in world
 bool CollisionSystem::resolveCircleVsAABB(const AEVec2& circleCenter, f32 radius,
                                           const AEVec2& boxCenter, const AEVec2& halfExt,
@@ -195,6 +260,9 @@ bool CollisionSystem::resolveCircleVsTriangle(const AEVec2& circleCenter, f32 ra
                                               AEVec2& outNormal, f32& outPenetration) {
     AEVec2 closest = circleCenter;
 
+    // pointInTriangle returns true if the inputted point is inside the triangle, otherwise false.
+    // If the circle center is outside the triangle, we find the closest point on the triangle
+    // edges. If it's inside, we can use the normal of the triangle for collision response.
     if (!pointInTriangle(circleCenter, v0, v1, v2)) {
         const AEVec2 c0 = closestPointOnSegment(v0, v1, circleCenter);
         const AEVec2 c1 = closestPointOnSegment(v1, v2, circleCenter);
@@ -209,7 +277,15 @@ bool CollisionSystem::resolveCircleVsTriangle(const AEVec2& circleCenter, f32 ra
     // We need this else statement in the event where the particle gets stuck inside the terrain,
     // causing the normalVec to default to (0,1), causing it to go upwards when the closest exit is
     // on the right.
+    //
+    // normalVec defaults to (0,1) when the circle center is exactly on the edge of the triangle
     else {
+        // Calculate triangle normal (not normalized)
+        const AEVec2 edge1 = vSub(v1, v0);
+        const AEVec2 edge2 = vSub(v2, v0);
+        const f32 nx = edge1.y * edge2.x - edge1.x * edge2.y;
+        const f32 ny = edge1.x * edge2.y - edge1.y * edge2.x;
+        closest = AEVec2{nx, ny}; // Use the normal direction as the "closest" vector
     }
 
     const AEVec2 d = vSub(circleCenter, closest);
@@ -222,6 +298,7 @@ bool CollisionSystem::resolveCircleVsTriangle(const AEVec2& circleCenter, f32 ra
     outPenetration = radius - dist;
     return true;
 }
+
 
 // Response: push out + slide (prevents teleporting)
 void CollisionSystem::pushOutAndSlide(FluidParticle& p, const AEVec2& n, f32 penetration,
@@ -252,6 +329,7 @@ void CollisionSystem::pushOutAndSlide(FluidParticle& p, const AEVec2& n, f32 pen
         p.physics_.velocity_.y *= 0.95f + noise;
     }
 }
+/*
 
 void CollisionSystem::cellToFluidParticleCollision(const Cell& cell, FluidParticle& fluidParticle) {
     // Circle center in world
@@ -267,10 +345,9 @@ void CollisionSystem::cellToFluidParticleCollision(const Cell& cell, FluidPartic
     const f32 radius = fluidParticle.collider_.shapeData_.circle_.radius;
 
     // Only resolve ONE collision per call to prevent stacking (teleport)
-    for (u32 i = 0; i < 3; ++i) {
-        const Collider2D& col = cell.colliders_[i];
-        if (col.colliderShape_ == ColliderShape::Empty)
-            continue;
+    // Loop through the 3 colliders in the cell (box, triangle, empty) and resolve against the
+particle. for (u32 i = 0; i < 3; ++i) { const Collider2D& col = cell.colliders_[i]; if
+(col.colliderShape_ == ColliderShape::Empty) continue;
 
         AEVec2 n{0.0f, 1.0f};
         f32 penetration = 0.0f;
@@ -300,13 +377,15 @@ void CollisionSystem::cellToFluidParticleCollision(const Cell& cell, FluidPartic
             hit = resolveCircleVsTriangle(circleCenter, radius, v0, v1, v2, n, penetration);
         }
 
-        if (hit) {
-            n = vNormalizeOr(n, AEVec2{0.0f, 1.0f});
+        // If any of the two collisions hit, we push out and slide, then break to prevent multiple
+collisions in one frame if (hit) { n = vNormalizeOr(n, AEVec2{0.0f, 1.0f});
             pushOutAndSlide(fluidParticle, n, penetration, radius);
             return; // stop after first hit (prevents teleport)
         }
     }
 }
+*/
+
 
 void CollisionSystem::resolveFluidParticlePair(FluidParticle& p1, FluidParticle& p2) {
 
