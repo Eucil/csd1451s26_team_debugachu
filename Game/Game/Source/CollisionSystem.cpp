@@ -184,14 +184,14 @@ bool CollisionSystem::pointInTriangle(const AEVec2& p, const AEVec2& a, const AE
 }
 
 
-CollisionContact CollisionSystem::cellToFluidParticleCollision(const Cell& cell,
+CollisionInfo CollisionSystem::cellToFluidParticleCollision(const Cell& cell,
                                                                const FluidParticle& fluidParticle) {
     
-    CollisionContact contact; 
+    CollisionInfo contact; 
     
     const AEVec2 circleCenter = vAdd(fluidParticle.transform_.pos_, fluidParticle.collider_.shapeData_.circle_.offset_);
     const f32 radius = fluidParticle.collider_.shapeData_.circle_.radius;
-    const AEVec2 velocity = fluidParticle.physics_.velocity_; // Pass velocity for our predictive check
+    const AEVec2 velocity = fluidParticle.physics_.velocity_;
 
     for (u32 i = 0; i < 3; ++i) {
         const Collider2D& col = cell.colliders_[i];
@@ -202,26 +202,40 @@ CollisionContact CollisionSystem::cellToFluidParticleCollision(const Cell& cell,
         bool hit = false;
 
         if (col.colliderShape_ == ColliderShape::Box) {
+            // This takes the box's local offset and stretches it by the cell's actual physical size on the screen.
             const AEVec2 offsetWorld{col.shapeData_.box_.offset_.x * cell.transform_.scale_.x,
                                      col.shapeData_.box_.offset_.y * cell.transform_.scale_.y};
+
+            // This takes the exact world coordinates of the Grid Cell itself, 
+            // and adds the offsetWorld to get the exact pixel coordinate of the Box's center.
             const AEVec2 boxCenter = vAdd(cell.transform_.pos_, offsetWorld);
+
+            // This stretches the local width/height of the box by the cell's scale to get the true pixel dimensions.
             const AEVec2 sizeWorld{col.shapeData_.box_.size_.x * cell.transform_.scale_.x,
                                    col.shapeData_.box_.size_.y * cell.transform_.scale_.y};
+
+            // halfExt just refers to half-width/half-height, calculated now so that future calculations arent needed.
             const AEVec2 halfExt{sizeWorld.x * 0.5f, sizeWorld.y * 0.5f};
 
-            hit = resolveCircleVsAABB(circleCenter, radius, boxCenter, halfExt, n, penetration);
+            hit = detectCircleVsAABB(circleCenter, radius, velocity, boxCenter, halfExt, n,
+                                      penetration);
         } 
         else if (col.colliderShape_ == ColliderShape::Triangle) {
+            // @todo comment
             const AEVec2 v0 = localToWorldPoint(col.shapeData_.triangle_.vertices_[0], cell.transform_);
             const AEVec2 v1 = localToWorldPoint(col.shapeData_.triangle_.vertices_[1], cell.transform_);
             const AEVec2 v2 = localToWorldPoint(col.shapeData_.triangle_.vertices_[2], cell.transform_);
 
-            // Notice we now pass velocity into the triangle solver!
-            hit = resolveCircleVsTriangle(circleCenter, radius, velocity, v0, v1, v2, n, penetration);
+            hit = detectCircleVsTriangle(circleCenter, radius, velocity, v0, v1, v2, n, penetration);
         }
 
+        // If any of the two collisions above occur, we return contact information so that collision response can occur in the calling function.
+        // 
+        // Even if there are more than 2 colliders in the cell, the particle should only collide with the FIRST collider it hits. 
+        // Collision response will then occur based on that first collision's normal and penetration values.
+        // If the particle gets pushed into another collider in the same frame, its okay as it will be resolved in the next frame when we check for collisions again.
+
         if (hit) {
-            // Populate our package and return it immediately!
             contact.hasCollision = true;
             contact.normal = vNormalizeOr(n, AEVec2{0.0f, 1.0f});
             contact.penetration = penetration;
@@ -232,75 +246,130 @@ CollisionContact CollisionSystem::cellToFluidParticleCollision(const Cell& cell,
     return contact; // Returns hasCollision = false if nothing was hit
 }
 
-// Narrow phase: circle vs AABB (axis-aligned box) in world
-bool CollisionSystem::resolveCircleVsAABB(const AEVec2& circleCenter, f32 radius,
-                                          const AEVec2& boxCenter, const AEVec2& halfExt,
-                                          AEVec2& outNormal, f32& outPenetration) {
-    // Closest point on AABB to circle center
+
+// Helper function for cellToFluidParticleCollision: detects Circle vs Triangle collision in world
+bool CollisionSystem::detectCircleVsTriangle(const AEVec2& circleCenter, f32 radius,
+                                             const AEVec2& velocity, const AEVec2& v0,
+                                             const AEVec2& v1, const AEVec2& v2, AEVec2& outNormal,
+                                             f32& outPenetration) {
+
+    // @todo comment Find the closest point on the triangle's perimeter
+    const AEVec2 c0 = closestPointOnSegment(v0, v1, circleCenter);
+    const AEVec2 c1 = closestPointOnSegment(v1, v2, circleCenter);
+    const AEVec2 c2 = closestPointOnSegment(v2, v0, circleCenter);
+
+    // vSub first to get the 'direction vector' from the circle center to the closest point
+    // vLenSq calculates the squared distance/magnitude from the circle center to each of the closest points on the triangle edges (c0, c1, c2).
+    // vLenSq is used instead of vLen to avoid std::sqrt which is expensive to calculate for every particle.
+    const f32 d0 = vLenSq(vSub(circleCenter, c0));
+    const f32 d1 = vLenSq(vSub(circleCenter, c1));
+    const f32 d2 = vLenSq(vSub(circleCenter, c2));
+
+    // Compares all distances (d0,d1,d2) obtained above to find the closest point (c0,c1,c2) on the triangle to the circle center. 
+    // This is the point of contact.
+    AEVec2 closest = (d0 < d1) ? ((d0 < d2) ? c0 : c2) : ((d1 < d2) ? c1 : c2);
+
+    // Now that we have the closest point, we can treat it like a circle vs point collision and find the normal and penetration.
+    // vSub is vecA-vecB btw so this gives a direction vector pointing from the circle center to the closest point on the triangle.
+    const AEVec2 d = vSub(circleCenter, closest);
+    const f32 distSq = vLenSq(d);
+    const f32 dist = std::sqrt((std::max)(distSq, 1e-8f));
+
+    // @todo comment/not my code
+    bool isInside = pointInTriangle(circleCenter, v0, v1, v2);
+
+    // If particle is inside the triangle, this code runs
+    if (isInside) {
+        // Vector 'd' points from the edge INWARD to the center.
+        // We flip it so the normal points OUTWARD to eject the particle.
+
+        
+        outNormal = AEVec2{-d.x / dist, -d.y / dist};
+        outPenetration = radius + dist;
+    } 
+
+    // If particle is outside the triangle, this code runs
+    else {
+
+        // This only runs if the particle is intersecting the point but outside the triangle
+        // If distance from circle center to closest point (distSq) is > magnitude of radius (distance of penetration), then there is no collision.
+        if (distSq > radius * radius)
+            return false; 
+
+        // If we are here, it means we are intersecting the triangle edge but outside the triangle.
+        outNormal = AEVec2{d.x / dist, d.y / dist};
+        outPenetration = radius - dist;
+
+        // Optimisation: If we are moving away from the triangle anyways, it will never collide with the triangle, 
+        //               so we can early-out and skip the collision response.
+        f32 dotProduct = (velocity.x * outNormal.x) + (velocity.y * outNormal.y);
+        if (dotProduct > 0.0f) {
+            return false; 
+        }
+    }
+
+    // return true so that collision response can occur
+    return true;
+}
+
+// Helper function for cellToFluidParticleCollision: detects Circle vs AABB collision in world
+bool CollisionSystem::detectCircleVsAABB(const AEVec2& circleCenter, f32 radius,
+                                         const AEVec2& velocity, const AEVec2& boxCenter,
+                                         const AEVec2& halfExt, AEVec2& outNormal,
+                                         f32& outPenetration) {
+
+
     AEVec2 closest;
+    // std::max prevents division by zero if dist is extremely small (which can cause NaN and break the simulation)
     closest.x =
         (std::max)(boxCenter.x - halfExt.x, (std::min)(circleCenter.x, boxCenter.x + halfExt.x));
     closest.y =
         (std::max)(boxCenter.y - halfExt.y, (std::min)(circleCenter.y, boxCenter.y + halfExt.y));
 
-    const AEVec2 d = vSub(circleCenter, closest);
-    const f32 distSq = vLenSq(d);
-    if (distSq > radius * radius)
-        return false;
+    bool isInside = (circleCenter.x == closest.x && circleCenter.y == closest.y);
 
-    const f32 dist = std::sqrt((std::max)(distSq, 1e-8f));
-    outNormal = AEVec2{d.x / dist, d.y / dist};
-    outPenetration = radius - dist;
-    return true;
-}
+    if (isInside) {
 
-// Narrow phase: circle vs triangle in world (closest point on triangle)
-bool CollisionSystem::resolveCircleVsTriangle(const AEVec2& circleCenter, f32 radius,
-                                              const AEVec2& v0, const AEVec2& v1, const AEVec2& v2,
-                                              AEVec2& outNormal, f32& outPenetration) {
-    AEVec2 closest = circleCenter;
+        f32 dx = circleCenter.x - boxCenter.x;
+        f32 dy = circleCenter.y - boxCenter.y;
 
-    // pointInTriangle returns true if the inputted point is inside the triangle, otherwise false.
-    // If the circle center is outside the triangle, we find the closest point on the triangle
-    // edges. If it's inside, we can use the normal of the triangle for collision response.
-    if (!pointInTriangle(circleCenter, v0, v1, v2)) {
-        const AEVec2 c0 = closestPointOnSegment(v0, v1, circleCenter);
-        const AEVec2 c1 = closestPointOnSegment(v1, v2, circleCenter);
-        const AEVec2 c2 = closestPointOnSegment(v2, v0, circleCenter);
+        // Distance to edges
+        f32 distToEdgeX = halfExt.x - std::abs(dx);
+        f32 distToEdgeY = halfExt.y - std::abs(dy);
 
-        const f32 d0 = vLenSq(vSub(circleCenter, c0));
-        const f32 d1 = vLenSq(vSub(circleCenter, c1));
-        const f32 d2 = vLenSq(vSub(circleCenter, c2));
+        // Eject towards the closest edge
+        if (distToEdgeX < distToEdgeY) {
+            outNormal = (dx > 0) ? AEVec2{1.0f, 0.0f} : AEVec2{-1.0f, 0.0f};
+            outPenetration = radius + distToEdgeX;
+        } else {
+            outNormal = (dy > 0) ? AEVec2{0.0f, 1.0f} : AEVec2{0.0f, -1.0f};
+            outPenetration = radius + distToEdgeY;
+        }
+    } else {
 
-        closest = (d0 < d1) ? ((d0 < d2) ? c0 : c2) : ((d1 < d2) ? c1 : c2);
-    }
-    // We need this else statement in the event where the particle gets stuck inside the terrain,
-    // causing the normalVec to default to (0,1), causing it to go upwards when the closest exit is
-    // on the right.
-    //
-    // normalVec defaults to (0,1) when the circle center is exactly on the edge of the triangle
-    else {
-        // Calculate triangle normal (not normalized)
-        const AEVec2 edge1 = vSub(v1, v0);
-        const AEVec2 edge2 = vSub(v2, v0);
-        const f32 nx = edge1.y * edge2.x - edge1.x * edge2.y;
-        const f32 ny = edge1.x * edge2.y - edge1.y * edge2.x;
-        closest = AEVec2{nx, ny}; // Use the normal direction as the "closest" vector
+        const AEVec2 d = vSub(circleCenter, closest);
+        const f32 distSq = vLenSq(d);
+
+        if (distSq > radius * radius)
+            return false; // Not touching!
+
+        const f32 dist = std::sqrt((std::max)(distSq, 1e-8f));
+        outNormal = AEVec2{d.x / dist, d.y / dist};
+        outPenetration = radius - dist;
+
+        f32 dotProduct = (velocity.x * outNormal.x) + (velocity.y * outNormal.y);
+        if (dotProduct > 0.0f) {
+            return false;
+        }
     }
 
-    const AEVec2 d = vSub(circleCenter, closest);
-    const f32 distSq = vLenSq(d);
-    if (distSq > radius * radius)
-        return false;
-
-    const f32 dist = std::sqrt((std::max)(distSq, 1e-8f));
-    outNormal = AEVec2{d.x / dist, d.y / dist};
-    outPenetration = radius - dist;
     return true;
 }
 
 
-// Response: push out + slide (prevents teleporting)
+
+// @todo not finished
+// Response: push out + slide 
 void CollisionSystem::pushOutAndSlide(FluidParticle& p, const AEVec2& n, f32 penetration,
                                       f32 radius) {
 
@@ -389,11 +458,11 @@ collisions in one frame if (hit) { n = vNormalizeOr(n, AEVec2{0.0f, 1.0f});
 
 void CollisionSystem::resolveFluidParticlePair(FluidParticle& p1, FluidParticle& p2) {
 
-    // Calculate distance
+    // Calculate distance between p1 and p2
     f32 dx = p1.transform_.pos_.x - p2.transform_.pos_.x;
     f32 dy = p1.transform_.pos_.y - p2.transform_.pos_.y;
 
-    // Jitter fix for vertical stacking of particles
+    // Optimisation: Jitter fix for vertical stacking of particles
     if (std::abs(dx) < 0.001f) {
         // Generate a tiny random float between - 0.05 and 0.05
         f32 noise = ((rand() % 100) * 0.001f) - 0.05f;
@@ -441,6 +510,8 @@ void CollisionSystem::resolveFluidParticlePair(FluidParticle& p1, FluidParticle&
         // moving faster than p2 in the x axis
         f32 relativeVX = p1.physics_.velocity_.x - p2.physics_.velocity_.x;
         f32 relativeVY = p1.physics_.velocity_.y - p2.physics_.velocity_.y;
+
+        // @todo comment this
         f32 velAlongNormal = relativeVX * nx + relativeVY * ny;
 
         if (velAlongNormal < 0.0f) {
