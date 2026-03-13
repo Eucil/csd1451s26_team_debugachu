@@ -92,7 +92,7 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
                     // 
                     // a bool indicating whether a collision has occurred,
                     // the outward normal of the collidable object (triangle or square or empty)
-                    CollisionContact contact =
+                    CollisionInfo contact =
                         cellToFluidParticleCollision(neighbourTerrainCell, fluidParticleA);
 
                     if (contact.hasCollision) {
@@ -312,47 +312,74 @@ bool CollisionSystem::detectCircleVsTriangle(const AEVec2& circleCenter, f32 rad
     return true;
 }
 
+
 // Helper function for cellToFluidParticleCollision: detects Circle vs AABB collision in world
 bool CollisionSystem::detectCircleVsAABB(const AEVec2& circleCenter, f32 radius,
                                          const AEVec2& velocity, const AEVec2& boxCenter,
                                          const AEVec2& halfExt, AEVec2& outNormal,
                                          f32& outPenetration) {
 
+    // Calculate the closest point on the box to the circle center
+    const f32 boxLeft = boxCenter.x - halfExt.x;
+    const f32 boxRight = boxCenter.x + halfExt.x;
+    const f32 boxBottom = boxCenter.y - halfExt.y;
+    const f32 boxTop = boxCenter.y + halfExt.y;
 
+    // Clamp the circle center to the box boundaries to get the closest point to the circle center
+    //
+    // For e.g. if boxLeft = 0, boxRight = 10, circleCenter.x = 15, circleCenter.x gets clamped to 10
     AEVec2 closest;
-    // std::max prevents division by zero if dist is extremely small (which can cause NaN and break the simulation)
-    closest.x =
-        (std::max)(boxCenter.x - halfExt.x, (std::min)(circleCenter.x, boxCenter.x + halfExt.x));
-    closest.y =
-        (std::max)(boxCenter.y - halfExt.y, (std::min)(circleCenter.y, boxCenter.y + halfExt.y));
+    closest.x = AEClamp(circleCenter.x, boxLeft, boxRight);
+    closest.y = AEClamp(circleCenter.y, boxBottom, boxTop);
 
+    // isInside is true as long as AEClamp does not actually clamp the circle's coordinates.
+    // This means that in this current frame, the circle is already inside the box.
     bool isInside = (circleCenter.x == closest.x && circleCenter.y == closest.y);
 
     if (isInside) {
 
+        // direction/'distance' vector from circle center to box center
         f32 dx = circleCenter.x - boxCenter.x;
         f32 dy = circleCenter.y - boxCenter.y;
 
-        // Distance to edges
+        // Finding the nearest edge to exit from 
+        //
+        // We use std::abs here to get a positive value of dxdy
+        // as the circle center can be on the left side or right side of the box center
         f32 distToEdgeX = halfExt.x - std::abs(dx);
         f32 distToEdgeY = halfExt.y - std::abs(dy);
 
-        // Eject towards the closest edge
+        // Find the nearest edge to exit from
         if (distToEdgeX < distToEdgeY) {
+
+            // If dx > 0, it means the circle center is on the right side of the box center, so we want to push it to the right, hence normal (1,0)
+            // If dx < 0, it means the circle center is on the left side of the box center....
             outNormal = (dx > 0) ? AEVec2{1.0f, 0.0f} : AEVec2{-1.0f, 0.0f};
             outPenetration = radius + distToEdgeX;
         } else {
+            // If dy > 0, it means the circle center is above the box center, so we want to push it up, hence normal (0,1)
+            // If dy < 0, it means the circle center is below the box center....
             outNormal = (dy > 0) ? AEVec2{0.0f, 1.0f} : AEVec2{0.0f, -1.0f};
             outPenetration = radius + distToEdgeY;
         }
+
+        // Return true to proceed with collision response using the output parameters: normal and penetration calculated above.
+        return true;
+
     } else {
 
+
+        // If the circle is not inside, we check if the closest point on the box to the circle center is within the radius distance.
         const AEVec2 d = vSub(circleCenter, closest);
         const f32 distSq = vLenSq(d);
 
+        // If distSq is greater than radius squared, it means the circle is too far from the box and there is no collision right now.
         if (distSq > radius * radius)
-            return false; // Not touching!
+            return false; 
 
+        // std::max returns the larger of distSq and 1e-8f to avoid taking the square root of a very small number.
+        // This prevents dividing by zero if the circle center just so happens to be right within the box edge, which would make distSq very close to zero
+        // and cause division by zero resulting in NaN values for the normal.
         const f32 dist = std::sqrt((std::max)(distSq, 1e-8f));
         outNormal = AEVec2{d.x / dist, d.y / dist};
         outPenetration = radius - dist;
@@ -362,7 +389,7 @@ bool CollisionSystem::detectCircleVsAABB(const AEVec2& circleCenter, f32 radius,
             return false;
         }
     }
-
+    // Return true to proceed with collision response using the output parameters: normal and penetration calculated above.
     return true;
 }
 

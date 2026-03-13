@@ -11,7 +11,7 @@
 #include "FluidSystem.h"
 #include "Terrain.h"
 
-struct CollisionContact {
+struct CollisionInfo {
     bool hasCollision = false;
     AEVec2 normal = {0.0f, 1.0f};
     f32 penetration = 0.0f;
@@ -46,14 +46,17 @@ private:
 
 
     // Generates a CollisionContact struct containing information about the collision (normal, penetration).
-    static CollisionContact cellToFluidParticleCollision(const Cell& cell, const FluidParticle& fluidParticle);
+    static CollisionInfo cellToFluidParticleCollision(const Cell& cell, const FluidParticle& fluidParticle);
 
     // Helper function (cellToFluidParticleCollision): circle vs AABB (axis-aligned box) in world
-    static bool resolveCircleVsAABB(const AEVec2& circleCenter, f32 radius, const AEVec2& boxCenter,
-                                    const AEVec2& halfExt, AEVec2& outNormal, f32& outPenetration);
+    static bool detectCircleVsAABB(const AEVec2& circleCenter, f32 radius,
+                                              const AEVec2& velocity, const AEVec2& boxCenter,
+                                              const AEVec2& halfExt, AEVec2& outNormal,
+                                              f32& outPenetration);
 
     // Narrow phase: circle vs triangle in world (closest point on triangle)
-    static bool resolveCircleVsTriangle(const AEVec2& circleCenter, f32 radius, const AEVec2& v0,
+    static bool detectCircleVsTriangle(const AEVec2& circleCenter, f32 radius,
+                                       const AEVec2& velocity, const AEVec2& v0,
                                         const AEVec2& v1, const AEVec2& v2, AEVec2& outNormal,
                                         f32& outPenetration);
 
