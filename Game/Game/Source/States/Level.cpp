@@ -255,10 +255,10 @@ void DrawLevel() {
         levelManager.renderLevelEditorUI();
         switch (levelManager.getCurrentGameBlock()) {
         case GameBlock::Dirt:;
-            levelManager.DrawBrushPreview(TerrainMaterial::Dirt);
+            levelManager.drawBrushPreview(TerrainMaterial::Dirt);
             break;
         case GameBlock::Stone:
-            levelManager.DrawBrushPreview(TerrainMaterial::Stone);
+            levelManager.drawBrushPreview(TerrainMaterial::Stone);
             break;
         case GameBlock::StartPoint:
             startEndPointSystem.DrawColorPreview(StartEndType::Pipe);

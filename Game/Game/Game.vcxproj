@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\CollisionSystem.cpp" />
+    <ClCompile Include="Source\ConfigManager.cpp" />
     <ClCompile Include="Source\FluidSystem.cpp" />
     <ClCompile Include="Source\PortalSystem.cpp" />
     <ClCompile Include="Source\StartEndPoint.cpp" />
@@ -32,6 +33,7 @@
   <ItemGroup>
     <ClInclude Include="Include\CollisionSystem.h" />
     <ClInclude Include="Include\Components.h" />
+    <ClInclude Include="Include\ConfigManager.h" />
     <ClInclude Include="Include\FluidSystem.h" />
     <ClInclude Include="Include\GameStateManager.h" />
     <ClInclude Include="Include\PortalSystem.h" />

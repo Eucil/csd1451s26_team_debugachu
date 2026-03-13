@@ -452,7 +452,7 @@ void LevelManager::parseStartEndInfo(StartEndPoint& startEndPointSystem) {
     }
 }
 
-void LevelManager::DrawBrushPreview(TerrainMaterial terrainType) {
+void LevelManager::drawBrushPreview(TerrainMaterial terrainType) {
     AEVec2 mousePos = GetMouseWorldPos();
 
     // Set up world matrix
