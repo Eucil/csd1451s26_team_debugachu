@@ -110,6 +110,8 @@ int ConfigManager::getInt(const std::string& file, const std::string& section,
                           const std::string& key, int defaultVal) const {
     const Json::Value* root = getValueRoot(file, section, key);
     if (root == nullptr) {
+        std::cout << "ConfigManager: getInt failed to find " << file << "." << section << "." << key
+                  << ", returning default value: " << defaultVal << "\n";
         return defaultVal;
     }
     return root->asInt();
@@ -119,6 +121,8 @@ float ConfigManager::getFloat(const std::string& file, const std::string& sectio
                               const std::string& key, float defaultVal) const {
     const Json::Value* root = getValueRoot(file, section, key);
     if (root == nullptr) {
+        std::cout << "ConfigManager: getFloat failed to find " << file << "." << section << "."
+                  << key << ", returning default value: " << defaultVal << "\n";
         return defaultVal;
     }
     return root->asFloat();
@@ -128,6 +132,8 @@ bool ConfigManager::getBool(const std::string& file, const std::string& section,
                             const std::string& key, bool defaultVal) const {
     const Json::Value* root = getValueRoot(file, section, key);
     if (root == nullptr) {
+        std::cout << "ConfigManager: getBool failed to find " << file << "." << section << "."
+                  << key << ", returning default value: " << defaultVal << "\n";
         return defaultVal;
     }
     return root->asBool();
@@ -137,9 +143,26 @@ std::string ConfigManager::getString(const std::string& file, const std::string&
                                      const std::string& key, const std::string& defaultVal) const {
     const Json::Value* root = getValueRoot(file, section, key);
     if (root == nullptr) {
+        std::cout << "ConfigManager: getString failed to find " << file << "." << section << "."
+                  << key << ", returning default value: " << defaultVal << "\n";
         return defaultVal;
     }
     return root->asString();
+}
+
+AEVec2 ConfigManager::getAEVec2(const std::string& file, const std::string& section,
+                                const std::string& key, const AEVec2& defaultVal) const {
+    const Json::Value* arrayRoot = getArrayRoot(file, section, key);
+    if (arrayRoot == nullptr || arrayRoot->size() != 2) {
+        std::cout << "ConfigManager: getAEVec2 failed to find " << file << "." << section << "."
+                  << key << " or array size is not 2, returning default value: (" << defaultVal.x
+                  << ", " << defaultVal.y << ")\n";
+        return defaultVal;
+    }
+    AEVec2 out;
+    out.x = (*arrayRoot)[0].asFloat();
+    out.y = (*arrayRoot)[1].asFloat();
+    return out;
 }
 
 void ConfigManager::getFloatArray(const std::string& file, const std::string& section,

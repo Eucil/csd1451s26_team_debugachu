@@ -1,4 +1,5 @@
 #include "States/LevelManager.h"
+#include "ConfigManager.h"
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -7,9 +8,17 @@
 LevelManager levelManager;
 
 void LevelManager::init() {
-    level_editor_mode_ = editorMode::None;
-    current_level_ = 0;
-    current_gameblock_ = GameBlock::None;
+    level_editor_mode_ = static_cast<editorMode>(configManager.getInt(
+        "LevelManager", "default", "level_editor_mode_", static_cast<int>(editorMode::None)));
+    current_level_ = configManager.getInt("LevelManager", "default", "current_level_", 0);
+    current_gameblock_ = static_cast<GameBlock>(configManager.getInt(
+        "LevelManager", "default", "current_gameblock_", static_cast<int>(GameBlock::None)));
+
+    // For level editor UI
+    container_scale_ = configManager.getAEVec2("LevelManager", "default", "container_scale_",
+                                               AEVec2{300.0f, 300.0f});
+    display_builder_container_ =
+        configManager.getBool("LevelManager", "default", "display_builder_container_", true);
 }
 
 void LevelManager::initEditorUI() {

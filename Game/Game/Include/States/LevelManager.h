@@ -86,7 +86,7 @@ private:
     GameBlock current_gameblock_{GameBlock::None};
 
     // For level editor UI
-    AEVec2 container_scale_ = {300.0f, 300.0f};
+    AEVec2 container_scale_ = {};
     bool display_builder_container_ = false;
     // Builder button is the parent container for builder container
     // Builder container is the parent container for all the buttons in the builder pool

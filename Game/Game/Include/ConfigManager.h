@@ -1,4 +1,5 @@
 #pragma once
+#include <AEEngine.h>
 #include <json/json.h>
 #include <string>
 #include <unordered_map>
@@ -15,6 +16,8 @@ public:
                  bool defaultVal = false) const;
     std::string getString(const std::string& file, const std::string& section,
                           const std::string& key, const std::string& defaultVal = "") const;
+    AEVec2 getAEVec2(const std::string& file, const std::string& section, const std::string& key,
+                     const AEVec2& defaultVal = {}) const;
     void getFloatArray(const std::string& file, const std::string& section, const std::string& key,
                        std::vector<float>& out) const;
 
