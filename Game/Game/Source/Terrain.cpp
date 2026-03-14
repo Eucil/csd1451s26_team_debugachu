@@ -587,6 +587,24 @@ void Terrain::buildTerrainRadius(f32 worldX, f32 worldY, f32 radius) {
     }
 }
 
+bool Terrain::isNearestNodeToMouseAtThreshold() {
+    s32 screenX{0}, screenY{0};
+    AEInputGetCursorPosition(&screenX, &screenY);
+
+    // Convert screen to world coordinates
+    f32 worldX{static_cast<f32>(screenX) - (AEGfxGetWindowWidth() / 2.0f)};
+    f32 worldY{(AEGfxGetWindowHeight() / 2.0f) - static_cast<f32>(screenY)};
+
+    f32 localX{worldX - bottomLeftPos_.x};
+    f32 localY{worldY - bottomLeftPos_.y};
+    u32 col{static_cast<u32>(std::round(localX / kCellSize_))};
+    u32 row{static_cast<u32>(std::round(localY / kCellSize_))};
+    if (col < kNodeCols_ && row < kNodeRows_) {
+        return nodes_[row * kNodeCols_ + col] == threshold_;
+    }
+    return false;
+}
+
 void Terrain::createDebugColliderMeshes() {
     // A thin "filled line" thickness in local space.
     // After scaling by cellSize (e.g. 32), this becomes visible.

@@ -55,6 +55,8 @@ public:
 
     std::vector<f32>& getNodes() { return nodes_; }
 
+    bool isNearestNodeToMouseAtThreshold();
+
     static void createDebugColliderMeshes();
     void renderCollidersDebug() const;
 
