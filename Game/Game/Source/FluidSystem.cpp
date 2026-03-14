@@ -105,6 +105,16 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         // We multiply by dt to make the simulation frame rate independent, then update position
         p.physics_.velocity_.y += gravity * dt;
 
+        // ================================================ //
+        // OPTIMISATION: ANTI-TUNNELLING GRAVITY CAP
+        // ================================================ //
+        // Without this, particles falling from a great height can reach very high speeds, 
+        // which can cause them to tunnel through terrain colliders.
+        const f32 TERMINAL_FALL_SPEED = -300.0f;
+        if (p.physics_.velocity_.y < TERMINAL_FALL_SPEED) {
+            p.physics_.velocity_.y = TERMINAL_FALL_SPEED;
+        }
+
         // Add a tiny random kick to every particle.
         // This prevents them from ever stacking perfectly still.
         f32 noiseX = ((rand() % 100) / 50.0f) - 1.0f; // Range -1.0 to 1.0
@@ -145,6 +155,7 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
             p.physics_.velocity_.x = (p.physics_.velocity_.x / actualSpeed) * MAX_SPEED;
             p.physics_.velocity_.y = (p.physics_.velocity_.y / actualSpeed) * MAX_SPEED;
         }
+
         // ================================================ //
         // 4. UPDATE POSITION (MUST BE LAST)
         // ================================================ /

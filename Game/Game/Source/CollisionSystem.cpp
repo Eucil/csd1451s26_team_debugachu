@@ -1,5 +1,5 @@
 #include "CollisionSystem.h"
-
+/*
 void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& fluidSystem) {
     using BucketEntry = std::pair<FluidType, u32>; // (type, index)
 
@@ -9,7 +9,7 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
     const u32 gridSize = terrain.getCellSize();
     const AEVec2 gridBottomLeftPos = terrain.getBottomLeftPos();
 
-    // One bucket per cell (flattened)
+    // One bucket per cell
     // Clear and resize grid
     std::vector<std::vector<BucketEntry>> fluidGrid;
     fluidGrid.resize(static_cast<size_t>(gridRows) * static_cast<size_t>(gridCols));
@@ -25,7 +25,7 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
 
             AEVec2 particlePos = particle.transform_.pos_;
 
-            //
+            // @todo comment this
             s32 particleCellX = static_cast<s32>(
                 std::floor((particlePos.x - gridBottomLeftPos.x) / static_cast<f32>(gridSize)));
             s32 particleCellY = static_cast<s32>(
@@ -124,6 +124,145 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
         }
     }
 }
+*/
+
+// @todo comment entire function
+void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& fluidSystem) {
+    using BucketEntry = std::pair<FluidType, u32>; // (type, index)
+
+    // Grid info
+    const u32 gridRows = terrain.getCellRows();
+    const u32 gridCols = terrain.getCellCols();
+    const u32 gridSize = terrain.getCellSize();
+    const AEVec2 gridBottomLeftPos = terrain.getBottomLeftPos();
+
+    // Clear and resize grid
+    std::vector<std::vector<BucketEntry>> fluidGrid;
+    fluidGrid.resize(static_cast<size_t>(gridRows) * static_cast<size_t>(gridCols));
+
+    // Loop each particle type (e.g. water, lava) and POPULATE the grid with the indices of which particles are in which
+    for (u32 t = 0; t < static_cast<u32>(FluidType::Count); ++t) {
+
+        // Get the particlepool for the currently iterated particle type (e.g. water or mud)
+        std::vector<FluidParticle>& particlePool =
+            fluidSystem.GetParticlePool(static_cast<FluidType>(t));
+
+        // Loop through every particle within this pool and calculate which cell of the grid it belongs to based on
+        for (size_t pIdx = 0; pIdx < particlePool.size(); ++pIdx) {
+
+            // Obtain the currently iterated particle and its position
+            FluidParticle& particle = particlePool[pIdx];
+            AEVec2 particlePos = particle.transform_.pos_;
+
+            // std::floor calculates the largest integer value not greater than the division result, 
+            // which gives us the correct cell index for negative positions as well.
+            s32 particleCellX = static_cast<s32>(
+                std::floor((particlePos.x - gridBottomLeftPos.x) / static_cast<f32>(gridSize)));
+            s32 particleCellY = static_cast<s32>(
+                std::floor((particlePos.y - gridBottomLeftPos.y) / static_cast<f32>(gridSize)));
+
+            // If particle cell index is out of bounds, we go to the next particle
+            if (particleCellX < 0 || particleCellX >= static_cast<int>(gridCols) ||
+                particleCellY < 0 || particleCellY >= static_cast<int>(gridRows)) {
+                continue;
+            }
+
+            // Calculate the cell index of the grid (y * maxX + x) and save the index of the current particle and its type into the grid
+            const size_t cellIndex =
+                static_cast<size_t>(particleCellY) * static_cast<size_t>(gridCols) +
+                static_cast<size_t>(particleCellX);
+            fluidGrid[cellIndex].emplace_back(static_cast<FluidType>(t), static_cast<u32>(pIdx));
+        }
+    }
+
+    // Obtain the total number of cells in the grid so that we can loop through every cell and resolve collisions
+    const size_t totalCells = static_cast<size_t>(gridRows) * static_cast<size_t>(gridCols);
+
+    // ====================================================================
+    // PASS 1: FLUID vs FLUID (Soft Constraints)
+    // ====================================================================
+    // Let the water squish, stack, and build pressure first.
+    for (size_t cell = 0; cell < totalCells; ++cell) {
+        if (fluidGrid[cell].empty())
+            continue;
+
+        const u32 cx = static_cast<u32>(cell % gridCols);
+        const u32 cy = static_cast<u32>(cell / gridCols);
+
+        for (int dy = -1; dy <= 1; ++dy) {
+            for (int dx = -1; dx <= 1; ++dx) {
+                const int nx = static_cast<int>(cx) + dx;
+                const int ny = static_cast<int>(cy) + dy;
+
+                if (nx < 0 || nx >= static_cast<int>(gridCols) || ny < 0 ||
+                    ny >= static_cast<int>(gridRows))
+                    continue;
+
+                const size_t neighbourIndex =
+                    static_cast<size_t>(ny) * static_cast<size_t>(gridCols) +
+                    static_cast<size_t>(nx);
+                std::vector<BucketEntry>& neighbourParticles = fluidGrid[neighbourIndex];
+
+                if (neighbourParticles.empty())
+                    continue;
+
+                for (const BucketEntry& a : fluidGrid[cell]) {
+                    FluidParticle& fluidParticleA = fluidSystem.GetParticlePool(a.first)[a.second];
+
+                    for (const BucketEntry& b : neighbourParticles) {
+                        FluidParticle& fluidParticleB =
+                            fluidSystem.GetParticlePool(b.first)[b.second];
+
+                        // Compare memory addresses to only resolve Pair(A, B) once
+                        if (&fluidParticleA < &fluidParticleB) {
+                            resolveFluidParticlePair(fluidParticleA, fluidParticleB);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ====================================================================
+    // PASS 2: FLUID vs TERRAIN (Hard Constraints)
+    // ====================================================================
+    // Now strictly enforce the solid walls so nothing gets pushed into the dirt.
+    for (size_t cell = 0; cell < totalCells; ++cell) {
+        if (fluidGrid[cell].empty())
+            continue;
+
+        const u32 cx = static_cast<u32>(cell % gridCols);
+        const u32 cy = static_cast<u32>(cell / gridCols);
+
+        for (int dy = -1; dy <= 1; ++dy) {
+            for (int dx = -1; dx <= 1; ++dx) {
+                const int nx = static_cast<int>(cx) + dx;
+                const int ny = static_cast<int>(cy) + dy;
+
+                if (nx < 0 || nx >= static_cast<int>(gridCols) || ny < 0 ||
+                    ny >= static_cast<int>(gridRows))
+                    continue;
+
+                const size_t neighbourIndex =
+                    static_cast<size_t>(ny) * static_cast<size_t>(gridCols) +
+                    static_cast<size_t>(nx);
+                Cell& neighbourTerrainCell = terrain.getCells()[neighbourIndex];
+
+                for (const BucketEntry& a : fluidGrid[cell]) {
+                    FluidParticle& fluidParticleA = fluidSystem.GetParticlePool(a.first)[a.second];
+
+                    CollisionInfo contact =
+                        cellToFluidParticleCollision(neighbourTerrainCell, fluidParticleA);
+                    if (contact.hasCollision) {
+                        pushOutAndSlide(fluidParticleA, contact.normal, contact.penetration,
+                                        fluidParticleA.collider_.shapeData_.circle_.radius);
+                    }
+                }
+            }
+        }
+    }
+}
+
 AEVec2 CollisionSystem::vNormalizeOr(const AEVec2& v, const AEVec2& fallback) {
     const f32 l2 = vLenSq(v);
     if (l2 <= 1e-8f)
@@ -431,8 +570,7 @@ bool CollisionSystem::detectCircleVsAABB(const AEVec2& circleCenter, f32 radius,
     return true;
 }
 
-// @todo not finished
-// Response: push out + slide
+// Collision Response
 void CollisionSystem::pushOutAndSlide(FluidParticle& p, const AEVec2& n, f32 penetration,
                                       f32 radius) {
 
@@ -443,76 +581,42 @@ void CollisionSystem::pushOutAndSlide(FluidParticle& p, const AEVec2& n, f32 pen
     p.transform_.pos_.x += n.x * push;
     p.transform_.pos_.y += n.y * push;
 
-    // Slide: remove velocity component into the surface
+    // vn = dot product between particle velocity direction vector and the collider's outNormal vector
+    // if vn < 0.0f, that means that they are going to collide!!! (just an extra safety check)
     const f32 vn = p.physics_.velocity_.x * n.x + p.physics_.velocity_.y * n.y;
     if (vn < 0.0f) {
         p.physics_.velocity_.x -= vn * n.x;
         p.physics_.velocity_.y -= vn * n.y;
+        
+        // EFFECT A: Variable Friction (Stretches the stream)
+        // We generate a random multiplier between 0.75f and 0.95f.
+        // Because it is ALWAYS less than 1.0f, it safely absorbs energy, but
+        // ensures particles leave the ramp at slightly different speeds!
+        f32 randomFriction = 0.98f + ((rand() % 100) * 0.0001f);
+        p.physics_.velocity_.x *= randomFriction;
+        p.physics_.velocity_.y *= randomFriction;
 
-        // mild damping so it settles
-        // Generates a random value between -0.15f and 0.15f
+        // EFFECT B: Micro-Bumps (Thickens the stream)
+        // Real dirt has tiny pebbles. When water hits them, it splashes outward.
+        // We apply a microscopic random kick purely along the OUTWARD normal vector.
+        // (Generates a tiny push between 0.0f and 15.0f velocity units)
+        f32 microBump = (rand() % 100) * 0.15f;
+        p.physics_.velocity_.x += n.x * microBump;
+        p.physics_.velocity_.y += n.y * microBump;
+        
+        /*
         f32 noise = ((rand() % 100) * 0.001f) - 0.04f;
         noise = std::abs(noise);
-        p.physics_.velocity_.x *= 0.95f + noise;
-        p.physics_.velocity_.y *= 0.95f + noise;
+        p.physics_.velocity_.x *= 0.85f + noise;
+        p.physics_.velocity_.y *= 0.95f + noise;       
+        */
+
+        
+
+   
+
     }
 }
-/*
-
-void CollisionSystem::cellToFluidParticleCollision(const Cell& cell, FluidParticle& fluidParticle) {
-    // Circle center in world
-    const AEVec2 circleCenter =
-        vAdd(fluidParticle.transform_.pos_, fluidParticle.collider_.shapeData_.circle_.offset_);
-
-    // Circle radius in world units (same rule you used)
-    // f32 circleScale = (std::max)(std::abs(fluidParticle.transform_.scale_.x),
-    //                             std::abs(fluidParticle.transform_.scale_.y));
-    // if (circleScale < 1e-8f)
-    //    circleScale = 1.0f;
-    // const f32 radius = fluidParticle.collider_.shapeData_.circle_.radius * circleScale;
-    const f32 radius = fluidParticle.collider_.shapeData_.circle_.radius;
-
-    // Only resolve ONE collision per call to prevent stacking (teleport)
-    // Loop through the 3 colliders in the cell (box, triangle, empty) and resolve against the
-particle. for (u32 i = 0; i < 3; ++i) { const Collider2D& col = cell.colliders_[i]; if
-(col.colliderShape_ == ColliderShape::Empty) continue;
-
-        AEVec2 n{0.0f, 1.0f};
-        f32 penetration = 0.0f;
-        bool hit = false;
-
-        if (col.colliderShape_ == ColliderShape::Box) {
-            // IMPORTANT: collider library is in CELL-LOCAL units.
-            // Convert offset and size into WORLD using the cell scale.
-            const AEVec2 offsetWorld{col.shapeData_.box_.offset_.x * cell.transform_.scale_.x,
-                                     col.shapeData_.box_.offset_.y * cell.transform_.scale_.y};
-            const AEVec2 boxCenter = vAdd(cell.transform_.pos_, offsetWorld);
-
-            const AEVec2 sizeWorld{col.shapeData_.box_.size_.x * cell.transform_.scale_.x,
-                                   col.shapeData_.box_.size_.y * cell.transform_.scale_.y};
-            const AEVec2 halfExt{sizeWorld.x * 0.5f, sizeWorld.y * 0.5f};
-
-            hit = resolveCircleVsAABB(circleCenter, radius, boxCenter, halfExt, n, penetration);
-        } else if (col.colliderShape_ == ColliderShape::Triangle) {
-            // Convert triangle vertices to WORLD using cell transform
-            const AEVec2 v0 =
-                localToWorldPoint(col.shapeData_.triangle_.vertices_[0], cell.transform_);
-            const AEVec2 v1 =
-                localToWorldPoint(col.shapeData_.triangle_.vertices_[1], cell.transform_);
-            const AEVec2 v2 =
-                localToWorldPoint(col.shapeData_.triangle_.vertices_[2], cell.transform_);
-
-            hit = resolveCircleVsTriangle(circleCenter, radius, v0, v1, v2, n, penetration);
-        }
-
-        // If any of the two collisions hit, we push out and slide, then break to prevent multiple
-collisions in one frame if (hit) { n = vNormalizeOr(n, AEVec2{0.0f, 1.0f});
-            pushOutAndSlide(fluidParticle, n, penetration, radius);
-            return; // stop after first hit (prevents teleport)
-        }
-    }
-}
-*/
 
 void CollisionSystem::resolveFluidParticlePair(FluidParticle& p1, FluidParticle& p2) {
 
@@ -523,8 +627,13 @@ void CollisionSystem::resolveFluidParticlePair(FluidParticle& p1, FluidParticle&
     // Optimisation: Jitter fix for vertical stacking of particles
     if (std::abs(dx) < 0.001f) {
         // Generate a tiny random float between - 0.05 and 0.05
+        
         f32 noise = ((rand() % 100) * 0.001f) - 0.05f;
         dx += noise;
+       
+        // Add a small constant value to dx to prevent perfect vertical stacking
+        //dx += 0.01f;
+
     }
 
     // Calculate minimum distance between p1 and p2 for collision to occur
@@ -552,15 +661,38 @@ void CollisionSystem::resolveFluidParticlePair(FluidParticle& p1, FluidParticle&
         //
         // If overlap is small, use a lower repulsion value (0.2f).
         f32 repulsion = (overlap < minDist * 0.1f) ? 0.2f : 0.5f;
-
+            
         f32 moveX = nx * (overlap * repulsion);
         f32 moveY = ny * (overlap * repulsion);
 
+        f32 p1Weight = 1.0f;
+        f32 p2Weight = 1.0f;
+         
+        // -- TUNNELLING FIX -- 
+        // If this is a mostly vertical collision (|ny| > 0.4), make the bottom particle heavier
+        // This prevents top layers from crushing bottom layers into the ground.
+        // 
+        // When a particle is colliding with another particle from the top to a certain extent, 
+        // the particle below is adjusted to have a heavy weight, causing it to move less while the particle above moves more.
+        if (std::abs(ny) > 0.4f) {
+            if (dy > 0.0f) {
+                // p1 is physically higher than p2.
+                p1Weight = 1.8f; // p1 gets splashed UP easily
+                p2Weight = 0.2f; // p2 (below p1) stubbornly resists moving DOWN
+            } else {
+                // p2 is physically higher than p1.
+                p1Weight = 0.2f;
+                p2Weight = 1.8f;
+            }
+        }
+
+
+
         // Apply the calculated movement to both particles directly to transform_.pos
-        p1.transform_.pos_.x += moveX;
-        p1.transform_.pos_.y += moveY;
-        p2.transform_.pos_.x -= moveX;
-        p2.transform_.pos_.y -= moveY;
+        p1.transform_.pos_.x += moveX * p1Weight;
+        p1.transform_.pos_.y += moveY * p1Weight;
+        p2.transform_.pos_.x -= moveX * p2Weight;
+        p2.transform_.pos_.y -= moveY * p2Weight;
 
         // --- Velocity Impulse ---
         // Upon collision, we should calculate the relative difference in velocity
@@ -579,7 +711,7 @@ void CollisionSystem::resolveFluidParticlePair(FluidParticle& p1, FluidParticle&
             //
             // -1.0f  : Perfectly Inelastic
             // -2.0f  : Perfectly Elastic
-            f32 restitution = -1.08f; // Bounciness
+            f32 restitution = -1.3f; // Bounciness
             f32 j = restitution * velAlongNormal * 0.5f;
 
             p1.physics_.velocity_.x += j * nx;
