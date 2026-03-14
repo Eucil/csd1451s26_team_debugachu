@@ -117,7 +117,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
     if (levelManager.getLevelEditorMode() == editorMode::Edit) {
         // Inputs to build level
         if (!levelManager.getDisplayBuilderContainer()) {
-            f32 brush_size = levelManager.brush_radius_;
+            f32 brush_size = levelManager.brushRadius_;
             switch (levelManager.getCurrentGameBlock()) {
             case GameBlock::Dirt:
                 if (AEInputCheckCurr(AEVK_LBUTTON)) {

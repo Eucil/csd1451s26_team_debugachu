@@ -8,84 +8,85 @@
 LevelManager levelManager;
 
 void LevelManager::init() {
-    level_editor_mode_ = static_cast<editorMode>(configManager.getInt(
-        "LevelManager", "default", "level_editor_mode_", static_cast<int>(editorMode::None)));
-    current_level_ = configManager.getInt("LevelManager", "default", "current_level_", 0);
-    current_gameblock_ = static_cast<GameBlock>(configManager.getInt(
-        "LevelManager", "default", "current_gameblock_", static_cast<int>(GameBlock::None)));
+    levelEditorMode_ = static_cast<editorMode>(configManager.getInt(
+        "LevelManager", "default", "levelEditorMode_", static_cast<int>(editorMode::None)));
+    currentLevel_ = configManager.getInt("LevelManager", "default", "currentLevel_", 0);
+    currentGameBlock_ = static_cast<GameBlock>(configManager.getInt(
+        "LevelManager", "default", "currentGameBlock_", static_cast<int>(GameBlock::None)));
 
     // For level editor UI
-    container_scale_ = configManager.getAEVec2("LevelManager", "default", "container_scale_",
-                                               AEVec2{300.0f, 300.0f});
-    display_builder_container_ =
-        configManager.getBool("LevelManager", "default", "display_builder_container_", true);
+    editorContainerScale_ = configManager.getAEVec2(
+        "LevelManager", "default", "editorContainerScale_", AEVec2{300.0f, 300.0f});
+    displayEditorContainer_ =
+        configManager.getBool("LevelManager", "default", "displayEditorContainer_", true);
 }
 
 void LevelManager::initEditorUI() {
     // Setup Editor UI
-    builder_button = Button(AEVec2{775.0f, 350.0f}, AEVec2{50.0f, 50.0f});
-    builder_container = Button(AEVec2{0.0f, 0.0f}, container_scale_);
+    editorButton_ = Button(AEVec2{775.0f, 350.0f}, AEVec2{50.0f, 50.0f});
+    editorContainer_ = Button(AEVec2{0.0f, 0.0f}, editorContainerScale_);
     // Set container position relative to button
     updateContainerPosition();
     // Set up meshes for button and container
-    builder_button.SetupMesh();
-    builder_container.SetupMesh();
+    editorButton_.SetupMesh();
+    editorContainer_.SetupMesh();
 
-    buttonPool.resize(static_cast<int>(GameBlock::None));
+    editorButtonPool_.resize(static_cast<int>(GameBlock::None));
     updateInnerButtonPosition();
 
     // Setup brush preview
     circleMesh = CreateCircleMesh(20);
 
-    savingRoot = Json::Value();
-    readingRoot = Json::Value();
+    savingRoot_ = Json::Value();
+    readingRoot_ = Json::Value();
 }
 
-editorMode LevelManager::getLevelEditorMode() const { return level_editor_mode_; }
+editorMode LevelManager::getLevelEditorMode() const { return levelEditorMode_; }
 
-void LevelManager::setLevelEditorMode(editorMode mode) { level_editor_mode_ = mode; }
+void LevelManager::setLevelEditorMode(editorMode mode) { levelEditorMode_ = mode; }
 
-int LevelManager::getCurrentLevel() const { return current_level_; }
+int LevelManager::getCurrentLevel() const { return currentLevel_; }
 
-void LevelManager::SetCurrentLevel(int level) { current_level_ = level; }
+void LevelManager::SetCurrentLevel(int level) { currentLevel_ = level; }
 
-GameBlock LevelManager::getCurrentGameBlock() const { return current_gameblock_; }
+GameBlock LevelManager::getCurrentGameBlock() const { return currentGameBlock_; }
 
-void LevelManager::setCurrentGameBlock(GameBlock block) { current_gameblock_ = block; }
+void LevelManager::setCurrentGameBlock(GameBlock block) { currentGameBlock_ = block; }
 
-bool LevelManager::getDisplayBuilderContainer() const { return display_builder_container_; }
+bool LevelManager::getDisplayBuilderContainer() const { return displayEditorContainer_; }
 
 void LevelManager::updateEditorButtonPosition() {
     // Update builder button position
     // If builder container is displayed, move button based on container scale
-    if (display_builder_container_) {
-        builder_button.transform_.pos_.x = builder_button.transform_.pos_.x - (container_scale_.x);
+    if (displayEditorContainer_) {
+        editorButton_.transform_.pos_.x =
+            editorButton_.transform_.pos_.x - (editorContainerScale_.x);
     } else {
-        builder_button.transform_.pos_.x = 775.0f;
+        editorButton_.transform_.pos_.x = 775.0f;
     }
 
-    builder_button.UpdateTransform();
+    editorButton_.UpdateTransform();
 }
 
 void LevelManager::updateContainerPosition() {
     // Update builder button position
     // And make sure builder container follows the button
     AEVec2 container_pos{};
-    container_pos.x = (builder_button.transform_.pos_.x + builder_button.transform_.scale_.x / 2) +
-                      (container_scale_.x / 2);
+    container_pos.x = (editorButton_.transform_.pos_.x + editorButton_.transform_.scale_.x / 2) +
+                      (editorContainerScale_.x / 2);
 
-    container_pos.y = builder_button.transform_.pos_.y - (container_scale_.y / 2) +
-                      (builder_button.transform_.scale_.y / 2);
+    container_pos.y = editorButton_.transform_.pos_.y - (editorContainerScale_.y / 2) +
+                      (editorButton_.transform_.scale_.y / 2);
 
-    builder_container.transform_.pos_ = container_pos;
+    editorContainer_.transform_.pos_ = container_pos;
 
-    builder_container.UpdateTransform();
+    editorContainer_.UpdateTransform();
 }
 
 void LevelManager::updateInnerButtonPosition() {
     // Update inner button position to follow the container
-    AEVec2 containerPos = builder_container.transform_.pos_;
-    AEVec2 containerScale = builder_container.transform_.scale_;
+    AEVec2 containerPos = editorContainer_.transform_.pos_;
+    AEVec2 containerScale = editorContainer_.transform_.scale_;
     float padding = 15.0f;
 
     int totalButtons = static_cast<int>(GameBlock::None);
@@ -115,27 +116,27 @@ void LevelManager::updateInnerButtonPosition() {
         float x = left + c * (buttonWidth + padding) + buttonWidth * 0.5f;
         float y = top - r * (buttonHeight + padding) - buttonHeight * 0.5f;
 
-        buttonPool[i].transform_.scale_.x = buttonWidth;
-        buttonPool[i].transform_.scale_.y = buttonHeight;
-        buttonPool[i].transform_.pos_.x = x;
-        buttonPool[i].transform_.pos_.y = y;
+        editorButtonPool_[i].transform_.scale_.x = buttonWidth;
+        editorButtonPool_[i].transform_.scale_.y = buttonHeight;
+        editorButtonPool_[i].transform_.pos_.x = x;
+        editorButtonPool_[i].transform_.pos_.y = y;
 
-        if (buttonPool[i].graphics_.mesh_ == nullptr) {
-            buttonPool[i].SetupMesh();
+        if (editorButtonPool_[i].graphics_.mesh_ == nullptr) {
+            editorButtonPool_[i].SetupMesh();
         }
         // If your SetupMesh needs to be re-run after transform changes, keep this.
-        buttonPool[i].UpdateTransform();
+        editorButtonPool_[i].UpdateTransform();
     }
 }
 
 void LevelManager::updateLevelEditor() {
-    if (level_editor_mode_ != editorMode::Edit) {
+    if (levelEditorMode_ != editorMode::Edit) {
         return;
     }
 
     // If Tab is pressed, toggle builder container
     if (AEInputCheckReleased(AEVK_TAB) || 0 == AESysDoesWindowExist()) {
-        display_builder_container_ = !display_builder_container_;
+        displayEditorContainer_ = !displayEditorContainer_;
         updateEditorButtonPosition();
         updateContainerPosition();
         updateInnerButtonPosition();
@@ -144,9 +145,9 @@ void LevelManager::updateLevelEditor() {
     // Check if any button in the button pool is clicked
     for (int i = 0; i < static_cast<int>(GameBlock::None); ++i) {
         if (AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
-            if (buttonPool[i].OnClick()) {
-                current_gameblock_ = static_cast<GameBlock>(i);
-                std::cout << "Selected block: " << static_cast<int>(current_gameblock_) << "\n";
+            if (editorButtonPool_[i].OnClick()) {
+                currentGameBlock_ = static_cast<GameBlock>(i);
+                std::cout << "Selected block: " << static_cast<int>(currentGameBlock_) << "\n";
             }
         }
     }
@@ -155,50 +156,50 @@ void LevelManager::updateLevelEditor() {
     s32 scroll_input{};
     AEInputMouseWheelDelta(&scroll_input);
     if (scroll_input > 0) {
-        brush_radius_ += 5.0f; // Increase brush size
-        if (brush_radius_ > 100.0f) {
-            brush_radius_ = 100.0f; // Cap maximum brush size
+        brushRadius_ += 5.0f; // Increase brush size
+        if (brushRadius_ > 100.0f) {
+            brushRadius_ = 100.0f; // Cap maximum brush size
         }
-        std::cout << "Scroll up detected. Brush radius: " << brush_radius_ << "\n";
+        std::cout << "Scroll up detected. Brush radius: " << brushRadius_ << "\n";
     } else if (scroll_input < 0) {
-        brush_radius_ -= 5.0f; // Decrease brush size
-        if (brush_radius_ < 20.0f) {
-            brush_radius_ = 20.0f; // Cap minimum brush size
+        brushRadius_ -= 5.0f; // Decrease brush size
+        if (brushRadius_ < 20.0f) {
+            brushRadius_ = 20.0f; // Cap minimum brush size
         }
-        std::cout << "Scroll down detected. Brush radius: " << brush_radius_ << "\n";
+        std::cout << "Scroll down detected. Brush radius: " << brushRadius_ << "\n";
     }
 }
 
 void LevelManager::renderLevelEditorUI() {
 
-    if (level_editor_mode_ != editorMode::Edit) {
+    if (levelEditorMode_ != editorMode::Edit) {
         return;
     }
 
     // Render builder button
-    builder_button.DrawColor(0.5f, 0.5f, 0.5f);
+    editorButton_.DrawColor(0.5f, 0.5f, 0.5f);
 
-    // Render builder container and buttons within if display_builder_container_ is true
-    if (display_builder_container_) {
-        builder_container.DrawColor(1.f, 0.3f, 0.3f);
+    // Render builder container and buttons within if displayEditorContainer_ is true
+    if (displayEditorContainer_) {
+        editorContainer_.DrawColor(1.f, 0.3f, 0.3f);
         // Render buttons in button pool
         for (int i = 0; i < static_cast<int>(GameBlock::None); ++i) {
-            buttonPool[i].DrawColor(0.0, 1.0f, 0.0f);
+            editorButtonPool_[i].DrawColor(0.0, 1.0f, 0.0f);
         }
     }
 }
 
 void LevelManager::freeLevelEditor() {
-    builder_button.UnloadMesh();
-    builder_container.UnloadMesh();
+    editorButton_.UnloadMesh();
+    editorContainer_.UnloadMesh();
     AEGfxMeshFree(circleMesh);
 
     for (int i = 0; i < static_cast<int>(GameBlock::None); ++i) {
-        buttonPool[i].UnloadMesh();
+        editorButtonPool_[i].UnloadMesh();
     }
 }
 
-bool LevelManager::makeFilePath(int level) {
+bool LevelManager::makeLevelFilePath(int level) {
     std::string levelPath = "Assets/Levels/Level_" + std::to_string(level);
     std::filesystem::path filepath(levelPath);
 
@@ -255,8 +256,8 @@ void LevelManager::deleteLevelData(int level) {
     std::filesystem::path filePath(levelPath);
 
     // Set file to default value
-    savingRoot = Json::Value();
-    savingRoot["None"];
+    savingRoot_ = Json::Value();
+    savingRoot_["None"];
 
     // Builder is use for file configuration
     Json::StreamWriterBuilder builder;
@@ -266,14 +267,14 @@ void LevelManager::deleteLevelData(int level) {
     std::unique_ptr<Json::StreamWriter> jsonWriter(builder.newStreamWriter());
     std::ofstream outfile(filePath);
     if (outfile) {
-        jsonWriter->write(savingRoot, &outfile);
+        jsonWriter->write(savingRoot_, &outfile);
         std::cout << "File saved successfully\n";
     } else {
         std::cout << "Failed to open file for writing\n";
     }
 
     // Clear root after writing to file to prevent accidental reuse
-    savingRoot.clear();
+    savingRoot_.clear();
 }
 
 void LevelManager::createLevelData(int level, int width, int height, int tilesize) {
@@ -282,16 +283,16 @@ void LevelManager::createLevelData(int level, int width, int height, int tilesiz
 }
 
 void LevelManager::saveMapInfo(int width, int height, int tilesize) {
-    savingRoot["Map"]["width"] = width;
-    savingRoot["Map"]["height"] = height;
-    savingRoot["Map"]["tileSize"] = tilesize;
+    savingRoot_["Map"]["width"] = width;
+    savingRoot_["Map"]["height"] = height;
+    savingRoot_["Map"]["tileSize"] = tilesize;
 }
 void LevelManager::saveTerrainInfo(std::vector<float> nodes, std::string terrainType) {
     Json::Value terrainJson(Json::arrayValue);
     for (size_t i = 0; i < nodes.size(); ++i) {
         terrainJson.append(nodes[i]);
     }
-    savingRoot["Terrain"][terrainType] = terrainJson;
+    savingRoot_["Terrain"][terrainType] = terrainJson;
 }
 void LevelManager::saveStartEndInfo(std::vector<StartEnd> startPoints, StartEnd endPoint) {
     Json::Value startPointsJson_array(Json::arrayValue);
@@ -306,7 +307,7 @@ void LevelManager::saveStartEndInfo(std::vector<StartEnd> startPoints, StartEnd 
         startPointJson["direction"] = static_cast<int>(startPoint.direction_);
         startPointsJson_array.append(startPointJson);
     }
-    savingRoot["Objects"]["startPoints"] = startPointsJson_array;
+    savingRoot_["Objects"]["startPoints"] = startPointsJson_array;
 
     Json::Value endPointJson;
     endPointJson["posX"] = endPoint.transform_.pos_.x;
@@ -316,7 +317,7 @@ void LevelManager::saveStartEndInfo(std::vector<StartEnd> startPoints, StartEnd 
     endPointJson["rotation"] = endPoint.transform_.rotationRad_;
     endPointJson["type"] = static_cast<int>(endPoint.type_);
     endPointJson["direction"] = static_cast<int>(endPoint.direction_);
-    savingRoot["Objects"]["endPoint"] = endPointJson;
+    savingRoot_["Objects"]["endPoint"] = endPointJson;
 }
 void LevelManager::writeToFile(int level) {
     std::string levelPath = "Assets/Levels/Level_" + std::to_string(level) + "/Map.json";
@@ -334,26 +335,26 @@ void LevelManager::writeToFile(int level) {
     std::unique_ptr<Json::StreamWriter> jsonWriter(builder.newStreamWriter());
     std::ofstream outfile(filePath);
     if (outfile) {
-        jsonWriter->write(savingRoot, &outfile);
+        jsonWriter->write(savingRoot_, &outfile);
         std::cout << "File saved successfully\n";
     } else {
         std::cout << "Failed to open file for writing\n";
     }
 
     // Clear root after writing to file to prevent accidental reuse
-    savingRoot.clear();
+    savingRoot_.clear();
 }
 
 bool LevelManager::getLevelData(int level) {
     // Clear previously read data to prevent accidental reuse
-    readingRoot = Json::Value();
+    readingRoot_ = Json::Value();
 
     std::string filePath = "Assets/Levels/Level_" + std::to_string(level) + "/Map.json";
     std::ifstream file(filePath);
     if (!file.is_open()) {
         std::cout << "Failed to open file: " << filePath << "\n";
         // Make directory and file if they don't exist
-        if (makeFilePath(level) && makeLevelFile(level)) {
+        if (makeLevelFilePath(level) && makeLevelFile(level)) {
             std::cout << "Created missing directory and file for level " << level << "\n";
         } else {
             std::cout << "Failed to create missing directory and file for level " << level << "\n";
@@ -365,13 +366,13 @@ bool LevelManager::getLevelData(int level) {
     builder["collectComments"] = false;
     JSONCPP_STRING errs;
 
-    bool parsingSuccessful = Json::parseFromStream(builder, file, &readingRoot, &errs);
+    bool parsingSuccessful = Json::parseFromStream(builder, file, &readingRoot_, &errs);
     if (!parsingSuccessful) {
         std::cout << "Failed to parse JSON: " << errs << "\n";
         return false;
     }
 
-    if (readingRoot.isMember("None")) {
+    if (readingRoot_.isMember("None")) {
         std::cout << "File is empty\n";
         return false;
     }
@@ -382,27 +383,27 @@ bool LevelManager::getLevelData(int level) {
 void LevelManager::checkLevelData() {
     // Loop through and check if level is playable by calling getLevelData for each
     for (int i = 1; i <= static_cast<int>(Level::None); ++i) {
-        playableLevels[i - 1] = getLevelData(i);
-        std::cout << "Level " << i << " playable: " << playableLevels[i - 1] << "\n";
+        playableLevels_[i - 1] = getLevelData(i);
+        std::cout << "Level " << i << " playable: " << playableLevels_[i - 1] << "\n";
     }
 }
 
 void LevelManager::parseMapInfo(int& width, int& height, int& tilesize) {
-    if (readingRoot.isMember("Map")) {
+    if (readingRoot_.isMember("Map")) {
         std::cout << "Parsing map info...\n";
-        width = readingRoot["Map"]["width"].asInt();
-        height = readingRoot["Map"]["height"].asInt();
-        tilesize = readingRoot["Map"]["tileSize"].asInt();
+        width = readingRoot_["Map"]["width"].asInt();
+        height = readingRoot_["Map"]["height"].asInt();
+        tilesize = readingRoot_["Map"]["tileSize"].asInt();
     } else {
         std::cout << "Map info not found in JSON\n";
     }
 }
 void LevelManager::parseTerrainInfo(std::vector<float>& nodes, std::string terrainType) {
-    if (!readingRoot.isMember("Terrain")) {
+    if (!readingRoot_.isMember("Terrain")) {
         std::cout << "Terrain info not found in JSON\n";
         return;
     }
-    const Json::Value& terrain = readingRoot["Terrain"];
+    const Json::Value& terrain = readingRoot_["Terrain"];
     if (!terrain.isMember(terrainType)) {
         std::cout << "Terrain type '" << terrainType << "' not found in JSON\n";
         return;
@@ -424,8 +425,8 @@ void LevelManager::parseTerrainInfo(std::vector<float>& nodes, std::string terra
 }
 void LevelManager::parseStartEndInfo(StartEndPoint& startEndPointSystem) {
 
-    if (readingRoot.isMember("Objects")) {
-        const Json::Value& objects = readingRoot["Objects"];
+    if (readingRoot_.isMember("Objects")) {
+        const Json::Value& objects = readingRoot_["Objects"];
         // Parse start points
         if (objects.isMember("startPoints")) {
             std::cout << "Parsing start points info...\n";
@@ -467,7 +468,7 @@ void LevelManager::drawBrushPreview(TerrainMaterial terrainType) {
     // Set up world matrix
     AEMtx33 scale_mtx, rot_mtx, trans_mtx, world_mtx;
 
-    AEMtx33Scale(&scale_mtx, brush_radius_ * 2, brush_radius_ * 2);
+    AEMtx33Scale(&scale_mtx, brushRadius_ * 2, brushRadius_ * 2);
     AEMtx33Rot(&rot_mtx, 0.0f);
     AEMtx33Trans(&trans_mtx, mousePos.x, mousePos.y);
 

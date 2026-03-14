@@ -45,7 +45,7 @@ public:
 
     // Create file/directory functions
     //=================================================================
-    bool makeFilePath(int level);
+    bool makeLevelFilePath(int level);
     bool makeLevelFile(int level);
     //=================================================================
 
@@ -75,31 +75,31 @@ public:
     // Public variables
     //=================================================================
     // Array of bool to store which level is playable
-    bool playableLevels[static_cast<int>(Level::None)]{};
+    bool playableLevels_[static_cast<int>(Level::None)]{};
     // For preview placement
-    f32 brush_radius_ = 20.0f;
+    f32 brushRadius_ = 20.0f;
     //=================================================================
 
 private:
-    editorMode level_editor_mode_{editorMode::None};
-    int current_level_{0};
-    GameBlock current_gameblock_{GameBlock::None};
+    editorMode levelEditorMode_{editorMode::None};
+    int currentLevel_{0};
+    GameBlock currentGameBlock_{GameBlock::None};
 
     // For level editor UI
-    AEVec2 container_scale_ = {};
-    bool display_builder_container_ = false;
+    AEVec2 editorContainerScale_ = {};
+    bool displayEditorContainer_ = false;
     // Builder button is the parent container for builder container
     // Builder container is the parent container for all the buttons in the builder pool
-    Button builder_button;
-    Button builder_container;
-    std::vector<Button> buttonPool;
+    Button editorButton_;
+    Button editorContainer_;
+    std::vector<Button> editorButtonPool_;
 
     // Brush mesh
     AEGfxVertexList* circleMesh = nullptr;
 
     // For saving and reading level data
-    Json::Value savingRoot{};
-    Json::Value readingRoot{};
+    Json::Value savingRoot_{};
+    Json::Value readingRoot_{};
 };
 
 extern LevelManager levelManager;
