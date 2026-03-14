@@ -13,7 +13,7 @@ void LoadGlobalVFXConfigs(VFXSystem& vfxSystem) {
 
     // Emitter setup
     EmitterConfig dirtConfig;
-    dirtConfig.spawnCount_ = 20;
+    dirtConfig.spawnCount_ = 10;
     dirtConfig.minLife_ = 0.3f;
     dirtConfig.maxLife_ = 0.6f;
     dirtConfig.minSpeed_ = 50.0f;

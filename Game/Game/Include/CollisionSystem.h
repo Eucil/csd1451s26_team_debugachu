@@ -11,6 +11,12 @@
 #include "FluidSystem.h"
 #include "Terrain.h"
 
+struct CollisionInfo {
+    bool hasCollision = false;
+    AEVec2 normal = {0.0f, 1.0f};
+    f32 penetration = 0.0f;
+};
+
 class CollisionSystem {
 public:
     static void terrainToFluidCollision(Terrain& terrain, FluidSystem& fluidSystem);
@@ -34,19 +40,29 @@ private:
     // Point in triangle (barycentric)
     static bool pointInTriangle(const AEVec2& p, const AEVec2& a, const AEVec2& b, const AEVec2& c);
 
-    // Narrow phase: circle vs AABB (axis-aligned box) in world
-    static bool resolveCircleVsAABB(const AEVec2& circleCenter, f32 radius, const AEVec2& boxCenter,
-                                    const AEVec2& halfExt, AEVec2& outNormal, f32& outPenetration);
+
+                                        
+
+
+
+    // Generates a CollisionContact struct containing information about the collision (normal, penetration).
+    static CollisionInfo cellToFluidParticleCollision(const Cell& cell, const FluidParticle& fluidParticle);
+
+    // Helper function (cellToFluidParticleCollision): circle vs AABB (axis-aligned box) in world
+    static bool detectCircleVsAABB(const AEVec2& circleCenter, f32 radius,
+                                              const AEVec2& velocity, const AEVec2& boxCenter,
+                                              const AEVec2& halfExt, AEVec2& outNormal,
+                                              f32& outPenetration);
 
     // Narrow phase: circle vs triangle in world (closest point on triangle)
-    static bool resolveCircleVsTriangle(const AEVec2& circleCenter, f32 radius, const AEVec2& v0,
+    static bool detectCircleVsTriangle(const AEVec2& circleCenter, f32 radius,
+                                       const AEVec2& velocity, const AEVec2& v0,
                                         const AEVec2& v1, const AEVec2& v2, AEVec2& outNormal,
                                         f32& outPenetration);
 
-    // Response: push out + slide (prevents teleporting)
+    // Collision Resolution function. 
     static void pushOutAndSlide(FluidParticle& p, const AEVec2& n, f32 penetration, f32 radius);
-
-    static void cellToFluidParticleCollision(const Cell& cell, FluidParticle& fluidParticle);
 
     static void resolveFluidParticlePair(FluidParticle& p1, FluidParticle& p2);
 };
+
