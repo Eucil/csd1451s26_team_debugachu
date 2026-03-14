@@ -677,12 +677,12 @@ void CollisionSystem::resolveFluidParticlePair(FluidParticle& p1, FluidParticle&
         if (std::abs(ny) > 0.4f) {
             if (dy > 0.0f) {
                 // p1 is physically higher than p2.
-                p1Weight = 1.8f; // p1 gets splashed UP easily
+                p1Weight = 1.5f; // p1 gets splashed UP easily
                 p2Weight = 0.2f; // p2 (below p1) stubbornly resists moving DOWN
             } else {
                 // p2 is physically higher than p1.
                 p1Weight = 0.2f;
-                p2Weight = 1.8f;
+                p2Weight = 1.5f;
             }
         }
 
