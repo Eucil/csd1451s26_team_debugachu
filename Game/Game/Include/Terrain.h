@@ -21,7 +21,7 @@ private:
 class Terrain {
 public:
     Terrain(TerrainMaterial terrainMaterial, AEGfxTexture* pTex, AEVec2 centerPosition,
-            u32 cellRows, u32 cellCols, u32 cellSize);
+            u32 cellRows, u32 cellCols, u32 cellSize, bool collidable);
 
     void initCellsTransform();
 
@@ -90,6 +90,8 @@ private:
     void destroyTerrainRadius(f32 worldX, f32 worldY, f32 radius);
 
     void buildTerrainRadius(f32 worldX, f32 worldY, f32 radius);
+
+    bool collidable_;
 
     static AEGfxVertexList* debugTriMesh_;
     static AEGfxVertexList* debugBoxMesh_;

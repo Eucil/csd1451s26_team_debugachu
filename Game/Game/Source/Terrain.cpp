@@ -12,10 +12,10 @@ AEGfxVertexList* Terrain::debugTriMesh_{nullptr};
 AEGfxVertexList* Terrain::debugBoxMesh_{nullptr};
 
 Terrain::Terrain(TerrainMaterial terrainMaterial, AEGfxTexture* pTex, AEVec2 centerPosition,
-                 u32 cellRows, u32 cellCols, u32 cellSize)
+                 u32 cellRows, u32 cellCols, u32 cellSize, bool collidable)
     : terrainMaterial_(terrainMaterial), kCellRows_(cellRows), kCellCols_(cellCols),
       kCellSize_(cellSize), kNodeRows_(kCellRows_ + 1), kNodeCols_(kCellCols_ + 1),
-      cells_(kCellRows_ * kCellCols_), nodes_(kNodeRows_ * kNodeCols_) {
+      cells_(kCellRows_ * kCellCols_), nodes_(kNodeRows_ * kNodeCols_), collidable_{collidable} {
 
     transform_.pos_ = centerPosition;
 
@@ -71,16 +71,19 @@ void Terrain::initCellsGraphics() {
 void Terrain::initCellsCollider() {
     for (u32 r{0}; r < kCellRows_; ++r) {
         for (u32 c{0}; c < kCellCols_; ++c) {
-            // Determine collider case (TL=8, TR=4, BR=2, BL=1)
             u32 index{0};
-            if (nodes_[(r + 1) * kNodeCols_ + c] >= threshold_)
-                index |= 8;
-            if (nodes_[(r + 1) * kNodeCols_ + c + 1] >= threshold_)
-                index |= 4;
-            if (nodes_[r * kNodeCols_ + c + 1] >= threshold_)
-                index |= 2;
-            if (nodes_[r * kNodeCols_ + c] >= threshold_)
-                index |= 1;
+            // If collidable_ is false, keep index at 0 (no colliders)
+            if (collidable_ == true) {
+                // Determine collider case (TL=8, TR=4, BR=2, BL=1)
+                if (nodes_[(r + 1) * kNodeCols_ + c] >= threshold_)
+                    index |= 8;
+                if (nodes_[(r + 1) * kNodeCols_ + c + 1] >= threshold_)
+                    index |= 4;
+                if (nodes_[r * kNodeCols_ + c + 1] >= threshold_)
+                    index |= 2;
+                if (nodes_[r * kNodeCols_ + c] >= threshold_)
+                    index |= 1;
+            }
 
             Cell& cell = cells_[r * kCellCols_ + c];
 
