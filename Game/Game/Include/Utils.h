@@ -8,7 +8,7 @@ usage: call AEGfxMeshStart -> AddCircleMesh -> meshPtr = AEGfxMeshEnd; -> waterP
 meshPtr;
 */
 
-AEGfxVertexList* CreateCircleMesh(f32 slices);
+AEGfxVertexList* CreateCircleMesh(u32 slices, f32 radius);
 
 AEGfxVertexList* CreateRectMesh();
 

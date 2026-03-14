@@ -3,12 +3,11 @@
 #include "Utils.h"
 #include <string>
 
-AEGfxVertexList* CreateCircleMesh(f32 slices) {
+AEGfxVertexList* CreateCircleMesh(u32 slices, f32 radius) {
     AEGfxMeshStart();
 
     // 1. Constants
-    f32 radius = 0.5f; // <--- DO NOT CHANGE THIS RADIUS
-    f32 angle_step = (3.14159265f * 2.0f) / (f32)slices;
+    f32 angle_step = (3.14159265f * 2.0f) / static_cast<f32>(slices);
 
     // 2. Loop to create pizza slices
     for (u32 i = 0; i < slices; i++) {

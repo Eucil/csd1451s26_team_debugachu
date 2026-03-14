@@ -3,7 +3,7 @@
 void LoadGlobalVFXConfigs(VFXSystem& vfxSystem) {
 
     // Graphics setup
-    AEGfxVertexList* circleMesh = CreateCircleMesh(20);
+    AEGfxVertexList* circleMesh = CreateCircleMesh(20, 0.5f);
 
     Graphics dirtGfx;
     dirtGfx.mesh_ = circleMesh;

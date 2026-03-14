@@ -19,7 +19,7 @@ FluidParticle::FluidParticle(f32 posX, f32 posY, f32 radius, FluidType type) {
 
     collider_.colliderShape_ = ColliderShape::Circle;
     collider_.shapeData_.circle_.radius =
-        radius * 0.7f; // * 0.7f so that collider is smaller than mesh
+        radius * 0.6f; // * 0.6f so that collider is smaller than mesh
 
     type_ = type;
 }
@@ -28,45 +28,53 @@ FluidParticle::FluidParticle(f32 posX, f32 posY, f32 radius, FluidType type) {
 // FluidSystem
 // ==========================================
 
-void FluidSystem::InitializeColor(f32 r, f32 g, f32 b, f32 a, FluidType type) {
-    int i = (int)type;
-
-    colorConfigs_[i][0] = r;
-    colorConfigs_[i][1] = g;
-    colorConfigs_[i][2] = b;
-    colorConfigs_[i][3] = a;
-}
-
 void FluidSystem::InitializeGraphics(AEGfxVertexList* mesh, AEGfxTexture* texture, u32 layer,
-                                     FluidType type) {
-    int i = (int)type;
+                                     f32 red, f32 green, f32 blue, f32 alpha, FluidType type,
+                                     u32 graphicsIndex) {
+    size_t fluidIndex = static_cast<size_t>(type);
 
-    graphicsConfigs_[i].mesh_ = mesh;
-    graphicsConfigs_[i].texture_ = texture;
-    graphicsConfigs_[i].layer_ = layer;
+    graphicsConfigs_[fluidIndex][graphicsIndex].mesh_ = mesh;
+    graphicsConfigs_[fluidIndex][graphicsIndex].texture_ = texture;
+    graphicsConfigs_[fluidIndex][graphicsIndex].layer_ = layer;
+    graphicsConfigs_[fluidIndex][graphicsIndex].red_ = red;
+    graphicsConfigs_[fluidIndex][graphicsIndex].blue_ = blue;
+    graphicsConfigs_[fluidIndex][graphicsIndex].green_ = green;
+    graphicsConfigs_[fluidIndex][graphicsIndex].alpha_ = alpha;
 }
 
 void FluidSystem::InitializePhysics(f32 mass, f32 gravity, AEVec2 velocity, FluidType type) {
-    int i = (int)type;
-    physicsConfigs_[i].mass_ = mass;
-    physicsConfigs_[i].gravity_ = gravity;
-    physicsConfigs_[i].velocity_ = velocity;
+    size_t fluidIndex = static_cast<size_t>(type);
+
+    physicsConfigs_[fluidIndex].mass_ = mass;
+    physicsConfigs_[fluidIndex].gravity_ = gravity;
+    physicsConfigs_[fluidIndex].velocity_ = velocity;
 }
 
 void FluidSystem::Initialize() {
-
-    AEGfxVertexList* circlePtr = CreateCircleMesh(20);
     // Reduces memory reallocation
     int typeCount{static_cast<int>(FluidType::Count)};
     for (int i{0}; i < typeCount; i++) {
         particlePools_[i].reserve(1000);
     }
-    InitializeColor(0.0f, 0.5f, 1.0f, 1.0f, FluidType::Water);
-    InitializeColor(1.0f, 0.2f, 0.0f, 1.0f, FluidType::Lava);
+
+    // Initialize physics for each fluid type
     InitializePhysics(1.0f, -500.0f, {0.0f, 0.0f}, FluidType::Water);
     InitializePhysics(1.0f, -200.0f, {0.0f, 0.0f}, FluidType::Lava);
-    InitializeGraphics(circlePtr, nullptr, 2, FluidType::Water);
-    InitializeGraphics(circlePtr, nullptr, 2, FluidType::Lava);
+
+    // Initialize graphics for each fluid type
+    InitializeGraphics(CreateCircleMesh(10, 0.5f), nullptr, 2, 1.0f, 1.0f, 1.0f, 1.0f,
+                       FluidType::Water, 0);
+    InitializeGraphics(CreateCircleMesh(10, 0.47f), nullptr, 2, 0.4f, 0.7f, 1.0f, 1.0f,
+                       FluidType::Water, 1);
+    InitializeGraphics(CreateCircleMesh(10, 0.4f), nullptr, 2, 0.0f, 0.5f, 1.0f, 1.0f,
+                       FluidType::Water, 2);
+
+    InitializeGraphics(CreateCircleMesh(10, 0.5f), nullptr, 2, 1.0f, 0.2f, 0.0f, 1.0f,
+                       FluidType::Lava, 0);
+    InitializeGraphics(CreateCircleMesh(10, 0.45f), nullptr, 2, 1.0f, 0.2f, 0.0f, 1.0f,
+                       FluidType::Lava, 1);
+    InitializeGraphics(CreateCircleMesh(10, 0.4f), nullptr, 2, 1.0f, 0.2f, 0.0f, 1.0f,
+                       FluidType::Lava, 2);
 }
 
 void FluidSystem::UpdateTransforms(std::vector<FluidParticle>& particlePool) {
@@ -195,20 +203,19 @@ void FluidSystem::DrawColor() {
         if (particlePools_[i].empty()) {
             continue;
         }
-        // set colour
-        AEGfxSetColorToMultiply(colorConfigs_[i][0],  //  <-- r
-                                colorConfigs_[i][1],  //  <-- g
-                                colorConfigs_[i][2],  //  <-- b
-                                colorConfigs_[i][3]); //  <-- alpha
 
-        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxSetTransparency(colorConfigs_[i][3]);
+        // Loop through each graphics component in each fluid type
+        for (u32 j{0}; j < 3; ++j) {
+            AEGfxSetColorToMultiply(graphicsConfigs_[i][j].red_, graphicsConfigs_[i][j].green_,
+                                    graphicsConfigs_[i][j].blue_, graphicsConfigs_[i][j].alpha_);
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxSetTransparency(1.0f);
 
-        // draw according to the particles' transform matrix
-        for (auto& p : particlePools_[i]) { // <-- p = current particle being looped
-
-            AEGfxSetTransform(p.transform_.worldMtx_.m);
-            AEGfxMeshDraw(graphicsConfigs_[i].mesh_, AE_GFX_MDM_TRIANGLES);
+            // draw according to the particles' transform matrix
+            for (auto& p : particlePools_[i]) { // <-- p = current particle being rendered
+                AEGfxSetTransform(p.transform_.worldMtx_.m);
+                AEGfxMeshDraw(graphicsConfigs_[i][j].mesh_, AE_GFX_MDM_TRIANGLES);
+            }
         }
     }
 }
@@ -217,48 +224,53 @@ void FluidSystem::DrawTexture() {
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 
     // Loops through (0) Water, (1) Lava, ...
-    for (int i = 0; i < (int)FluidType::Count; ++i) {
-
+    for (size_t fluidIndex{0}; fluidIndex < static_cast<size_t>(FluidType::Count); ++fluidIndex) {
         // if particle pool is empty, completely skip this pool
-        if (particlePools_[i].empty()) {
+        if (particlePools_[fluidIndex].empty()) {
             continue;
         }
 
-        AEGfxTextureSet(graphicsConfigs_[i].texture_, 0, 0);
+        // Loop through each graphics component in each fluid type
+        for (u32 i{0}; i < 3; ++i) {
+            AEGfxTextureSet(graphicsConfigs_[fluidIndex][i].texture_, 0, 0);
 
-        AEGfxSetColorToMultiply(colorConfigs_[i][0],  //  <-- r
-                                colorConfigs_[i][1],  //  <-- g
-                                colorConfigs_[i][2],  //  <-- b
-                                colorConfigs_[i][3]); //  <-- alpha
+            AEGfxSetColorToMultiply(
+                graphicsConfigs_[fluidIndex][i].red_, graphicsConfigs_[fluidIndex][i].green_,
+                graphicsConfigs_[fluidIndex][i].blue_, graphicsConfigs_[fluidIndex][i].alpha_);
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            AEGfxSetTransparency(1.0f);
 
-        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxSetTransparency(colorConfigs_[i][3]);
-
-        // Loop through each particle
-        for (auto& p : particlePools_[i]) {
-            AEGfxSetTransform(p.transform_.worldMtx_.m);
-            AEGfxMeshDraw(graphicsConfigs_[i].mesh_, AE_GFX_MDM_TRIANGLES);
+            // draw according to the particles' transform matrix
+            for (auto& p : particlePools_[fluidIndex]) { // <-- p = current particle being rendered
+                AEGfxSetTransform(p.transform_.worldMtx_.m);
+                AEGfxMeshDraw(graphicsConfigs_[fluidIndex][i].mesh_, AE_GFX_MDM_TRIANGLES);
+            }
         }
     }
 }
 
 void FluidSystem::Free() {
-    // Free the mesh once and then set the rest
-    if (graphicsConfigs_[0].mesh_ != nullptr) {
-        AEGfxMeshFree(graphicsConfigs_[0].mesh_);
-    }
+    // Free all fluid meshes
+    for (size_t fluidIndex{0}; fluidIndex < static_cast<size_t>(FluidType::Count); ++fluidIndex) {
+        for (size_t i{0}; i < 3; ++i) {
+            std::cout << graphicsConfigs_[fluidIndex][i].mesh_ << std::endl;
+            if (graphicsConfigs_[fluidIndex][i].mesh_ != nullptr) {
+                AEGfxMeshFree(graphicsConfigs_[fluidIndex][i].mesh_);
 
-    // Nullify all mesh pointers so we don't accidentally use dead memory
-    for (int i = 0; i < (int)FluidType::Count; ++i) {
-        graphicsConfigs_[i].mesh_ = nullptr;
+                // Nullify all mesh pointers so we don't accidentally use freed memory
+                graphicsConfigs_[fluidIndex][i].mesh_ = nullptr;
+            }
+        }
     }
 
     // Free textures
-    for (int i = 0; i < (int)FluidType::Count; ++i) {
-        if (graphicsConfigs_[i].texture_ != nullptr) {
-            AEGfxTextureUnload(
-                graphicsConfigs_[i].texture_); // Or AEGfxTextureFree depending on version
-            graphicsConfigs_[i].texture_ = nullptr;
+    for (size_t fluidIndex{0}; fluidIndex < static_cast<size_t>(FluidType::Count); ++fluidIndex) {
+        for (size_t i{0}; i < 3; ++i) {
+            if (graphicsConfigs_[fluidIndex][i].texture_ != nullptr) {
+                AEGfxTextureUnload(graphicsConfigs_[fluidIndex][i]
+                                       .texture_); // Or AEGfxTextureFree depending on version
+                graphicsConfigs_[fluidIndex][i].texture_ = nullptr;
+            }
         }
     }
 

@@ -13,6 +13,10 @@ struct Graphics {
     AEGfxVertexList* mesh_{nullptr};
     AEGfxTexture* texture_{nullptr};
     u32 layer_{0};
+    f32 red_{1.0f};
+    f32 green_{1.0f};
+    f32 blue_{1.0f};
+    f32 alpha_{0.0f};
 };
 
 struct RigidBody2D {
