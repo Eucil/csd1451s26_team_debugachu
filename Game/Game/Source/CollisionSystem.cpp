@@ -652,6 +652,17 @@ void CollisionSystem::resolveFluidParticlePair(FluidParticle& p1, FluidParticle&
 
         f32 overlap = minDist - dist;
 
+        // ==========================================
+        // PRESSURE RELIEF VALVE
+        // ==========================================
+        // Cap the maximum overlap we resolve per frame.
+        // This single rule replaces the Popcorn Clamp and Wall Hugger!
+        // It prevents explosive teleports while keeping the fluid soft.
+        f32 maxOverlap = p1.collider_.shapeData_.circle_.radius * 0.15f;
+        if (overlap > maxOverlap) {
+            overlap = maxOverlap;
+        }
+
         // --- Repulsion ---
         // Resolve the collision by pushing them apart based on the amount of overlap
         // calculated above
@@ -660,39 +671,27 @@ void CollisionSystem::resolveFluidParticlePair(FluidParticle& p1, FluidParticle&
         // (original: 0.5f)
         //
         // If overlap is small, use a lower repulsion value (0.2f).
-        f32 repulsion = (overlap < minDist * 0.1f) ? 0.2f : 0.5f;
-            
+        //f32 repulsion = (overlap < minDist * 0.1f) ? 0.2f : 0.5f;
+        f32 repulsion = 0.5f;
+
         f32 moveX = nx * (overlap * repulsion);
         f32 moveY = ny * (overlap * repulsion);
 
-        f32 p1Weight = 1.0f;
-        f32 p2Weight = 1.0f;
-         
-        // -- TUNNELLING FIX -- 
-        // If this is a mostly vertical collision (|ny| > 0.4), make the bottom particle heavier
-        // This prevents top layers from crushing bottom layers into the ground.
-        // 
-        // When a particle is colliding with another particle from the top to a certain extent, 
-        // the particle below is adjusted to have a heavy weight, causing it to move less while the particle above moves more.
-        if (std::abs(ny) > 0.4f) {
-            if (dy > 0.0f) {
-                // p1 is physically higher than p2.
-                p1Weight = 1.5f; // p1 gets splashed UP easily
-                p2Weight = 0.2f; // p2 (below p1) stubbornly resists moving DOWN
-            } else {
-                // p2 is physically higher than p1.
-                p1Weight = 0.2f;
-                p2Weight = 1.5f;
-            }
+        // ==========================================
+        // HYDROSTATIC SLIP (Fixes Clumping!)
+        // ==========================================
+        // If particles are stacked vertically (|ny| > 0.6), convert some
+        // vertical pressure into outward horizontal slip to force leveling.
+        if (std::abs(ny) > 0.6f) {
+            f32 slip = overlap * 0.15f;
+            moveX += (nx > 0.0f) ? slip : -slip;
         }
 
-
-
-        // Apply the calculated movement to both particles directly to transform_.pos
-        p1.transform_.pos_.x += moveX * p1Weight;
-        p1.transform_.pos_.y += moveY * p1Weight;
-        p2.transform_.pos_.x -= moveX * p2Weight;
-        p2.transform_.pos_.y -= moveY * p2Weight;
+        // Apply 50/50 symmetric movement (Deleted all p1Weight/p2Weight logic!)
+        p1.transform_.pos_.x += moveX;
+        p1.transform_.pos_.y += moveY;
+        p2.transform_.pos_.x -= moveX;
+        p2.transform_.pos_.y -= moveY;
 
         // --- Velocity Impulse ---
         // Upon collision, we should calculate the relative difference in velocity
