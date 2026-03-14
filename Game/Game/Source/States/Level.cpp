@@ -8,10 +8,12 @@
 
 #include <AEEngine.h>
 
+#include "Button.h"
 #include "CollisionSystem.h"
 #include "Components.h"
 #include "FluidSystem.h"
 #include "GameStateManager.h"
+#include "Pause.h"
 #include "PortalSystem.h"
 #include "StartEndPoint.h"
 #include "States/LevelManager.h"
@@ -37,6 +39,11 @@ static bool fileExist;
 
 static VFXSystem vfxSystem;
 
+static NewButton buttonRestart;
+static NewButton buttonQuit;
+
+static PauseSystem pauseSystem;
+
 void LoadLevel() {
     // std::cout << "Load level 3\n";
     Terrain::createMeshLibrary();
@@ -46,8 +53,8 @@ void LoadLevel() {
     pTerrainStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
 
     // Setup texts
-    rotationText = Text(0.7f, 0.9f, "");
-    font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 12);
+    rotationText = Text(0.6f, 0.9f, "");
+    font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
 
     levelManager.initEditorUI();
 
@@ -62,6 +69,15 @@ void LoadLevel() {
         tileSize = 20;
         fileExist = false;
     }
+
+    // UI buttons
+    buttonRestart.loadMesh();
+    buttonRestart.loadTexture("Assets/Textures/brown_button.png");
+    buttonQuit.loadMesh();
+    buttonQuit.loadTexture("Assets/Textures/brown_button.png");
+
+    // Once level is loaded, make sure it is not paused
+    pauseSystem.resume();
 }
 
 void InitializeLevel() {
@@ -95,147 +111,185 @@ void InitializeLevel() {
 
     vfxSystem.Initialize(800, 20);
     LoadGlobalVFXConfigs(vfxSystem); // <-- change this to read from a json instead
+
+    // UI buttons
+    Json::Value buttonsRoot;
+    std::ifstream buttonsFile("Assets/GameData/UI/level_buttons.json");
+    buttonsFile >> buttonsRoot;
+    if (!buttonsFile.is_open()) {
+        std::cout << "Failed to open buttons.json\n" << std::endl;
+    }
+
+    buttonRestart.initFromJson(buttonsRoot["buttons"]["Restart"]);
+    buttonQuit.initFromJson(buttonsRoot["buttons"]["Quit"]);
 }
 
 void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
     // std::cout << "Update level 3\n";
 
-    // Press Q to go to main menu
-    if (AEInputCheckTriggered(AEVK_Q) || 0 == AESysDoesWindowExist()) {
-        std::cout << "Q triggered\n";
-        GSM.nextState_ = StateId::MainMenu;
-    }
-
-    // Press R to restart
-    if (AEInputCheckTriggered(AEVK_R) || 0 == AESysDoesWindowExist()) {
-        std::cout << "R triggered\n";
-        GSM.nextState_ = StateId::Restart;
-    }
-
-    // Keyboard/Mouse inputs for level editor and gameplay
-    // If in editor mode, edit level
-    if (levelManager.getLevelEditorMode() == editorMode::Edit) {
-        // Inputs to build level
-        if (!levelManager.getDisplayBuilderContainer()) {
-            f32 brush_size = levelManager.brush_radius_;
-            switch (levelManager.getCurrentGameBlock()) {
-            case GameBlock::Dirt:
-                if (AEInputCheckCurr(AEVK_LBUTTON)) {
-                    dirt->buildAtMouse(brush_size);
-                } else if (AEInputCheckCurr(AEVK_RBUTTON)) {
-                    dirt->destroyAtMouse(brush_size);
-                }
-                break;
-            case GameBlock::Stone:
-                if (AEInputCheckCurr(AEVK_LBUTTON)) {
-                    stone->buildAtMouse(brush_size);
-                } else if (AEInputCheckCurr(AEVK_RBUTTON)) {
-                    stone->destroyAtMouse(brush_size);
-                }
-                break;
-            case GameBlock::StartPoint:
-                if (AEInputCheckReleased(AEVK_LBUTTON)) {
-                    startEndPointSystem.SpawnAtMousePos(StartEndType::Pipe, GoalDirection::Down);
-                } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
-                    startEndPointSystem.DeleteAtMousePos();
-                }
-                break;
-            case GameBlock::EndPoint:
-                if (AEInputCheckReleased(AEVK_LBUTTON)) {
-                    startEndPointSystem.SpawnAtMousePos(StartEndType::Flower, GoalDirection::Up);
-                } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
-                    startEndPointSystem.DeleteAtMousePos();
-                }
-                break;
-            default:
-                break;
-            }
+    if (pauseSystem.isPaused()) { // Game is paused
+        if (AEInputCheckTriggered(AEVK_P) || 0 == AESysDoesWindowExist()) {
+            std::cout << "P triggered\n";
+            pauseSystem.resume();
         }
-        // Inputs to save level
-        if (AEInputCheckReleased(AEVK_S)) {
-            levelManager.saveMapInfo(width, height, tileSize);
-            levelManager.saveTerrainInfo(dirt->getNodes(), "Dirt");
-            levelManager.saveTerrainInfo(stone->getNodes(), "Stone");
-            levelManager.saveStartEndInfo(startEndPointSystem.startPoints_,
-                                          startEndPointSystem.endPoint_);
-            levelManager.writeToFile(levelManager.getCurrentLevel());
+        if (buttonRestart.checkMouseClick()) {
+            GSM.nextState_ = StateId::Restart;
+            pauseSystem.resume();
+        }
+        if (buttonQuit.checkMouseClick()) {
+            GSM.nextState_ = StateId::MainMenu;
         }
 
-    } else {
-        // Else do inputs for gameplay instead
-        if (AEInputCheckCurr(AEVK_LBUTTON)) {
-            dirt->destroyAtMouse(20.0f);
+        // UI buttons
+        buttonRestart.updateTransform();
+        buttonQuit.updateTransform();
 
-            vfxSystem.vfxSpawnTimer_ -= deltaTime;
-            if (vfxSystem.vfxSpawnTimer_ <= 0.0f) {
+    } else { // Game is not paused
+        // Press P to pause
+        if (AEInputCheckTriggered(AEVK_P) || 0 == AESysDoesWindowExist()) {
+            std::cout << "P triggered\n";
+            pauseSystem.pause();
+        }
 
-                vfxSystem.SpawnVFX(VFXType::DirtBurst, GetMouseWorldPos());
+        // Press Q to go to main menu
+        if (AEInputCheckTriggered(AEVK_Q) || 0 == AESysDoesWindowExist()) {
+            std::cout << "Q triggered\n";
+            GSM.nextState_ = StateId::MainMenu;
+        }
 
-                vfxSystem.vfxSpawnTimer_ = 0.1f;
+        // Press R to restart
+        if (AEInputCheckTriggered(AEVK_R) || 0 == AESysDoesWindowExist()) {
+            std::cout << "R triggered\n";
+            GSM.nextState_ = StateId::Restart;
+        }
+
+        // Keyboard/Mouse inputs for level editor and gameplay
+        // If in editor mode, edit level
+        if (levelManager.getLevelEditorMode() == editorMode::Edit) {
+            // Inputs to build level
+            if (!levelManager.getDisplayBuilderContainer()) {
+                f32 brush_size = levelManager.brush_radius_;
+                switch (levelManager.getCurrentGameBlock()) {
+                case GameBlock::Dirt:
+                    if (AEInputCheckCurr(AEVK_LBUTTON)) {
+                        dirt->buildAtMouse(brush_size);
+                    } else if (AEInputCheckCurr(AEVK_RBUTTON)) {
+                        dirt->destroyAtMouse(brush_size);
+                    }
+                    break;
+                case GameBlock::Stone:
+                    if (AEInputCheckCurr(AEVK_LBUTTON)) {
+                        stone->buildAtMouse(brush_size);
+                    } else if (AEInputCheckCurr(AEVK_RBUTTON)) {
+                        stone->destroyAtMouse(brush_size);
+                    }
+                    break;
+                case GameBlock::StartPoint:
+                    if (AEInputCheckReleased(AEVK_LBUTTON)) {
+                        startEndPointSystem.SpawnAtMousePos(StartEndType::Pipe,
+                                                            GoalDirection::Down);
+                    } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
+                        startEndPointSystem.DeleteAtMousePos();
+                    }
+                    break;
+                case GameBlock::EndPoint:
+                    if (AEInputCheckReleased(AEVK_LBUTTON)) {
+                        startEndPointSystem.SpawnAtMousePos(StartEndType::Flower,
+                                                            GoalDirection::Up);
+                    } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
+                        startEndPointSystem.DeleteAtMousePos();
+                    }
+                    break;
+                default:
+                    break;
+                }
             }
+            // Inputs to save level
+            if (AEInputCheckReleased(AEVK_S)) {
+                levelManager.saveMapInfo(width, height, tileSize);
+                levelManager.saveTerrainInfo(dirt->getNodes(), "Dirt");
+                levelManager.saveTerrainInfo(stone->getNodes(), "Stone");
+                levelManager.saveStartEndInfo(startEndPointSystem.startPoints_,
+                                              startEndPointSystem.endPoint_);
+                levelManager.writeToFile(levelManager.getCurrentLevel());
+            }
+
         } else {
-            vfxSystem.vfxSpawnTimer_ = 0.0f;
-        }
+            // Else do inputs for gameplay instead
+            if (AEInputCheckCurr(AEVK_LBUTTON)) {
+                dirt->destroyAtMouse(20.0f);
 
-        if (AEInputCheckTriggered(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
+                vfxSystem.vfxSpawnTimer_ -= deltaTime;
+                if (vfxSystem.vfxSpawnTimer_ <= 0.0f) {
 
-            startEndPointSystem.CheckMouseClick();
+                    vfxSystem.SpawnVFX(VFXType::DirtBurst, GetMouseWorldPos());
 
-        } else if (AEInputCheckReleased(AEVK_LBUTTON)) {
+                    vfxSystem.vfxSpawnTimer_ = 0.1f;
+                }
+            } else {
+                vfxSystem.vfxSpawnTimer_ = 0.0f;
+            }
 
-            startEndPointSystem.ResetIframe();
-        }
+            if (AEInputCheckTriggered(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
 
-        if (AEInputCheckTriggered(AEVK_RBUTTON) || 0 == AESysDoesWindowExist()) {
-            portalSystem.CheckMouseClick();
-        } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
-            portalSystem.ResetIframe();
-        }
-        if (AEInputCheckTriggered(AEVK_MBUTTON)) {
-            portalSystem.RotatePortal();
-        }
-    }
+                startEndPointSystem.CheckMouseClick();
 
-    for (auto& startPoint : startEndPointSystem.startPoints_) {
-        if (startPoint.release_water_) {
-            static f32 spawn_timer = 0.0f;
-            spawn_timer -= deltaTime;
-            if (spawn_timer <= 0.0f) {
+            } else if (AEInputCheckReleased(AEVK_LBUTTON)) {
 
-                // RESET TIMER: Set this to how fast you want water to flow
-                // Original: 0.005f;
-                spawn_timer = 0.025f;
+                startEndPointSystem.ResetIframe();
+            }
 
-                // the particle spawns at the values shown below, including its FluidType
-                f32 noise = ((static_cast<int>(AERandFloat() * 12345) % 100)) * 0.001f - 0.1f;
-
-                // f32 randRadius = 13.0f - (noise * 100.0f);
-                f32 randRadius = 5.0f;
-
-                f32 x_offset = startPoint.transform_.pos_.x +
-                               AERandFloat() * startPoint.transform_.scale_.x -
-                               (startPoint.transform_.scale_.x / 2.f);
-                AEVec2 position = {x_offset, startPoint.transform_.pos_.y -
-                                                 (startPoint.transform_.scale_.y / 2.f) -
-                                                 (randRadius)};
-
-                fluidSystem.SpawnParticle(position.x, position.y, randRadius, FluidType::Water);
-                s32 size = fluidSystem.GetParticleCount(FluidType::Water);
+            if (AEInputCheckTriggered(AEVK_RBUTTON) || 0 == AESysDoesWindowExist()) {
+                portalSystem.CheckMouseClick();
+            } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
+                portalSystem.ResetIframe();
+            }
+            if (AEInputCheckTriggered(AEVK_MBUTTON)) {
+                portalSystem.RotatePortal();
             }
         }
-    }
 
-    // fluidSystem.UpdateMain(deltaTime);
-    fluidSystem.Update(deltaTime, *dirt);
-    fluidSystem.Update(deltaTime, *stone);
-    startEndPointSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
-    portalSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
-    vfxSystem.Update(deltaTime);
+        for (auto& startPoint : startEndPointSystem.startPoints_) {
+            if (startPoint.release_water_) {
+                static f32 spawn_timer = 0.0f;
+                spawn_timer -= deltaTime;
+                if (spawn_timer <= 0.0f) {
 
-    levelManager.updateLevelEditor();
+                    // RESET TIMER: Set this to how fast you want water to flow
+                    // Original: 0.005f;
+                    spawn_timer = 0.025f;
 
-    if (startEndPointSystem.CheckWinCondition(fluidSystem.particleMaxCount)) {
-        std::cout << "WIN\n ";
+                    // the particle spawns at the values shown below, including its FluidType
+                    f32 noise = ((static_cast<int>(AERandFloat() * 12345) % 100)) * 0.001f - 0.1f;
+
+                    // f32 randRadius = 13.0f - (noise * 100.0f);
+                    f32 randRadius = 5.0f;
+
+                    f32 x_offset = startPoint.transform_.pos_.x +
+                                   AERandFloat() * startPoint.transform_.scale_.x -
+                                   (startPoint.transform_.scale_.x / 2.f);
+                    AEVec2 position = {x_offset, startPoint.transform_.pos_.y -
+                                                     (startPoint.transform_.scale_.y / 2.f) -
+                                                     (randRadius)};
+
+                    fluidSystem.SpawnParticle(position.x, position.y, randRadius, FluidType::Water);
+                    s32 size = fluidSystem.GetParticleCount(FluidType::Water);
+                }
+            }
+        }
+
+        // fluidSystem.UpdateMain(deltaTime);
+        fluidSystem.Update(deltaTime, *dirt);
+        fluidSystem.Update(deltaTime, *stone);
+        startEndPointSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
+        portalSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
+        vfxSystem.Update(deltaTime);
+
+        levelManager.updateLevelEditor();
+
+        if (startEndPointSystem.CheckWinCondition(fluidSystem.particleMaxCount)) {
+            std::cout << "WIN\n ";
+        }
     }
 }
 
@@ -276,6 +330,13 @@ void DrawLevel() {
     const char* rotationStr = rotationText.text_.c_str();
     AEGfxPrint(font, rotationStr, rotationText.pos_x_, rotationText.pos_y_, 1.f, 1.f, 1.f, 1.f,
                1.f);
+
+    if (pauseSystem.isPaused()) { // Game is paused
+        // UI buttons
+        buttonRestart.draw(font);
+        buttonQuit.draw(font);
+    } else { // Game is not paused
+    }
 }
 
 void FreeLevel() {
@@ -301,4 +362,8 @@ void UnloadLevel() {
 
     levelManager.freeLevelEditor();
     levelManager.SetCurrentLevel(0);
+
+    // UI buttons
+    buttonRestart.unload();
+    buttonQuit.unload();
 }
