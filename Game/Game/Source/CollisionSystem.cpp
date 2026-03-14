@@ -436,13 +436,9 @@ bool CollisionSystem::detectCircleVsAABB(const AEVec2& circleCenter, f32 radius,
 void CollisionSystem::pushOutAndSlide(FluidParticle& p, const AEVec2& n, f32 penetration,
                                       f32 radius) {
 
-    // Push out of the surface (position correction)
-    const f32 slop = 0.10f;
+    // We add a tiny slop to prevent floating point errors from causing continuous micro-collisions
+    const f32 slop = 0.01f;
     f32 push = (std::max)(0.0f, penetration + slop);
-
-    // Prevent large corrections that look like teleporting
-    const f32 maxPush = radius * 0.5f; // tune 0.1..0.5
-    push = (std::min)(push, maxPush);
 
     p.transform_.pos_.x += n.x * push;
     p.transform_.pos_.y += n.y * push;
