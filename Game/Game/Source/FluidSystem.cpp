@@ -87,9 +87,13 @@ void FluidSystem::UpdateTransforms(std::vector<FluidParticle>& particlePool) {
 
 void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt) {
 
-    //  load new constants with config values
+    //  load new constants with the previously set config values
     f32 mass = particlePool[0].physics_.mass_;
     f32 gravity = particlePool[0].physics_.gravity_;
+
+    // Set maximum allowed speed
+    const f32 MAX_SPEED = 800.0f;
+    const f32 MAX_SPEED_SQ = MAX_SPEED * MAX_SPEED;
 
     for (auto& p : particlePool) {
 
@@ -109,11 +113,7 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         p.physics_.velocity_.x += noiseX * dt * 3.0f;
         p.physics_.velocity_.y += noiseY * dt * 3.0f;
 
-        // GLOBAL FUNCTION
-        // Updates Position after UpdateCollision and main physics calculations within UpdatePhysics
-        // has been done.
-        p.transform_.pos_.x += p.physics_.velocity_.x * dt;
-        p.transform_.pos_.y += p.physics_.velocity_.y * dt;
+
 
         // ================================================ //
         // OPTIMISATION: STOPS VERY SLOW PARTICLES
@@ -124,13 +124,34 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         //
         // (sqrt(1.0f + 1.0f) ) ^ 2
         f32 thresholdVel = 1.41f * 1.41f;
+        f32 currentSpeedSq = (p.physics_.velocity_.x * p.physics_.velocity_.x) +
+                             (p.physics_.velocity_.y * p.physics_.velocity_.y);
 
-        if ((p.physics_.velocity_.x * p.physics_.velocity_.x) +
-                (p.physics_.velocity_.y * p.physics_.velocity_.y) <
-            1.99f) {
+        if (currentSpeedSq < thresholdVel) {
             p.physics_.velocity_.x = 0.0f;
             p.physics_.velocity_.y = 0.0f;
+            currentSpeedSq = 0.0f; // Reset this so the max speed check below ignores it
         }
+
+        // ================================================ //
+        // 3. ANTI-TUNNELING: CAP MAXIMUM SPEED
+        // ================================================ //
+        if (currentSpeedSq > MAX_SPEED_SQ) {
+            // If currentSpeedSq > MAX_SPEED, we are going too fast.
+            // Calculate actual speed to normalize.
+            f32 actualSpeed = std::sqrt(currentSpeedSq);
+
+            // Normalize and multiply by our hard speed limit
+            p.physics_.velocity_.x = (p.physics_.velocity_.x / actualSpeed) * MAX_SPEED;
+            p.physics_.velocity_.y = (p.physics_.velocity_.y / actualSpeed) * MAX_SPEED;
+        }
+        // ================================================ //
+        // 4. UPDATE POSITION (MUST BE LAST)
+        // ================================================ /
+        // Updates Position after UpdateCollision and main physics calculations within UpdatePhysics
+        // has been done.
+        p.transform_.pos_.x += p.physics_.velocity_.x * dt;
+        p.transform_.pos_.y += p.physics_.velocity_.y * dt;
     }
 }
 
