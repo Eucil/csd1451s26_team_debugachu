@@ -7,7 +7,7 @@
 
 #include "Components.h"
 
-enum class TerrainMaterial { Dirt, Stone };
+enum class TerrainMaterial { Dirt, Stone, Magic };
 
 class Cell {
 public:

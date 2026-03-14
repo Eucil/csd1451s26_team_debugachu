@@ -10,7 +10,7 @@
 
 enum class Level { Level1, Level2, Level3, Level4, Level5, Level6, Level7, Level8, None };
 enum class editorMode { Edit, Delete, Create, None };
-enum class GameBlock { Dirt, Stone, StartPoint, EndPoint, None };
+enum class GameBlock { Dirt, Stone, Magic, StartPoint, EndPoint, None };
 
 class LevelManager {
 public:

@@ -24,8 +24,11 @@
 
 static Terrain* dirt = nullptr;
 static Terrain* stone = nullptr;
+static Terrain* magic = nullptr;
+
 static AEGfxTexture* pTerrainDirtTex{nullptr};
 static AEGfxTexture* pTerrainStoneTex{nullptr};
+static AEGfxTexture* pTerrainMagicTex{nullptr};
 
 static FluidSystem fluidSystem;
 static StartEndPoint startEndPointSystem;
@@ -51,6 +54,7 @@ void LoadLevel() {
 
     pTerrainDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
     pTerrainStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
+    pTerrainMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
 
     // Setup texts
     rotationText = Text(0.6f, 0.9f, "");
@@ -93,6 +97,8 @@ void InitializeLevel() {
                        tileSize, true);
     stone = new Terrain(TerrainMaterial::Stone, pTerrainStoneTex, {0.0f, 0.0f}, height, width,
                         tileSize, true);
+    magic = new Terrain(TerrainMaterial::Magic, pTerrainMagicTex, {0.0f, 0.0f}, height, width,
+                        tileSize, false);
     if (fileExist) {
         levelManager.parseTerrainInfo(dirt->getNodes(), "Dirt");
     }
@@ -108,6 +114,14 @@ void InitializeLevel() {
     stone->initCellsGraphics();
     stone->initCellsCollider();
     stone->updateTerrain();
+
+    if (fileExist) {
+        levelManager.parseTerrainInfo(magic->getNodes(), "Magic");
+    }
+    magic->initCellsTransform();
+    magic->initCellsGraphics();
+    magic->initCellsCollider();
+    magic->updateTerrain();
 
     vfxSystem.Initialize(800, 20);
     LoadGlobalVFXConfigs(vfxSystem); // <-- change this to read from a json instead
@@ -184,6 +198,13 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                         stone->destroyAtMouse(brush_size);
                     }
                     break;
+                case GameBlock::Magic:
+                    if (AEInputCheckCurr(AEVK_LBUTTON)) {
+                        magic->buildAtMouse(brush_size);
+                    } else if (AEInputCheckCurr(AEVK_RBUTTON)) {
+                        magic->destroyAtMouse(brush_size);
+                    }
+                    break;
                 case GameBlock::StartPoint:
                     if (AEInputCheckReleased(AEVK_LBUTTON)) {
                         startEndPointSystem.SpawnAtMousePos(StartEndType::Pipe,
@@ -209,6 +230,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 levelManager.saveMapInfo(width, height, tileSize);
                 levelManager.saveTerrainInfo(dirt->getNodes(), "Dirt");
                 levelManager.saveTerrainInfo(stone->getNodes(), "Stone");
+                levelManager.saveTerrainInfo(magic->getNodes(), "Magic");
                 levelManager.saveStartEndInfo(startEndPointSystem.startPoints_,
                                               startEndPointSystem.endPoint_);
                 levelManager.writeToFile(levelManager.getCurrentLevel());
@@ -239,10 +261,13 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 startEndPointSystem.ResetIframe();
             }
 
-            if (AEInputCheckTriggered(AEVK_RBUTTON) || 0 == AESysDoesWindowExist()) {
-                portalSystem.CheckMouseClick();
-            } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
-                portalSystem.ResetIframe();
+            // If magic terrain is near mouse click, place portal
+            if (magic->isNearestNodeToMouseAtThreshold() == true) {
+                if (AEInputCheckTriggered(AEVK_RBUTTON) || 0 == AESysDoesWindowExist()) {
+                    portalSystem.CheckMouseClick();
+                } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
+                    portalSystem.ResetIframe();
+                }
             }
             if (AEInputCheckTriggered(AEVK_MBUTTON)) {
                 portalSystem.RotatePortal();
@@ -302,6 +327,7 @@ void DrawLevel() {
 
     dirt->renderTerrain();
     stone->renderTerrain();
+    magic->renderTerrain();
     portalSystem.DrawColor();
     vfxSystem.Draw();
 
@@ -350,6 +376,8 @@ void FreeLevel() {
     dirt = nullptr;
     delete stone;
     stone = nullptr;
+    delete magic;
+    magic = nullptr;
 }
 
 void UnloadLevel() {
@@ -359,6 +387,7 @@ void UnloadLevel() {
 
     AEGfxTextureUnload(pTerrainDirtTex);
     AEGfxTextureUnload(pTerrainStoneTex);
+    AEGfxTextureUnload(pTerrainMagicTex);
 
     levelManager.freeLevelEditor();
     levelManager.SetCurrentLevel(0);
