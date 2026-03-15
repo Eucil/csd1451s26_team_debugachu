@@ -20,6 +20,7 @@ public:
                      const AEVec2& defaultVal = {}) const;
     void getFloatArray(const std::string& file, const std::string& section, const std::string& key,
                        std::vector<float>& out) const;
+    Json::Value getSection(const std::string& file, const std::string& section) const;
 
     bool hasFile(const std::string& file) const;
     bool hasSection(const std::string& file, const std::string& section) const;

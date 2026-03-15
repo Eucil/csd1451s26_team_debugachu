@@ -1,32 +1,30 @@
 {
-  "buttons": {
-    "Restart": {
-      "position": { "x": 0.0, "y": 100.0 },
-      "scale": { "x": 320.0, "y": 96.0 },
-      "text": {
-        "content": "Restart",
-        "x": -0.1,
-        "y": 0.205,
-        "scale": 1.0,
-        "red": 1.0,
-        "green": 1.0,
-        "blue": 1.0,
-        "alpha": 1.0
-      }
-    },
-    "Quit": {
-      "position": { "x": 0.0, "y": -100.0 },
-      "scale": { "x": 320.0, "y": 96.0 },
-      "text": {
-        "content": "Quit",
-        "x": -0.06,
-        "y": -0.24,
-        "scale": 1.0,
-        "red": 1.0,
-        "green": 1.0,
-        "blue": 1.0,
-        "alpha": 1.0
-      }
+  "Restart": {
+    "position": { "x": 0.0, "y": 100.0 },
+    "scale": { "x": 320.0, "y": 96.0 },
+    "text": {
+      "content": "Restart",
+      "x": -0.1,
+      "y": 0.205,
+      "scale": 1.0,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+  "Quit": {
+    "position": { "x": 0.0, "y": -100.0 },
+    "scale": { "x": 320.0, "y": 96.0 },
+    "text": {
+      "content": "Quit",
+      "x": -0.06,
+      "y": -0.24,
+      "scale": 1.0,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
     }
   }
 }

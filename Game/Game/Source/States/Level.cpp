@@ -113,15 +113,8 @@ void InitializeLevel() {
     LoadGlobalVFXConfigs(vfxSystem); // <-- change this to read from a json instead
 
     // UI buttons
-    Json::Value buttonsRoot;
-    std::ifstream buttonsFile("Assets/GameData/UI/level_buttons.json");
-    buttonsFile >> buttonsRoot;
-    if (!buttonsFile.is_open()) {
-        std::cout << "Failed to open buttons.json\n" << std::endl;
-    }
-
-    buttonRestart.initFromJson(buttonsRoot["buttons"]["Restart"]);
-    buttonQuit.initFromJson(buttonsRoot["buttons"]["Quit"]);
+    buttonRestart.initFromJson("level_buttons", "Restart");
+    buttonQuit.initFromJson("level_buttons", "Quit");
 }
 
 void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {

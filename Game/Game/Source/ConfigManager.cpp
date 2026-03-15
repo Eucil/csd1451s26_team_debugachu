@@ -177,3 +177,12 @@ void ConfigManager::getFloatArray(const std::string& file, const std::string& se
         out[i] = (*arrayRoot)[i].asFloat();
     }
 }
+
+Json::Value ConfigManager::getSection(const std::string& file, const std::string& section) const {
+    if (!hasSection(file, section)) {
+        std::cout << "ConfigManager: getSection failed to find " << file << "." << section
+                  << ", returning empty Json::Value\n";
+        return Json::Value();
+    }
+    return configs_.at(file)[section];
+}
