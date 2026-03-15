@@ -25,7 +25,6 @@
     <ClCompile Include="Source\States\MainMenu.cpp" />
     <ClCompile Include="Source\Terrain.cpp" />
     <ClCompile Include="Source\Utils.cpp" />
-    <ClCompile Include="Source\VFXConfigs.cpp" />
     <ClCompile Include="Source\VFXSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -49,7 +48,6 @@
     <ClInclude Include="Include\Terrain.h" />
     <ClInclude Include="Include\UISystem.h" />
     <ClInclude Include="Include\Utils.h" />
-    <ClInclude Include="Include\VFXConfigs.h" />
     <ClInclude Include="Include\VFXSystem.h" />
   </ItemGroup>
   <ItemGroup>

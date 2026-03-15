@@ -19,7 +19,6 @@
 #include "States/LevelManager.h"
 #include "Terrain.h"
 #include "UISystem.h"
-#include "VFXConfigs.h"
 #include "VFXSystem.h"
 
 static Terrain* dirt = nullptr;
@@ -110,7 +109,6 @@ void InitializeLevel() {
     stone->updateTerrain();
 
     vfxSystem.Initialize(800, 20);
-    LoadGlobalVFXConfigs(vfxSystem); // <-- change this to read from a json instead
 
     // UI buttons
     buttonRestart.initFromJson("level_buttons", "Restart");
