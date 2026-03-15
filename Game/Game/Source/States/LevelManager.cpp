@@ -17,9 +17,7 @@ void LevelManager::init() {
 
     // For level editor UI
     editorButtonStartPosX_ =
-        configManager.getFloat("LevelManager", "default", "editorButtonStartPosX_", -775.0f);
-    editorContainerScale_ = configManager.getAEVec2(
-        "LevelManager", "default", "editorContainerScale_", AEVec2{300.0f, 300.0f});
+        configManager.getFloat("LevelManager", "default", "editorButtonStartPosX_", 775.0f);
     displayEditorContainer_ =
         configManager.getBool("LevelManager", "default", "displayEditorContainer_", true);
 }
@@ -34,6 +32,7 @@ void LevelManager::initEditorUI() {
     editorButton_.initFromJson("level_manager_buttons", "editorButton_");
     editorContainer_.initFromJson("level_manager_buttons", "editorContainer_");
     // Set container position relative to button
+    updateEditorButtonPosition();
     updateContainerPosition();
 
     editorButtonPool_.resize(static_cast<int>(GameBlock::None));
@@ -68,7 +67,8 @@ void LevelManager::updateEditorButtonPosition() {
     // Update builder button position
     // If builder container is displayed, move button based on container scale
     if (displayEditorContainer_) {
-        AEVec2 newPos = {editorButton_.getTransform().pos_.x - editorContainerScale_.x,
+        AEVec2 newPos = {editorButton_.getTransform().pos_.x -
+                             editorContainer_.getTransform().scale_.x,
                          editorButton_.getTransform().pos_.y};
         editorButton_.setTransform(newPos, editorButton_.getTransform().scale_,
                                    editorButton_.getTransform().rotationRad_);
@@ -87,9 +87,10 @@ void LevelManager::updateContainerPosition() {
     AEVec2 container_pos{};
     container_pos.x =
         (editorButton_.getTransform().pos_.x + editorButton_.getTransform().scale_.x / 2) +
-        (editorContainerScale_.x / 2);
+        (editorContainer_.getTransform().scale_.x / 2);
 
-    container_pos.y = editorButton_.getTransform().pos_.y - (editorContainerScale_.y / 2) +
+    container_pos.y = editorButton_.getTransform().pos_.y -
+                      (editorContainer_.getTransform().scale_.y / 2) +
                       (editorButton_.getTransform().scale_.y / 2);
 
     editorContainer_.setTransform(container_pos, editorContainer_.getTransform().scale_,
@@ -182,6 +183,7 @@ void LevelManager::updateLevelEditor() {
 void LevelManager::renderLevelEditorUI(s8 font) {
 
     if (levelEditorMode_ != editorMode::Edit) {
+        std::cout << "Not in edit mode, skipping render\n";
         return;
     }
 

@@ -88,7 +88,6 @@ private:
 
     // For level editor UI
     float editorButtonStartPosX_ = {};
-    AEVec2 editorContainerScale_ = {};
     bool displayEditorContainer_ = false;
     // Builder button is the parent container for builder container
     // Builder container is the parent container for all the buttons in the builder pool
