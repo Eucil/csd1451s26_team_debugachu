@@ -31,7 +31,7 @@ Terrain::Terrain(TerrainMaterial terrainMaterial, AEGfxTexture* pTex, AEVec2 cen
     // Initialize nodes to random values for testing
     for (u32 r{0}; r < kNodeRows_; ++r) {
         for (u32 c{0}; c < kNodeCols_; ++c) {
-            nodes_[r * kNodeCols_ + c] = 0.0f;
+            nodes_[static_cast<size_t>(r) * kNodeCols_ + c] = 0.0f;
         }
     }
 }
@@ -39,7 +39,7 @@ Terrain::Terrain(TerrainMaterial terrainMaterial, AEGfxTexture* pTex, AEVec2 cen
 void Terrain::initCellsTransform() {
     for (u32 r{0}; r < kCellRows_; ++r) {
         for (u32 c{0}; c < kCellCols_; ++c) {
-            Cell& cell = cells_[r * kCellCols_ + c];
+            Cell& cell = cells_[static_cast<size_t>(r) * kCellCols_ + c];
 
             // Set position and scale
             cell.transform_.pos_.x = bottomLeftPos_.x + (c + 0.5f) * kCellSize_;
@@ -54,16 +54,16 @@ void Terrain::initCellsGraphics() {
         for (u32 c{0}; c < kCellCols_; ++c) {
             // Determine mesh case (TL=8, TR=4, BR=2, BL=1)
             u32 index{0};
-            if (nodes_[(r + 1) * kNodeCols_ + c] >= threshold_)
+            if (nodes_[(static_cast<size_t>(r) + 1) * kNodeCols_ + c] >= threshold_)
                 index |= 8;
-            if (nodes_[(r + 1) * kNodeCols_ + c + 1] >= threshold_)
+            if (nodes_[(static_cast<size_t>(r) + 1) * kNodeCols_ + c + 1] >= threshold_)
                 index |= 4;
-            if (nodes_[r * kNodeCols_ + c + 1] >= threshold_)
+            if (nodes_[static_cast<size_t>(r) * kNodeCols_ + c + 1] >= threshold_)
                 index |= 2;
-            if (nodes_[r * kNodeCols_ + c] >= threshold_)
+            if (nodes_[static_cast<size_t>(r) * kNodeCols_ + c] >= threshold_)
                 index |= 1;
 
-            cells_[r * kCellCols_ + c].graphics_.mesh_ = meshLibrary_[index];
+            cells_[static_cast<size_t>(r) * kCellCols_ + c].graphics_.mesh_ = meshLibrary_[index];
         }
     }
 }
@@ -75,17 +75,17 @@ void Terrain::initCellsCollider() {
             // If collidable_ is false, keep index at 0 (no colliders)
             if (collidable_ == true) {
                 // Determine collider case (TL=8, TR=4, BR=2, BL=1)
-                if (nodes_[(r + 1) * kNodeCols_ + c] >= threshold_)
+                if (nodes_[static_cast<size_t>(r + 1) * kNodeCols_ + c] >= threshold_)
                     index |= 8;
-                if (nodes_[(r + 1) * kNodeCols_ + c + 1] >= threshold_)
+                if (nodes_[static_cast<size_t>(r + 1) * kNodeCols_ + c + 1] >= threshold_)
                     index |= 4;
-                if (nodes_[r * kNodeCols_ + c + 1] >= threshold_)
+                if (nodes_[static_cast<size_t>(r) * kNodeCols_ + c + 1] >= threshold_)
                     index |= 2;
-                if (nodes_[r * kNodeCols_ + c] >= threshold_)
+                if (nodes_[static_cast<size_t>(r) * kNodeCols_ + c] >= threshold_)
                     index |= 1;
             }
 
-            Cell& cell = cells_[r * kCellCols_ + c];
+            Cell& cell = cells_[static_cast<size_t>(r) * kCellCols_ + c];
 
             // Assign the collider shape from the library
             for (u32 i{0}; i < 3; ++i) {
@@ -98,7 +98,7 @@ void Terrain::initCellsCollider() {
 void Terrain::updateTerrain() {
     for (u32 r{0}; r < kCellRows_; ++r) {
         for (u32 c{0}; c < kCellCols_; ++c) {
-            Cell& cell = cells_[r * kCellCols_ + c];
+            Cell& cell = cells_[static_cast<size_t>(r) * kCellCols_ + c];
 
             AEMtx33 scaleMtx, rotMtx, transMtx;
             AEMtx33Scale(&scaleMtx, cell.transform_.scale_.x, cell.transform_.scale_.y);
@@ -161,7 +161,7 @@ void Terrain::renderTerrain() {
 
     for (u32 y{0}; y < kCellRows_; ++y) {
         for (u32 x{0}; x < kCellCols_; ++x) {
-            Cell& cell{cells_[y * kCellCols_ + x]};
+            Cell& cell{cells_[static_cast<size_t>(y) * kCellCols_ + x]};
 
             AEGfxSetTransform(cell.transform_.worldMtx_.m);
             AEGfxTextureSet(graphics_.texture_, x * (1.0f / 16.0f), y * -(1.0f / 16.0f));
@@ -526,7 +526,7 @@ void Terrain::destroyTerrain(f32 worldX, f32 worldY) {
     if (col < kNodeCols_ && row < kNodeRows_) {
 
         // Update the node
-        nodes_[row * kNodeCols_ + col] = 0.0f;
+        nodes_[static_cast<size_t>(row) * kNodeCols_ + col] = 0.0f;
 
         // Update meshes
         initCellsGraphics(); // Unoptimal as all cells are being updated
@@ -547,7 +547,7 @@ void Terrain::destroyTerrainRadius(f32 worldX, f32 worldY, f32 radius) {
             f32 dx = nodeWorldX - worldX;
             f32 dy = nodeWorldY - worldY;
             if ((dx * dx + dy * dy) <= (radius * radius)) {
-                nodes_[r * kNodeCols_ + c] = 0.0f;
+                nodes_[static_cast<size_t>(r) * kNodeCols_ + c] = 0.0f;
                 changed = true;
             }
         }
@@ -573,7 +573,7 @@ void Terrain::buildTerrainRadius(f32 worldX, f32 worldY, f32 radius) {
             f32 dx = nodeWorldX - worldX;
             f32 dy = nodeWorldY - worldY;
             if ((dx * dx + dy * dy) <= (radius * radius)) {
-                nodes_[r * kNodeCols_ + c] = 1.0f;
+                nodes_[static_cast<size_t>(r) * kNodeCols_ + c] = 1.0f;
                 changed = true;
             }
         }
@@ -600,94 +600,7 @@ bool Terrain::isNearestNodeToMouseAtThreshold() {
     u32 col{static_cast<u32>(std::round(localX / kCellSize_))};
     u32 row{static_cast<u32>(std::round(localY / kCellSize_))};
     if (col < kNodeCols_ && row < kNodeRows_) {
-        return nodes_[row * kNodeCols_ + col] == threshold_;
+        return nodes_[static_cast<size_t>(row) * kNodeCols_ + col] == threshold_;
     }
     return false;
-}
-
-void Terrain::createDebugColliderMeshes() {
-    // A thin "filled line" thickness in local space.
-    // After scaling by cellSize (e.g. 32), this becomes visible.
-    constexpr f32 t = 0.03f;
-    constexpr u32 color = 0xFF00FFFF; // cyan (ARGB or ABGR depending on engine; tweak if needed)
-
-    // -------- Triangle mesh (unit right-triangle placeholder) --------
-    // We'll use this mesh by rebuilding per-triangle? No: we can just draw triangles
-    // directly by creating a mesh per collider OR we can prebuild a generic triangle and
-    // ignore vertices. Since your triangles differ per case, we won't use a single tri mesh
-    // for all. So keep debugTriMesh_ unused or omit it. We'll render triangle colliders by
-    // building a mesh on the fly.
-    debugTriMesh_ = nullptr;
-
-    // -------- Box outline mesh (centered square outline) --------
-    // This mesh draws an outline around [-0.5..0.5] square using 4 thin rectangles.
-    // We'll scale it later per collider size by temporarily scaling via transform if
-    // needed, but easiest: build per box collider on the fly too (since sizes vary: 1x1,
-    // 1x0.5, 0.5x1). So similarly, we can skip this library too.
-    debugBoxMesh_ = nullptr;
-}
-
-void Terrain::renderCollidersDebug() const {
-    // Debug render state
-    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetTransparency(0.35f); // semi-transparent so you can see terrain under it
-    AEGfxSetColorToAdd(0, 0, 0, 0);
-    AEGfxSetColorToMultiply(0.0f, 1.0f, 1.0f, 1.0f); // cyan tint (multiply)
-
-    const u32 color = 0xFF00FFFF; // per-vertex color (format may vary; if odd, change)
-
-    for (const Cell& cell : cells_) {
-        // Use the same transform as terrain rendering
-        AEMtx33 m = cell.transform_.worldMtx_; // makes a non-const copy
-        AEGfxSetTransform(m.m);
-        AEGfxTextureSet(nullptr, 0.0f, 0.0f); // no texture
-
-        for (u32 i = 0; i < 3; ++i) {
-            const Collider2D& col = cell.colliders_[i];
-
-            if (col.colliderShape_ == ColliderShape::Empty) {
-                continue;
-            }
-
-            if (col.colliderShape_ == ColliderShape::Box) {
-                // Box is defined by offset_ (local) and size_ (local, relative to cell)
-                const AEVec2 o = col.shapeData_.box_.offset_;
-                const AEVec2 s = col.shapeData_.box_.size_;
-
-                const f32 hx = s.x * 0.5f;
-                const f32 hy = s.y * 0.5f;
-
-                const f32 x0 = o.x - hx;
-                const f32 x1 = o.x + hx;
-                const f32 y0 = o.y - hy;
-                const f32 y1 = o.y + hy;
-
-                // Build and draw a rectangle (two triangles) in local space
-                AEGfxMeshStart();
-                AEGfxTriAdd(x0, y0, color, 0, 0, x1, y0, color, 0, 0, x0, y1, color, 0, 0);
-
-                AEGfxTriAdd(x1, y0, color, 0, 0, x1, y1, color, 0, 0, x0, y1, color, 0, 0);
-
-                AEGfxVertexList* mesh = AEGfxMeshEnd();
-                AEGfxMeshDraw(mesh, AE_GFX_MDM_TRIANGLES);
-                AEGfxMeshFree(mesh);
-            } else if (col.colliderShape_ == ColliderShape::Triangle) {
-                const AEVec2 v0 = col.shapeData_.triangle_.vertices_[0];
-                const AEVec2 v1 = col.shapeData_.triangle_.vertices_[1];
-                const AEVec2 v2 = col.shapeData_.triangle_.vertices_[2];
-
-                AEGfxMeshStart();
-                AEGfxTriAdd(v0.x, v0.y, color, 0, 0, v1.x, v1.y, color, 0, 0, v2.x, v2.y, color, 0,
-                            0);
-
-                AEGfxVertexList* mesh = AEGfxMeshEnd();
-                AEGfxMeshDraw(mesh, AE_GFX_MDM_TRIANGLES);
-                AEGfxMeshFree(mesh);
-            }
-        }
-    }
-
-    // restore transparency if needed by your pipeline (optional)
-    AEGfxSetTransparency(1.0f);
 }

@@ -1,8 +1,9 @@
 #pragma once
 
+#include "Button.h"
 #include "StartEndPoint.h"
 #include "Terrain.h"
-#include "UISystem.h"
+
 #include <AEEngine.h>
 #include <filesystem>
 #include <json/json.h>
@@ -34,7 +35,7 @@ public:
     void updateContainerPosition();
     void updateInnerButtonPosition();
     void updateLevelEditor();
-    void renderLevelEditorUI();
+    void renderLevelEditorUI(s8 font);
     void drawBrushPreview(TerrainMaterial terrainType);
     //=================================================================
 
@@ -86,6 +87,7 @@ private:
     GameBlock currentGameBlock_{GameBlock::None};
 
     // For level editor UI
+    float editorButtonStartPosX_ = {};
     AEVec2 editorContainerScale_ = {};
     bool displayEditorContainer_ = false;
     // Builder button is the parent container for builder container

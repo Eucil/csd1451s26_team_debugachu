@@ -18,7 +18,6 @@
 #include "StartEndPoint.h"
 #include "States/LevelManager.h"
 #include "Terrain.h"
-#include "UISystem.h"
 #include "VFXSystem.h"
 
 static Terrain* dirt = nullptr;
@@ -30,7 +29,7 @@ static FluidSystem fluidSystem;
 static StartEndPoint startEndPointSystem;
 static PortalSystem portalSystem;
 
-static Text rotationText;
+static TextData rotationText;
 static s8 font;
 
 static int height, width, tileSize;
@@ -38,8 +37,8 @@ static bool fileExist;
 
 static VFXSystem vfxSystem;
 
-static NewButton buttonRestart;
-static NewButton buttonQuit;
+static Button buttonRestart;
+static Button buttonQuit;
 
 static PauseSystem pauseSystem;
 
@@ -52,7 +51,7 @@ void LoadLevel() {
     pTerrainStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
 
     // Setup texts
-    rotationText = Text(0.6f, 0.9f, "");
+    rotationText = TextData{"", 0.6f, 0.9f};
     font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
 
     levelManager.initEditorUI();
@@ -250,9 +249,6 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                     // Original: 0.005f;
                     spawn_timer = 0.025f;
 
-                    // the particle spawns at the values shown below, including its FluidType
-                    f32 noise = ((static_cast<int>(AERandFloat() * 12345) % 100)) * 0.001f - 0.1f;
-
                     // f32 randRadius = 13.0f - (noise * 100.0f);
                     f32 randRadius = 7.0f;
 
@@ -264,7 +260,6 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                                                      (randRadius)};
 
                     fluidSystem.SpawnParticle(position.x, position.y, randRadius, FluidType::Water);
-                    s32 size = fluidSystem.GetParticleCount(FluidType::Water);
                 }
             }
         }
@@ -297,7 +292,7 @@ void DrawLevel() {
     vfxSystem.Draw();
 
     if (levelManager.getLevelEditorMode() == editorMode::Edit) {
-        levelManager.renderLevelEditorUI();
+        levelManager.renderLevelEditorUI(font);
         switch (levelManager.getCurrentGameBlock()) {
         case GameBlock::Dirt:;
             levelManager.drawBrushPreview(TerrainMaterial::Dirt);
@@ -316,11 +311,9 @@ void DrawLevel() {
         }
     }
 
-    rotationText.text_ =
+    rotationText.content_ =
         "Portal Rotation:" + std::to_string(static_cast<s32>(portalSystem.GetRotationValue()));
-    const char* rotationStr = rotationText.text_.c_str();
-    AEGfxPrint(font, rotationStr, rotationText.pos_x_, rotationText.pos_y_, 1.f, 1.f, 1.f, 1.f,
-               1.f);
+    rotationText.draw(font);
 
     if (pauseSystem.isPaused()) { // Game is paused
         // UI buttons
