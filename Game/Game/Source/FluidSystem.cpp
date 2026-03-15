@@ -116,22 +116,12 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         // ================================================ //
         // OPTIMISATION: ANTI-TUNNELLING GRAVITY CAP
         // ================================================ //
-        // Without this, particles falling from a great height can reach very high speeds, 
+        // Without this, particles falling from a great height can reach very high speeds,
         // which can cause them to tunnel through terrain colliders.
         const f32 TERMINAL_FALL_SPEED = -300.0f;
         if (p.physics_.velocity_.y < TERMINAL_FALL_SPEED) {
             p.physics_.velocity_.y = TERMINAL_FALL_SPEED;
         }
-
-        // Add a tiny random kick to every particle.
-        // This prevents them from ever stacking perfectly still.
-        f32 noiseX = ((rand() % 100) / 50.0f) - 1.0f; // Range -1.0 to 1.0
-        f32 noiseY = ((rand() % 100) / 50.0f) - 1.0f; // Range -1.0 to 1.0
-
-        p.physics_.velocity_.x += noiseX * dt * 3.0f;
-        p.physics_.velocity_.y += noiseY * dt * 3.0f;
-
-
 
         // ================================================ //
         // OPTIMISATION: STOPS VERY SLOW PARTICLES
@@ -148,8 +138,20 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         if (currentSpeedSq < thresholdVel) {
             p.physics_.velocity_.x = 0.0f;
             p.physics_.velocity_.y = 0.0f;
-            currentSpeedSq = 0.0f; // Reset this so the max speed check below ignores it
+            // currentSpeedSq = 0.0f; // Reset this so the max speed check below ignores it
         }
+
+        // Add a tiny random kick to every particle.
+        // This prevents them from ever stacking perfectly still.
+        f32 noiseX = ((rand() % 100) / 50.0f) - 1.0f; // Range -1.0 to 1.0
+        f32 noiseY = ((rand() % 100) / 50.0f) - 1.0f; // Range -1.0 to 1.0
+
+        p.physics_.velocity_.x += noiseX * dt * 3.0f;
+        p.physics_.velocity_.y += noiseY * dt * 3.0f;
+
+        // Recalculate after noise so the max speed cap below can catch any noise-induced spikes
+        currentSpeedSq = (p.physics_.velocity_.x * p.physics_.velocity_.x) +
+                         (p.physics_.velocity_.y * p.physics_.velocity_.y);
 
         // ================================================ //
         // 3. ANTI-TUNNELING: CAP MAXIMUM SPEED
@@ -323,4 +325,40 @@ u32 FluidSystem::GetParticleCount(FluidType type) { return particlePools_[(u32)t
 
 std::vector<FluidParticle>& FluidSystem::GetParticlePool(FluidType type) {
     return particlePools_[(int)type];
+}
+
+void FluidSystem::Update(f32 dt, std::initializer_list<Terrain*> terrains) {
+    // DT clamp
+    if (dt > 0.016f) {
+        dt = 0.016f;
+    }
+
+    // Substeps
+    const int subSteps = 4;
+    const f32 subDt = dt / (f32)subSteps;
+
+    for (int s = 0; s < subSteps; s++) {
+
+        for (int i = 0; i < (int)FluidType::Count; i++) {
+            if (particlePools_[i].empty())
+                continue;
+
+            // Physicss
+            UpdatePhysics(particlePools_[i], subDt);
+        }
+
+        // Collision
+        for (Terrain* terrain : terrains) {
+            CollisionSystem::terrainToFluidCollision(*terrain, *this, subDt);
+        }
+    }
+
+    // Final per-frame updates
+    for (int i = 0; i < (int)FluidType::Count; i++) {
+        if (particlePools_[i].empty()) {
+            continue;
+        }
+        UpdateTransforms(particlePools_[i]);
+        UpdatePortalIframes(dt, particlePools_[i]);
+    }
 }
