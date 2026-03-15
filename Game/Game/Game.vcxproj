@@ -14,6 +14,7 @@
     <ClCompile Include="Source\Pause.cpp" />
     <ClCompile Include="Source\Button.cpp" />
     <ClCompile Include="Source\CollisionSystem.cpp" />
+    <ClCompile Include="Source\ConfigManager.cpp" />
     <ClCompile Include="Source\FluidSystem.cpp" />
     <ClCompile Include="Source\PortalSystem.cpp" />
     <ClCompile Include="Source\StartEndPoint.cpp" />
@@ -35,6 +36,7 @@
     <ClInclude Include="Include\Button.h" />
     <ClInclude Include="Include\CollisionSystem.h" />
     <ClInclude Include="Include\Components.h" />
+    <ClInclude Include="Include\ConfigManager.h" />
     <ClInclude Include="Include\FluidSystem.h" />
     <ClInclude Include="Include\GameStateManager.h" />
     <ClInclude Include="Include\Pause.h" />

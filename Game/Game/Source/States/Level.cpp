@@ -168,7 +168,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
         if (levelManager.getLevelEditorMode() == editorMode::Edit) {
             // Inputs to build level
             if (!levelManager.getDisplayBuilderContainer()) {
-                f32 brush_size = levelManager.brush_radius_;
+                f32 brush_size = levelManager.brushRadius_;
                 switch (levelManager.getCurrentGameBlock()) {
                 case GameBlock::Dirt:
                     if (AEInputCheckCurr(AEVK_LBUTTON)) {
@@ -309,10 +309,10 @@ void DrawLevel() {
         levelManager.renderLevelEditorUI();
         switch (levelManager.getCurrentGameBlock()) {
         case GameBlock::Dirt:;
-            levelManager.DrawBrushPreview(TerrainMaterial::Dirt);
+            levelManager.drawBrushPreview(TerrainMaterial::Dirt);
             break;
         case GameBlock::Stone:
-            levelManager.DrawBrushPreview(TerrainMaterial::Stone);
+            levelManager.drawBrushPreview(TerrainMaterial::Stone);
             break;
         case GameBlock::StartPoint:
             startEndPointSystem.DrawColorPreview(StartEndType::Pipe);
