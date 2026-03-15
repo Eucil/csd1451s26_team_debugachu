@@ -1,0 +1,72 @@
+{
+  "Start": {
+    "position": { "x": 0.0, "y": 300.0 },
+    "scale": { "x": 400.0, "y": 80.0 },
+    "text": {
+      "content": "Start",
+      "x": -0.15,
+      "y": 0.64,
+      "scale": 1.0,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+  "HowToPlay": {
+    "position": { "x": 0.0, "y": 180.0 },
+    "scale": { "x": 400.0, "y": 80.0 },
+    "text": {
+      "content": "How to Play",
+      "x": -0.23,
+      "y": 0.38,
+      "scale": 1.0,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+  "Settings": {
+    "position": { "x": 0.0, "y": 60.0 },
+    "scale": { "x": 400.0, "y": 80.0 },
+    "text": {
+      "content": "Settings",
+      "x": -0.15,
+      "y": 0.13,
+      "scale": 1.0,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+    "Credits": {
+    "position": { "x": 0.0, "y": -60.0 },
+    "scale": { "x": 400.0, "y": 80.0 },
+    "text": {
+      "content": "Credits",
+      "x": -0.15,
+      "y": -0.13,
+      "scale": 1.0,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+    "Quit": {
+    "position": { "x": 0.0, "y": -180.0 },
+    "scale": { "x": 400.0, "y": 80.0 },
+    "text": {
+      "content": "Quit",
+      "x": -0.15,
+      "y": -0.38,
+      "scale": 1.0,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  }
+}

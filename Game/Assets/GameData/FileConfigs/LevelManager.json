@@ -4,6 +4,7 @@
     "levelEditorMode_" : 3,
     "currentLevel_" : 0,
     "currentGameBlock_" : 4,
+    "editorButtonStartPosX_" : 775.0,
     "editorContainerScale_" :
     [
       300.0,

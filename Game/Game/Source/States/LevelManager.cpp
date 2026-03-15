@@ -1,5 +1,6 @@
 #include "States/LevelManager.h"
 #include "ConfigManager.h"
+#include "Utils.h"
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -15,6 +16,8 @@ void LevelManager::init() {
         "LevelManager", "default", "currentGameBlock_", static_cast<int>(GameBlock::None)));
 
     // For level editor UI
+    editorButtonStartPosX_ =
+        configManager.getFloat("LevelManager", "default", "editorButtonStartPosX_", -775.0f);
     editorContainerScale_ = configManager.getAEVec2(
         "LevelManager", "default", "editorContainerScale_", AEVec2{300.0f, 300.0f});
     displayEditorContainer_ =
@@ -23,15 +26,21 @@ void LevelManager::init() {
 
 void LevelManager::initEditorUI() {
     // Setup Editor UI
-    editorButton_ = Button(AEVec2{775.0f, 350.0f}, AEVec2{50.0f, 50.0f});
-    editorContainer_ = Button(AEVec2{0.0f, 0.0f}, editorContainerScale_);
+    editorButton_.loadMesh();
+    editorButton_.loadTexture("Assets/Textures/pale_blue_button.png");
+    editorContainer_.loadMesh();
+    editorContainer_.loadTexture("Assets/Textures/pink_button.png");
+
+    editorButton_.initFromJson("level_manager_buttons", "editorButton_");
+    editorContainer_.initFromJson("level_manager_buttons", "editorContainer_");
     // Set container position relative to button
     updateContainerPosition();
-    // Set up meshes for button and container
-    editorButton_.SetupMesh();
-    editorContainer_.SetupMesh();
 
     editorButtonPool_.resize(static_cast<int>(GameBlock::None));
+    for (int i = 0; i < static_cast<int>(GameBlock::None); ++i) {
+        editorButtonPool_[i].loadMesh();
+        editorButtonPool_[i].loadTexture("Assets/Textures/pale_blue_button.png");
+    }
     updateInnerButtonPosition();
 
     // Setup brush preview
@@ -59,34 +68,40 @@ void LevelManager::updateEditorButtonPosition() {
     // Update builder button position
     // If builder container is displayed, move button based on container scale
     if (displayEditorContainer_) {
-        editorButton_.transform_.pos_.x =
-            editorButton_.transform_.pos_.x - (editorContainerScale_.x);
+        AEVec2 newPos = {editorButton_.getTransform().pos_.x - editorContainerScale_.x,
+                         editorButton_.getTransform().pos_.y};
+        editorButton_.setTransform(newPos, editorButton_.getTransform().scale_,
+                                   editorButton_.getTransform().rotationRad_);
     } else {
-        editorButton_.transform_.pos_.x = 775.0f;
+        editorButton_.setTransform({editorButtonStartPosX_, editorButton_.getTransform().pos_.y},
+                                   editorButton_.getTransform().scale_,
+                                   editorButton_.getTransform().rotationRad_);
     }
 
-    editorButton_.UpdateTransform();
+    editorButton_.updateTransform();
 }
 
 void LevelManager::updateContainerPosition() {
     // Update builder button position
     // And make sure builder container follows the button
     AEVec2 container_pos{};
-    container_pos.x = (editorButton_.transform_.pos_.x + editorButton_.transform_.scale_.x / 2) +
-                      (editorContainerScale_.x / 2);
+    container_pos.x =
+        (editorButton_.getTransform().pos_.x + editorButton_.getTransform().scale_.x / 2) +
+        (editorContainerScale_.x / 2);
 
-    container_pos.y = editorButton_.transform_.pos_.y - (editorContainerScale_.y / 2) +
-                      (editorButton_.transform_.scale_.y / 2);
+    container_pos.y = editorButton_.getTransform().pos_.y - (editorContainerScale_.y / 2) +
+                      (editorButton_.getTransform().scale_.y / 2);
 
-    editorContainer_.transform_.pos_ = container_pos;
+    editorContainer_.setTransform(container_pos, editorContainer_.getTransform().scale_,
+                                  editorContainer_.getTransform().rotationRad_);
 
-    editorContainer_.UpdateTransform();
+    editorContainer_.updateTransform();
 }
 
 void LevelManager::updateInnerButtonPosition() {
     // Update inner button position to follow the container
-    AEVec2 containerPos = editorContainer_.transform_.pos_;
-    AEVec2 containerScale = editorContainer_.transform_.scale_;
+    AEVec2 containerPos = editorContainer_.getTransform().pos_;
+    AEVec2 containerScale = editorContainer_.getTransform().scale_;
     float padding = 15.0f;
 
     int totalButtons = static_cast<int>(GameBlock::None);
@@ -116,16 +131,10 @@ void LevelManager::updateInnerButtonPosition() {
         float x = left + c * (buttonWidth + padding) + buttonWidth * 0.5f;
         float y = top - r * (buttonHeight + padding) - buttonHeight * 0.5f;
 
-        editorButtonPool_[i].transform_.scale_.x = buttonWidth;
-        editorButtonPool_[i].transform_.scale_.y = buttonHeight;
-        editorButtonPool_[i].transform_.pos_.x = x;
-        editorButtonPool_[i].transform_.pos_.y = y;
+        editorButtonPool_[i].setTransform({x, y}, {buttonWidth, buttonHeight});
 
-        if (editorButtonPool_[i].graphics_.mesh_ == nullptr) {
-            editorButtonPool_[i].SetupMesh();
-        }
         // If your SetupMesh needs to be re-run after transform changes, keep this.
-        editorButtonPool_[i].UpdateTransform();
+        editorButtonPool_[i].updateTransform();
     }
 }
 
@@ -145,7 +154,7 @@ void LevelManager::updateLevelEditor() {
     // Check if any button in the button pool is clicked
     for (int i = 0; i < static_cast<int>(GameBlock::None); ++i) {
         if (AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
-            if (editorButtonPool_[i].OnClick()) {
+            if (editorButtonPool_[i].checkMouseClick()) {
                 currentGameBlock_ = static_cast<GameBlock>(i);
                 std::cout << "Selected block: " << static_cast<int>(currentGameBlock_) << "\n";
             }
@@ -170,32 +179,32 @@ void LevelManager::updateLevelEditor() {
     }
 }
 
-void LevelManager::renderLevelEditorUI() {
+void LevelManager::renderLevelEditorUI(s8 font) {
 
     if (levelEditorMode_ != editorMode::Edit) {
         return;
     }
 
     // Render builder button
-    editorButton_.DrawColor(0.5f, 0.5f, 0.5f);
+    editorButton_.draw(font);
 
     // Render builder container and buttons within if displayEditorContainer_ is true
     if (displayEditorContainer_) {
-        editorContainer_.DrawColor(1.f, 0.3f, 0.3f);
+        editorContainer_.draw(font);
         // Render buttons in button pool
         for (int i = 0; i < static_cast<int>(GameBlock::None); ++i) {
-            editorButtonPool_[i].DrawColor(0.0, 1.0f, 0.0f);
+            editorButtonPool_[i].draw(font);
         }
     }
 }
 
 void LevelManager::freeLevelEditor() {
-    editorButton_.UnloadMesh();
-    editorContainer_.UnloadMesh();
+    editorButton_.unload();
+    editorContainer_.unload();
     AEGfxMeshFree(circleMesh);
 
     for (int i = 0; i < static_cast<int>(GameBlock::None); ++i) {
-        editorButtonPool_[i].UnloadMesh();
+        editorButtonPool_[i].unload();
     }
 }
 

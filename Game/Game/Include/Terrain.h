@@ -43,22 +43,19 @@ public:
 
     static void createColliderLibrary();
 
-    u32 getCellRows() { return kCellRows_; }
+    u32 getCellRows() const { return kCellRows_; }
 
-    u32 getCellCols() { return kCellCols_; }
+    u32 getCellCols() const { return kCellCols_; }
 
-    u32 getCellSize() { return kCellSize_; }
+    u32 getCellSize() const { return kCellSize_; }
 
-    AEVec2 getBottomLeftPos() { return bottomLeftPos_; }
+    AEVec2 getBottomLeftPos() const { return bottomLeftPos_; }
 
     std::vector<Cell>& getCells() { return cells_; }
 
     std::vector<f32>& getNodes() { return nodes_; }
 
     bool isNearestNodeToMouseAtThreshold();
-
-    static void createDebugColliderMeshes();
-    void renderCollidersDebug() const;
 
 private:
     TerrainMaterial terrainMaterial_;
