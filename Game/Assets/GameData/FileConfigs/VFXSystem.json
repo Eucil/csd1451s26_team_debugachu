@@ -1,0 +1,18 @@
+{
+  "dirtGFX": {
+    "layer": 5
+  },
+  "dirtConfig": {
+    "spawnCount_": 10,
+    "minLife_": 0.3,
+    "maxLife_": 0.6,
+    "minSpeed_": 50.0,
+    "maxSpeed_": 150.0,
+    "minScale_": 10.0,
+    "maxScale_": 11.5,
+    "r_": 0.3,
+    "g_": 0.2,
+    "b_": 0.1,
+    "a_": 1.0
+  }
+}

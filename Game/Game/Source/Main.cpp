@@ -3,6 +3,7 @@
 #include <AEEngine.h>
 #include <crtdbg.h>
 
+#include "ConfigManager.h"
 #include "GameStateManager.h"
 #include "States/LevelManager.h"
 
@@ -19,7 +20,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     AESysReset();
 
-    printf("Hello, World\n");
+    // Initalise config manager
+    configManager.init("Assets/GameData/FileConfigs");
+    configManager.init("Assets/GameData/UI");
 
     GameStateManager GSM;
     GSM.init(StateId::MainMenu);

@@ -18,7 +18,7 @@ class NewButton {
 public:
     void loadTexture(const char* path);
     void loadMesh();
-    void initFromJson(const Json::Value& jsonBtn);
+    void initFromJson(const std::string& file, const std::string& section);
     void updateTransform();
     void draw(s8 font);
     void unload();

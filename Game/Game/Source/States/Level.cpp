@@ -19,7 +19,6 @@
 #include "States/LevelManager.h"
 #include "Terrain.h"
 #include "UISystem.h"
-#include "VFXConfigs.h"
 #include "VFXSystem.h"
 
 static Terrain* dirt = nullptr;
@@ -124,18 +123,10 @@ void InitializeLevel() {
     magic->updateTerrain();
 
     vfxSystem.Initialize(800, 20);
-    LoadGlobalVFXConfigs(vfxSystem); // <-- change this to read from a json instead
 
     // UI buttons
-    Json::Value buttonsRoot;
-    std::ifstream buttonsFile("Assets/GameData/UI/level_buttons.json");
-    buttonsFile >> buttonsRoot;
-    if (!buttonsFile.is_open()) {
-        std::cout << "Failed to open buttons.json\n" << std::endl;
-    }
-
-    buttonRestart.initFromJson(buttonsRoot["buttons"]["Restart"]);
-    buttonQuit.initFromJson(buttonsRoot["buttons"]["Quit"]);
+    buttonRestart.initFromJson("level_buttons", "Restart");
+    buttonQuit.initFromJson("level_buttons", "Quit");
 }
 
 void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
@@ -182,7 +173,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
         if (levelManager.getLevelEditorMode() == editorMode::Edit) {
             // Inputs to build level
             if (!levelManager.getDisplayBuilderContainer()) {
-                f32 brush_size = levelManager.brush_radius_;
+                f32 brush_size = levelManager.brushRadius_;
                 switch (levelManager.getCurrentGameBlock()) {
                 case GameBlock::Dirt:
                     if (AEInputCheckCurr(AEVK_LBUTTON)) {
@@ -335,10 +326,10 @@ void DrawLevel() {
         levelManager.renderLevelEditorUI();
         switch (levelManager.getCurrentGameBlock()) {
         case GameBlock::Dirt:;
-            levelManager.DrawBrushPreview(TerrainMaterial::Dirt);
+            levelManager.drawBrushPreview(TerrainMaterial::Dirt);
             break;
         case GameBlock::Stone:
-            levelManager.DrawBrushPreview(TerrainMaterial::Stone);
+            levelManager.drawBrushPreview(TerrainMaterial::Stone);
             break;
         case GameBlock::StartPoint:
             startEndPointSystem.DrawColorPreview(StartEndType::Pipe);

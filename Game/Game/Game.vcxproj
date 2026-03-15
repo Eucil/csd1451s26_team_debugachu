@@ -14,6 +14,7 @@
     <ClCompile Include="Source\Pause.cpp" />
     <ClCompile Include="Source\Button.cpp" />
     <ClCompile Include="Source\CollisionSystem.cpp" />
+    <ClCompile Include="Source\ConfigManager.cpp" />
     <ClCompile Include="Source\FluidSystem.cpp" />
     <ClCompile Include="Source\PortalSystem.cpp" />
     <ClCompile Include="Source\StartEndPoint.cpp" />
@@ -24,7 +25,6 @@
     <ClCompile Include="Source\States\MainMenu.cpp" />
     <ClCompile Include="Source\Terrain.cpp" />
     <ClCompile Include="Source\Utils.cpp" />
-    <ClCompile Include="Source\VFXConfigs.cpp" />
     <ClCompile Include="Source\VFXSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -35,6 +35,7 @@
     <ClInclude Include="Include\Button.h" />
     <ClInclude Include="Include\CollisionSystem.h" />
     <ClInclude Include="Include\Components.h" />
+    <ClInclude Include="Include\ConfigManager.h" />
     <ClInclude Include="Include\FluidSystem.h" />
     <ClInclude Include="Include\GameStateManager.h" />
     <ClInclude Include="Include\Pause.h" />
@@ -47,7 +48,6 @@
     <ClInclude Include="Include\Terrain.h" />
     <ClInclude Include="Include\UISystem.h" />
     <ClInclude Include="Include\Utils.h" />
-    <ClInclude Include="Include\VFXConfigs.h" />
     <ClInclude Include="Include\VFXSystem.h" />
   </ItemGroup>
   <ItemGroup>

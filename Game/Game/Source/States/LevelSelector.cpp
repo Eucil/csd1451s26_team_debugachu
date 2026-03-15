@@ -10,7 +10,7 @@
 
 static s8 font;
 
-static std::vector<Button> buttonPool;
+static std::vector<Button> editorButtonPool_;
 static std::vector<Text> textPool;
 static Text titleText = Text(-0.4f, 0.8f, "SELECT LEVEL");
 
@@ -21,8 +21,6 @@ static std::string inputStr;
 static Text inputPrompt = Text(-0.4f, -0.8f, "Width:");
 
 void LoadLevelSelector() {
-    // Todo
-    // std::cout << "Load Level Selector\n";
     font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
 
     // Setup texts
@@ -38,7 +36,7 @@ void LoadLevelSelector() {
         Button tempButton =
             Button(AEVec2{-600.f + (400.f * x), 200.0f - (200.f * y)}, AEVec2{200.0f, 150.0f});
         tempButton.SetupMesh();
-        buttonPool.push_back(tempButton);
+        editorButtonPool_.push_back(tempButton);
         Text tempText =
             Text(tempButton.transform_.pos_.x / 800.f - x_offset,
                  tempButton.transform_.pos_.y / 450.f - y_offset, std::to_string(i + 1));
@@ -105,14 +103,14 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
     if ((AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) && !creatingLevel) {
         for (int i = 0; i < static_cast<int>(Level::None); ++i) {
             // Clicks for level selection and editor
-            if (buttonPool[i].OnClick()) {
+            if (editorButtonPool_[i].OnClick()) {
                 std::cout << "Level " << (i + 1) << " button clicked\n";
 
                 // Handle level selection based on editor mode
                 switch (levelManager.getLevelEditorMode()) {
                 case editorMode::None:
                     // If none, just play the level if it's playable
-                    if (levelManager.playableLevels[i]) {
+                    if (levelManager.playableLevels_[i]) {
                         levelManager.SetCurrentLevel(i + 1);
                         GSM.nextState_ = StateId::Level;
                     }
@@ -194,10 +192,10 @@ void DrawLevelSelector() {
 
     // Draw button with different color base on level editor mode
     for (int i = 0; i < static_cast<int>(Level::None); ++i) {
-        if (levelManager.playableLevels[i]) {
-            buttonPool[i].DrawColor(0.0f, 1.0f, 0.0f);
+        if (levelManager.playableLevels_[i]) {
+            editorButtonPool_[i].DrawColor(0.0f, 1.0f, 0.0f);
         } else {
-            buttonPool[i].DrawColor(0.5f, 0.5f, 0.5f);
+            editorButtonPool_[i].DrawColor(0.5f, 0.5f, 0.5f);
         }
     }
 
@@ -225,10 +223,10 @@ void UnloadLevelSelector() {
     // Todo
     // std::cout << "Unload main menu\n";
     for (int i = 0; i < static_cast<int>(Level::None); ++i) {
-        buttonPool[i].UnloadMesh();
+        editorButtonPool_[i].UnloadMesh();
     }
 
-    buttonPool.clear();
+    editorButtonPool_.clear();
     textPool.clear();
     AEGfxDestroyFont(font);
 }

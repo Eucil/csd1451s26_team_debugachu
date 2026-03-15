@@ -1,0 +1,14 @@
+{
+  "default" : 
+  {
+    "levelEditorMode_" : 3,
+    "currentLevel_" : 0,
+    "currentGameBlock_" : 4,
+    "editorContainerScale_" :
+    [
+      300.0,
+      300.0
+    ],
+    "displayEditorContainer_" : false
+  }
+}

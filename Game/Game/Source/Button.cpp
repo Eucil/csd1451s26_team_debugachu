@@ -10,6 +10,7 @@
 #include <json/json.h>
 
 #include "Components.h"
+#include "ConfigManager.h"
 #include "Utils.h"
 
 void NewButton::loadTexture(const char* path) { graphics_.texture_ = AEGfxTextureLoad(path); }
@@ -17,14 +18,15 @@ void NewButton::loadTexture(const char* path) { graphics_.texture_ = AEGfxTextur
 void NewButton::loadMesh() { graphics_.mesh_ = CreateRectMesh(); }
 
 // Usage example:
-// obj.initFromJson(root["buttons"]["Restart"]);
-void NewButton::initFromJson(const Json::Value& jsonBtn) {
-    transform_.pos_.x = jsonBtn["position"]["x"].asFloat();
-    transform_.pos_.y = jsonBtn["position"]["y"].asFloat();
-    transform_.scale_.x = jsonBtn["scale"]["x"].asFloat();
-    transform_.scale_.y = jsonBtn["scale"]["y"].asFloat();
+// obj.initFromJson("level_buttons", "buttons", "Restart");
+void NewButton::initFromJson(const std::string& file, const std::string& section) {
+    const Json::Value& buttonSection = configManager.getSection(file, section);
+    transform_.pos_.x = buttonSection["position"]["x"].asFloat();
+    transform_.pos_.y = buttonSection["position"]["y"].asFloat();
+    transform_.scale_.x = buttonSection["scale"]["x"].asFloat();
+    transform_.scale_.y = buttonSection["scale"]["y"].asFloat();
 
-    const Json::Value& t = jsonBtn["text"];
+    const Json::Value& t = buttonSection["text"];
     text_.content_ = t["content"].asString();
     text_.x_ = t["x"].asFloat();
     text_.y_ = t["y"].asFloat();
