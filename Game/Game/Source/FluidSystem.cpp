@@ -19,7 +19,7 @@ FluidParticle::FluidParticle(f32 posX, f32 posY, f32 radius, FluidType type) {
 
     collider_.colliderShape_ = ColliderShape::Circle;
     collider_.shapeData_.circle_.radius =
-        radius * 0.6f; // * 0.6f so that collider is smaller than mesh
+        radius * 0.5f; // * 0.6f so that collider is smaller than mesh
 
     type_ = type;
 }
@@ -116,7 +116,7 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         // ================================================ //
         // OPTIMISATION: ANTI-TUNNELLING GRAVITY CAP
         // ================================================ //
-        // Without this, particles falling from a great height can reach very high speeds, 
+        // Without this, particles falling from a great height can reach very high speeds,
         // which can cause them to tunnel through terrain colliders.
         const f32 TERMINAL_FALL_SPEED = -300.0f;
         if (p.physics_.velocity_.y < TERMINAL_FALL_SPEED) {
@@ -128,20 +128,14 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         f32 noiseX = ((rand() % 100) / 50.0f) - 1.0f; // Range -1.0 to 1.0
         f32 noiseY = ((rand() % 100) / 50.0f) - 1.0f; // Range -1.0 to 1.0
 
-        p.physics_.velocity_.x += noiseX * dt * 3.0f;
-        p.physics_.velocity_.y += noiseY * dt * 3.0f;
-
-
+        p.physics_.velocity_.x += noiseX * dt * 0.01f;
+        p.physics_.velocity_.y += noiseY * dt * 0.01f;
 
         // ================================================ //
         // OPTIMISATION: STOPS VERY SLOW PARTICLES
         // ================================================ //
         //
-        // NOTE: 1.99f is a MAGIC NUMBER, it was chosen coz if the particle is moving at less than
-        // (1 pixel, 1 pixel) velocity, it is considered miniscule.
-        //
-        // (sqrt(1.0f + 1.0f) ) ^ 2
-        f32 thresholdVel = 1.41f * 1.41f;
+        f32 thresholdVel = 0.01f;
         f32 currentSpeedSq = (p.physics_.velocity_.x * p.physics_.velocity_.x) +
                              (p.physics_.velocity_.y * p.physics_.velocity_.y);
 
@@ -314,6 +308,9 @@ void FluidSystem::Free() {
 
 void FluidSystem::SpawnParticle(f32 posX, f32 posY, f32 radius, FluidType type) {
     int i = (int)type;
+    if (particlePools_[i].size() >= 150) {
+        return;
+    }
     FluidParticle newParticle(posX, posY, radius, type);
     newParticle.physics_ = physicsConfigs_[i];
     particlePools_[i].push_back(newParticle);
