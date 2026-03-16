@@ -1,130 +1,4 @@
 #include "CollisionSystem.h"
-/*
-void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& fluidSystem) {
-    using BucketEntry = std::pair<FluidType, u32>; // (type, index)
-
-    // Grid info
-    const u32 gridRows = terrain.getCellRows();
-    const u32 gridCols = terrain.getCellCols();
-    const u32 gridSize = terrain.getCellSize();
-    const AEVec2 gridBottomLeftPos = terrain.getBottomLeftPos();
-
-    // One bucket per cell
-    // Clear and resize grid
-    std::vector<std::vector<BucketEntry>> fluidGrid;
-    fluidGrid.resize(static_cast<size_t>(gridRows) * static_cast<size_t>(gridCols));
-
-    // Loop each particle type and POPULATE the grid
-    for (u32 t = 0; t < static_cast<u32>(FluidType::Count); ++t) {
-        std::vector<FluidParticle>& particlePool =
-            fluidSystem.GetParticlePool(static_cast<FluidType>(t));
-
-        // Loop through every particle within this pool
-        for (size_t pIdx = 0; pIdx < particlePool.size(); ++pIdx) {
-            FluidParticle& particle = particlePool[pIdx];
-
-            AEVec2 particlePos = particle.transform_.pos_;
-
-            // @todo comment this
-            s32 particleCellX = static_cast<s32>(
-                std::floor((particlePos.x - gridBottomLeftPos.x) / static_cast<f32>(gridSize)));
-            s32 particleCellY = static_cast<s32>(
-                std::floor((particlePos.y - gridBottomLeftPos.y) / static_cast<f32>(gridSize)));
-
-            if (particleCellX < 0 || particleCellX >= static_cast<int>(gridCols) ||
-                particleCellY < 0 || particleCellY >= static_cast<int>(gridRows)) {
-                continue;
-            }
-
-            // Calculate the cell index of the grid (y * maxX + x)
-            const size_t cellIndex =
-                static_cast<size_t>(particleCellY) * static_cast<size_t>(gridCols) +
-                static_cast<size_t>(particleCellX);
-
-            // Save the index of the current particle and its type into the grid
-            fluidGrid[cellIndex].emplace_back(static_cast<FluidType>(t), static_cast<u32>(pIdx));
-        }
-    }
-
-    // Loop over every bucket
-    const size_t totalCells = static_cast<size_t>(gridRows) * static_cast<size_t>(gridCols);
-
-    for (size_t cell = 0; cell < totalCells; ++cell) {
-
-        if (fluidGrid[cell].empty())
-            continue;
-
-        // calculate the column number
-        const u32 cx = static_cast<u32>(cell % gridCols);
-        // calculate the row number
-        const u32 cy = static_cast<u32>(cell / gridCols);
-
-        // Check 3x3 neighborhood
-        for (int dy = -1; dy <= 1; ++dy) {
-            for (int dx = -1; dx <= 1; ++dx) {
-                const int nx = static_cast<int>(cx) + dx;
-                const int ny = static_cast<int>(cy) + dy;
-
-                if (nx < 0 || nx >= static_cast<int>(gridCols) || ny < 0 ||
-                    ny >= static_cast<int>(gridRows)) {
-                    continue;
-                }
-                const size_t neighbourIndex =
-                    static_cast<size_t>(ny) * static_cast<size_t>(gridCols) +
-                    static_cast<size_t>(nx);
-
-                Cell& neighbourTerrainCell = terrain.getCells()[neighbourIndex];
-                std::vector<BucketEntry>& neighbourParticles = fluidGrid[neighbourIndex];
-
-                for (const BucketEntry& a : fluidGrid[cell]) {
-                    const auto currentFluidTypeA = a.first;
-                    const auto currentFluidIndexA = a.second;
-
-                    auto& particlePoolA =
-                        fluidSystem.GetParticlePool(static_cast<FluidType>(currentFluidTypeA));
-
-                    // obtain our fluidparticle within this cell of the grid
-                    FluidParticle& fluidParticleA = particlePoolA[currentFluidIndexA];
-
-                    // We first evaluate the current fluidParticleA against the terrain cell it is
-                    // visiting. celltoFluidParticleCollision returns the contact information of the
-                    // collision which includes:
-                    //
-                    // a bool indicating whether a collision has occurred,
-                    // the outward normal of the collidable object (triangle or square or empty)
-                    CollisionInfo contact =
-                        cellToFluidParticleCollision(neighbourTerrainCell, fluidParticleA);
-
-                    if (contact.hasCollision) {
-                        pushOutAndSlide(fluidParticleA, contact.normal, contact.penetration,
-                                        fluidParticleA.collider_.shapeData_.circle_.radius);
-                    }
-
-                    // @todo code below may now be irrelevant have to check again
-                    //
-                    // cellToFluidParticleCollision(neighbourTerrainCell, fluidParticleA);
-                    if (!neighbourParticles.empty()) {
-                        for (const BucketEntry& b : neighbourParticles) {
-                            const auto currentFluidTypeB = b.first;
-                            const auto currentFluidIndexB = b.second;
-                            auto& particlePoolB = fluidSystem.GetParticlePool(
-                                static_cast<FluidType>(currentFluidTypeB));
-                            FluidParticle& fluidParticleB = particlePoolB[b.second];
-
-                            // Comparing memory addresses ensures we only solve Pair(A, B) once.
-                            // If we didn't do this, we would solve it when A visits B,
-                            // and when B visits A.
-                            if (&fluidParticleA < &fluidParticleB) {
-                                resolveFluidParticlePair(fluidParticleA, fluidParticleB);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-*/
 
 // @todo comment entire function
 void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& fluidSystem, f32 dt) {
@@ -142,48 +16,6 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
 
     // Loop each particle type (e.g. water, lava) and POPULATE the grid with the indices of which
     // particles are in which
-    auto buildGrid = [&]() {
-        // Clear all buckets before repopulating
-        for (auto& bucket : fluidGrid)
-            bucket.clear();
-
-        for (u32 t = 0; t < static_cast<u32>(FluidType::Count); ++t) {
-
-            // Get the particlepool for the currently iterated particle type (e.g. water or mud)
-            std::vector<FluidParticle>& particlePool =
-                fluidSystem.GetParticlePool(static_cast<FluidType>(t));
-
-            // Loop through every particle within this pool and calculate which cell of the grid
-            // it belongs to based on
-            for (size_t pIdx = 0; pIdx < particlePool.size(); ++pIdx) {
-
-                // Obtain the currently iterated particle and its position
-                FluidParticle& particle = particlePool[pIdx];
-                AEVec2 particlePos = particle.transform_.pos_;
-
-                // std::floor calculates the largest integer value not greater than the division
-                // result, which gives us the correct cell index for negative positions as well.
-                s32 particleCellX = static_cast<s32>(
-                    std::floor((particlePos.x - gridBottomLeftPos.x) / static_cast<f32>(gridSize)));
-                s32 particleCellY = static_cast<s32>(
-                    std::floor((particlePos.y - gridBottomLeftPos.y) / static_cast<f32>(gridSize)));
-
-                // If particle cell index is out of bounds, we go to the next particle
-                if (particleCellX < 0 || particleCellX >= static_cast<int>(gridCols) ||
-                    particleCellY < 0 || particleCellY >= static_cast<int>(gridRows)) {
-                    continue;
-                }
-
-                // Calculate the cell index of the grid (y * maxX + x) and save the index of the
-                // current particle and its type into the grid
-                const size_t cellIndex =
-                    static_cast<size_t>(particleCellY) * static_cast<size_t>(gridCols) +
-                    static_cast<size_t>(particleCellX);
-                fluidGrid[cellIndex].emplace_back(static_cast<FluidType>(t),
-                                                  static_cast<u32>(pIdx));
-            }
-        }
-    };
 
     // Obtain the total number of cells in the grid so that we can loop through every cell and
     // resolve collisions
@@ -193,7 +25,7 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
     // PASS 1: FLUID vs FLUID (Soft Constraints)
     // ====================================================================
     // Let the water squish, stack, and build pressure first.
-    buildGrid();
+    buildGrid(fluidGrid, fluidSystem, gridBottomLeftPos, gridCols, gridRows, gridSize);
     for (size_t cell = 0; cell < totalCells; ++cell) {
         if (fluidGrid[cell].empty())
             continue;
@@ -239,7 +71,7 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
     // PASS 2: FLUID vs TERRAIN (Hard Constraints)
     // ====================================================================
     // Now strictly enforce the solid walls so nothing gets pushed into the dirt.
-    buildGrid();
+    buildGrid(fluidGrid, fluidSystem, gridBottomLeftPos, gridCols, gridRows, gridSize);
     for (size_t cell = 0; cell < totalCells; ++cell) {
         if (fluidGrid[cell].empty())
             continue;
@@ -736,6 +568,37 @@ void CollisionSystem::resolveFluidParticlePair(FluidParticle& p1, FluidParticle&
             p1.physics_.velocity_.y += j * ny;
             p2.physics_.velocity_.x -= j * nx;
             p2.physics_.velocity_.y -= j * ny;
+        }
+    }
+}
+
+void CollisionSystem::buildGrid(std::vector<std::vector<BucketEntry>>& fluidGrid,
+                                FluidSystem& fluidSystem, const AEVec2& gridBottomLeftPos,
+                                u32 gridCols, u32 gridRows, u32 gridSize) {
+    for (auto& bucket : fluidGrid)
+        bucket.clear();
+
+    for (u32 t = 0; t < static_cast<u32>(FluidType::Count); ++t) {
+        std::vector<FluidParticle>& particlePool =
+            fluidSystem.GetParticlePool(static_cast<FluidType>(t));
+
+        for (size_t pIdx = 0; pIdx < particlePool.size(); ++pIdx) {
+            FluidParticle& particle = particlePool[pIdx];
+            AEVec2 particlePos = particle.transform_.pos_;
+
+            s32 particleCellX = static_cast<s32>(
+                std::floor((particlePos.x - gridBottomLeftPos.x) / static_cast<f32>(gridSize)));
+            s32 particleCellY = static_cast<s32>(
+                std::floor((particlePos.y - gridBottomLeftPos.y) / static_cast<f32>(gridSize)));
+
+            if (particleCellX < 0 || particleCellX >= static_cast<int>(gridCols) ||
+                particleCellY < 0 || particleCellY >= static_cast<int>(gridRows))
+                continue;
+
+            const size_t cellIndex =
+                static_cast<size_t>(particleCellY) * static_cast<size_t>(gridCols) +
+                static_cast<size_t>(particleCellX);
+            fluidGrid[cellIndex].emplace_back(static_cast<FluidType>(t), static_cast<u32>(pIdx));
         }
     }
 }

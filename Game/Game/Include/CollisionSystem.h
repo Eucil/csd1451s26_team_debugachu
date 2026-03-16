@@ -22,6 +22,7 @@ public:
     static void terrainToFluidCollision(Terrain& terrain, FluidSystem& fluidSystem, f32 dt = {});
 
 private:
+    using BucketEntry = std::pair<FluidType, u32>;
     // -----------------------------
     // Minimal vector helpers (avoid AE const-pointer issues)
     // -----------------------------
@@ -60,4 +61,8 @@ private:
                                 f32 dt);
 
     static void resolveFluidParticlePair(FluidParticle& p1, FluidParticle& p2);
+
+    static void buildGrid(std::vector<std::vector<BucketEntry>>& fluidGrid,
+                          FluidSystem& fluidSystem, const AEVec2& gridBottomLeftPos, u32 gridCols,
+                          u32 gridRows, u32 gridSize);
 };
