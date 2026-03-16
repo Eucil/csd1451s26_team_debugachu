@@ -1,0 +1,12 @@
+{
+  "Background": {
+    "position": { "x": 0.0, "y": 100.0 },
+    "scale": { "x": 320.0, "y": 96.0 },
+    "graphics": {
+      "red": 0.0,
+      "green": 0.0,
+      "blue": 0.0,
+      "alpha": 0.5
+    }
+  }
+}
