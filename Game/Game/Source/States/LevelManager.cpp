@@ -293,19 +293,20 @@ void LevelManager::createLevelData(int level, int width, int height, int tilesiz
     writeToFile(level);
 }
 
-void LevelManager::saveMapInfo(int width, int height, int tilesize) {
+void LevelManager::saveMapInfo(int& width, int& height, int& tilesize) {
     savingRoot_["Map"]["width"] = width;
     savingRoot_["Map"]["height"] = height;
     savingRoot_["Map"]["tileSize"] = tilesize;
 }
-void LevelManager::saveTerrainInfo(std::vector<float> nodes, std::string terrainType) {
+void LevelManager::saveTerrainInfo(std::vector<float>& nodes, const std::string& terrainType) {
     Json::Value terrainJson(Json::arrayValue);
     for (size_t i = 0; i < nodes.size(); ++i) {
         terrainJson.append(nodes[i]);
     }
     savingRoot_["Terrain"][terrainType] = terrainJson;
 }
-void LevelManager::saveStartEndInfo(std::vector<StartEnd> startPoints, StartEnd endPoint) {
+
+void LevelManager::saveStartEndInfo(std::vector<StartEnd>& startPoints, StartEnd& endPoint) {
     Json::Value startPointsJson_array(Json::arrayValue);
     for (const auto& startPoint : startPoints) {
         Json::Value startPointJson;
@@ -330,6 +331,20 @@ void LevelManager::saveStartEndInfo(std::vector<StartEnd> startPoints, StartEnd 
     endPointJson["direction"] = static_cast<int>(endPoint.direction_);
     savingRoot_["Objects"]["endPoint"] = endPointJson;
 }
+
+void LevelManager::saveCollectibleInfo(std::vector<Collectible>& collectibles) {
+
+    Json::Value collectiblesJson_array(Json::arrayValue);
+    for (const auto& collectible : collectibles) {
+        Json::Value collectibleJson;
+        collectibleJson["posX"] = collectible.transform_.pos_.x;
+        collectibleJson["posY"] = collectible.transform_.pos_.y;
+        collectibleJson["type"] = static_cast<int>(collectible.type_);
+        collectiblesJson_array.append(collectibleJson);
+    }
+    savingRoot_["Objects"]["collectibles"] = collectiblesJson_array;
+}
+
 void LevelManager::writeToFile(int level) {
     std::string levelPath = "Assets/Levels/Level_" + std::to_string(level) + "/Map.json";
     std::filesystem::path filePath(levelPath);
@@ -470,6 +485,26 @@ void LevelManager::parseStartEndInfo(StartEndPoint& startEndPointSystem) {
         }
     } else {
         std::cout << "Objects info not found in JSON\n";
+    }
+}
+
+void LevelManager::parseCollectibleInfo(CollectibleSystem& collectibleSystem) {
+    if (readingRoot_.isMember("Objects")) {
+        const Json::Value& objects = readingRoot_["Objects"];
+        // Parse collectibles
+        if (objects.isMember("collectibles")) {
+            const Json::Value& collectibles = objects["collectibles"];
+            std::cout << "Parsing collectibles info...\n";
+
+            for (Json::ArrayIndex i = 0; i < collectibles.size(); ++i) {
+                AEVec2 pos{collectibles[i]["posX"].asFloat(), collectibles[i]["posY"].asFloat()};
+                CollectibleType type =
+                    static_cast<CollectibleType>(collectibles[i]["type"].asInt());
+                collectibleSystem.LoadLevelCollectibles(pos, type);
+            }
+        } else {
+            std::cout << "Collectibles info not found in JSON\n";
+        }
     }
 }
 

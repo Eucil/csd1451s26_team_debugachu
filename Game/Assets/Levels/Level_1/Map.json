@@ -28,6 +28,24 @@
         "scaleY" : 50.0,
         "type" : 0
       }
+    ],
+    "collectibles" :
+    [
+      {
+        "posX" : 300.0,
+        "posY" : 200.0,
+        "type" : 0
+      },
+      {
+        "posX" : -250.0,
+        "posY" : 150.0,
+        "type" : 1
+      },
+      {
+        "posX" : 50.0,
+        "posY" : -180.0,
+        "type" : 2
+      }
     ]
   },
   "Terrain" : 

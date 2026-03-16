@@ -1,5 +1,7 @@
 #include "Collectible.h"
+#include "ConfigManager.h"
 #include "Utils.h"
+
 #include <cmath>
 #include <cstdio>
 
@@ -33,16 +35,25 @@ Collectible::Collectible(AEVec2 pos, CollectibleType type) {
     rotationSpeed_ = 1.0f + (AERandFloat() * 2.0f); // Random rotation speed
 }
 
-void CollectibleSystem::Initialize(s8 font) {
+void CollectibleSystem::Load(s8 font) {
     font_ = font;
-    collectionText_.x_ = -0.6f;
-    collectionText_.y_ = 0.92f;
-    collectionText_.scale_ = 0.5f;
-    collectionText_.content_ = "Items: 0/3";
+    collectionText_.x_ =
+        configManager.getFloat("Collectible", "default", "collectionText_.x_", -0.6f);
+    collectionText_.y_ =
+        configManager.getFloat("Collectible", "default", "collectionText_.y_", 0.92f);
+    collectionText_.scale_ =
+        configManager.getFloat("Collectible", "default", "collectionText_.scale_", 0.5f);
+    collectionText_.content_ =
+        configManager.getString("Collectible", "default", "collectionText_.x_", "Items: 0/3");
+}
+
+void CollectibleSystem::Initialize() {
     CreateMeshes();
     collectedCount_ = 0;
     totalCollectibles_ = 0;
     globalTimer_ = 0.0f;
+
+    collectibles_.clear();
 }
 
 void CollectibleSystem::CreateMeshes() {
@@ -105,14 +116,9 @@ void CollectibleSystem::CreateMeshes() {
     leafMesh_ = AEGfxMeshEnd();
 }
 
-void CollectibleSystem::LoadLevel1Collectibles() {
-    collectibles_.clear();
-    collectedCount_ = 0;
+void CollectibleSystem::LoadLevelCollectibles(AEVec2 pos, CollectibleType type) {
 
-    // Level 1 collectible positions (adjust these based on your level layout)
-    collectibles_.emplace_back(AEVec2{300.0f, 200.0f}, CollectibleType::Star);
-    collectibles_.emplace_back(AEVec2{-250.0f, 150.0f}, CollectibleType::Gem);
-    collectibles_.emplace_back(AEVec2{50.0f, -180.0f}, CollectibleType::Leaf);
+    collectibles_.emplace_back(pos, type);
 
     totalCollectibles_ = static_cast<int>(collectibles_.size());
 }
@@ -227,6 +233,35 @@ void CollectibleSystem::Free() {
         leafMesh_ = nullptr;
     }
     collectibles_.clear();
+}
+
+void CollectibleSystem::spawnAtMousePos() {
+    AEVec2 mousePos = GetMouseWorldPos();
+    collectibles_.emplace_back(mousePos, static_cast<CollectibleType>(totalCollectibles_ % 3));
+    totalCollectibles_ = static_cast<int>(collectibles_.size());
+}
+
+void CollectibleSystem::destroyAtMousePos() {
+    // Get mouse position
+    AEVec2 mousePos = GetMouseWorldPos();
+    f32 mouse_x = static_cast<f32>(mousePos.x);
+    f32 mouse_y = static_cast<f32>(mousePos.y);
+
+    // Check if mouse is over any start point
+    for (auto it = collectibles_.begin(); it != collectibles_.end(); ++it) {
+        if (!it->active_ || it->collected_)
+            continue;
+
+        f32 radius = it->collider_.shapeData_.circle_.radius;
+        if (mouse_x >= (it->transform_.pos_.x - radius) &&
+            mouse_x <= (it->transform_.pos_.x + radius) &&
+            mouse_y >= (it->transform_.pos_.y - radius) &&
+            mouse_y <= (it->transform_.pos_.y + radius)) {
+            collectibles_.erase(it);
+            totalCollectibles_ = static_cast<int>(collectibles_.size());
+            return;
+        }
+    }
 }
 
 void CollectibleSystem::ResetCollection() {

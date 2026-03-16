@@ -1,0 +1,9 @@
+{
+  "default" : 
+  {
+    "collectionText_.x_" : -0.6,
+    "collectionText_.y_" : 0.92,
+    "collectionText_.scale_" : 0.5,
+    "collectionText_.content_" : "Items: 0/3"
+  }
+}

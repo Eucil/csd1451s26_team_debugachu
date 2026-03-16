@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Button.h"
+#include "Collectible.h"
 #include "StartEndPoint.h"
 #include "Terrain.h"
 
@@ -11,7 +12,7 @@
 
 enum class Level { Level1, Level2, Level3, Level4, Level5, Level6, Level7, Level8, None };
 enum class editorMode { Edit, Delete, Create, None };
-enum class GameBlock { Dirt, Stone, Magic, StartPoint, EndPoint, None };
+enum class GameBlock { Dirt, Stone, Magic, StartPoint, EndPoint, Collectible, None };
 
 class LevelManager {
 public:
@@ -58,9 +59,10 @@ public:
 
     // Functions for saving/writing level data to JSON
     //=================================================================
-    void saveMapInfo(int width, int height, int tilesize);
-    void saveTerrainInfo(std::vector<float> nodes, std::string terrainType);
-    void saveStartEndInfo(std::vector<StartEnd> startPoints, StartEnd endPoint);
+    void saveMapInfo(int& width, int& height, int& tilesize);
+    void saveTerrainInfo(std::vector<float>& nodes, const std::string& terrainType);
+    void saveStartEndInfo(std::vector<StartEnd>& startPoints, StartEnd& endPoint);
+    void saveCollectibleInfo(std::vector<Collectible>& collectibles);
     void writeToFile(int level);
     //=================================================================
 
@@ -71,6 +73,7 @@ public:
     void parseMapInfo(int& width, int& height, int& tilesize);
     void parseTerrainInfo(std::vector<float>& nodes, std::string terrainType);
     void parseStartEndInfo(StartEndPoint& startEndPointSystem);
+    void parseCollectibleInfo(CollectibleSystem& collectibleSystem);
     //=================================================================
 
     // Public variables

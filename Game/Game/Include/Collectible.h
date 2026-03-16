@@ -45,15 +45,20 @@ private:
     float globalTimer_{0.0f};
 
 public:
-    void Initialize(s8 font);
-    void LoadLevel1Collectibles();
+    void Load(s8 font);
+    void Initialize();
+    void LoadLevelCollectibles(AEVec2 pos, CollectibleType type);
     void Update(f32 dt, std::vector<FluidParticle>& particlePool);
     void Draw();
     void Free();
 
+    void spawnAtMousePos();
+    void destroyAtMousePos();
+
     bool CheckAllCollected() const { return collectedCount_ >= totalCollectibles_; }
     int GetCollectedCount() const { return collectedCount_; }
     int GetTotalCount() const { return totalCollectibles_; }
+    std::vector<Collectible>& GetCollectibles() { return collectibles_; }
     void ResetCollection();
 
 private:

@@ -70,10 +70,8 @@ void LoadLevel() {
     font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
 
     // tc added start
-    collectibleSystem.Initialize(font);
-    if (levelManager.getCurrentLevel() == 1) {
-        collectibleSystem.LoadLevel1Collectibles();
-    }
+    collectibleSystem.Load(font);
+
     startEndPointSystem.InitializeUI(font);
 
     totalWaterText.x_ = -0.35f;
@@ -115,10 +113,6 @@ void LoadLevel() {
 void InitializeLevel() {
     // std::cout << "Initialize level 3\n";
     fluidSystem.Initialize();
-    startEndPointSystem.Initialize();
-    if (fileExist) {
-        levelManager.parseStartEndInfo(startEndPointSystem);
-    }
     portalSystem.Initialize();
 
     dirt = new Terrain(TerrainMaterial::Dirt, pTerrainDirtTex, {0.0f, 0.0f}, height, width,
@@ -150,6 +144,16 @@ void InitializeLevel() {
     magic->initCellsGraphics();
     magic->initCellsCollider();
     magic->updateTerrain();
+
+    startEndPointSystem.Initialize();
+    if (fileExist) {
+        levelManager.parseStartEndInfo(startEndPointSystem);
+    }
+
+    collectibleSystem.Initialize();
+    if (fileExist) {
+        levelManager.parseCollectibleInfo(collectibleSystem);
+    }
 
     vfxSystem.Initialize(800, 20);
 
@@ -330,6 +334,13 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                         startEndPointSystem.DeleteAtMousePos();
                     }
                     break;
+                case GameBlock::Collectible:
+                    if (AEInputCheckReleased(AEVK_LBUTTON)) {
+                        collectibleSystem.spawnAtMousePos();
+                    } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
+                        collectibleSystem.destroyAtMousePos();
+                    }
+                    break;
                 default:
                     break;
                 }
@@ -342,6 +353,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 levelManager.saveTerrainInfo(magic->getNodes(), "Magic");
                 levelManager.saveStartEndInfo(startEndPointSystem.startPoints_,
                                               startEndPointSystem.endPoint_);
+                levelManager.saveCollectibleInfo(collectibleSystem.GetCollectibles());
                 levelManager.writeToFile(levelManager.getCurrentLevel());
             }
 
