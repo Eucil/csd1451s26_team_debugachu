@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Collectible.cpp" />
     <ClCompile Include="Source\CollisionSystem.cpp" />
     <ClCompile Include="Source\FluidSystem.cpp" />
     <ClCompile Include="Source\PortalSystem.cpp" />
@@ -30,6 +31,7 @@
     <None Include="Docs\Standards.md" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\Collectible.h" />
     <ClInclude Include="Include\CollisionSystem.h" />
     <ClInclude Include="Include\Components.h" />
     <ClInclude Include="Include\FluidSystem.h" />

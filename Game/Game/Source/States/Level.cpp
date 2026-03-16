@@ -8,6 +8,7 @@
 
 #include <AEEngine.h>
 
+#include "Collectible.h"
 #include "CollisionSystem.h"
 #include "Components.h"
 #include "FluidSystem.h"
@@ -38,6 +39,7 @@ static bool fileExist;
 static VFXSystem vfxSystem;
 
 // tc added start
+static CollectibleSystem collectibleSystem;
 static Text totalWaterText;
 static Text goalText;
 static f32 totalWaterRemaining = 0.0f;
@@ -59,9 +61,13 @@ void LoadLevel() {
     font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 12);
 
     // tc added start
+    collectibleSystem.Initialize(font);
+    if (levelManager.getCurrentLevel() == 1) {
+        collectibleSystem.LoadLevel1Collectibles();
+    }
     startEndPointSystem.InitializeUI(font);
-    totalWaterText = Text(-0.6f, 0.92f, "Water: 0/0");
-    goalText = Text(0.1f, 0.92f, "Goal: 0%");
+    totalWaterText = Text(-0.35f, 0.92f, "Water: 0/0");
+    goalText = Text(0.2f, 0.92f, "Goal: 0%");
     // tc added end
 
     levelManager.initEditorUI();
@@ -300,7 +306,15 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
         }
     }
 
-    // tc added start - Call the water spawn function
+    // tc added start - Update collectibles
+    collectibleSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
+
+    // Check if all items collected
+    if (collectibleSystem.CheckAllCollected()) {
+        std::cout << "All items collected!\n";
+        // You can trigger level complete here
+    }
+    // Call the water spawn function
     SpawnWaterWithLimit(deltaTime);
     // tc added end
 
@@ -458,7 +472,11 @@ void DrawLevel() {
     portalSystem.DrawColor();
     vfxSystem.Draw();
 
-    // tc added start - Show total water counter with progress bar and goal progress bar
+    // tc added start
+    // Draw collectibles
+    collectibleSystem.Draw();
+
+    // Show total water counter with progress bar and goal progress bar
     const char* totalWaterStr = totalWaterText.text_.c_str();
     AEGfxPrint(font, totalWaterStr, totalWaterText.pos_x_, totalWaterText.pos_y_, 1.f, 1.f, 1.f,
                1.f, 1.f);
@@ -467,7 +485,7 @@ void DrawLevel() {
     AEGfxPrint(font, goalStr, goalText.pos_x_, goalText.pos_y_, 1.f, 1.f, 1.f, 1.f, 1.f);
 
     // Water progress bar below the water text with dark blue border
-    DrawTotalWaterBar(totalWaterText.pos_x_ + 0.33f, totalWaterText.pos_y_ - 0.09f,
+    DrawTotalWaterBar(totalWaterText.pos_x_ + 0.35f, totalWaterText.pos_y_ - 0.09f,
                       totalWaterRemaining, totalWaterCapacity);
 
     // Goal progress bar below the goal text with dark green border
@@ -509,6 +527,9 @@ void FreeLevel() {
     vfxSystem.Free();
 
     // tc added start
+
+    collectibleSystem.Free();
+
     if (g_barMesh) {
         AEGfxMeshFree(g_barMesh);
         g_barMesh = nullptr;
