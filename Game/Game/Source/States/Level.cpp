@@ -416,10 +416,11 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                                                      (randRadius)};
 
                     // Call the water spawn function
-                    SpawnWaterWithLimit(deltaTime);
                     // tc added end
-                    fluidSystem.SpawnParticle(position.x, position.y, randRadius, FluidType::Water);
+                    // fluidSystem.SpawnParticle(position.x, position.y, randRadius,
+                    // FluidType::Water);
                 }
+                SpawnWaterWithLimit(deltaTime);
             }
         }
 
