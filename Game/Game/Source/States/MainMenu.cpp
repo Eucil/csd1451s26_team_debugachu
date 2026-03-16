@@ -4,8 +4,33 @@
 
 #include <AEEngine.h>
 
+// Background simulation includes
+#include "FluidSystem.h"
+#include "StartEndPoint.h"
+#include "Terrain.h"
+#include "States/LevelManager.h"
+
+// UI includes
 #include "Button.h"
 #include "GameStateManager.h"
+
+
+// Json file reading variables
+static int height, width, tileSize;
+static bool fileExist;
+
+// Background simulation variables
+static Terrain* bgDirt = nullptr;
+static Terrain* bgStone = nullptr;
+static AEGfxTexture* pBgDirtTex{nullptr};
+static AEGfxTexture* pBgStoneTex{nullptr};
+
+static FluidSystem bgFluidSystem;
+static StartEndPoint bgStartEndPoint;
+
+// Auto spawn fluid without player input
+static f32 autoSpawnTimer = 0.0f;
+
 
 // TC added start
 static Button startButton;
@@ -22,6 +47,27 @@ static s8 buttonFont;
 static s8 font;
 
 void LoadMainMenu() {
+    // Load background simulation level map
+    //@todo add lvl99 to levelmanager
+    if (levelManager.getLevelData(99)) {
+        levelManager.parseMapInfo(width, height, tileSize); 
+        fileExist = true;
+    } else {
+        std::cout << "Failed to load level data\n";
+        std::cout << "Using default values\n";
+        width = 80;
+        height = 45;
+        tileSize = 20;
+        fileExist = false;
+    }
+
+    // Load background simulation textures
+    Terrain::createMeshLibrary();
+    Terrain::createColliderLibrary();
+
+    pBgDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
+    pBgStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
+
     // Setup buttons - position them vertically
     startButton.loadMesh();
     startButton.loadTexture("Assets/Textures/brown_button.png");
@@ -40,6 +86,41 @@ void LoadMainMenu() {
 }
 
 void InitializeMainMenu() {
+
+    // Initialize simulation systems
+    bgFluidSystem.Initialize();
+
+    // Setup terrain
+    bgDirt = new Terrain(TerrainMaterial::Dirt, pBgDirtTex, {0.0f, 0.0f}, height, width,
+                          tileSize, true);
+    bgStone = new Terrain(TerrainMaterial::Stone, pBgStoneTex, {0.0f, 0.0f}, height, width,
+                          tileSize, true);
+    // Initialise JSON data into the background terrain cells
+    if (fileExist) {
+        levelManager.parseTerrainInfo(bgDirt->getNodes(), "Dirt");
+    }
+    bgDirt->initCellsTransform();
+    bgDirt->initCellsGraphics();
+    bgDirt->initCellsCollider();
+    bgDirt->updateTerrain();
+    if (fileExist) {
+        levelManager.parseTerrainInfo(bgStone->getNodes(), "Stone");
+    }
+    bgStone->initCellsTransform();
+    bgStone->initCellsGraphics();
+    bgStone->initCellsCollider();
+    bgStone->updateTerrain();
+
+    bgStartEndPoint.Initialize();
+    if (fileExist) {
+        levelManager.parseStartEndInfo(bgStartEndPoint);
+    }
+
+    for (auto& startPoint : bgStartEndPoint.startPoints_) {
+        startPoint.infinite_water_ = true;
+        startPoint.release_water_ = true;
+    }
+
     // UI buttons
     startButton.initFromJson("main_menu_buttons", "Start");
     howToPlayButton.initFromJson("main_menu_buttons", "HowToPlay");
@@ -48,6 +129,34 @@ void InitializeMainMenu() {
     quitButton.initFromJson("main_menu_buttons", "Quit");
 
     titleText.initFromJson("main_menu_texts", "Title");
+}
+
+static void BgSpawnWater(f32 deltaTime) {
+    static f32 global_spawn_timer = 0.0f;
+    global_spawn_timer -= deltaTime;
+
+    // Only spawn if enough time has passed
+    if (global_spawn_timer <= 0.0f) {
+        global_spawn_timer = 0.025f; // Keep the same flow rate as your main game
+
+        for (auto& startPoint : bgStartEndPoint.startPoints_) {
+            // Only process if the pipe is currently turned ON by our toggle timer
+            if (startPoint.release_water_ && startPoint.type_ == StartEndType::Pipe) {
+
+                f32 randRadius = 5.0f;
+                f32 x_offset = startPoint.transform_.pos_.x +
+                               AERandFloat() * startPoint.transform_.scale_.x -
+                               (startPoint.transform_.scale_.x / 2.f);
+
+                AEVec2 position = {x_offset, startPoint.transform_.pos_.y -
+                                                 (startPoint.transform_.scale_.y / 2.f) -
+                                                 randRadius};
+
+                // Spawn the particle into our background fluid system
+                bgFluidSystem.SpawnParticle(position.x, position.y, randRadius, FluidType::Water);
+            }
+        }
+    }
 }
 
 void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
@@ -101,10 +210,37 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
     settingsButton.updateTransform();
     creditsButton.updateTransform();
     quitButton.updateTransform();
+    // Update the pipes to spawn water
+    bgStartEndPoint.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
+
+    
+    static f32 waterToggleTimer = 3.0f; // Time in seconds before switching
+    static bool waterIsFlowing = true;
+
+    waterToggleTimer -= deltaTime;
+    if (waterToggleTimer <= 0.0f) {
+        waterIsFlowing = !waterIsFlowing; 
+        waterToggleTimer = 3.0f;         
+
+        // Apply the new state to all background pipes
+        for (auto& startPoint : bgStartEndPoint.startPoints_) {
+            startPoint.release_water_ = waterIsFlowing;
+        }
+    }
+    BgSpawnWater(deltaTime);
+    // Update the fluid physics against the loaded terrain
+    // @todo fix this
+    bgFluidSystem.Update(deltaTime, *bgDirt);
+    bgFluidSystem.Update(deltaTime, *bgStone);
+
 }
 
 void DrawMainMenu() {
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
+    bgDirt->renderTerrain();
+    bgStone->renderTerrain();
+    bgStartEndPoint.DrawColor(); 
+    bgFluidSystem.DrawColor();
 
     // Draw all buttons with different colors
     startButton.draw(buttonFont);
@@ -117,7 +253,15 @@ void DrawMainMenu() {
     titleText.draw(titleFont);
 }
 
-void FreeMainMenu() {}
+void FreeMainMenu() {
+    bgFluidSystem.Free();
+    bgStartEndPoint.Free();
+
+    delete bgDirt;
+    bgDirt = nullptr;
+    delete bgStone;
+    bgStone = nullptr;
+}
 
 void UnloadMainMenu() {
     // Free all meshes
