@@ -23,6 +23,12 @@ struct StartEnd {
 
     bool active_{true};
 
+    // tc added start
+    float water_capacity_{100.0f};  // Total water available for this start point
+    float water_remaining_{100.0f}; // Water remaining
+    bool infinite_water_{false};    // Debug/infinite mode
+    // tc added end
+
     StartEnd();
     StartEnd(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndType type, GoalDirection direction);
 };
@@ -33,6 +39,12 @@ private:
 
     // graphic configs for each StartEnd type
     Graphics graphicsConfigs_[static_cast<int>(StartEndType::Count)];
+
+    // tc added start
+    //  Water indicator UI
+    AEGfxVertexList* bar_mesh_{nullptr};
+    s8 font_;
+    // tc added end
 
 public:
     // Can have multiple start points but only one end point
@@ -50,6 +62,10 @@ public:
 
     void Initialize();
 
+    // tc added start
+    void InitializeUI(s8 font);
+    // tc added end
+
     void SetupPoint(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndType type,
                     GoalDirection direction);
 
@@ -63,6 +79,10 @@ public:
 
     void DrawColor();
 
+    // tc added start
+    void DrawWaterIndicator(const StartEnd& startPoint, const AEVec2& screenPos);
+    // tc added end
+
     void DrawTexture();
 
     void DrawColorPreview(StartEndType type);
@@ -74,4 +94,12 @@ public:
     void ResetIframe();
 
     bool CheckWinCondition(s32 particle_max_count);
+
+    // tc added start
+    //  getter/setter for water
+    float GetWaterRemaining(int startPointIndex) const;
+    void SetWaterRemaining(int startPointIndex, float amount);
+    void RefillAllWater();
+    void ToggleInfiniteWater();
+    // tc added end
 };

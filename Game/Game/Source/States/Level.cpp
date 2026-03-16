@@ -9,6 +9,7 @@
 #include <AEEngine.h>
 
 #include "Button.h"
+#include "Collectible.h"
 #include "CollisionSystem.h"
 #include "Components.h"
 #include "FluidSystem.h"
@@ -45,6 +46,16 @@ static Button buttonQuit;
 
 static PauseSystem pauseSystem;
 
+// tc added start
+static CollectibleSystem collectibleSystem;
+static TextData totalWaterText;
+static TextData goalText;
+static f32 totalWaterRemaining = 0.0f;
+static f32 totalWaterCapacity = 0.0f;
+static f32 goalPercentage = 0.0f;
+static AEGfxVertexList* g_barMesh = nullptr; // Global bar mesh for cleanup
+// tc added end
+
 void LoadLevel() {
     // std::cout << "Load level 3\n";
     Terrain::createMeshLibrary();
@@ -57,6 +68,25 @@ void LoadLevel() {
     // Setup texts
     rotationText = TextData{"", 0.6f, 0.9f};
     font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
+
+    // tc added start
+    collectibleSystem.Initialize(font);
+    if (levelManager.getCurrentLevel() == 1) {
+        collectibleSystem.LoadLevel1Collectibles();
+    }
+    startEndPointSystem.InitializeUI(font);
+
+    totalWaterText.x_ = -0.35f;
+    totalWaterText.y_ = 0.92f;
+    totalWaterText.scale_ = 0.5f;
+    totalWaterText.content_ = "Water: 0/0";
+
+    goalText.x_ = 0.2f;
+    goalText.y_ = 0.92f;
+    goalText.scale_ = 0.5f;
+    goalText.content_ = "Goal: 0%";
+
+    // tc added end
 
     levelManager.initEditorUI();
 
@@ -128,7 +158,96 @@ void InitializeLevel() {
     buttonQuit.initFromJson("level_buttons", "Quit");
 }
 
+// tc added start - Function to handle water spawning with limit
+static void SpawnWaterWithLimit(f32 deltaTime) {
+    // Use a static timer that persists between function calls
+    static f32 global_spawn_timer = 0.0f;
+
+    // Decrement the global timer
+    global_spawn_timer -= deltaTime;
+
+    // Only spawn if enough time has passed
+    if (global_spawn_timer <= 0.0f) {
+        // Reset timer to control spawn rate across all start points
+        global_spawn_timer = 0.025f; // Same spawn rate as before
+
+        // Loop through all start points
+        for (auto& startPoint : startEndPointSystem.startPoints_) {
+            // Only process active pipe-type start points that are releasing water
+            if (startPoint.release_water_ && startPoint.type_ == StartEndType::Pipe) {
+
+                // Check if there's water remaining (or infinite mode)
+                if (startPoint.water_remaining_ > 0.0f || startPoint.infinite_water_) {
+
+                    // Consume water (unless infinite)
+                    if (!startPoint.infinite_water_) {
+                        startPoint.water_remaining_ -= 0.5f; // Adjust consumption rate as needed
+                        if (startPoint.water_remaining_ < 0.0f) {
+                            startPoint.water_remaining_ = 0.0f;
+                            startPoint.release_water_ = false; // Auto-stop when empty
+                        }
+                    }
+
+                    // Only spawn particle if there's still water
+                    if (startPoint.water_remaining_ > 0.0f || startPoint.infinite_water_) {
+                        // Spawn particle at the start point position
+                        f32 randRadius = 5.0f;
+
+                        // Calculate random x offset within the start point's width
+                        f32 x_offset = startPoint.transform_.pos_.x +
+                                       AERandFloat() * startPoint.transform_.scale_.x -
+                                       (startPoint.transform_.scale_.x / 2.f);
+                        AEVec2 position = {x_offset, startPoint.transform_.pos_.y -
+                                                         (startPoint.transform_.scale_.y / 2.f) -
+                                                         (randRadius)};
+
+                        // Spawn the water particle
+                        fluidSystem.SpawnParticle(position.x, position.y, randRadius,
+                                                  FluidType::Water);
+                    }
+                }
+            }
+        }
+    }
+}
+// tc added end
+
 void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
+    // tc added start
+    totalWaterRemaining = 0.0f;
+    totalWaterCapacity = 0.0f;
+    for (const auto& startPoint : startEndPointSystem.startPoints_) {
+        if (startPoint.active_ && startPoint.type_ == StartEndType::Pipe) {
+            totalWaterRemaining += startPoint.water_remaining_;
+            totalWaterCapacity += startPoint.water_capacity_;
+        }
+    }
+    char buffer[64];
+    snprintf(buffer, sizeof(buffer), "Water: %.0f/%.0f", totalWaterRemaining, totalWaterCapacity);
+    totalWaterText.content_ = buffer;
+
+    // Calculate goal percentage based on particles collected vs max particles
+    goalPercentage = (static_cast<f32>(startEndPointSystem.particlesCollected_) /
+                      static_cast<f32>(fluidSystem.particleMaxCount / 3)) *
+                     100.0f;
+    if (goalPercentage > 100.0f)
+        goalPercentage = 100.0f;
+
+    char goalBuffer[32];
+    snprintf(goalBuffer, sizeof(goalBuffer), "Goal: %.0f%%", goalPercentage);
+    goalText.content_ = goalBuffer;
+
+    if (AEInputCheckTriggered(AEVK_F)) {
+        // Refill all start points
+        startEndPointSystem.RefillAllWater();
+    }
+
+    if (AEInputCheckTriggered(AEVK_G)) {
+        // Toggle infinite water for all start points
+        startEndPointSystem.ToggleInfiniteWater();
+    }
+    // tc added end
+
     // std::cout << "Update level 3\n";
 
     if (pauseSystem.isPaused()) { // Game is paused
@@ -284,9 +403,21 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                                                      (startPoint.transform_.scale_.y / 2.f) -
                                                      (randRadius)};
 
+                    // Call the water spawn function
+                    SpawnWaterWithLimit(deltaTime);
+                    // tc added end
                     fluidSystem.SpawnParticle(position.x, position.y, randRadius, FluidType::Water);
                 }
             }
+        }
+
+        // tc added start - Update collectibles
+        collectibleSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
+
+        // Check if all items collected
+        if (collectibleSystem.CheckAllCollected()) {
+            std::cout << "All items collected!\n";
+            // You can trigger level complete here
         }
 
         // fluidSystem.UpdateMain(deltaTime);
@@ -304,6 +435,134 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
     }
 }
 
+// tc added start - Enhanced total water counter with a progress bar and dark blue border
+static void DrawTotalWaterBar(f32 x, f32 y, f32 remaining, f32 capacity) {
+    if (capacity <= 0.0f)
+        return;
+
+    f32 percentage = remaining / capacity;
+    if (percentage < 0.0f)
+        percentage = 0.0f;
+
+    // Bar dimensions (in screen coordinates)
+    f32 barWidth = 200.0f;
+    f32 barHeight = 20.0f;
+    f32 borderThickness = 2.0f;
+
+    // Convert from screen coordinates (-0.9 to 0.9 range) to world coordinates
+    f32 worldX = x * 710.0f; // Convert from -0.9 to world X
+    f32 worldY = y * 510.0f; // Convert from 0.9 to world Y
+
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+
+    // Create a global mesh for the bar that can be cleaned up
+    if (!g_barMesh) {
+        g_barMesh = CreateRectMesh();
+    }
+
+    // Draw dark blue border (slightly larger rectangle)
+    AEMtx33 trans_mtx, scale_mtx, world_mtx;
+
+    // Border - slightly larger than the bar
+    AEMtx33Trans(&trans_mtx, worldX, worldY);
+    AEMtx33Scale(&scale_mtx, barWidth + borderThickness * 2, barHeight + borderThickness * 2);
+    AEMtx33Concat(&world_mtx, &trans_mtx, &scale_mtx);
+
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(0.0f, 0.0f, 0.5f, 1.0f); // Dark blue border
+    AEGfxSetTransform(world_mtx.m);
+    AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
+
+    // Draw background bar (gray)
+    AEMtx33Trans(&trans_mtx, worldX, worldY);
+    AEMtx33Scale(&scale_mtx, barWidth, barHeight);
+    AEMtx33Concat(&world_mtx, &trans_mtx, &scale_mtx);
+
+    AEGfxSetTransparency(0.3f);
+    AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f);
+    AEGfxSetTransform(world_mtx.m);
+    AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
+
+    // Draw fill bar (blue)
+    if (percentage > 0.0f) {
+        f32 fillWidth = barWidth * percentage;
+        f32 fillX = worldX - (barWidth - fillWidth) / 2.0f;
+
+        AEMtx33Trans(&trans_mtx, fillX, worldY);
+        AEMtx33Scale(&scale_mtx, fillWidth, barHeight);
+        AEMtx33Concat(&world_mtx, &trans_mtx, &scale_mtx);
+
+        AEGfxSetTransparency(0.8f);
+        AEGfxSetColorToMultiply(0.0f, 0.5f, 1.0f, 1.0f); // Blue fill
+        AEGfxSetTransform(world_mtx.m);
+        AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
+    }
+}
+
+// Enhanced goal progress bar with dark green border
+static void DrawGoalBar(f32 x, f32 y, f32 percentage) {
+    if (percentage < 0.0f)
+        percentage = 0.0f;
+    if (percentage > 100.0f)
+        percentage = 100.0f;
+
+    // Bar dimensions (in screen coordinates)
+    f32 barWidth = 200.0f;
+    f32 barHeight = 20.0f;
+    f32 borderThickness = 2.0f;
+
+    // Convert from screen coordinates (-0.9 to 0.9 range) to world coordinates
+    f32 worldX = x * 710.0f; // Convert from -0.9 to world X
+    f32 worldY = y * 510.0f; // Convert from 0.9 to world Y
+
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+
+    if (!g_barMesh) {
+        g_barMesh = CreateRectMesh();
+    }
+
+    // Draw dark green border (slightly larger rectangle)
+    AEMtx33 trans_mtx, scale_mtx, world_mtx;
+
+    // Border - slightly larger than the bar
+    AEMtx33Trans(&trans_mtx, worldX, worldY);
+    AEMtx33Scale(&scale_mtx, barWidth + borderThickness * 2, barHeight + borderThickness * 2);
+    AEMtx33Concat(&world_mtx, &trans_mtx, &scale_mtx);
+
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(0.0f, 0.4f, 0.0f, 1.0f); // Dark green border
+    AEGfxSetTransform(world_mtx.m);
+    AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
+
+    // Draw background bar (gray)
+    AEMtx33Trans(&trans_mtx, worldX, worldY);
+    AEMtx33Scale(&scale_mtx, barWidth, barHeight);
+    AEMtx33Concat(&world_mtx, &trans_mtx, &scale_mtx);
+
+    AEGfxSetTransparency(0.3f);
+    AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f);
+    AEGfxSetTransform(world_mtx.m);
+    AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
+
+    // Draw fill bar (green)
+    if (percentage > 0.0f) {
+        f32 fillWidth = barWidth * (percentage / 100.0f);
+        f32 fillX = worldX - (barWidth - fillWidth) / 2.0f;
+
+        AEMtx33Trans(&trans_mtx, fillX, worldY);
+        AEMtx33Scale(&scale_mtx, fillWidth, barHeight);
+        AEMtx33Concat(&world_mtx, &trans_mtx, &scale_mtx);
+
+        AEGfxSetTransparency(0.8f);
+        AEGfxSetColorToMultiply(0.0f, 1.0f, 0.0f, 1.0f); // Green fill
+        AEGfxSetTransform(world_mtx.m);
+        AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
+    }
+}
+// tc added end
+
 void DrawLevel() {
     // std::cout << "Draw level 2\n";
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
@@ -316,6 +575,22 @@ void DrawLevel() {
     magic->renderTerrain();
     portalSystem.DrawColor();
     vfxSystem.Draw();
+
+    // tc added start
+    // Draw collectibles
+    collectibleSystem.Draw();
+
+    // Show total water counter with progress bar and goal progress bar
+    totalWaterText.draw(font);
+    goalText.draw(font);
+
+    // Water progress bar below the water text with dark blue border
+    DrawTotalWaterBar(totalWaterText.x_ + 0.35f, totalWaterText.y_ - 0.09f, totalWaterRemaining,
+                      totalWaterCapacity);
+
+    // Goal progress bar below the goal text with dark green border
+    DrawGoalBar(goalText.x_ + 0.33f, goalText.y_ - 0.09f, goalPercentage);
+    // tc added end
 
     if (levelManager.getLevelEditorMode() == editorMode::Edit) {
         levelManager.renderLevelEditorUI(font);
@@ -355,6 +630,16 @@ void FreeLevel() {
     startEndPointSystem.Free();
     portalSystem.Free();
     vfxSystem.Free();
+
+    // tc added start
+
+    collectibleSystem.Free();
+
+    if (g_barMesh) {
+        AEGfxMeshFree(g_barMesh);
+        g_barMesh = nullptr;
+    }
+    // tc added end
 
     delete dirt;
     dirt = nullptr;

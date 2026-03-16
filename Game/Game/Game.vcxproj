@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClCompile Include="Source\Pause.cpp" />
     <ClCompile Include="Source\Button.cpp" />
+    <ClCompile Include="Source\Collectible.cpp" />
     <ClCompile Include="Source\CollisionSystem.cpp" />
     <ClCompile Include="Source\ConfigManager.cpp" />
     <ClCompile Include="Source\FluidSystem.cpp" />
@@ -32,6 +33,7 @@
     <None Include="Docs\Standards.md" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\Collectible.h" />
     <ClInclude Include="Include\Button.h" />
     <ClInclude Include="Include\CollisionSystem.h" />
     <ClInclude Include="Include\Components.h" />
