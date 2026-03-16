@@ -290,8 +290,9 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
         }
 
         // fluidSystem.UpdateMain(deltaTime);
-        fluidSystem.Update(deltaTime, *dirt);
-        fluidSystem.Update(deltaTime, *stone);
+        // fluidSystem.Update(deltaTime, *dirt);
+        // fluidSystem.Update(deltaTime, *stone);
+        fluidSystem.Update(deltaTime, {dirt, stone});
         startEndPointSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
         portalSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
         vfxSystem.Update(deltaTime);
