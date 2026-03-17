@@ -31,6 +31,7 @@
     <ClCompile Include="Source\Terrain.cpp" />
     <ClCompile Include="Source\Utils.cpp" />
     <ClCompile Include="Source\VFXSystem.cpp" />
+    <ClCompile Include="Source\WinScreen.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />
@@ -58,6 +59,7 @@
     <ClInclude Include="Include\Terrain.h" />
     <ClInclude Include="Include\Utils.h" />
     <ClInclude Include="Include\VFXSystem.h" />
+    <ClInclude Include="Include\WinScreen.h" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="..\Assets\Fonts\PressStart2P-Regular.ttf" />

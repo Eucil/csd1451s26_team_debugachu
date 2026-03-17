@@ -1,3 +1,4 @@
+
 #include "States/MainMenu.h"
 
 #include <fstream>
@@ -22,6 +23,7 @@
 #include "States/LevelManager.h"
 #include "Terrain.h"
 #include "VFXSystem.h"
+#include <WinScreen.h>
 
 static Terrain* dirt = nullptr;
 static Terrain* stone = nullptr;
@@ -36,6 +38,9 @@ static StartEndPoint startEndPointSystem;
 static PortalSystem portalSystem;
 // tc added start
 static MossSystem mossSystem;
+
+static WinScreen winScreen;
+
 // tc added end
 
 static TextData rotationText;
@@ -76,7 +81,7 @@ void LoadLevel() {
 
     // tc added start
     collectibleSystem.Load(font);
-
+    winScreen.Load(font);
     mossSystem.Load(font);
 
     startEndPointSystem.InitializeUI(font);
@@ -540,10 +545,13 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
 
         levelManager.updateLevelEditor();
 
-        if (startEndPointSystem.CheckWinCondition(fluidSystem.particleMaxCount)) {
-            std::cout << "WIN\n ";
+        if (startEndPointSystem.CheckWinCondition(fluidSystem.particleMaxCount) &&
+            !winScreen.IsVisible()) {
+            std::cout << "WIN - Showing win screen\n";
+            winScreen.Show(collectibleSystem.GetCollectedCount(), collectibleSystem.GetTotalCount(),
+                           levelManager.getCurrentLevel());
         }
-
+        winScreen.Update(GSM);
         // Pause system
         pauseSystem.setTransformFillScreen();
         pauseSystem.updateTransform();
@@ -732,7 +740,7 @@ void DrawLevel() {
     rotationText.content_ =
         "Portal Rotation:" + std::to_string(static_cast<s32>(portalSystem.GetRotationValue()));
     rotationText.draw(font);
-
+    winScreen.Draw();
     if (pauseSystem.isPaused()) { // Game is paused
         // Backgroun
         pauseSystem.renderBackground();
@@ -746,6 +754,7 @@ void DrawLevel() {
 
 void FreeLevel() {
     // std::cout << "Free level 2\n";
+    winScreen.Free();
     fluidSystem.Free();
     startEndPointSystem.Free();
     portalSystem.Free();
@@ -798,6 +807,7 @@ void UnloadLevel() {
     // Pause system
     pauseSystem.unload();
 
+    winScreen.Shutdown();
     // Audio system
     gAudioSystem.unloadAllSounds();
     gAudioSystem.unloadAllMusic();

@@ -42,16 +42,19 @@ AEGfxVertexList* CreateRectMesh() {
     AEGfxMeshStart();
 
     // This shape has 2 triangles that makes up a square
-    // Color parameters represent colours as ARGB
-    // UV coordinates to read from loaded textures
     AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f, 0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 1.0f, -0.5f,
                 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
 
     AEGfxTriAdd(0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 1.0f, 0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f, -0.5f,
                 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
 
-    // Saving the rect mesh
-    return AEGfxMeshEnd();
+    AEGfxVertexList* mesh = AEGfxMeshEnd();
+
+    if (mesh == nullptr) {
+        printf("ERROR: Failed to create rectangle mesh!\n");
+    }
+
+    return mesh;
 }
 
 AEVec2 GetMouseWorldPos() {
