@@ -55,6 +55,11 @@ public:
 
     std::vector<f32>& getNodes() { return nodes_; }
 
+    std::vector<bool>& getCachedHasColliders() { return cachedHasColliders_; }
+    bool isCollidersCacheDirty() const { return collidersCacheDirty_; }
+    void markCollidersCacheDirty() { collidersCacheDirty_ = true; }
+    void markCollidersCacheClean() { collidersCacheDirty_ = false; }
+
     bool isNearestNodeToMouseAtThreshold();
 
 private:
@@ -94,4 +99,7 @@ private:
 
     static AEGfxVertexList* debugTriMesh_;
     static AEGfxVertexList* debugBoxMesh_;
+
+    std::vector<bool> cachedHasColliders_;
+    bool collidersCacheDirty_ = true;
 };

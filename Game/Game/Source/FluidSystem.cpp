@@ -114,7 +114,7 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         p.physics_.velocity_.y += gravity * dt;
 
         // ================================================ //
-        // OPTIMISATION: ANTI-TUNNELLING GRAVITY CAP
+        // OPTIMISATION: ANTI-TUNNELLING CAP
         // ================================================ //
         // Without this, particles falling from a great height can reach very high speeds,
         // which can cause them to tunnel through terrain colliders.
@@ -123,6 +123,8 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
             p.physics_.velocity_.y = TERMINAL_FALL_SPEED;
         }
 
+        // Same cap applied horizontally to prevent tunneling from high horizontal speeds (e.g. from
+        // being pushed by a fast-moving floor or explosion).
         const f32 MAX_HORIZONTAL_SPEED = 300.0f;
         if (p.physics_.velocity_.x > MAX_HORIZONTAL_SPEED)
             p.physics_.velocity_.x = MAX_HORIZONTAL_SPEED;
@@ -132,11 +134,9 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         // ================================================ //
         // OPTIMISATION: STOPS VERY SLOW PARTICLES
         // ================================================ //
-        //
-        // NOTE: 1.99f is a MAGIC NUMBER, it was chosen coz if the particle is moving at less than
-        // (1 pixel, 1 pixel) velocity, it is considered miniscule.
-        //
-        // (sqrt(1.0f + 1.0f) ) ^ 2
+        // Lowered from 1.41*1.41 (~2.0) to 0.5 so slow-moving particles are not
+        // immediately zeroed. The original threshold was killing horizontal flow
+        // since particles sliding along terrain move slowly.
         f32 thresholdVel = 0.5f;
         f32 currentSpeedSq = (p.physics_.velocity_.x * p.physics_.velocity_.x) +
                              (p.physics_.velocity_.y * p.physics_.velocity_.y);
@@ -144,16 +144,20 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         if (currentSpeedSq < thresholdVel) {
             p.physics_.velocity_.x = 0.0f;
             p.physics_.velocity_.y = 0.0f;
-            // currentSpeedSq = 0.0f; // Reset this so the max speed check below ignores it
         }
 
-        // Add a tiny random kick to every particle.
-        // This prevents them from ever stacking perfectly still.
-        f32 noiseX = ((rand() % 100) / 50.0f) - 1.0f; // Range -1.0 to 1.0
-        f32 noiseY = ((rand() % 100) / 50.0f) - 1.0f; // Range -1.0 to 1.0
-
-        p.physics_.velocity_.x += noiseX * dt * 3.0f;
-        p.physics_.velocity_.y += noiseY * dt * 3.0f;
+        // ANTI-OSCILLATION: Only apply noise to nearly-stopped particles.
+        // Previously noise ran on every particle every substep — in dense settled
+        // groups this caused all particles to randomly oscillate together, creating
+        // the vigorous left-right swinging behaviour.
+        // Now noise only fires when a particle is nearly still (speed < ~2.2 units/s)
+        // to break perfect vertical stacking, leaving actively moving particles alone.
+        if (currentSpeedSq < 5.0f) {
+            f32 noiseX = ((rand() % 100) / 50.0f) - 1.0f;
+            f32 noiseY = ((rand() % 100) / 50.0f) - 1.0f;
+            p.physics_.velocity_.x += noiseX * dt * 3.0f;
+            p.physics_.velocity_.y += noiseY * dt * 3.0f;
+        }
 
         currentSpeedSq = (p.physics_.velocity_.x * p.physics_.velocity_.x) +
                          (p.physics_.velocity_.y * p.physics_.velocity_.y);
