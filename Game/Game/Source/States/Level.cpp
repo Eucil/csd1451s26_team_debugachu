@@ -121,11 +121,6 @@ void LoadLevel() {
     pauseSystem.loadMesh();
     // Once level is loaded, make sure it is not paused
     pauseSystem.resume();
-
-    // Audio System
-    gAudioSystem.loadSound("faucet_squeak", "Assets/Audio/faucet_squeak.mp3");
-    gAudioSystem.loadSound("wormhole_place", "Assets/Audio/wormhole_place.mp3");
-    gAudioSystem.loadSound("dirt_break", "Assets/Audio/dirt_break.mp3");
 }
 
 void InitializeLevel() {
@@ -427,6 +422,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 if (hitDirt) {
                     vfxSystem.SpawnContinuous(VFXType::DirtBurst, GetMouseWorldPos(), deltaTime,
                                               0.1f);
+                    gAudioSystem.playSound("dirt_break", "sfx", 0.25f, 1.0f);
                 } else {
                     vfxSystem.ResetSpawnTimer();
                 }
@@ -772,7 +768,4 @@ void UnloadLevel() {
     pauseSystem.unload();
 
     winScreen.Unload();
-    // Audio system
-    gAudioSystem.unloadAllSounds();
-    gAudioSystem.unloadAllMusic();
 }

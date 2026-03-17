@@ -9,6 +9,7 @@
 #include <AEEngine.h>
 #include <json/json.h>
 
+#include "AudioSystem.h"
 #include "Components.h"
 #include "ConfigManager.h"
 #include "Utils.h"
@@ -136,6 +137,8 @@ bool Button::checkMouseClick() const {
             mouseX <= (transform_.pos_.x + rect_half_width) &&
             mouseY >= (transform_.pos_.y - rect_half_height) &&
             mouseY <= (transform_.pos_.y + rect_half_height)) {
+
+            gAudioSystem.playSound("click", "sfx", 0.4f, 1.0f);
             return true;
         }
     }

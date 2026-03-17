@@ -5,6 +5,7 @@
 #include <AEEngine.h>
 
 // Background simulation includes
+#include "AudioSystem.h"
 #include "FluidSystem.h"
 #include "PortalSystem.h"
 #include "StartEndPoint.h"
@@ -249,6 +250,7 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
         bool hitDirt = bgDirt->destroyAtMouse(20.0f);
         if (hitDirt) {
             bgVfxSystem.SpawnContinuous(VFXType::DirtBurst, GetMouseWorldPos(), deltaTime, 0.1f);
+            gAudioSystem.playSound("dirt_break", "sfx", 0.25f, 1.0f);
         } else {
             bgVfxSystem.ResetSpawnTimer();
         }

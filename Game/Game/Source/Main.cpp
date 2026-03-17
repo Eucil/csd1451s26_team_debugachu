@@ -32,6 +32,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     gAudioSystem.createGroup("sfx");
     gAudioSystem.createGroup("bgm");
 
+    gAudioSystem.loadSound("faucet_squeak", "Assets/Audio/faucet_squeak.mp3");
+    gAudioSystem.loadSound("wormhole_place", "Assets/Audio/wormhole_place.mp3");
+    gAudioSystem.loadSound("dirt_break", "Assets/Audio/dirt_break.mp3");
+    gAudioSystem.loadSound("ding", "Assets/Audio/ding.mp3");
+    gAudioSystem.loadSound("click", "Assets/Audio/click.mp3");
+
     // Game Loop
     while (GSM.currentState_ != StateId::Quit) {
         if (GSM.currentState_ == StateId::Restart) {

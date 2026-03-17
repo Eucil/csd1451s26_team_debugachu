@@ -1,4 +1,5 @@
 #include "Collectible.h"
+#include "AudioSystem.h"
 #include "ConfigManager.h"
 #include "Utils.h"
 
@@ -171,6 +172,7 @@ void CollectibleSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool)
 
                 // Play collection sound or spawn particle effect here
                 // vfxSystem.SpawnVFX(VFXType::Collect, c.transform_.pos_);
+                gAudioSystem.playSound("ding", "sfx", 1.0f, 1.0f);
 
                 break;
             }
