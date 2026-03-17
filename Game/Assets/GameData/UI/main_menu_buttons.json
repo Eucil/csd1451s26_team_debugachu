@@ -68,5 +68,19 @@
       "blue": 1.0,
       "alpha": 1.0
     }
-  }
+  },
+  "Back": {
+        "position": {"x": 0.625, "y": 0.667},
+        "scale": {"x": 50.0, "y": 50.0},
+        "text": {
+            "content": "BACK",
+            "x": 0.0,
+            "y": 0.0,
+            "scale": 0.2,
+            "red": 1.0,
+            "green": 1.0,
+            "blue": 1.0,
+            "alpha": 1.0
+        }
+    }
 }

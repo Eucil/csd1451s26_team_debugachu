@@ -2,11 +2,12 @@
 
 #include <AEEngine.h>
 
+#include "States/Credits.h"
 #include "States/Level.h"
 #include "States/LevelSelector.h"
 #include "States/MainMenu.h"
 
-enum class StateId { Quit, Next, Restart, MainMenu, LevelSelector, Level };
+enum class StateId { Quit, Next, Restart, MainMenu, LevelSelector, Level, Credits };
 
 class GameState {
 public:
@@ -53,6 +54,14 @@ public:
             fpDraw_ = DrawLevel;
             fpFree_ = FreeLevel;
             fpUnload_ = UnloadLevel;
+            break;
+        case StateId::Credits:
+            fpLoad_ = LoadCredits;
+            fpInitialize_ = InitializeCredits;
+            fpUpdate_ = UpdateCredits;
+            fpDraw_ = DrawCredits;
+            fpFree_ = FreeCredits;
+            fpUnload_ = UnloadCredits;
             break;
         }
     }

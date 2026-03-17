@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Credits.cpp" />
     <ClCompile Include="Source\Animations.cpp" />
     <ClCompile Include="Source\AudioSystem.cpp" />
     <ClCompile Include="Source\Pause.cpp" />
@@ -47,6 +48,7 @@
     <ClInclude Include="Include\Pause.h" />
     <ClInclude Include="Include\PortalSystem.h" />
     <ClInclude Include="Include\StartEndPoint.h" />
+    <ClInclude Include="Include\States\Credits.h" />
     <ClInclude Include="Include\States\Level.h" />
     <ClInclude Include="Include\States\LevelManager.h" />
     <ClInclude Include="Include\States\LevelSelector.h" />
