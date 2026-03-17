@@ -120,6 +120,7 @@ void InitializeLevel() {
     // std::cout << "Initialize level 3\n";
     fluidSystem.Initialize();
     portalSystem.Initialize();
+    mossSystem.Load(font);
     mossSystem.Initialize();
 
     dirt = new Terrain(TerrainMaterial::Dirt, pTerrainDirtTex, {0.0f, 0.0f}, height, width,
