@@ -5,8 +5,7 @@
 #include <cstdio>
 #include <cstring>
 
-// Helper function to calculate centered X position (keeping for reference, but we'll use manual
-// positions)
+// Helper function to calculate centered X position
 static float GetCenteredX(const char* text, float textSize) {
     if (!text || strlen(text) == 0)
         return 0.0f;
@@ -61,19 +60,9 @@ static float lineSpacing = 80.0f;   // Spacing between lines
 static float scrollSpeed = -200.0f; // Scroll speed in pixels per second
 static int numLines = 0;            // Number of credit lines
 
-static struct Particle {
-    AEVec2 pos;
-    AEVec2 vel;
-    float rotation;
-    float scale;
-    float lifeTime;
-    float maxLifeTime;
-    bool active;
-} particlePool[100];
-
-// Texture handles
-static AEGfxTexture* bubbleTexture = nullptr;
-static AEGfxVertexList* particleMesh = nullptr;
+// Simple dirt background
+static AEGfxTexture* dirtTexture = nullptr;
+static AEGfxVertexList* screenQuadMesh = nullptr;
 
 void LoadCredits() {
     // Load font
@@ -89,8 +78,18 @@ void LoadCredits() {
     // Reset scroll position
     yPos = 950.0f;
 
-    // Create simple meshes
-    particleMesh = CreateCircleMesh(8, 5.0f); // Small circle for particles
+    // Load dirt texture (same as Level 1)
+    dirtTexture = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
+
+    // Create a simple quad mesh for full-screen rendering
+    AEGfxMeshStart();
+    // Two triangles forming a full-screen quad (with texture coordinates)
+    AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f, 0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 1.0f, -0.5f,
+                0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
+
+    AEGfxTriAdd(0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 1.0f, 0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f, -0.5f,
+                0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
+    screenQuadMesh = AEGfxMeshEnd();
 
     // Initialize back button
     backButton.loadMesh();
@@ -98,39 +97,17 @@ void LoadCredits() {
     backButton.initFromJson("main_menu_buttons", "Back");
     backButton.setTransform({-650.0f, -350.0f}, {150.0f, 50.0f});
     backButton.setText("Back", -0.875f, -0.8f, 0.75f, 1.0f, 1.0f, 1.0f, 1.0f);
-
-    // Initialize background elements
-    for (int i = 0; i < 100; i++) {
-        particlePool[i].active = false;
-    }
 }
 
 void InitializeCredits() {
     // Reset scroll position
     yPos = -450.0f;
     printf("Credits: Initialized with yPos = %f\n", yPos);
-
-    // Spawn some initial particles
-    for (int i = 0; i < 50; i++) {
-        for (int j = 0; j < 100; j++) {
-            if (!particlePool[j].active) {
-                particlePool[j].active = true;
-                particlePool[j].pos = {(float)(rand() % 1600) - 800.0f,
-                                       (float)(rand() % 900) - 450.0f};
-                particlePool[j].vel = {(float)(rand() % 40 - 20), (float)(rand() % 20 + 10)};
-                particlePool[j].rotation = (float)(rand() % 360);
-                particlePool[j].scale = (float)(rand() % 5 + 2);
-                particlePool[j].lifeTime = 0.0f;
-                particlePool[j].maxLifeTime = (float)(rand() % 5 + 3);
-                break;
-            }
-        }
-    }
 }
 
 void UpdateCredits(GameStateManager& GSM, f32 deltaTime) {
-    // Scroll credits UPWARD (negative speed)
-    yPos -= scrollSpeed * deltaTime; // scrollSpeed is -200, so this is yPos += 200*dt
+    // Scroll credits UPWARD
+    yPos -= scrollSpeed * deltaTime;
 
     // Check for input to skip or go back
     if (AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_SPACE)) {
@@ -149,75 +126,38 @@ void UpdateCredits(GameStateManager& GSM, f32 deltaTime) {
         printf("Credits: Finished scrolling, lastLineY=%f\n", lastLineY);
         GSM.nextState_ = StateId::MainMenu;
     }
-
-    // Update background particles
-    for (int i = 0; i < 100; i++) {
-        if (particlePool[i].active) {
-            particlePool[i].pos.x += particlePool[i].vel.x * deltaTime;
-            particlePool[i].pos.y += particlePool[i].vel.y * deltaTime;
-            particlePool[i].rotation += 50.0f * deltaTime;
-            particlePool[i].lifeTime += deltaTime;
-
-            // Reset if out of bounds or dead
-            if (particlePool[i].pos.y > 450.0f || particlePool[i].pos.x < -800.0f ||
-                particlePool[i].pos.x > 800.0f ||
-                particlePool[i].lifeTime > particlePool[i].maxLifeTime) {
-
-                particlePool[i].active = false;
-
-                // Spawn new particle
-                for (int j = 0; j < 100; j++) {
-                    if (!particlePool[j].active) {
-                        particlePool[j].active = true;
-                        particlePool[j].pos = {(float)(rand() % 1600) - 800.0f, -450.0f};
-                        particlePool[j].vel = {(float)(rand() % 40 - 20),
-                                               (float)(rand() % 20 + 10)};
-                        particlePool[j].rotation = 0.0f;
-                        particlePool[j].scale = (float)(rand() % 5 + 2);
-                        particlePool[j].lifeTime = 0.0f;
-                        particlePool[j].maxLifeTime = (float)(rand() % 5 + 3);
-                        break;
-                    }
-                }
-            }
-        }
-    }
 }
 
 void DrawCredits() {
-    // Clear background to dark blue
-    AEGfxSetBackgroundColor(0.05f, 0.2f, 0.3f); // Dark blue color
+    // Draw full-screen dirt background
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxSetTransparency(1.0f);
 
-    // Draw background particles
+    // Create a full-screen quad transform
+    AEMtx33 scale, trans, world;
+    AEMtx33Scale(&scale, 1600.0f, 900.0f); // Screen size
+    AEMtx33Trans(&trans, 0.0f, 0.0f);      // Center of screen
+    AEMtx33Concat(&world, &trans, &scale);
+
+    // Draw the dirt texture stretched across the whole screen
+    AEGfxSetTransform(world.m);
+    AEGfxTextureSet(dirtTexture, 0, 0); // Use full texture (no tiling)
+    AEGfxMeshDraw(screenQuadMesh, AE_GFX_MDM_TRIANGLES);
+
+    // Add a semi-transparent dark overlay to make text readable
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(0.4f);
+    AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
 
-    for (int i = 0; i < 100; i++) {
-        if (particlePool[i].active) {
-            // Set transform
-            AEMtx33 scale, rot, trans, world;
-            AEMtx33Scale(&scale, particlePool[i].scale, particlePool[i].scale);
-            AEMtx33Rot(&rot, AEDegToRad(particlePool[i].rotation));
-            AEMtx33Trans(&trans, particlePool[i].pos.x, particlePool[i].pos.y);
+    // Same full-screen quad for overlay
+    AEGfxSetTransform(world.m);
+    AEGfxMeshDraw(screenQuadMesh, AE_GFX_MDM_TRIANGLES);
 
-            AEMtx33Concat(&world, &rot, &scale);
-            AEMtx33Concat(&world, &trans, &world);
-
-            AEGfxSetTransform(world.m);
-
-            // Fade out as they age
-            float alpha = 1.0f - (particlePool[i].lifeTime / particlePool[i].maxLifeTime);
-            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, alpha);
-            AEGfxSetTransparency(alpha);
-
-            if (bubbleTexture) {
-                AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-                AEGfxTextureSet(bubbleTexture, 0, 0);
-            }
-
-            AEGfxMeshDraw(particleMesh, AE_GFX_MDM_TRIANGLES);
-        }
-    }
+    // Reset for text rendering
+    AEGfxSetTransparency(1.0f);
 
     // Draw credits text
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
@@ -226,133 +166,131 @@ void DrawCredits() {
     for (int i = 0; i < numLines; i++) {
         float yLine = yPos - i * lineSpacing;
 
-        // Only draw if on screen
         if (yLine > -450.0f && yLine < 450.0f) {
             const char* currentLine = credits[i];
 
-            // Skip truly empty strings (but keep the line position)
             if (strlen(currentLine) == 0) {
-                linesDrawn++; // Still count it for spacing
+                linesDrawn++;
                 continue;
             }
 
-            // Determine text color and size based on content
             float textSize = 0.6f;
             float r = 1.0f, g = 1.0f, b = 1.0f;
-            float xPos = 0.0f; // Default X position (center)
+            float xPos = 0.0f;
 
+            // Text positioning code (keep your existing one)
             if (strcmp(currentLine, "WWW.DIGIPEN.EDU") == 0) {
                 textSize = 0.6f;
-                xPos = -0.22f; // Adjust this value
+                xPos = -0.22f;
             } else if (strcmp(currentLine, "All content copyright 2025 DigiPen Institute of "
                                            "Technology Singapore. All Rights Reserved") == 0) {
                 r = 0.7f;
                 g = 0.7f;
-                b = 0.7f; // Gray
+                b = 0.7f;
                 textSize = 0.4f;
-                xPos = -0.80f; // Long line needs more negative
+                xPos = -0.80f;
             } else if (strcmp(currentLine, "TEAM") == 0) {
                 r = 1.0f;
                 g = 0.0f;
-                b = 0.0f; // Red
+                b = 0.0f;
                 textSize = 0.9f;
-                xPos = -0.10f; // Short line, adjust this
+                xPos = -0.10f;
             } else if (strcmp(currentLine, "Debugachu") == 0) {
                 r = 1.0f;
                 g = 0.84f;
-                b = 0.0f; // Gold
+                b = 0.0f;
                 textSize = 0.8f;
-                xPos = -0.175f; // Adjust this
+                xPos = -0.175f;
             } else if (strcmp(currentLine, "DEVELOPED BY") == 0) {
                 r = 1.0f;
                 g = 0.84f;
-                b = 0.0f; // Gold
+                b = 0.0f;
                 textSize = 0.8f;
-                xPos = -0.224f; // Adjust this
+                xPos = -0.224f;
             } else if (strcmp(currentLine, "Woo Guang Theng") == 0) {
                 textSize = 0.6f;
-                xPos = -0.212f; // Adjust this
+                xPos = -0.212f;
             } else if (strcmp(currentLine, "Sean Lee Hong Wei") == 0) {
                 textSize = 0.6f;
-                xPos = -0.235f; // Adjust this
+                xPos = -0.235f;
             } else if (strcmp(currentLine, "Chia Hanxin") == 0) {
                 textSize = 0.6f;
-                xPos = -0.16f; // Adjust this
+                xPos = -0.16f;
             } else if (strcmp(currentLine, "Han Tianchou") == 0) {
                 textSize = 0.6f;
-                xPos = -0.17f; // Adjust this
+                xPos = -0.17f;
             } else if (strcmp(currentLine, "FACULTY AND ADVISORS") == 0) {
                 r = 1.0f;
                 g = 0.84f;
-                b = 0.0f; // Gold
+                b = 0.0f;
                 textSize = 0.8f;
-                xPos = -0.35f; // Adjust this
+                xPos = -0.35f;
             } else if (strcmp(currentLine, "Gerald Wong") == 0) {
                 textSize = 0.6f;
-                xPos = -0.16f; // Adjust this
+                xPos = -0.16f;
             } else if (strcmp(currentLine, "Soroor Malekmohammadi Faradounbeh") == 0) {
                 textSize = 0.6f;
-                xPos = -0.435f; // Very long line, needs more negative
+                xPos = -0.435f;
             } else if (strcmp(currentLine, "Tommy Tan") == 0) {
                 textSize = 0.6f;
-                xPos = -0.13f; // Adjust this
+                xPos = -0.13f;
             } else if (strcmp(currentLine, "CREATED AT") == 0) {
                 r = 1.0f;
                 g = 0.84f;
-                b = 0.0f; // Gold
+                b = 0.0f;
                 textSize = 0.8f;
-                xPos = -0.183f; // Adjust this
+                xPos = -0.183f;
             } else if (strcmp(currentLine, "DigiPen Institute of Technology Singapore") == 0) {
                 textSize = 0.6f;
-                xPos = -0.52f; // Long line
+                xPos = -0.52f;
             } else if (strcmp(currentLine, "PRESIDENT") == 0) {
                 r = 1.0f;
                 g = 0.84f;
-                b = 0.0f; // Gold
+                b = 0.0f;
                 textSize = 0.8f;
-                xPos = -0.16f; // Adjust this
+                xPos = -0.16f;
             } else if (strcmp(currentLine, "Claude Comair") == 0) {
                 textSize = 0.6f;
-                xPos = -0.18f; // Adjust this
+                xPos = -0.18f;
             } else if (strcmp(currentLine, "EXECUTIVES") == 0) {
                 r = 1.0f;
                 g = 0.84f;
-                b = 0.0f; // Gold
+                b = 0.0f;
                 textSize = 0.8f;
-                xPos = -0.175f; // Adjust this
+                xPos = -0.175f;
             } else if (strcmp(currentLine, "Chu Jason Yeu Tat       Michael Gats") == 0) {
                 textSize = 0.6f;
-                xPos = -0.48f; // Long line with spaces
+                xPos = -0.48f;
             } else if (strcmp(currentLine, "Tan Chek Ming       Prasanna Kumar Ghali") == 0) {
                 textSize = 0.6f;
-                xPos = -0.52f; // Very long line
+                xPos = -0.52f;
             } else if (strcmp(currentLine, "Mandy Wong       Johnny Deek") == 0) {
                 textSize = 0.6f;
-                xPos = -0.35f; // Long line
+                xPos = -0.35f;
             } else if (strcmp(currentLine, "SPECIAL THANKS") == 0) {
                 r = 1.0f;
                 g = 0.84f;
-                b = 0.0f; // Gold
+                b = 0.0f;
                 textSize = 0.8f;
-                xPos = -0.23f; // Adjust this
+                xPos = -0.23f;
             } else if (strcmp(currentLine, "All playtesters") == 0) {
                 textSize = 0.6f;
-                xPos = -0.17f; // Adjust this
+                xPos = -0.17f;
             }
 
-            // Convert world Y to screen Y
             float screenY = yLine / 450.0f;
 
-            // Debug print for first few lines
-            static bool debugPrinted = false;
-            if (!debugPrinted && i < 10) {
-                printf("Line %d: '%s' len=%zu textSize=%.2f xPos=%.3f\n", i, currentLine,
-                       strlen(currentLine), textSize, xPos);
-                if (i == 9)
-                    debugPrinted = true;
-            }
+            // Draw text with black outline for readability on dirt
+            AEGfxPrint(font, currentLine, xPos - 0.002f, screenY - 0.002f, textSize, 0.0f, 0.0f,
+                       0.0f, 1.0f);
+            AEGfxPrint(font, currentLine, xPos + 0.002f, screenY - 0.002f, textSize, 0.0f, 0.0f,
+                       0.0f, 1.0f);
+            AEGfxPrint(font, currentLine, xPos - 0.002f, screenY + 0.002f, textSize, 0.0f, 0.0f,
+                       0.0f, 1.0f);
+            AEGfxPrint(font, currentLine, xPos + 0.002f, screenY + 0.002f, textSize, 0.0f, 0.0f,
+                       0.0f, 1.0f);
 
-            // Draw the text with manual X position
+            // Draw main text
             AEGfxPrint(font, currentLine, xPos, screenY, textSize, r, g, b, 1.0f);
             linesDrawn++;
         }
@@ -363,19 +301,16 @@ void DrawCredits() {
 }
 
 void FreeCredits() {
-    // Free textures
-    if (bubbleTexture) {
-        AEGfxTextureUnload(bubbleTexture);
-        bubbleTexture = nullptr;
+    if (dirtTexture) {
+        AEGfxTextureUnload(dirtTexture);
+        dirtTexture = nullptr;
     }
 
-    // Free meshes
-    if (particleMesh) {
-        AEGfxMeshFree(particleMesh);
-        particleMesh = nullptr;
+    if (screenQuadMesh) {
+        AEGfxMeshFree(screenQuadMesh);
+        screenQuadMesh = nullptr;
     }
 
-    // Free button
     backButton.unload();
 }
 
