@@ -265,11 +265,18 @@ void PortalSystem::CheckMouseClick() {
 void PortalSystem::ResetIframe() { click_iframe = false; }
 
 void PortalSystem::RotatePortal() {
-    rotation_value += 45.0f;
-    if (rotation_value > 360.0f) {
+
+    s32 scroll_input{};
+    AEInputMouseWheelDelta(&scroll_input);
+    if (scroll_input > 0) {
+        rotation_value += 15.0f; // Increase rotation
+    } else if (scroll_input < 0) {
+        rotation_value -= 15.0f; // Decrease rotation
+    }
+
+    if (rotation_value > 360.0f || rotation_value < 0.0f) {
         rotation_value = 0.0f;
     }
-    std::cout << "Portal rotation set to " << rotation_value << " degrees\n";
 }
 
 f32 PortalSystem::GetRotationValue() { return rotation_value; }

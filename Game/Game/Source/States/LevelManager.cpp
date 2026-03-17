@@ -605,6 +605,9 @@ void LevelManager::drawBrushPreview(TerrainMaterial terrainType) {
     case TerrainMaterial::Stone:
         AEGfxSetColorToMultiply(0.5f, 0.5f, 0.5f, 1.0f); // Gray color for stone preview
         break;
+    case TerrainMaterial::Magic:
+        AEGfxSetColorToMultiply(0.5f, 0.0f, 0.5f, 1.0f); // Purple color for magic preview
+        break;
     }
 
     AEGfxSetTransform(world_mtx.m);

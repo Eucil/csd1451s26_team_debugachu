@@ -101,15 +101,7 @@ void StartEndPoint::InitializeUI(s8 font) {
 void StartEndPoint::SetupPoint(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndType type,
                                GoalDirection direction) {
     if (type == StartEndType::Pipe) {
-        if (free_start_point_indices_.empty()) {
-            // No free indices, add new start point
-            startPoints_.emplace_back(pos, scale, rotation, type, direction);
-        } else {
-            // Reuse a free index
-            int index = free_start_point_indices_.back();
-            free_start_point_indices_.pop_back();
-            startPoints_[index] = StartEnd(pos, scale, rotation, type, direction);
-        }
+        startPoints_.emplace_back(pos, scale, rotation, type, direction);
     } else if (type == StartEndType::Flower) {
         endPoint_ = StartEnd(pos, scale, rotation, type, direction);
     }
@@ -242,9 +234,8 @@ void StartEndPoint::DeleteAtMousePos() {
             mouse_x <= (startPoint.transform_.pos_.x + rect_half_width) &&
             mouse_y >= (startPoint.transform_.pos_.y - rect_half_height) &&
             mouse_y <= (startPoint.transform_.pos_.y + rect_half_height)) {
-            // Mark this index as free and remove the start point
-            free_start_point_indices_.push_back(static_cast<int>(i));
-            startPoints_[i] = StartEnd();
+            // Delete this start point
+            startPoints_.erase(startPoints_.begin() + i);
             return;
         }
     }
@@ -361,8 +352,10 @@ void StartEndPoint::DrawColorPreview(StartEndType type) {
 
 void StartEndPoint::Free() {
 
-    AEGfxMeshFree(rectMesh);
-    rectMesh = nullptr;
+    if (rectMesh) {
+        AEGfxMeshFree(rectMesh);
+        rectMesh = nullptr;
+    }
 
     // tc added start
     if (bar_mesh_) {
