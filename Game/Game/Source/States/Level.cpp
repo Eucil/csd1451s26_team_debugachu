@@ -378,19 +378,13 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 bool hitDirt = dirt->destroyAtMouse(20.0f);
                 // Only run the VFX timer if we actually dug through dirt
                 if (hitDirt) {
-                    vfxSystem.vfxSpawnTimer_ -= deltaTime;
-                    if (vfxSystem.vfxSpawnTimer_ <= 0.0f) {
-                        vfxSystem.SpawnVFX(VFXType::DirtBurst, GetMouseWorldPos());
-                        vfxSystem.vfxSpawnTimer_ = 0.1f;
-                    }
+                    vfxSystem.SpawnContinuous(VFXType::DirtBurst, GetMouseWorldPos(), deltaTime,
+                                                0.1f);
                 } else {
-                    // If we are holding click but hitting empty air, reset the timer
-                    // so it spawns instantly the moment we touch dirt again
-                    vfxSystem.vfxSpawnTimer_ = 0.0f;
+                    vfxSystem.ResetSpawnTimer();
                 }
-
             } else {
-                vfxSystem.vfxSpawnTimer_ = 0.0f;
+                vfxSystem.ResetSpawnTimer();
             }
 
             if (AEInputCheckTriggered(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {

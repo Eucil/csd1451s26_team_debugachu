@@ -9,6 +9,7 @@
 #include "StartEndPoint.h"
 #include "Terrain.h"
 #include "PortalSystem.h"
+#include "VFXSystem.h"
 #include "States/LevelManager.h"
 
 
@@ -32,6 +33,7 @@ static AEGfxTexture* pBgMagicTex{nullptr};
 static FluidSystem bgFluidSystem;
 static StartEndPoint bgStartEndPoint;
 static PortalSystem bgPortalSystem;
+static VFXSystem bgVfxSystem;
 
 // Auto spawn fluid without player input
 static f32 autoSpawnTimer = 0.0f;
@@ -96,6 +98,7 @@ void InitializeMainMenu() {
     // Initialize simulation systems
     bgFluidSystem.Initialize();
     bgPortalSystem.Initialize(); 
+    bgVfxSystem.Initialize(800, 20);
 
     // Setup terrain
     bgDirt = new Terrain(TerrainMaterial::Dirt, pBgDirtTex, {0.0f, 0.0f}, height, width,
@@ -206,7 +209,6 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
 
     // Mouse click handling for all buttons
     if (AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
-
         // Start button - goes to Level 1 (or you could make it go to a level select)
         if (startButton.checkMouseClick()) {
             std::cout << "Start button clicked - Going to Level Selector\n";
@@ -240,8 +242,19 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
             std::cout << "Quit button clicked - Exiting game\n";
             GSM.nextState_ = StateId::Quit;
         }
-    }
 
+    }
+    if (AEInputCheckCurr(AEVK_LBUTTON)) {
+        
+        bool hitDirt = bgDirt->destroyAtMouse(20.0f);
+        if (hitDirt) {
+            bgVfxSystem.SpawnContinuous(VFXType::DirtBurst, GetMouseWorldPos(), deltaTime, 0.1f);
+        } else {
+            bgVfxSystem.ResetSpawnTimer();
+        }
+    } else {
+        bgVfxSystem.ResetSpawnTimer();
+    }
     startButton.updateTransform();
     howToPlayButton.updateTransform();
     settingsButton.updateTransform();
@@ -259,6 +272,7 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
     bgFluidSystem.Update(deltaTime, *bgMagic);
 
     bgPortalSystem.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
+    bgVfxSystem.Update(deltaTime);
 }
 
 void DrawMainMenu() {
@@ -270,6 +284,7 @@ void DrawMainMenu() {
     bgStartEndPoint.DrawColor();
     bgPortalSystem.DrawColor();
     bgFluidSystem.DrawColor();
+    bgVfxSystem.Draw();
 
     // Draw all buttons with different colors
     startButton.draw(buttonFont);
@@ -286,6 +301,8 @@ void FreeMainMenu() {
     bgFluidSystem.Free();
     bgStartEndPoint.Free();
     bgPortalSystem.Free();
+    bgVfxSystem.Free();
+    
 
     delete bgDirt;
     bgDirt = nullptr;

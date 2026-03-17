@@ -287,3 +287,17 @@ void VFXSystem::SetEmitterConfig(VFXType type, const EmitterConfig& config) {
 void VFXSystem::SetGraphicsConfig(VFXType type, const Graphics& gfxConfig) {
     graphicsConfigs_[static_cast<int>(type)] = gfxConfig;
 }
+
+// public
+void VFXSystem::SpawnContinuous(VFXType type, AEVec2 position, f32 deltaTime, f32 spawnRate) {
+    vfxSpawnTimer_ -= deltaTime;
+
+    if (vfxSpawnTimer_ <= 0.0f) {
+        SpawnVFX(type, position);
+        vfxSpawnTimer_ = spawnRate; // Reset the timer using the inputted rate
+    }
+}
+
+void VFXSystem::ResetSpawnTimer() {
+    vfxSpawnTimer_ = 0.0f; 
+}
