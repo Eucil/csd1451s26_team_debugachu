@@ -12,6 +12,8 @@
 #include "Utils.h"
 
 static s8 font;
+static AEGfxTexture* bgTexture = nullptr;
+static AEGfxVertexList* bgMesh = nullptr; 
 
 // Map Preview Variables
 static std::vector<AEGfxTexture*> previewTextures;
@@ -40,6 +42,24 @@ static TextData inputPrompt{
 
 void LoadLevelSelector() {
     font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
+    bgTexture = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
+
+    // Calculate window bounds
+    f32 halfW = AEGfxGetWindowWidth() / 2.0f;
+    f32 halfH = AEGfxGetWindowHeight() / 2.0f;
+
+    // TILING LOGIC: Repeat the texture every 64 pixels
+    f32 uRepeat = AEGfxGetWindowWidth() / 64.0f;
+    f32 vRepeat = AEGfxGetWindowHeight() / 64.0f;
+
+    AEGfxMeshStart();
+    // Triangle 1 for background
+    AEGfxTriAdd(-halfW, -halfH, 0xFFFFFFFF, 0.0f, vRepeat, halfW, -halfH, 0xFFFFFFFF, uRepeat,
+                vRepeat, -halfW, halfH, 0xFFFFFFFF, 0.0f, 0.0f);
+    // Triangle 2 for background
+    AEGfxTriAdd(halfW, -halfH, 0xFFFFFFFF, uRepeat, vRepeat, halfW, halfH, 0xFFFFFFFF, uRepeat,
+                0.0f, -halfW, halfH, 0xFFFFFFFF, 0.0f, 0.0f);
+    bgMesh = AEGfxMeshEnd();
 
     previewMesh = CreateRectMesh();
     defaultPreviewTex = AEGfxTextureLoad("Assets/Textures/pink_button.png");
@@ -173,6 +193,11 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
             titleText.content_ = "DELETE LEVEL";
         }
     }
+    if ((AEInputCheckTriggered(AEVK_Q) || 0 == AESysDoesWindowExist()) &&
+        !creatingLevel) {
+        std::cout << "Q triggered\n";
+        GSM.nextState_ = StateId::MainMenu;
+    }
 
     if ((AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) && !creatingLevel) {
         for (int i = 0; i < static_cast<int>(Level::None); ++i) {
@@ -267,7 +292,24 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
 void DrawLevelSelector() {
     // Todo
     // std::cout << "Draw Level Selector\n";
-    AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
+    
+    // Default AE settings
+    AEGfxSetBackgroundColor(1.0f, 1.0f, 1.0f);
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
+    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);     
+    AEGfxSetTransparency(1.0f);
+
+
+    if (bgTexture && bgMesh) {
+        AEMtx33 identity;
+        AEMtx33Identity(&identity);
+        AEGfxSetTransform(identity.m);
+        AEGfxSetTransparency(1.0f);
+        AEGfxTextureSet(bgTexture, 0, 0);
+        AEGfxMeshDraw(bgMesh, AE_GFX_MDM_TRIANGLES);
+    }
 
     // Draw button with different color base on level editor mode
     for (int i = 0; i < static_cast<int>(Level::None); ++i) {
@@ -382,5 +424,13 @@ void UnloadLevelSelector() {
     if (defaultPreviewTex != nullptr) {
         AEGfxTextureUnload(defaultPreviewTex);
         defaultPreviewTex = nullptr;
+    }
+    if (bgTexture) {
+        AEGfxTextureUnload(bgTexture);
+        bgTexture = nullptr;
+    }
+    if (bgMesh) {
+        AEGfxMeshFree(bgMesh);
+        bgMesh = nullptr;
     }
 }
