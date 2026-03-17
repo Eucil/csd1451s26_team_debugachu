@@ -66,6 +66,10 @@ void LoadMainMenu() {
         tileSize = 20;
         fileExist = false;
     }
+    // Load fonts
+    titleFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 72);
+    buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 33);
+    font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
 
     // Load background simulation textures
     Terrain::createMeshLibrary();
@@ -74,8 +78,6 @@ void LoadMainMenu() {
     pBgDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
     pBgStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
     pBgMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
-
-    bgCollectibleSystem.Load(font);
 
     // Setup buttons - position them vertically
     startButton.loadMesh();
@@ -89,9 +91,7 @@ void LoadMainMenu() {
     quitButton.loadMesh();
     quitButton.loadTexture("Assets/Textures/brown_button.png");
 
-    // Load fonts
-    titleFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 72);
-    buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 33);
+    bgCollectibleSystem.Load(font);
 }
 
 void InitializeMainMenu() {
@@ -138,6 +138,7 @@ void InitializeMainMenu() {
     if (fileExist) {
         levelManager.parseStartEndInfo(bgStartEndPoint);
         levelManager.parsePortalInfo(bgPortalSystem);
+        levelManager.parseCollectibleInfo(bgCollectibleSystem);
     }
 
     for (auto& startPoint : bgStartEndPoint.startPoints_) {
@@ -305,7 +306,7 @@ void FreeMainMenu() {
     bgPortalSystem.Free();
     bgVfxSystem.Free();
     bgCollectibleSystem.Free();
-    
+
     delete bgDirt;
     bgDirt = nullptr;
     delete bgStone;

@@ -656,18 +656,6 @@ void DrawLevel() {
     // Draw moss
     mossSystem.Draw();
 
-    // Show total water counter with progress bar and goal progress bar
-    totalWaterText.draw(font);
-    goalText.draw(font);
-
-    // Water progress bar below the water text with dark blue border
-    DrawTotalWaterBar(totalWaterText.x_ + 0.35f, totalWaterText.y_ - 0.09f, totalWaterRemaining,
-                      totalWaterCapacity);
-
-    // Goal progress bar below the goal text with dark green border
-    DrawGoalBar(goalText.x_ + 0.33f, goalText.y_ - 0.09f, goalPercentage);
-    // tc added end
-
     if (levelManager.getLevelEditorMode() == editorMode::Edit) {
         levelManager.renderLevelEditorUI(font);
         switch (levelManager.getCurrentGameBlock()) {
@@ -690,6 +678,20 @@ void DrawLevel() {
             break;
         }
     }
+
+    // DRAW ALL UI ELEMENT LAST
+    collectibleSystem.DrawUI();
+    // Show total water counter with progress bar and goal progress bar
+    totalWaterText.draw(font);
+    goalText.draw(font);
+
+    // Water progress bar below the water text with dark blue border
+    DrawTotalWaterBar(totalWaterText.x_ + 0.35f, totalWaterText.y_ - 0.09f, totalWaterRemaining,
+                      totalWaterCapacity);
+
+    // Goal progress bar below the goal text with dark green border
+    DrawGoalBar(goalText.x_ + 0.33f, goalText.y_ - 0.09f, goalPercentage);
+    // tc added end
 
     rotationText.content_ =
         "Portal Rotation:" + std::to_string(static_cast<s32>(portalSystem.GetRotationValue()));

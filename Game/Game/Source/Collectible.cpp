@@ -214,7 +214,9 @@ void CollectibleSystem::Draw() {
             continue;
         DrawCollectible(c);
     }
+}
 
+void CollectibleSystem::DrawUI() {
     // Draw collection counter
     collectionText_.draw(font_);
 }
