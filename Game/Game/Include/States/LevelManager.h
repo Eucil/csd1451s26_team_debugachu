@@ -2,6 +2,7 @@
 
 #include "Button.h"
 #include "Collectible.h"
+#include "Moss.h"
 #include "PortalSystem.h"
 #include "StartEndPoint.h"
 #include "Terrain.h"
@@ -28,7 +29,7 @@ enum class Level {
     Level99 = 99
 };
 enum class editorMode { Edit, Delete, Create, None };
-enum class GameBlock { Dirt, Stone, Magic, StartPoint, EndPoint, Collectible, Portal, None };
+enum class GameBlock { Dirt, Stone, Magic, StartPoint, EndPoint, Collectible, Portal, Moss, None };
 
 class LevelManager {
 public:
@@ -79,6 +80,7 @@ public:
     void saveTerrainInfo(std::vector<float>& nodes, const std::string& terrainType);
     void saveStartEndInfo(std::vector<StartEnd>& startPoints, StartEnd& endPoint);
     void saveCollectibleInfo(std::vector<Collectible>& collectibles);
+    void saveMossInfo(std::vector<Moss>& mosses);
     void savePortalInfo(PortalSystem& portalSystem);
     void writeToFile(int level);
     //=================================================================
@@ -91,6 +93,7 @@ public:
     void parseTerrainInfo(std::vector<float>& nodes, std::string terrainType);
     void parseStartEndInfo(StartEndPoint& startEndPointSystem);
     void parseCollectibleInfo(CollectibleSystem& collectibleSystem);
+    void parseMossInfo(MossSystem& mossSystem);
     void parsePortalInfo(PortalSystem& portalSystem);
     //=================================================================
 
