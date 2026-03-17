@@ -150,3 +150,26 @@ void TextData::setTransform(const f32& x, const f32& y, const f32& scale, const 
     b_ = b;
     a_ = a;
 }
+
+bool Button::isHovered() const {
+    // Get mouse position
+    s32 mouseX{0};
+    s32 mouseY{0};
+
+    AEInputGetCursorPosition(&mouseX, &mouseY);
+    mouseX -= AEGfxGetWindowWidth() / 2;
+    mouseY = (AEGfxGetWindowHeight() / 2) - mouseY;
+
+    // Check if mouse pos falls within the button's collider box
+    f32 rect_half_width{transform_.scale_.x / 2.0f};
+    f32 rect_half_height{transform_.scale_.y / 2.0f};
+
+    if (mouseX >= (transform_.pos_.x - rect_half_width) &&
+        mouseX <= (transform_.pos_.x + rect_half_width) &&
+        mouseY >= (transform_.pos_.y - rect_half_height) &&
+        mouseY <= (transform_.pos_.y + rect_half_height)) {
+        return true;
+    }
+
+    return false;
+}

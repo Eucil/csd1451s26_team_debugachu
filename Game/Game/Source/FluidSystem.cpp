@@ -57,6 +57,7 @@ void FluidSystem::Initialize() {
         particlePools_[i].reserve(1000);
     }
 
+    // @todo To change to read values from a json file instead and load them into private containers
     // Initialize physics for each fluid type
     InitializePhysics(1.0f, -500.0f, {0.0f, 0.0f}, FluidType::Water);
     InitializePhysics(1.0f, -200.0f, {0.0f, 0.0f}, FluidType::Lava);
@@ -118,7 +119,7 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         // ================================================ //
         // Without this, particles falling from a great height can reach very high speeds,
         // which can cause them to tunnel through terrain colliders.
-        const f32 TERMINAL_FALL_SPEED = -300.0f;
+        const f32 TERMINAL_FALL_SPEED = -500.0f;
         if (p.physics_.velocity_.y < TERMINAL_FALL_SPEED) {
             p.physics_.velocity_.y = TERMINAL_FALL_SPEED;
         }

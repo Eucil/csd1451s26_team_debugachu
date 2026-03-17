@@ -33,6 +33,7 @@ public:
     void draw(s8 font);
     void unload();
     bool checkMouseClick() const;
+    bool isHovered() const;
 
 private:
     Transform transform_;
