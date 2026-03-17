@@ -34,11 +34,11 @@ StartEnd::StartEnd() {
     release_water_iframe_ = {false};
     active_ = {false};
 
-    // tc added start
+    //// tc added start
     water_capacity_ = 100.0f;
     water_remaining_ = 100.0f;
     infinite_water_ = false;
-    // tc added end
+    //// tc added end
 }
 
 StartEnd::StartEnd(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndType type,

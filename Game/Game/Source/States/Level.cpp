@@ -14,6 +14,7 @@
 #include "Components.h"
 #include "FluidSystem.h"
 #include "GameStateManager.h"
+#include "Moss.h"
 #include "Pause.h"
 #include "PortalSystem.h"
 #include "StartEndPoint.h"
@@ -32,6 +33,9 @@ static AEGfxTexture* pTerrainMagicTex{nullptr};
 static FluidSystem fluidSystem;
 static StartEndPoint startEndPointSystem;
 static PortalSystem portalSystem;
+// tc added start
+static MossSystem mossSystem;
+// tc added end
 
 static TextData rotationText;
 static s8 font;
@@ -71,6 +75,8 @@ void LoadLevel() {
 
     // tc added start
     collectibleSystem.Load(font);
+
+    mossSystem.Load(font);
 
     startEndPointSystem.InitializeUI(font);
 
@@ -114,6 +120,7 @@ void InitializeLevel() {
     // std::cout << "Initialize level 3\n";
     fluidSystem.Initialize();
     portalSystem.Initialize();
+    mossSystem.Initialize();
 
     dirt = new Terrain(TerrainMaterial::Dirt, pTerrainDirtTex, {0.0f, 0.0f}, height, width,
                        tileSize, true);
@@ -150,11 +157,64 @@ void InitializeLevel() {
         levelManager.parseStartEndInfo(startEndPointSystem);
     }
 
+    // ===== FIX: Remove invalid start points at (0,0) =====
+    auto& startPoints = startEndPointSystem.startPoints_;
+    std::vector<StartEnd> validStartPoints;
+
+    printf("=== CLEANING START POINTS ===\n");
+    printf("Before cleaning: %zu start points\n", startPoints.size());
+
+    for (size_t i = 0; i < startPoints.size(); i++) {
+        StartEnd& sp = startPoints[i];
+
+        // Keep only start points that are active
+        if (!sp.active_) {
+            printf("  Removing inactive start point\n");
+            continue;
+        }
+
+        // Check if position is at (0,0) or very close
+        float epsilon = 0.1f;
+        bool isAtOrigin =
+            (fabs(sp.transform_.pos_.x) < epsilon && fabs(sp.transform_.pos_.y) < epsilon);
+
+        if (isAtOrigin) {
+            printf("  Removing zombie start point at (0,0)\n");
+            continue;
+        }
+
+        // If we get here, the start point is valid
+        validStartPoints.push_back(sp);
+        printf("  Keeping start point at (%.1f, %.1f) with %.0f water\n", sp.transform_.pos_.x,
+               sp.transform_.pos_.y, sp.water_remaining_);
+    }
+
+    // Replace with cleaned list
+    startPoints = validStartPoints;
+    printf("After cleaning: %zu start points\n", startPoints.size());
+    printf("Total water: %.0f\n", totalWaterRemaining);
+    printf("==============================\n");
+
+    printf("=== WATER DEBUG ===\n");
+    printf("Number of start points: %zu\n", startEndPointSystem.startPoints_.size());
+    float totalWater = 0.0f;
+    for (const auto& sp : startEndPointSystem.startPoints_) {
+        if (sp.active_ && sp.type_ == StartEndType::Pipe) {
+            printf("  Start point at (%.1f, %.1f): water = %.1f/%.1f\n", sp.transform_.pos_.x,
+                   sp.transform_.pos_.y, sp.water_remaining_, sp.water_capacity_);
+            totalWater += sp.water_remaining_;
+        }
+    }
+    printf("Total water: %.1f\n", totalWater);
+    printf("===================\n");
+
     collectibleSystem.Initialize();
     if (fileExist) {
         levelManager.parseCollectibleInfo(collectibleSystem);
     }
-
+    if (fileExist) {
+        levelManager.parseMossInfo(mossSystem);
+    }
     if (fileExist) {
         levelManager.parsePortalInfo(portalSystem);
     }
@@ -345,6 +405,13 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                         collectibleSystem.destroyAtMousePos();
                     }
                     break;
+                case GameBlock::Moss:
+                    if (AEInputCheckReleased(AEVK_LBUTTON)) {
+                        mossSystem.spawnAtMousePos();
+                    } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
+                        mossSystem.destroyAtMousePos();
+                    }
+                    break;
                 case GameBlock::Portal:
                     if (magic->isNearestNodeToMouseAtThreshold() == true) {
                         if (AEInputCheckTriggered(AEVK_RBUTTON) || 0 == AESysDoesWindowExist()) {
@@ -370,6 +437,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 levelManager.saveStartEndInfo(startEndPointSystem.startPoints_,
                                               startEndPointSystem.endPoint_);
                 levelManager.saveCollectibleInfo(collectibleSystem.GetCollectibles());
+                levelManager.saveMossInfo(mossSystem.GetMosses());
                 levelManager.savePortalInfo(portalSystem);
                 levelManager.writeToFile(levelManager.getCurrentLevel());
             }
@@ -442,6 +510,8 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
 
         // tc added start - Update collectibles
         collectibleSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
+        mossSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
+                          startEndPointSystem);
 
         // Check if all items collected
         if (collectibleSystem.CheckAllCollected()) {
@@ -609,6 +679,8 @@ void DrawLevel() {
     // tc added start
     // Draw collectibles
     collectibleSystem.Draw();
+    // Draw moss
+    mossSystem.Draw();
 
     // Show total water counter with progress bar and goal progress bar
     totalWaterText.draw(font);
@@ -662,7 +734,7 @@ void FreeLevel() {
     vfxSystem.Free();
 
     // tc added start
-
+    mossSystem.Free();
     collectibleSystem.Free();
 
     if (g_barMesh) {

@@ -1,5 +1,6 @@
 #include "States/LevelManager.h"
 #include "ConfigManager.h"
+#include "Moss.h"
 #include "Utils.h"
 #include <filesystem>
 #include <fstream>
@@ -343,6 +344,37 @@ void LevelManager::saveCollectibleInfo(std::vector<Collectible>& collectibles) {
         collectiblesJson_array.append(collectibleJson);
     }
     savingRoot_["Objects"]["collectibles"] = collectiblesJson_array;
+}
+void LevelManager::saveMossInfo(std::vector<Moss>& mosses) {
+    Json::Value mossJson_array(Json::arrayValue);
+    for (const auto& moss : mosses) {
+        Json::Value mossJson;
+        mossJson["posX"] = moss.transform_.pos_.x;
+        mossJson["posY"] = moss.transform_.pos_.y;
+        mossJson["type"] = static_cast<int>(moss.type_);
+        mossJson["health"] = moss.currentHealth_;
+        mossJson["maxHealth"] = moss.maxHealth_;
+        mossJson["absorptionRate"] = moss.absorptionRate_;
+        mossJson_array.append(mossJson);
+    }
+    savingRoot_["Objects"]["moss"] = mossJson_array;
+}
+
+void LevelManager::parseMossInfo(MossSystem& mossSystem) {
+    if (readingRoot_.isMember("Objects")) {
+        const Json::Value& objects = readingRoot_["Objects"];
+        if (objects.isMember("moss")) {
+            const Json::Value& mosses = objects["moss"];
+            for (Json::ArrayIndex i = 0; i < mosses.size(); ++i) {
+                AEVec2 pos{mosses[i]["posX"].asFloat(), mosses[i]["posY"].asFloat()};
+                MossType type = static_cast<MossType>(mosses[i]["type"].asInt());
+                mossSystem.LoadLevelMoss(pos, type);
+
+                // Optional: restore health if saved
+                // You'd need to modify LoadLevelMoss to accept more parameters
+            }
+        }
+    }
 }
 
 void LevelManager::savePortalInfo(PortalSystem& portalSystem) {
