@@ -8,7 +8,6 @@ private:
     bool isVisible_{false};
 
     // UI Elements
-    Button backgroundPanel_;
     Button nextLevelButton_;
     Button restartButton_;
     Button mainMenuButton_;
@@ -16,6 +15,10 @@ private:
     TextData titleText_;
     TextData collectiblesText_;
     TextData statsText_;
+
+    // For background panel
+    Transform transform_;
+    Graphics graphics_;
 
     s8 font_;
 
@@ -34,7 +37,7 @@ public:
     void Update(GameStateManager& GSM);
     void Draw();
     void Free();
-    void Shutdown();
+    void Unload();
 
     void SetCollectibles(int collected, int total) {
         collectiblesCollected_ = collected;

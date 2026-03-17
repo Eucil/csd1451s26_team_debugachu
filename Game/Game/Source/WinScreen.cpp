@@ -7,7 +7,11 @@ void WinScreen::Load(s8 font) {
     font_ = font;
 
     // Create background panel (semi-transparent black)
-    backgroundPanel_.loadMesh();
+    graphics_.mesh_ = CreateRectMesh();
+    graphics_.red_ = 0.0f;
+    graphics_.green_ = 0.0f;
+    graphics_.blue_ = 0.0f;
+    graphics_.alpha_ = 0.7f;
 
     // Create buttons
     nextLevelButton_.loadMesh();
@@ -63,6 +67,28 @@ void WinScreen::Update(GameStateManager& GSM) {
     if (!isVisible_)
         return;
 
+    s32 windowHeight{AEGfxGetWindowHeight()};
+    s32 windowWidth{AEGfxGetWindowWidth()};
+    f32 worldMinX{AEGfxGetWinMinX()};
+    f32 worldMinY{AEGfxGetWinMinY()};
+
+    // Position at center of screen
+    transform_.pos_ = {worldMinX + (static_cast<f32>(windowWidth) / 2.0f),
+                       worldMinY + (static_cast<f32>(windowHeight) / 2.0f)};
+
+    // Scale to fit screen
+    transform_.scale_ = {static_cast<f32>(windowWidth), static_cast<f32>(windowHeight)};
+
+    // No rotation
+    transform_.rotationRad_ = 0.0f;
+
+    AEMtx33 scaleMtx, rotMtx, transMtx;
+    AEMtx33Scale(&scaleMtx, transform_.scale_.x, transform_.scale_.y);
+    AEMtx33Rot(&rotMtx, transform_.rotationRad_);
+    AEMtx33Trans(&transMtx, transform_.pos_.x, transform_.pos_.y);
+    AEMtx33Concat(&transform_.worldMtx_, &rotMtx, &scaleMtx);
+    AEMtx33Concat(&transform_.worldMtx_, &transMtx, &transform_.worldMtx_);
+
     // Check button clicks
     if (nextLevelButton_.checkMouseClick()) {
         // Check if there is a next level
@@ -91,48 +117,13 @@ void WinScreen::Draw() {
     if (!isVisible_)
         return;
 
-    // Draw semi-transparent background overlay
+    // Draw black-transparent background overlay
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetTransparency(0.7f);
-    AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
-
-    // Full screen dark overlay
-    AEMtx33 scale, trans, world;
-    AEMtx33Scale(&scale, 1600.0f, 900.0f);
-    AEMtx33Trans(&trans, 0.0f, 0.0f);
-    AEMtx33Concat(&world, &trans, &scale);
-    AEGfxSetTransform(world.m);
-
-    // Use a simple quad mesh for overlay
-    static AEGfxVertexList* quadMesh = nullptr;
-    if (!quadMesh) {
-        AEGfxMeshStart();
-        AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 0.0f, 0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 0.0f,
-                    -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 1.0f);
-        AEGfxTriAdd(0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 0.0f, 0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 1.0f, -0.5f,
-                    0.5f, 0xFFFFFFFF, 0.0f, 1.0f);
-        quadMesh = AEGfxMeshEnd();
-    }
-    AEGfxMeshDraw(quadMesh, AE_GFX_MDM_TRIANGLES);
-
-    // Draw white panel in center
-    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetTransparency(1.0f);
-    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-
-    AEMtx33Scale(&scale, 600.0f, 400.0f);
-    AEMtx33Trans(&trans, 0.0f, 0.0f);
-    AEMtx33Concat(&world, &trans, &scale);
-    AEGfxSetTransform(world.m);
-    AEGfxMeshDraw(quadMesh, AE_GFX_MDM_TRIANGLES);
-
-    // Draw border (darker rectangle)
-    AEGfxSetColorToMultiply(0.5f, 0.5f, 0.5f, 1.0f);
-    AEMtx33Scale(&scale, 610.0f, 410.0f);
-    AEMtx33Concat(&world, &trans, &scale);
-    AEGfxSetTransform(world.m);
-    AEGfxMeshDraw(quadMesh, AE_GFX_MDM_TRIANGLES);
+    AEGfxSetColorToMultiply(graphics_.red_, graphics_.green_, graphics_.blue_, graphics_.alpha_);
+    AEGfxSetTransform(transform_.worldMtx_.m);
+    AEGfxMeshDraw(graphics_.mesh_, AE_GFX_MDM_TRIANGLES);
 
     // Draw text
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
@@ -170,15 +161,19 @@ void WinScreen::Free() {
     printf("WinScreen: Freed\n");
 }
 
-void WinScreen::Shutdown() {
+void WinScreen::Unload() {
     // Properly unload all button resources
-    backgroundPanel_.unload();
     nextLevelButton_.unload();
     restartButton_.unload();
     mainMenuButton_.unload();
 
+    if (graphics_.mesh_ != nullptr) {
+        AEGfxMeshFree(graphics_.mesh_);
+        graphics_.mesh_ = nullptr;
+    }
     // Hide the screen
     isVisible_ = false;
+    AEGfxDestroyFont(font_);
 
-    printf("WinScreen: Shutdown complete\n");
+    printf("WinScreen: unloaded\n");
 }

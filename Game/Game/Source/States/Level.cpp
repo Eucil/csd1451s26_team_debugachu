@@ -771,7 +771,7 @@ void UnloadLevel() {
     // Pause system
     pauseSystem.unload();
 
-    winScreen.Shutdown();
+    winScreen.Unload();
     // Audio system
     gAudioSystem.unloadAllSounds();
     gAudioSystem.unloadAllMusic();
