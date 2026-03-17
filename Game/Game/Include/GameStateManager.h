@@ -6,8 +6,9 @@
 #include "States/Level.h"
 #include "States/LevelSelector.h"
 #include "States/MainMenu.h"
+#include "States/Settings.h"
 
-enum class StateId { Quit, Next, Restart, MainMenu, LevelSelector, Level, Credits };
+enum class StateId { Quit, Next, Restart, MainMenu, LevelSelector, Level, Credits, Settings };
 
 class GameState {
 public:
@@ -62,6 +63,14 @@ public:
             fpDraw_ = DrawCredits;
             fpFree_ = FreeCredits;
             fpUnload_ = UnloadCredits;
+            break;
+        case StateId::Settings:
+            fpLoad_ = loadSettings;
+            fpInitialize_ = initializeSettings;
+            fpUpdate_ = updateSettings;
+            fpDraw_ = drawSettings;
+            fpFree_ = freeSettings;
+            fpUnload_ = unloadSettings;
             break;
         }
     }
