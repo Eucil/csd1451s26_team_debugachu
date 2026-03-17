@@ -113,6 +113,7 @@ void LoadLevel() {
     buttonQuit.loadMesh();
     buttonQuit.loadTexture("Assets/Textures/brown_button.png");
 
+    pauseSystem.loadMesh();
     // Once level is loaded, make sure it is not paused
     pauseSystem.resume();
 
@@ -231,6 +232,9 @@ void InitializeLevel() {
     // UI buttons
     buttonRestart.initFromJson("level_buttons", "Restart");
     buttonQuit.initFromJson("level_buttons", "Quit");
+
+    // Pause system
+    pauseSystem.initFromJson("pause_system", "Background");
 }
 
 // tc added start - Function to handle water spawning with limit
@@ -539,6 +543,10 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
         if (startEndPointSystem.CheckWinCondition(fluidSystem.particleMaxCount)) {
             std::cout << "WIN\n ";
         }
+
+        // Pause system
+        pauseSystem.setTransformFillScreen();
+        pauseSystem.updateTransform();
     }
 }
 
@@ -726,6 +734,9 @@ void DrawLevel() {
     rotationText.draw(font);
 
     if (pauseSystem.isPaused()) { // Game is paused
+        // Backgroun
+        pauseSystem.renderBackground();
+
         // UI buttons
         buttonRestart.draw(font);
         buttonQuit.draw(font);
@@ -783,6 +794,9 @@ void UnloadLevel() {
     // UI buttons
     buttonRestart.unload();
     buttonQuit.unload();
+
+    // Pause system
+    pauseSystem.unload();
 
     // Audio system
     gAudioSystem.unloadAllSounds();
