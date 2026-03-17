@@ -4,8 +4,40 @@
 
 #include <AEEngine.h>
 
+// Background simulation includes
+#include "FluidSystem.h"
+#include "StartEndPoint.h"
+#include "Terrain.h"
+#include "PortalSystem.h"
+#include "VFXSystem.h"
+#include "States/LevelManager.h"
+
+
+// UI includes
 #include "Button.h"
 #include "GameStateManager.h"
+
+
+// Json file reading variables
+static int height, width, tileSize;
+static bool fileExist;
+
+// Background simulation variables
+static Terrain* bgDirt = nullptr;
+static Terrain* bgStone = nullptr;
+static Terrain* bgMagic = nullptr;
+static AEGfxTexture* pBgDirtTex{nullptr};
+static AEGfxTexture* pBgStoneTex{nullptr};
+static AEGfxTexture* pBgMagicTex{nullptr};
+
+static FluidSystem bgFluidSystem;
+static StartEndPoint bgStartEndPoint;
+static PortalSystem bgPortalSystem;
+static VFXSystem bgVfxSystem;
+
+// Auto spawn fluid without player input
+static f32 autoSpawnTimer = 0.0f;
+
 
 // TC added start
 static Button startButton;
@@ -22,6 +54,28 @@ static s8 buttonFont;
 static s8 font;
 
 void LoadMainMenu() {
+    // Load background simulation level map
+    //@todo add lvl99 to levelmanager
+    if (levelManager.getLevelData(99)) {
+        levelManager.parseMapInfo(width, height, tileSize); 
+        fileExist = true;
+    } else {
+        std::cout << "Failed to load level data\n";
+        std::cout << "Using default values\n";
+        width = 80;
+        height = 45;
+        tileSize = 20;
+        fileExist = false;
+    }
+
+    // Load background simulation textures
+    Terrain::createMeshLibrary();
+    Terrain::createColliderLibrary();
+
+    pBgDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
+    pBgStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
+    pBgMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
+
     // Setup buttons - position them vertically
     startButton.loadMesh();
     startButton.loadTexture("Assets/Textures/brown_button.png");
@@ -40,6 +94,55 @@ void LoadMainMenu() {
 }
 
 void InitializeMainMenu() {
+
+    // Initialize simulation systems
+    bgFluidSystem.Initialize();
+    bgPortalSystem.Initialize(); 
+    bgVfxSystem.Initialize(800, 20);
+
+    // Setup terrain
+    bgDirt = new Terrain(TerrainMaterial::Dirt, pBgDirtTex, {0.0f, 0.0f}, height, width,
+                          tileSize, true);
+    bgStone = new Terrain(TerrainMaterial::Stone, pBgStoneTex, {0.0f, 0.0f}, height, width,
+                          tileSize, true);
+    bgMagic = new Terrain(TerrainMaterial::Magic, pBgMagicTex, {0.0f, 0.0f}, height, width,
+                          tileSize, false);
+
+    // Initialise JSON data into the background terrain cells
+    if (fileExist) {
+        levelManager.parseTerrainInfo(bgDirt->getNodes(), "Dirt");
+    }
+    bgDirt->initCellsTransform();
+    bgDirt->initCellsGraphics();
+    bgDirt->initCellsCollider();
+    bgDirt->updateTerrain();
+    if (fileExist) {
+        levelManager.parseTerrainInfo(bgStone->getNodes(), "Stone");
+    }
+    bgStone->initCellsTransform();
+    bgStone->initCellsGraphics();
+    bgStone->initCellsCollider();
+    bgStone->updateTerrain();
+
+    if (fileExist) {
+        levelManager.parseTerrainInfo(bgMagic->getNodes(), "Magic");
+    }
+    bgMagic->initCellsTransform();
+    bgMagic->initCellsGraphics();
+    bgMagic->initCellsCollider();
+    bgMagic->updateTerrain();
+
+    bgStartEndPoint.Initialize();
+    if (fileExist) {
+        levelManager.parseStartEndInfo(bgStartEndPoint);
+        levelManager.parsePortalInfo(bgPortalSystem);
+    }
+
+    for (auto& startPoint : bgStartEndPoint.startPoints_) {
+        startPoint.infinite_water_ = true;
+        startPoint.release_water_ = true;
+    }
+
     // UI buttons
     startButton.initFromJson("main_menu_buttons", "Start");
     howToPlayButton.initFromJson("main_menu_buttons", "HowToPlay");
@@ -48,6 +151,52 @@ void InitializeMainMenu() {
     quitButton.initFromJson("main_menu_buttons", "Quit");
 
     titleText.initFromJson("main_menu_texts", "Title");
+}
+
+static void BgSpawnWater(f32 deltaTime) {
+    // STATE VARIABLES
+    static bool isWaiting = true; 
+    static f32 stateTimer = 3.5f;    // Wait 3.5 seconds before the very first burst
+    static f32 particleTimer = 0.0f; // Tracks how fast individual drops fall
+    static int particlesSpawned = 0; // Explicitly counts how many dropped
+
+    if (isWaiting) {
+        stateTimer -= deltaTime;
+        // When the wait is over, open the tap and reset the counter
+        if (stateTimer <= 0.0f) {
+            isWaiting = false;
+            particlesSpawned = 0;
+            particleTimer = 0.0f; // Force the first drop to spawn instantly
+        }
+    } else { // The tap is ON
+        particleTimer -= deltaTime;
+
+        while (particleTimer <= 0.0f && particlesSpawned < 10) {
+            particleTimer += 0.05f; // Cooldown between drops
+            particlesSpawned++;    
+
+            for (auto& startPoint : bgStartEndPoint.startPoints_) {
+                if (startPoint.type_ == StartEndType::Pipe) {
+
+                    f32 randRadius = 8.0f;
+                    f32 x_offset = startPoint.transform_.pos_.x +
+                                   AERandFloat() * startPoint.transform_.scale_.x -
+                                   (startPoint.transform_.scale_.x / 2.f);
+
+                    f32 y_offset = startPoint.transform_.pos_.y -
+                                   (startPoint.transform_.scale_.y / 2.f) - randRadius;
+
+                    bgFluidSystem.SpawnParticle(x_offset, y_offset, randRadius, FluidType::Water);
+                }
+            }
+        }
+
+        // Once we hit 10 particles, turn the tap OFF and wait 9 seconds
+        if (particlesSpawned >= 10) {
+            isWaiting = true;
+            stateTimer = 9.0f;
+        }
+    }
 }
 
 void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
@@ -60,7 +209,6 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
 
     // Mouse click handling for all buttons
     if (AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
-
         // Start button - goes to Level 1 (or you could make it go to a level select)
         if (startButton.checkMouseClick()) {
             std::cout << "Start button clicked - Going to Level Selector\n";
@@ -94,17 +242,49 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
             std::cout << "Quit button clicked - Exiting game\n";
             GSM.nextState_ = StateId::Quit;
         }
-    }
 
+    }
+    if (AEInputCheckCurr(AEVK_LBUTTON)) {
+        
+        bool hitDirt = bgDirt->destroyAtMouse(20.0f);
+        if (hitDirt) {
+            bgVfxSystem.SpawnContinuous(VFXType::DirtBurst, GetMouseWorldPos(), deltaTime, 0.1f);
+        } else {
+            bgVfxSystem.ResetSpawnTimer();
+        }
+    } else {
+        bgVfxSystem.ResetSpawnTimer();
+    }
     startButton.updateTransform();
     howToPlayButton.updateTransform();
     settingsButton.updateTransform();
     creditsButton.updateTransform();
     quitButton.updateTransform();
+    // Update the pipes to spawn water
+    bgStartEndPoint.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
+
+    
+    BgSpawnWater(deltaTime);
+    // Update the fluid physics against the loaded terrain
+    // @todo fix this
+    bgFluidSystem.Update(deltaTime, *bgDirt);
+    bgFluidSystem.Update(deltaTime, *bgStone);
+    bgFluidSystem.Update(deltaTime, *bgMagic);
+
+    bgPortalSystem.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
+    bgVfxSystem.Update(deltaTime);
 }
 
 void DrawMainMenu() {
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
+    bgDirt->renderTerrain();
+    bgStone->renderTerrain();
+    bgMagic->renderTerrain();
+
+    bgStartEndPoint.DrawColor();
+    bgPortalSystem.DrawColor();
+    bgFluidSystem.DrawColor();
+    bgVfxSystem.Draw();
 
     // Draw all buttons with different colors
     startButton.draw(buttonFont);
@@ -117,9 +297,40 @@ void DrawMainMenu() {
     titleText.draw(titleFont);
 }
 
-void FreeMainMenu() {}
+void FreeMainMenu() {
+    bgFluidSystem.Free();
+    bgStartEndPoint.Free();
+    bgPortalSystem.Free();
+    bgVfxSystem.Free();
+    
+
+    delete bgDirt;
+    bgDirt = nullptr;
+    delete bgStone;
+    bgStone = nullptr;
+    delete bgMagic;
+    bgMagic = nullptr;
+}
 
 void UnloadMainMenu() {
+
+    // free terrain mesh
+    Terrain::freeMeshLibrary();
+
+    // unload background terrain textures
+    if (pBgDirtTex) {
+        AEGfxTextureUnload(pBgDirtTex);
+        pBgDirtTex = nullptr;
+    }
+    if (pBgStoneTex) {
+        AEGfxTextureUnload(pBgStoneTex);
+        pBgStoneTex = nullptr;
+    }
+    if (pBgMagicTex) {
+        AEGfxTextureUnload(pBgMagicTex);
+        pBgMagicTex = nullptr;
+    }
+
     // Free all meshes
     startButton.unload();
     howToPlayButton.unload();
@@ -128,6 +339,12 @@ void UnloadMainMenu() {
     quitButton.unload();
 
     // Free fonts
-    AEGfxDestroyFont(titleFont);
-    AEGfxDestroyFont(buttonFont);
+    if (titleFont) {
+        AEGfxDestroyFont(titleFont);
+        titleFont = 0; 
+    }
+    if (buttonFont) {
+        AEGfxDestroyFont(buttonFont);
+        buttonFont = 0;
+    }
 }

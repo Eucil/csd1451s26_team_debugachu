@@ -345,6 +345,23 @@ void LevelManager::saveCollectibleInfo(std::vector<Collectible>& collectibles) {
     savingRoot_["Objects"]["collectibles"] = collectiblesJson_array;
 }
 
+void LevelManager::savePortalInfo(PortalSystem& portalSystem) {
+    Json::Value portalsJson_array(Json::arrayValue);
+
+    for (const auto& portal : portalSystem.GetPortals()) {
+        Json::Value portalJson;
+        portalJson["posX"] = portal->transform_.pos_.x;
+        portalJson["posY"] = portal->transform_.pos_.y;
+        portalJson["scaleX"] = portal->transform_.scale_.x;
+        portalJson["scaleY"] = portal->transform_.scale_.y;
+        portalJson["rotation"] = portal->transform_.rotationRad_;
+
+        portalsJson_array.append(portalJson);
+    }
+
+    savingRoot_["Objects"]["portals"] = portalsJson_array;
+}
+
 void LevelManager::writeToFile(int level) {
     std::string levelPath = "Assets/Levels/Level_" + std::to_string(level) + "/Map.json";
     std::filesystem::path filePath(levelPath);
@@ -504,6 +521,31 @@ void LevelManager::parseCollectibleInfo(CollectibleSystem& collectibleSystem) {
             }
         } else {
             std::cout << "Collectibles info not found in JSON\n";
+        }
+    }
+}
+
+void LevelManager::parsePortalInfo(PortalSystem& portalSystem) {
+    if (readingRoot_.isMember("Objects")) {
+        const Json::Value& objects = readingRoot_["Objects"];
+
+        if (objects.isMember("portals")) {
+            std::cout << "Parsing portals info...\n";
+            const Json::Value& portalsJson = objects["portals"];
+
+            for (Json::ArrayIndex i = 0; i < portalsJson.size(); ++i) {
+                AEVec2 pos = {portalsJson[i]["posX"].asFloat(), portalsJson[i]["posY"].asFloat()};
+                AEVec2 scale = {portalsJson[i]["scaleX"].asFloat(),
+                                portalsJson[i]["scaleY"].asFloat()};
+
+                // Convert stored Radians back to Degrees for SetupPortal
+                f32 rotationRad = portalsJson[i]["rotation"].asFloat();
+                f32 rotationDeg = AERadToDeg(rotationRad);
+
+                portalSystem.SetupPortal(pos, scale, rotationDeg);
+            }
+        } else {
+            std::cout << "Portals not found in JSON\n";
         }
     }
 }

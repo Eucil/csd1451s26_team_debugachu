@@ -56,4 +56,6 @@ public:
     void RotatePortal();
 
     f32 GetRotationValue();
+
+    const std::vector<Portal*>& GetPortals() const;
 };

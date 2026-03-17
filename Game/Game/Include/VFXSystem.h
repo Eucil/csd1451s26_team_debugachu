@@ -65,6 +65,11 @@ public:
 
     void SpawnVFX(VFXType type, AEVec2 position);
 
+    // Used together with ResetSpawnTimer
+    void SpawnContinuous(VFXType type, AEVec2 position, f32 deltaTime, f32 spawnRate = 0.1f);
+
+    void ResetSpawnTimer();
+
 private:
     std::vector<VFXParticle> vfxParticlePool_[static_cast<int>(VFXType::Count)];
 

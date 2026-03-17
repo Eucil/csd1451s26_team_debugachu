@@ -155,6 +155,10 @@ void InitializeLevel() {
         levelManager.parseCollectibleInfo(collectibleSystem);
     }
 
+    if (fileExist) {
+        levelManager.parsePortalInfo(portalSystem);
+    }
+
     vfxSystem.Initialize(800, 20);
 
     // UI buttons
@@ -344,6 +348,16 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 default:
                     break;
                 }
+                if (magic->isNearestNodeToMouseAtThreshold() == true) {
+                    if (AEInputCheckTriggered(AEVK_RBUTTON) || 0 == AESysDoesWindowExist()) {
+                        portalSystem.CheckMouseClick();
+                    } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
+                        portalSystem.ResetIframe();
+                    }
+                }
+                if (AEInputCheckTriggered(AEVK_MBUTTON)) {
+                    portalSystem.RotatePortal();
+                }
             }
             // Inputs to save level
             if (AEInputCheckReleased(AEVK_S)) {
@@ -354,23 +368,23 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 levelManager.saveStartEndInfo(startEndPointSystem.startPoints_,
                                               startEndPointSystem.endPoint_);
                 levelManager.saveCollectibleInfo(collectibleSystem.GetCollectibles());
+                levelManager.savePortalInfo(portalSystem);
                 levelManager.writeToFile(levelManager.getCurrentLevel());
             }
 
         } else {
             // Else do inputs for gameplay instead
             if (AEInputCheckCurr(AEVK_LBUTTON)) {
-                dirt->destroyAtMouse(20.0f);
-
-                vfxSystem.vfxSpawnTimer_ -= deltaTime;
-                if (vfxSystem.vfxSpawnTimer_ <= 0.0f) {
-
-                    vfxSystem.SpawnVFX(VFXType::DirtBurst, GetMouseWorldPos());
-
-                    vfxSystem.vfxSpawnTimer_ = 0.1f;
+                bool hitDirt = dirt->destroyAtMouse(20.0f);
+                // Only run the VFX timer if we actually dug through dirt
+                if (hitDirt) {
+                    vfxSystem.SpawnContinuous(VFXType::DirtBurst, GetMouseWorldPos(), deltaTime,
+                                                0.1f);
+                } else {
+                    vfxSystem.ResetSpawnTimer();
                 }
             } else {
-                vfxSystem.vfxSpawnTimer_ = 0.0f;
+                vfxSystem.ResetSpawnTimer();
             }
 
             if (AEInputCheckTriggered(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
@@ -668,9 +682,19 @@ void UnloadLevel() {
     Terrain::freeMeshLibrary();
     AEGfxDestroyFont(font);
 
-    AEGfxTextureUnload(pTerrainDirtTex);
-    AEGfxTextureUnload(pTerrainStoneTex);
-    AEGfxTextureUnload(pTerrainMagicTex);
+    // unload terrain textures
+    if (pTerrainDirtTex) {
+        AEGfxTextureUnload(pTerrainDirtTex);
+        pTerrainDirtTex = nullptr;
+    }
+    if (pTerrainStoneTex) {
+        AEGfxTextureUnload(pTerrainStoneTex);
+        pTerrainStoneTex = nullptr;
+    }
+    if (pTerrainMagicTex) {
+        AEGfxTextureUnload(pTerrainMagicTex);
+        pTerrainMagicTex = nullptr;
+    }
 
     levelManager.freeLevelEditor();
     levelManager.SetCurrentLevel(0);
@@ -678,4 +702,5 @@ void UnloadLevel() {
     // UI buttons
     buttonRestart.unload();
     buttonQuit.unload();
+
 }

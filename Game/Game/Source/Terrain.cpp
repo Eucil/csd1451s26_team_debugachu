@@ -113,7 +113,7 @@ void Terrain::updateTerrain() {
     }
 }
 
-void Terrain::destroyAtMouse(f32 radius) {
+bool Terrain::destroyAtMouse(f32 radius) {
     s32 screenX, screenY;
     AEInputGetCursorPosition(&screenX, &screenY);
 
@@ -121,7 +121,7 @@ void Terrain::destroyAtMouse(f32 radius) {
     f32 worldX{static_cast<f32>(screenX) - (AEGfxGetWindowWidth() / 2.0f)};
     f32 worldY{(AEGfxGetWindowHeight() / 2.0f) - static_cast<f32>(screenY)};
 
-    destroyTerrainRadius(worldX, worldY, radius);
+    return destroyTerrainRadius(worldX, worldY, radius);
 }
 
 void Terrain::buildAtMouse(f32 radius) {
@@ -537,7 +537,7 @@ void Terrain::destroyTerrain(f32 worldX, f32 worldY) {
     }
 }
 
-void Terrain::destroyTerrainRadius(f32 worldX, f32 worldY, f32 radius) {
+bool Terrain::destroyTerrainRadius(f32 worldX, f32 worldY, f32 radius) {
     bool changed{false};
 
     for (u32 r{0}; r < kNodeRows_; ++r) {
@@ -549,8 +549,11 @@ void Terrain::destroyTerrainRadius(f32 worldX, f32 worldY, f32 radius) {
             f32 dx = nodeWorldX - worldX;
             f32 dy = nodeWorldY - worldY;
             if ((dx * dx + dy * dy) <= (radius * radius)) {
-                nodes_[static_cast<size_t>(r) * kNodeCols_ + c] = 0.0f;
-                changed = true;
+                size_t nodeIndex = static_cast<size_t>(r) * kNodeCols_ + c;
+                if (nodes_[nodeIndex] > 0.0f) {
+                    nodes_[nodeIndex] = 0.0f;
+                    changed = true;
+                }
             }
         }
     }
@@ -562,6 +565,7 @@ void Terrain::destroyTerrainRadius(f32 worldX, f32 worldY, f32 radius) {
         initCellsCollider();
         markCollidersCacheDirty();
     }
+    return changed;
 }
 
 void Terrain::buildTerrainRadius(f32 worldX, f32 worldY, f32 radius) {
