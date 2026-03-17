@@ -229,16 +229,13 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
         // Settings button
         if (settingsButton.checkMouseClick()) {
             std::cout << "Settings button clicked\n";
-            // TODO: Implement settings screen or state
-            // GSM.nextState_ = StateId::Settings;
+            GSM.nextState_ = StateId::Settings;
         }
 
         // Credits button
         if (creditsButton.checkMouseClick()) {
             std::cout << "Credits button clicked\n";
             GSM.nextState_ = StateId::Credits;
-            // TODO: Implement credits screen or state
-            // GSM.nextState_ = StateId::Credits;
         }
 
         // Quit button
