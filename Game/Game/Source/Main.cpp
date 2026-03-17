@@ -3,6 +3,7 @@
 #include <AEEngine.h>
 #include <crtdbg.h>
 
+#include "AudioSystem.h"
 #include "ConfigManager.h"
 #include "GameStateManager.h"
 #include "States/LevelManager.h"
@@ -26,6 +27,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     GameStateManager GSM;
     GSM.init(StateId::MainMenu);
+
+    // Audio system
+    gAudioSystem.createGroup("sfx");
+    gAudioSystem.createGroup("bgm");
 
     // Game Loop
     while (GSM.currentState_ != StateId::Quit) {
@@ -66,6 +71,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         GSM.previousState_ = GSM.currentState_;
         GSM.currentState_ = GSM.nextState_;
     }
+    // Audio system
+    gAudioSystem.stopGroup("sfx");
+    gAudioSystem.stopGroup("bgm");
+    gAudioSystem.unloadAllSounds();
+    gAudioSystem.unloadAllMusic();
+    gAudioSystem.unloadAllGroups();
 
     AESysExit();
 }

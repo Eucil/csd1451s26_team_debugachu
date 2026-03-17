@@ -1,5 +1,6 @@
 #include "AEEngine.h"
 
+#include "AudioSystem.h"
 #include "PortalSystem.h"
 #include "Utils.h"
 
@@ -246,6 +247,7 @@ void PortalSystem::CheckMouseClick() {
                 current_portal_ = nullptr;
             }
             delete currentPortal;
+            gAudioSystem.playSound("wormhole_place", "sfx", 2.0f, 1.0f);
             click_iframe = true;
             return;
         } else {
@@ -256,6 +258,7 @@ void PortalSystem::CheckMouseClick() {
     AEVec2 portal_pos = {static_cast<f32>(mouse_x), static_cast<f32>(mouse_y)};
     AEVec2 portal_scale = {30.0f, 60.0f};
     SetupPortal(portal_pos, portal_scale, rotation_value);
+    gAudioSystem.playSound("wormhole_place", "sfx", 2.0f, 1.0f);
     click_iframe = true;
 }
 
