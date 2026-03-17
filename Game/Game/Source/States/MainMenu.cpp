@@ -6,17 +6,15 @@
 
 // Background simulation includes
 #include "FluidSystem.h"
-#include "StartEndPoint.h"
-#include "Terrain.h"
 #include "PortalSystem.h"
-#include "VFXSystem.h"
+#include "StartEndPoint.h"
 #include "States/LevelManager.h"
-
+#include "Terrain.h"
+#include "VFXSystem.h"
 
 // UI includes
 #include "Button.h"
 #include "GameStateManager.h"
-
 
 // Json file reading variables
 static int height, width, tileSize;
@@ -38,7 +36,6 @@ static VFXSystem bgVfxSystem;
 // Auto spawn fluid without player input
 static f32 autoSpawnTimer = 0.0f;
 
-
 // TC added start
 static Button startButton;
 static Button howToPlayButton;
@@ -57,7 +54,7 @@ void LoadMainMenu() {
     // Load background simulation level map
     //@todo add lvl99 to levelmanager
     if (levelManager.getLevelData(99)) {
-        levelManager.parseMapInfo(width, height, tileSize); 
+        levelManager.parseMapInfo(width, height, tileSize);
         fileExist = true;
     } else {
         std::cout << "Failed to load level data\n";
@@ -97,12 +94,12 @@ void InitializeMainMenu() {
 
     // Initialize simulation systems
     bgFluidSystem.Initialize();
-    bgPortalSystem.Initialize(); 
+    bgPortalSystem.Initialize();
     bgVfxSystem.Initialize(800, 20);
 
     // Setup terrain
-    bgDirt = new Terrain(TerrainMaterial::Dirt, pBgDirtTex, {0.0f, 0.0f}, height, width,
-                          tileSize, true);
+    bgDirt =
+        new Terrain(TerrainMaterial::Dirt, pBgDirtTex, {0.0f, 0.0f}, height, width, tileSize, true);
     bgStone = new Terrain(TerrainMaterial::Stone, pBgStoneTex, {0.0f, 0.0f}, height, width,
                           tileSize, true);
     bgMagic = new Terrain(TerrainMaterial::Magic, pBgMagicTex, {0.0f, 0.0f}, height, width,
@@ -155,7 +152,7 @@ void InitializeMainMenu() {
 
 static void BgSpawnWater(f32 deltaTime) {
     // STATE VARIABLES
-    static bool isWaiting = true; 
+    static bool isWaiting = true;
     static f32 stateTimer = 3.5f;    // Wait 3.5 seconds before the very first burst
     static f32 particleTimer = 0.0f; // Tracks how fast individual drops fall
     static int particlesSpawned = 0; // Explicitly counts how many dropped
@@ -173,7 +170,7 @@ static void BgSpawnWater(f32 deltaTime) {
 
         while (particleTimer <= 0.0f && particlesSpawned < 10) {
             particleTimer += 0.05f; // Cooldown between drops
-            particlesSpawned++;    
+            particlesSpawned++;
 
             for (auto& startPoint : bgStartEndPoint.startPoints_) {
                 if (startPoint.type_ == StartEndType::Pipe) {
@@ -242,10 +239,9 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
             std::cout << "Quit button clicked - Exiting game\n";
             GSM.nextState_ = StateId::Quit;
         }
-
     }
     if (AEInputCheckCurr(AEVK_LBUTTON)) {
-        
+
         bool hitDirt = bgDirt->destroyAtMouse(20.0f);
         if (hitDirt) {
             bgVfxSystem.SpawnContinuous(VFXType::DirtBurst, GetMouseWorldPos(), deltaTime, 0.1f);
@@ -263,13 +259,10 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
     // Update the pipes to spawn water
     bgStartEndPoint.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
 
-    
     BgSpawnWater(deltaTime);
     // Update the fluid physics against the loaded terrain
     // @todo fix this
-    bgFluidSystem.Update(deltaTime, *bgDirt);
-    bgFluidSystem.Update(deltaTime, *bgStone);
-    bgFluidSystem.Update(deltaTime, *bgMagic);
+    bgFluidSystem.Update(deltaTime, {bgDirt, bgStone});
 
     bgPortalSystem.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
     bgVfxSystem.Update(deltaTime);
@@ -302,7 +295,6 @@ void FreeMainMenu() {
     bgStartEndPoint.Free();
     bgPortalSystem.Free();
     bgVfxSystem.Free();
-    
 
     delete bgDirt;
     bgDirt = nullptr;
@@ -341,7 +333,7 @@ void UnloadMainMenu() {
     // Free fonts
     if (titleFont) {
         AEGfxDestroyFont(titleFont);
-        titleFont = 0; 
+        titleFont = 0;
     }
     if (buttonFont) {
         AEGfxDestroyFont(buttonFont);

@@ -345,18 +345,20 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                         collectibleSystem.destroyAtMousePos();
                     }
                     break;
+                case GameBlock::Portal:
+                    if (magic->isNearestNodeToMouseAtThreshold() == true) {
+                        if (AEInputCheckTriggered(AEVK_RBUTTON) || 0 == AESysDoesWindowExist()) {
+                            portalSystem.CheckMouseClick();
+                        } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
+                            portalSystem.ResetIframe();
+                        }
+                    }
+                    if (AEInputCheckTriggered(AEVK_MBUTTON)) {
+                        portalSystem.RotatePortal();
+                    }
+                    break;
                 default:
                     break;
-                }
-                if (magic->isNearestNodeToMouseAtThreshold() == true) {
-                    if (AEInputCheckTriggered(AEVK_RBUTTON) || 0 == AESysDoesWindowExist()) {
-                        portalSystem.CheckMouseClick();
-                    } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
-                        portalSystem.ResetIframe();
-                    }
-                }
-                if (AEInputCheckTriggered(AEVK_MBUTTON)) {
-                    portalSystem.RotatePortal();
                 }
             }
             // Inputs to save level
@@ -379,7 +381,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 // Only run the VFX timer if we actually dug through dirt
                 if (hitDirt) {
                     vfxSystem.SpawnContinuous(VFXType::DirtBurst, GetMouseWorldPos(), deltaTime,
-                                                0.1f);
+                                              0.1f);
                 } else {
                     vfxSystem.ResetSpawnTimer();
                 }
@@ -702,5 +704,4 @@ void UnloadLevel() {
     // UI buttons
     buttonRestart.unload();
     buttonQuit.unload();
-
 }

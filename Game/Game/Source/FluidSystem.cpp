@@ -200,40 +200,6 @@ void FluidSystem::UpdatePortalIframes(f32 dt, std::vector<FluidParticle>& partic
     }
 }
 
-void FluidSystem::Update(f32 dt, Terrain& terrain) {
-    // DT clamp
-    if (dt > 0.016f) {
-        dt = 0.016f;
-    }
-
-    // Substeps
-    const int subSteps = 4;
-    const f32 subDt = dt / (f32)subSteps;
-
-    for (int s = 0; s < subSteps; s++) {
-
-        for (int i = 0; i < (int)FluidType::Count; i++) {
-            if (particlePools_[i].empty())
-                continue;
-
-            // Physicss
-            UpdatePhysics(particlePools_[i], subDt);
-        }
-
-        // Collision
-        CollisionSystem::terrainToFluidCollision(terrain, *this);
-    }
-
-    // Final per-frame updates
-    for (int i = 0; i < (int)FluidType::Count; i++) {
-        if (particlePools_[i].empty()) {
-            continue;
-        }
-        UpdateTransforms(particlePools_[i]);
-        UpdatePortalIframes(dt, particlePools_[i]);
-    }
-}
-
 void FluidSystem::DrawColor() {
 
     // color render mode
@@ -296,7 +262,6 @@ void FluidSystem::Free() {
     // Free all fluid meshes
     for (size_t fluidIndex{0}; fluidIndex < static_cast<size_t>(FluidType::Count); ++fluidIndex) {
         for (size_t i{0}; i < 3; ++i) {
-            std::cout << graphicsConfigs_[fluidIndex][i].mesh_ << std::endl;
             if (graphicsConfigs_[fluidIndex][i].mesh_ != nullptr) {
                 AEGfxMeshFree(graphicsConfigs_[fluidIndex][i].mesh_);
 
