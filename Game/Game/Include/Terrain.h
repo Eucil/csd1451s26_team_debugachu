@@ -31,7 +31,7 @@ public:
 
     void updateTerrain();
 
-    void destroyAtMouse(f32 radius);
+    bool destroyAtMouse(f32 radius);
 
     void buildAtMouse(f32 radius);
 
@@ -86,7 +86,7 @@ private:
 
     void destroyTerrain(f32 worldX, f32 worldY);
 
-    void destroyTerrainRadius(f32 worldX, f32 worldY, f32 radius);
+    bool destroyTerrainRadius(f32 worldX, f32 worldY, f32 radius);
 
     void buildTerrainRadius(f32 worldX, f32 worldY, f32 radius);
 
