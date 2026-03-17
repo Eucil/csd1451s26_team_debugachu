@@ -38,5 +38,15 @@
     "green": 1.0,
     "blue": 1.0,
     "alpha": 1.0
+  },
+  "Header": {
+    "content": "Settings",
+    "x": -0.13,
+    "y": 0.8,
+    "scale": 1.0,
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
   }
 }

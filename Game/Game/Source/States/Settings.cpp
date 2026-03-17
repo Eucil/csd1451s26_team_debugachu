@@ -15,6 +15,7 @@ static Button buttonBack;
 
 static s8 font;
 
+static TextData headerText;
 static TextData sfxVolumeText;
 static TextData bgmVolumeText;
 static TextData sfxVolumeAmountText;
@@ -44,6 +45,7 @@ void initializeSettings() {
 
     buttonBack.initFromJson("settings_buttons", "Back");
 
+    headerText.initFromJson("settings_text", "Header");
     sfxVolumeText.initFromJson("settings_text", "SfxVolume");
     bgmVolumeText.initFromJson("settings_text", "BgmVolume");
     sfxVolumeAmountText.initFromJson("settings_text", "SfxVolumeAmount");
@@ -90,6 +92,7 @@ void drawSettings() {
 
     buttonBack.draw(font);
 
+    headerText.draw(font);
     sfxVolumeText.draw(font);
     bgmVolumeText.draw(font);
     sfxVolumeAmountText.draw(font);
