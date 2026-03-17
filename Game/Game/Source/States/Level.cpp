@@ -195,7 +195,7 @@ static void SpawnWaterWithLimit(f32 deltaTime) {
                     // Only spawn particle if there's still water
                     if (startPoint.water_remaining_ > 0.0f || startPoint.infinite_water_) {
                         // Spawn particle at the start point position
-                        f32 randRadius = 5.0f;
+                        f32 randRadius = 10.0f;
 
                         // Calculate random x offset within the start point's width
                         f32 x_offset = startPoint.transform_.pos_.x +
@@ -434,8 +434,9 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
         }
 
         // fluidSystem.UpdateMain(deltaTime);
-        fluidSystem.Update(deltaTime, *dirt);
-        fluidSystem.Update(deltaTime, *stone);
+        // fluidSystem.Update(deltaTime, *dirt);
+        // fluidSystem.Update(deltaTime, *stone);
+        fluidSystem.Update(deltaTime, {dirt, stone});
         startEndPointSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
         portalSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
         vfxSystem.Update(deltaTime);

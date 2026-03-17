@@ -19,9 +19,16 @@ struct CollisionInfo {
 
 class CollisionSystem {
 public:
-    static void terrainToFluidCollision(Terrain& terrain, FluidSystem& fluidSystem);
+    static void terrainToFluidCollision(Terrain& terrain, FluidSystem& fluidSystem, f32 dt = {});
+
+    // Notify CollisionSystem that terrain collider data has changed.
+    // This causes cellHasColliders[] to be recomputed on the next
+    // terrainToFluidCollision call, ensuring particles don't clip through
+    // newly built terrain or fall through newly dug holes.
 
 private:
+    using BucketEntry = std::pair<FluidType, u32>;
+
     // -----------------------------
     // Minimal vector helpers (avoid AE const-pointer issues)
     // -----------------------------
@@ -40,29 +47,28 @@ private:
     // Point in triangle (barycentric)
     static bool pointInTriangle(const AEVec2& p, const AEVec2& a, const AEVec2& b, const AEVec2& c);
 
-
-                                        
-
-
-
-    // Generates a CollisionContact struct containing information about the collision (normal, penetration).
-    static CollisionInfo cellToFluidParticleCollision(const Cell& cell, const FluidParticle& fluidParticle);
+    // Generates a CollisionContact struct containing information about the collision (normal,
+    // penetration).
+    static CollisionInfo cellToFluidParticleCollision(const Cell& cell,
+                                                      const FluidParticle& fluidParticle);
 
     // Helper function (cellToFluidParticleCollision): circle vs AABB (axis-aligned box) in world
-    static bool detectCircleVsAABB(const AEVec2& circleCenter, f32 radius,
-                                              const AEVec2& velocity, const AEVec2& boxCenter,
-                                              const AEVec2& halfExt, AEVec2& outNormal,
-                                              f32& outPenetration);
+    static bool detectCircleVsAABB(const AEVec2& circleCenter, f32 radius, const AEVec2& velocity,
+                                   const AEVec2& boxCenter, const AEVec2& halfExt,
+                                   AEVec2& outNormal, f32& outPenetration);
 
     // Narrow phase: circle vs triangle in world (closest point on triangle)
     static bool detectCircleVsTriangle(const AEVec2& circleCenter, f32 radius,
-                                       const AEVec2& velocity, const AEVec2& v0,
-                                        const AEVec2& v1, const AEVec2& v2, AEVec2& outNormal,
-                                        f32& outPenetration);
+                                       const AEVec2& velocity, const AEVec2& v0, const AEVec2& v1,
+                                       const AEVec2& v2, AEVec2& outNormal, f32& outPenetration);
 
-    // Collision Resolution function. 
-    static void pushOutAndSlide(FluidParticle& p, const AEVec2& n, f32 penetration, f32 radius);
+    // Collision Resolution function.
+    static void pushOutAndSlide(FluidParticle& p, const AEVec2& n, f32 penetration, f32 radius,
+                                f32 dt);
 
     static void resolveFluidParticlePair(FluidParticle& p1, FluidParticle& p2);
-};
 
+    static void buildGrid(std::vector<std::vector<BucketEntry>>& fluidGrid,
+                          FluidSystem& fluidSystem, const AEVec2& gridBottomLeftPos, u32 gridCols,
+                          u32 gridRows, u32 gridSize);
+};

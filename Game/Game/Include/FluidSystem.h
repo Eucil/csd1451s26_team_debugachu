@@ -2,6 +2,7 @@
 #include "AEEngine.h"
 #include "Components.h"
 #include "Terrain.h"
+#include <initializer_list>
 #include <vector>
 
 enum class FluidType { Water, Lava, Count };
@@ -29,6 +30,8 @@ public:
     void Initialize();
 
     void Update(f32 dt, Terrain& terrain);
+
+    void Update(f32 dt, std::initializer_list<Terrain*> terrains);
 
     void DrawColor();
 

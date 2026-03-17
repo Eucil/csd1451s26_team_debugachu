@@ -114,42 +114,53 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         p.physics_.velocity_.y += gravity * dt;
 
         // ================================================ //
-        // OPTIMISATION: ANTI-TUNNELLING GRAVITY CAP
+        // OPTIMISATION: ANTI-TUNNELLING CAP
         // ================================================ //
-        // Without this, particles falling from a great height can reach very high speeds, 
+        // Without this, particles falling from a great height can reach very high speeds,
         // which can cause them to tunnel through terrain colliders.
         const f32 TERMINAL_FALL_SPEED = -300.0f;
         if (p.physics_.velocity_.y < TERMINAL_FALL_SPEED) {
             p.physics_.velocity_.y = TERMINAL_FALL_SPEED;
         }
 
-        // Add a tiny random kick to every particle.
-        // This prevents them from ever stacking perfectly still.
-        f32 noiseX = ((rand() % 100) / 50.0f) - 1.0f; // Range -1.0 to 1.0
-        f32 noiseY = ((rand() % 100) / 50.0f) - 1.0f; // Range -1.0 to 1.0
-
-        p.physics_.velocity_.x += noiseX * dt * 3.0f;
-        p.physics_.velocity_.y += noiseY * dt * 3.0f;
-
-
+        // Same cap applied horizontally to prevent tunneling from high horizontal speeds (e.g. from
+        // being pushed by a fast-moving floor or explosion).
+        const f32 MAX_HORIZONTAL_SPEED = 300.0f;
+        if (p.physics_.velocity_.x > MAX_HORIZONTAL_SPEED)
+            p.physics_.velocity_.x = MAX_HORIZONTAL_SPEED;
+        if (p.physics_.velocity_.x < -MAX_HORIZONTAL_SPEED)
+            p.physics_.velocity_.x = -MAX_HORIZONTAL_SPEED;
 
         // ================================================ //
         // OPTIMISATION: STOPS VERY SLOW PARTICLES
         // ================================================ //
-        //
-        // NOTE: 1.99f is a MAGIC NUMBER, it was chosen coz if the particle is moving at less than
-        // (1 pixel, 1 pixel) velocity, it is considered miniscule.
-        //
-        // (sqrt(1.0f + 1.0f) ) ^ 2
-        f32 thresholdVel = 1.41f * 1.41f;
+        // Lowered from 1.41*1.41 (~2.0) to 0.5 so slow-moving particles are not
+        // immediately zeroed. The original threshold was killing horizontal flow
+        // since particles sliding along terrain move slowly.
+        f32 thresholdVel = 0.5f;
         f32 currentSpeedSq = (p.physics_.velocity_.x * p.physics_.velocity_.x) +
                              (p.physics_.velocity_.y * p.physics_.velocity_.y);
 
         if (currentSpeedSq < thresholdVel) {
             p.physics_.velocity_.x = 0.0f;
             p.physics_.velocity_.y = 0.0f;
-            currentSpeedSq = 0.0f; // Reset this so the max speed check below ignores it
         }
+
+        // ANTI-OSCILLATION: Only apply noise to nearly-stopped particles.
+        // Previously noise ran on every particle every substep — in dense settled
+        // groups this caused all particles to randomly oscillate together, creating
+        // the vigorous left-right swinging behaviour.
+        // Now noise only fires when a particle is nearly still (speed < ~2.2 units/s)
+        // to break perfect vertical stacking, leaving actively moving particles alone.
+        if (currentSpeedSq < 5.0f) {
+            f32 noiseX = ((rand() % 100) / 50.0f) - 1.0f;
+            f32 noiseY = ((rand() % 100) / 50.0f) - 1.0f;
+            p.physics_.velocity_.x += noiseX * dt * 3.0f;
+            p.physics_.velocity_.y += noiseY * dt * 3.0f;
+        }
+
+        currentSpeedSq = (p.physics_.velocity_.x * p.physics_.velocity_.x) +
+                         (p.physics_.velocity_.y * p.physics_.velocity_.y);
 
         // ================================================ //
         // 3. ANTI-TUNNELING: CAP MAXIMUM SPEED
@@ -323,4 +334,40 @@ u32 FluidSystem::GetParticleCount(FluidType type) { return particlePools_[(u32)t
 
 std::vector<FluidParticle>& FluidSystem::GetParticlePool(FluidType type) {
     return particlePools_[(int)type];
+}
+
+void FluidSystem::Update(f32 dt, std::initializer_list<Terrain*> terrains) {
+    // DT clamp
+    if (dt > 0.016f) {
+        dt = 0.016f;
+    }
+
+    // Substeps
+    const int subSteps = 4;
+    const f32 subDt = dt / (f32)subSteps;
+
+    for (int s = 0; s < subSteps; s++) {
+
+        for (int i = 0; i < (int)FluidType::Count; i++) {
+            if (particlePools_[i].empty())
+                continue;
+
+            // Physicss
+            UpdatePhysics(particlePools_[i], subDt);
+        }
+
+        // Collision
+        for (Terrain* terrain : terrains) {
+            CollisionSystem::terrainToFluidCollision(*terrain, *this, subDt);
+        }
+    }
+
+    // Final per-frame updates
+    for (int i = 0; i < (int)FluidType::Count; i++) {
+        if (particlePools_[i].empty()) {
+            continue;
+        }
+        UpdateTransforms(particlePools_[i]);
+        UpdatePortalIframes(dt, particlePools_[i]);
+    }
 }
