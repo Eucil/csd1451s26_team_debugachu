@@ -32,6 +32,7 @@ static FluidSystem bgFluidSystem;
 static StartEndPoint bgStartEndPoint;
 static PortalSystem bgPortalSystem;
 static VFXSystem bgVfxSystem;
+static CollectibleSystem bgCollectibleSystem;
 
 // Auto spawn fluid without player input
 static f32 autoSpawnTimer = 0.0f;
@@ -51,6 +52,7 @@ static s8 buttonFont;
 static s8 font;
 
 void LoadMainMenu() {
+    AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
     // Load background simulation level map
     //@todo add lvl99 to levelmanager
     if (levelManager.getLevelData(99)) {
@@ -73,6 +75,8 @@ void LoadMainMenu() {
     pBgStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
     pBgMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
 
+    bgCollectibleSystem.Load(font);
+
     // Setup buttons - position them vertically
     startButton.loadMesh();
     startButton.loadTexture("Assets/Textures/brown_button.png");
@@ -87,7 +91,7 @@ void LoadMainMenu() {
 
     // Load fonts
     titleFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 72);
-    buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 36);
+    buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 33);
 }
 
 void InitializeMainMenu() {
@@ -96,6 +100,7 @@ void InitializeMainMenu() {
     bgFluidSystem.Initialize();
     bgPortalSystem.Initialize();
     bgVfxSystem.Initialize(800, 20);
+    bgCollectibleSystem.Initialize();
 
     // Setup terrain
     bgDirt =
@@ -257,6 +262,8 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
     settingsButton.updateTransform();
     creditsButton.updateTransform();
     quitButton.updateTransform();
+    bgCollectibleSystem.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
+
     // Update the pipes to spawn water
     bgStartEndPoint.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
 
@@ -279,6 +286,7 @@ void DrawMainMenu() {
     bgPortalSystem.DrawColor();
     bgFluidSystem.DrawColor();
     bgVfxSystem.Draw();
+    bgCollectibleSystem.Draw();
 
     // Draw all buttons with different colors
     startButton.draw(buttonFont);
@@ -296,7 +304,8 @@ void FreeMainMenu() {
     bgStartEndPoint.Free();
     bgPortalSystem.Free();
     bgVfxSystem.Free();
-
+    bgCollectibleSystem.Free();
+    
     delete bgDirt;
     bgDirt = nullptr;
     delete bgStone;

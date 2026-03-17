@@ -137,14 +137,14 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
     hoveredLevelIndex = -1;
     for (int i = 0; i < static_cast<int>(Level::None); ++i) {
         editorButtonPool_[i].updateTransform();
-
-        // If the mouse is colliding with this specific button, save its index!
-        if (editorButtonPool_[i].isHovered()) {
+        bool isPlayable = (levelManager.playableLevels_[i]);
+        // If the mouse is colliding with this specific button, save its index
+        if (editorButtonPool_[i].isHovered() && isPlayable) {
             hoveredLevelIndex = i;
         }
     }
     if (hoveredLevelIndex != -1) {
-        displayLevelIndex = hoveredLevelIndex; // Remember what we are looking at!
+        displayLevelIndex = hoveredLevelIndex; // Remember what we are looking at
         previewFader.FadeIn();                 // Tell it to animate in
     } else {
         previewFader.FadeOut(); // Tell it to animate out

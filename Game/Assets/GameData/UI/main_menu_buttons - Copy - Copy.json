@@ -1,11 +1,11 @@
 {
   "Start": {
-    "position": { "x": 0.0, "y": 240.0 },
+    "position": { "x": 0.0, "y": 300.0 },
     "scale": { "x": 400.0, "y": 80.0 },
     "text": {
       "content": "Start",
-      "x": -0.12,
-      "y": 0.50,
+      "x": -0.15,
+      "y": 0.64,
       "scale": 1.0,
       "red": 1.0,
       "green": 1.0,
@@ -14,40 +14,12 @@
     }
   },
   "HowToPlay": {
-    "position": { "x": 0.0, "y": 100.0 },
+    "position": { "x": 0.0, "y": 180.0 },
     "scale": { "x": 400.0, "y": 80.0 },
     "text": {
       "content": "How to Play",
-      "x": -0.22,
-      "y": 0.19,
-      "scale": 0.92,
-      "red": 1.0,
-      "green": 1.0,
-      "blue": 1.0,
-      "alpha": 1.0
-    }
-  },
-  "Settings": {
-    "position": { "x": 0.0, "y": -40.0 },
-    "scale": { "x": 400.0, "y": 80.0 },
-    "text": {
-      "content": "Settings",
-      "x": -0.16,
-      "y": -0.13,
-      "scale": 1.00,
-      "red": 1.0,
-      "green": 1.0,
-      "blue": 1.0,
-      "alpha": 1.0
-    }
-  },
-  "Credits": {
-    "position": { "x": 0.0, "y": -180.0 },
-    "scale": { "x": 400.0, "y": 80.0 },
-    "text": {
-      "content": "Credits",
-      "x": -0.16,
-      "y": -0.43,
+      "x": -0.23,
+      "y": 0.38,
       "scale": 1.0,
       "red": 1.0,
       "green": 1.0,
@@ -55,13 +27,41 @@
       "alpha": 1.0
     }
   },
-  "Quit": {
-    "position": { "x": 0.0, "y": -320.0 },
+  "Settings": {
+    "position": { "x": 0.0, "y": 60.0 },
+    "scale": { "x": 400.0, "y": 80.0 },
+    "text": {
+      "content": "Settings",
+      "x": -0.15,
+      "y": 0.13,
+      "scale": 1.0,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+    "Credits": {
+    "position": { "x": 0.0, "y": -60.0 },
+    "scale": { "x": 400.0, "y": 80.0 },
+    "text": {
+      "content": "Credits",
+      "x": -0.15,
+      "y": -0.13,
+      "scale": 1.0,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+    "Quit": {
+    "position": { "x": 0.0, "y": -180.0 },
     "scale": { "x": 400.0, "y": 80.0 },
     "text": {
       "content": "Quit",
-      "x": -0.10,
-      "y": -0.75,
+      "x": -0.15,
+      "y": -0.38,
       "scale": 1.0,
       "red": 1.0,
       "green": 1.0,
@@ -70,17 +70,17 @@
     }
   },
   "Back": {
-    "position": {"x": 0.625, "y": 0.667},
-    "scale": {"x": 50.0, "y": 50.0},
-    "text": {
-      "content": "BACK",
-      "x": 0.0,
-      "y": -0.10,
-      "scale": 0.2,
-      "red": 1.0,
-      "green": 1.0,
-      "blue": 1.0,
-      "alpha": 1.0
+        "position": {"x": 0.625, "y": 0.667},
+        "scale": {"x": 50.0, "y": 50.0},
+        "text": {
+            "content": "BACK",
+            "x": 0.0,
+            "y": 0.0,
+            "scale": 0.2,
+            "red": 1.0,
+            "green": 1.0,
+            "blue": 1.0,
+            "alpha": 1.0
+        }
     }
-  }
 }
