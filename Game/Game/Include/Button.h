@@ -34,6 +34,8 @@ public:
     void unload();
     bool checkMouseClick() const;
     bool isHovered() const;
+    AEGfxVertexList* getMesh() const { return graphics_.mesh_; }
+    AEGfxTexture* getTexture() const { return graphics_.texture_; }
 
 private:
     Transform transform_;

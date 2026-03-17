@@ -74,17 +74,37 @@ void Button::updateTransform() {
 }
 
 void Button::draw(s8 font) {
-    // Render button (no text)
-    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetTransparency(1.0f);
-    AEGfxSetColorToMultiply(graphics_.red_, graphics_.green_, graphics_.blue_, graphics_.alpha_);
-    AEGfxSetTransform(transform_.worldMtx_.m);
-    AEGfxTextureSet(graphics_.texture_, 0.0f, 0.0f);
-    AEGfxMeshDraw(graphics_.mesh_, AE_GFX_MDM_TRIANGLES);
+    // SAFETY CHECK: Make sure mesh exists
+    if (graphics_.mesh_ == nullptr) {
+        printf("ERROR: Button mesh is null! Content: %s\n", text_.content_.c_str());
+        return;
+    }
+
+    // SAFETY CHECK: If texture is missing, draw in color mode as fallback
+    if (graphics_.texture_ == nullptr) {
+        // Draw in color mode as fallback
+        AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetColorToMultiply(0.6f, 0.4f, 0.2f, 1.0f); // Brown color fallback
+        AEGfxSetTransform(transform_.worldMtx_.m);
+        AEGfxMeshDraw(graphics_.mesh_, AE_GFX_MDM_TRIANGLES);
+    } else {
+        // Normal texture rendering
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetColorToMultiply(graphics_.red_, graphics_.green_, graphics_.blue_,
+                                graphics_.alpha_);
+        AEGfxSetTransform(transform_.worldMtx_.m);
+        AEGfxTextureSet(graphics_.texture_, 0.0f, 0.0f);
+        AEGfxMeshDraw(graphics_.mesh_, AE_GFX_MDM_TRIANGLES);
+    }
 
     // Render text
-    text_.draw(font);
+    if (font != 0) {
+        text_.draw(font);
+    }
 }
 
 void Button::unload() {
@@ -124,6 +144,12 @@ bool Button::checkMouseClick() const {
 }
 
 void TextData::draw(s8 font) const {
+    // Add null check
+    if (font == 0) {
+        printf("ERROR: Attempting to draw text with null font!\n");
+        return;
+    }
+
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxPrint(font, content_.c_str(), x_, y_, scale_, r_, g_, b_, a_);
 }
