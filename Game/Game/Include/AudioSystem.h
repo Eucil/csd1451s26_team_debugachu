@@ -21,6 +21,7 @@ public:
     void unloadGroup(const std::string& key) {
         AEAudioUnloadAudioGroup(groups_.at(key));
         groups_.erase(key);
+        groupVolumes_.erase(key);
     }
 
     void unloadAllSounds() {
@@ -45,10 +46,14 @@ public:
         }
 
         groups_.clear();
+        groupVolumes_.clear();
     }
 
     // Groups
-    void createGroup(const std::string& groupKey) { groups_[groupKey] = AEAudioCreateGroup(); }
+    void createGroup(const std::string& groupKey) {
+        groups_[groupKey] = AEAudioCreateGroup();
+        groupVolumes_[groupKey] = 100; // By default group volume is full (100%)
+    }
 
     void pauseGroup(const std::string& groupKey) { AEAudioPauseGroup(groups_.at(groupKey)); }
 
@@ -62,6 +67,25 @@ public:
 
     void setGroupPitch(const std::string& groupKey, f32 pitch) {
         AEAudioSetGroupPitch(groups_.at(groupKey), pitch);
+    }
+
+    // Group Volume
+    void adjustGroupVolume(const std::string& groupKey, f32 delta) {
+        if (groups_.find(groupKey) == groups_.end())
+            return;
+
+        // Clamp volume to [0, 100]
+        groupVolumes_[groupKey] = AEClamp(groupVolumes_[groupKey] + delta, 0, 100);
+        AEAudioSetGroupVolume(groups_.at(groupKey), groupVolumes_[groupKey] / 100.0f);
+    }
+
+    s32 getGroupVolume(const std::string& groupKey) const {
+        auto it = groupVolumes_.find(groupKey);
+        if (it == groupVolumes_.end()) {
+            return 0;
+        }
+
+        return it->second;
     }
 
     // Load sound / music
@@ -102,6 +126,9 @@ private:
     std::unordered_map<std::string, AEAudio> sounds_;
     std::unordered_map<std::string, AEAudio> music_;
     std::unordered_map<std::string, AEAudioGroup> groups_;
+
+    // Store as s32 instead of f32 to avoid floating point inaccuracy
+    std::unordered_map<std::string, s32> groupVolumes_;
 };
 
 extern AudioSystem gAudioSystem;
