@@ -20,9 +20,12 @@ struct CollisionInfo {
 class CollisionSystem {
 public:
     static void terrainToFluidCollision(Terrain& terrain, FluidSystem& fluidSystem, f32 dt = {});
+    static void markCollidersDirty() { collidersDirty_ = true; }
 
 private:
     using BucketEntry = std::pair<FluidType, u32>;
+
+    static bool collidersDirty_;
     // -----------------------------
     // Minimal vector helpers (avoid AE const-pointer issues)
     // -----------------------------

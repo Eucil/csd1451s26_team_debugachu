@@ -1,5 +1,7 @@
 #include "CollisionSystem.h"
 
+bool CollisionSystem::collidersDirty_ = true;
+
 // @todo comment entire function
 void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& fluidSystem, f32 dt) {
     using BucketEntry = std::pair<FluidType, u32>; // (type, index)
@@ -10,21 +12,38 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
     const u32 gridSize = terrain.getCellSize();
     const AEVec2 gridBottomLeftPos = terrain.getBottomLeftPos();
 
-    // Clear and resize grid
-    std::vector<std::vector<BucketEntry>> fluidGrid;
-    fluidGrid.resize(static_cast<size_t>(gridRows) * static_cast<size_t>(gridCols));
-
-    // Loop each particle type (e.g. water, lava) and POPULATE the grid with the indices of which
-    // particles are in which
-
-    // Obtain the total number of cells in the grid so that we can loop through every cell and
-    // resolve collisions
     const size_t totalCells = static_cast<size_t>(gridRows) * static_cast<size_t>(gridCols);
+
+    // Allocate once, reuse every frame
+    static std::vector<std::vector<BucketEntry>> fluidGrid;
+    static std::vector<bool> cellHasColliders;
+    static size_t cachedTotalCells = 0;
+
+    if (cachedTotalCells != totalCells) {
+        fluidGrid.resize(totalCells);
+        cellHasColliders.resize(totalCells, false);
+        cachedTotalCells = totalCells;
+        collidersDirty_ = true;
+    }
+
+    // Only recompute when terrain changes
+    if (collidersDirty_) {
+        for (size_t i = 0; i < totalCells; ++i) {
+            const Cell& c = terrain.getCells()[i];
+            cellHasColliders[i] = false;
+            for (u32 j = 0; j < 3; ++j) {
+                if (c.colliders_[j].colliderShape_ != ColliderShape::Empty) {
+                    cellHasColliders[i] = true;
+                    break;
+                }
+            }
+        }
+        collidersDirty_ = false;
+    }
 
     // ====================================================================
     // PASS 1: FLUID vs FLUID (Soft Constraints)
     // ====================================================================
-    // Let the water squish, stack, and build pressure first.
     buildGrid(fluidGrid, fluidSystem, gridBottomLeftPos, gridCols, gridRows, gridSize);
     for (size_t cell = 0; cell < totalCells; ++cell) {
         if (fluidGrid[cell].empty())
@@ -45,8 +64,8 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
                 const size_t neighbourIndex =
                     static_cast<size_t>(ny) * static_cast<size_t>(gridCols) +
                     static_cast<size_t>(nx);
-                std::vector<BucketEntry>& neighbourParticles = fluidGrid[neighbourIndex];
 
+                std::vector<BucketEntry>& neighbourParticles = fluidGrid[neighbourIndex];
                 if (neighbourParticles.empty())
                     continue;
 
@@ -57,7 +76,6 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
                         FluidParticle& fluidParticleB =
                             fluidSystem.GetParticlePool(b.first)[b.second];
 
-                        // Compare memory addresses to only resolve Pair(A, B) once
                         if (&fluidParticleA < &fluidParticleB) {
                             resolveFluidParticlePair(fluidParticleA, fluidParticleB);
                         }
@@ -70,7 +88,6 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
     // ====================================================================
     // PASS 2: FLUID vs TERRAIN (Hard Constraints)
     // ====================================================================
-    // Now strictly enforce the solid walls so nothing gets pushed into the dirt.
     buildGrid(fluidGrid, fluidSystem, gridBottomLeftPos, gridCols, gridRows, gridSize);
     for (size_t cell = 0; cell < totalCells; ++cell) {
         if (fluidGrid[cell].empty())
@@ -91,6 +108,10 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
                 const size_t neighbourIndex =
                     static_cast<size_t>(ny) * static_cast<size_t>(gridCols) +
                     static_cast<size_t>(nx);
+
+                if (!cellHasColliders[neighbourIndex])
+                    continue;
+
                 Cell& neighbourTerrainCell = terrain.getCells()[neighbourIndex];
 
                 for (const BucketEntry& a : fluidGrid[cell]) {
@@ -98,10 +119,9 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
 
                     CollisionInfo contact =
                         cellToFluidParticleCollision(neighbourTerrainCell, fluidParticleA);
-                    if (contact.hasCollision) {
+                    if (contact.hasCollision)
                         pushOutAndSlide(fluidParticleA, contact.normal, contact.penetration,
                                         fluidParticleA.collider_.shapeData_.circle_.radius, dt);
-                    }
                 }
             }
         }
@@ -118,15 +138,15 @@ AEVec2 CollisionSystem::vNormalizeOr(const AEVec2& v, const AEVec2& fallback) {
 
 // Apply terrain cell transform to a local point (scale -> rotate -> translate)
 AEVec2 CollisionSystem::localToWorldPoint(const AEVec2& local, const Transform& t) {
-    // scale
     AEVec2 s{local.x * t.scale_.x, local.y * t.scale_.y};
 
-    // rotate
+    if (t.rotationRad_ == 0.0f) {
+        return AEVec2{s.x + t.pos_.x, s.y + t.pos_.y};
+    }
+
     const f32 c = std::cos(t.rotationRad_);
     const f32 sn = std::sin(t.rotationRad_);
     AEVec2 r{s.x * c - s.y * sn, s.x * sn + s.y * c};
-
-    // translate
     return AEVec2{r.x + t.pos_.x, r.y + t.pos_.y};
 }
 
@@ -438,21 +458,26 @@ void CollisionSystem::pushOutAndSlide(FluidParticle& p, const AEVec2& n, f32 pen
         // We generate a random multiplier between 0.75f and 0.95f.
         // Because it is ALWAYS less than 1.0f, it safely absorbs energy, but
         // ensures particles leave the ramp at slightly different speeds!
-        f32 randomFriction = 0.98f + ((rand() % 100) * 0.0001f);
-        p.physics_.velocity_.x *= randomFriction;
-        p.physics_.velocity_.y *= randomFriction;
+        // f32 randomFriction = 0.98f + ((rand() % 100) * 0.0001f);
+        // p.physics_.velocity_.x *= randomFriction;
+        // p.physics_.velocity_.y *= randomFriction;
 
         // EFFECT B: Micro-Bumps (Thickens the stream)
         // Real dirt has tiny pebbles. When water hits them, it splashes outward.
         // We apply a microscopic random kick purely along the OUTWARD normal vector.
         // (Generates a tiny push between 0.0f and 15.0f velocity units)
-        if (n.y <= 0.5f) {
-            const f32 MAX_MICRO_BUMP = 30.0f;
-            f32 microBump = (rand() % 100) * 0.15f * (dt / 0.004f);
-            microBump = (std::min)(microBump, MAX_MICRO_BUMP);
-            p.physics_.velocity_.x += n.x * microBump;
-            p.physics_.velocity_.y += n.y * microBump;
+        if (n.y > 0.5f) {
+            f32 impactSpeed = std::abs(vn);
+            f32 spreadDir = (std::abs(p.physics_.velocity_.x) > 1.0f)
+                                ? (p.physics_.velocity_.x > 0 ? 1.0f : -1.0f)
+                                : ((rand() % 2) == 0 ? 1.0f : -1.0f);
+            p.physics_.velocity_.x += spreadDir * impactSpeed * 0.2f;
         }
+
+        // Very light friction — barely removes energy so flow persists
+        f32 randomFriction = 0.999f + ((rand() % 100) * 0.000001f);
+        p.physics_.velocity_.x *= randomFriction;
+        p.physics_.velocity_.y *= randomFriction;
 
         /*
         f32 noise = ((rand() % 100) * 0.001f) - 0.04f;
@@ -531,17 +556,28 @@ void CollisionSystem::resolveFluidParticlePair(FluidParticle& p1, FluidParticle&
             }
         }
 
-        // Apply the calculated movement to both particles directly to transform_.pos
+        // Cap both directions to prevent tunneling
         const f32 MAX_UPWARD_PUSH = 2.0f;
+        const f32 MAX_HORIZONTAL_PUSH = 2.0f;
+        f32 p1MoveX = moveX * p1Weight;
+        f32 p2MoveX = moveX * p2Weight;
         f32 p1MoveY = moveY * p1Weight;
         f32 p2MoveY = moveY * p2Weight;
         if (p1MoveY > MAX_UPWARD_PUSH)
             p1MoveY = MAX_UPWARD_PUSH;
         if (-p2MoveY > MAX_UPWARD_PUSH)
             p2MoveY = -MAX_UPWARD_PUSH;
-        p1.transform_.pos_.x += moveX * p1Weight;
+        if (p1MoveX > MAX_HORIZONTAL_PUSH)
+            p1MoveX = MAX_HORIZONTAL_PUSH;
+        if (p1MoveX < -MAX_HORIZONTAL_PUSH)
+            p1MoveX = -MAX_HORIZONTAL_PUSH;
+        if (p2MoveX > MAX_HORIZONTAL_PUSH)
+            p2MoveX = MAX_HORIZONTAL_PUSH;
+        if (p2MoveX < -MAX_HORIZONTAL_PUSH)
+            p2MoveX = -MAX_HORIZONTAL_PUSH;
+        p1.transform_.pos_.x += p1MoveX;
         p1.transform_.pos_.y += p1MoveY;
-        p2.transform_.pos_.x -= moveX * p2Weight;
+        p2.transform_.pos_.x -= p2MoveX;
         p2.transform_.pos_.y += p2MoveY;
 
         // --- Velocity Impulse ---
@@ -561,13 +597,15 @@ void CollisionSystem::resolveFluidParticlePair(FluidParticle& p1, FluidParticle&
             //
             // -1.0f  : Perfectly Inelastic
             // -2.0f  : Perfectly Elastic
-            f32 restitution = -1.3f; // Bounciness
-            f32 j = restitution * velAlongNormal * 0.5f;
-
-            p1.physics_.velocity_.x += j * nx;
-            p1.physics_.velocity_.y += j * ny;
-            p2.physics_.velocity_.x -= j * nx;
-            p2.physics_.velocity_.y -= j * ny;
+            const f32 MIN_BOUNCE_THRESHOLD = 15.0f;
+            if (std::abs(velAlongNormal) > MIN_BOUNCE_THRESHOLD) {
+                f32 restitution = -1.8f;
+                f32 j = restitution * velAlongNormal * 0.5f;
+                p1.physics_.velocity_.x += j * nx;
+                p1.physics_.velocity_.y += j * ny;
+                p2.physics_.velocity_.x -= j * nx;
+                p2.physics_.velocity_.y -= j * ny;
+            }
         }
     }
 }

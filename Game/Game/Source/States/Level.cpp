@@ -45,6 +45,9 @@ static Button buttonQuit;
 
 static PauseSystem pauseSystem;
 
+static int fpsDisplay = 0;
+static int particleDisplay = 0;
+
 void LoadLevel() {
     // std::cout << "Load level 3\n";
     Terrain::createMeshLibrary();
@@ -130,6 +133,15 @@ void InitializeLevel() {
 
 void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
     // std::cout << "Update level 3\n";
+
+    static f32 fpsTimer = 0.0f;
+
+    fpsTimer += deltaTime;
+    if (fpsTimer >= 0.5f) {
+        fpsDisplay = static_cast<int>(1.0f / deltaTime);
+        particleDisplay = fluidSystem.GetParticleCount(FluidType::Water);
+        fpsTimer = 0.0f;
+    }
 
     if (pauseSystem.isPaused()) { // Game is paused
         if (AEInputCheckTriggered(AEVK_P) || 0 == AESysDoesWindowExist()) {
@@ -341,6 +353,15 @@ void DrawLevel() {
     rotationText.content_ =
         "Portal Rotation:" + std::to_string(static_cast<s32>(portalSystem.GetRotationValue()));
     rotationText.draw(font);
+
+    TextData fpsText{"", -0.9f, 0.9f};
+    TextData particleText{"", -0.9f, 0.8f};
+
+    fpsText.content_ = "FPS: " + std::to_string(fpsDisplay);
+    fpsText.draw(font);
+
+    particleText.content_ = "Particles: " + std::to_string(particleDisplay);
+    particleText.draw(font);
 
     if (pauseSystem.isPaused()) { // Game is paused
         // UI buttons

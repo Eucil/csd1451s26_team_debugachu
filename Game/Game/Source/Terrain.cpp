@@ -1,4 +1,5 @@
 #include "Terrain.h"
+#include "CollisionSystem.h"
 
 #include <iostream>
 #include <vector>
@@ -532,6 +533,7 @@ void Terrain::destroyTerrain(f32 worldX, f32 worldY) {
         initCellsGraphics(); // Unoptimal as all cells are being updated
         updateTerrain();
         initCellsCollider();
+        CollisionSystem::markCollidersDirty();
     }
 }
 
@@ -558,6 +560,7 @@ void Terrain::destroyTerrainRadius(f32 worldX, f32 worldY, f32 radius) {
         initCellsGraphics();
         updateTerrain();
         initCellsCollider();
+        CollisionSystem::markCollidersDirty();
     }
 }
 
@@ -584,6 +587,7 @@ void Terrain::buildTerrainRadius(f32 worldX, f32 worldY, f32 radius) {
         initCellsGraphics();
         updateTerrain();
         initCellsCollider();
+        CollisionSystem::markCollidersDirty();
     }
 }
 

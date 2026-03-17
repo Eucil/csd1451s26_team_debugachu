@@ -123,6 +123,12 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
             p.physics_.velocity_.y = TERMINAL_FALL_SPEED;
         }
 
+        const f32 MAX_HORIZONTAL_SPEED = 300.0f;
+        if (p.physics_.velocity_.x > MAX_HORIZONTAL_SPEED)
+            p.physics_.velocity_.x = MAX_HORIZONTAL_SPEED;
+        if (p.physics_.velocity_.x < -MAX_HORIZONTAL_SPEED)
+            p.physics_.velocity_.x = -MAX_HORIZONTAL_SPEED;
+
         // ================================================ //
         // OPTIMISATION: STOPS VERY SLOW PARTICLES
         // ================================================ //
@@ -131,7 +137,7 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         // (1 pixel, 1 pixel) velocity, it is considered miniscule.
         //
         // (sqrt(1.0f + 1.0f) ) ^ 2
-        f32 thresholdVel = 1.41f * 1.41f;
+        f32 thresholdVel = 0.5f;
         f32 currentSpeedSq = (p.physics_.velocity_.x * p.physics_.velocity_.x) +
                              (p.physics_.velocity_.y * p.physics_.velocity_.y);
 
