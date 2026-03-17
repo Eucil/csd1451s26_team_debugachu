@@ -270,3 +270,5 @@ void PortalSystem::RotatePortal() {
 }
 
 f32 PortalSystem::GetRotationValue() { return rotation_value; }
+
+const std::vector<Portal*>& PortalSystem::GetPortals() const { return portal_vec; }

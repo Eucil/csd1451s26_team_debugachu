@@ -4,6 +4,7 @@
 #include "Collectible.h"
 #include "StartEndPoint.h"
 #include "Terrain.h"
+#include "PortalSystem.h"
 
 #include <AEEngine.h>
 #include <filesystem>
@@ -12,7 +13,7 @@
 
 enum class Level { Level1 = 1, Level2, Level3, Level4, Level5, Level6, Level7, Level8, None, Level99 = 99};
 enum class editorMode { Edit, Delete, Create, None };
-enum class GameBlock { Dirt, Stone, Magic, StartPoint, EndPoint, Collectible, None };
+enum class GameBlock { Dirt, Stone, Magic, StartPoint, EndPoint, Collectible, Portal, None };
 
 class LevelManager {
 public:
@@ -63,6 +64,7 @@ public:
     void saveTerrainInfo(std::vector<float>& nodes, const std::string& terrainType);
     void saveStartEndInfo(std::vector<StartEnd>& startPoints, StartEnd& endPoint);
     void saveCollectibleInfo(std::vector<Collectible>& collectibles);
+    void savePortalInfo(PortalSystem& portalSystem);
     void writeToFile(int level);
     //=================================================================
 
@@ -74,6 +76,7 @@ public:
     void parseTerrainInfo(std::vector<float>& nodes, std::string terrainType);
     void parseStartEndInfo(StartEndPoint& startEndPointSystem);
     void parseCollectibleInfo(CollectibleSystem& collectibleSystem);
+    void parsePortalInfo(PortalSystem& portalSystem);
     //=================================================================
 
     // Public variables

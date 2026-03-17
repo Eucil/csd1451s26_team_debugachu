@@ -155,6 +155,10 @@ void InitializeLevel() {
         levelManager.parseCollectibleInfo(collectibleSystem);
     }
 
+    if (fileExist) {
+        levelManager.parsePortalInfo(portalSystem);
+    }
+
     vfxSystem.Initialize(800, 20);
 
     // UI buttons
@@ -344,6 +348,16 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 default:
                     break;
                 }
+                if (magic->isNearestNodeToMouseAtThreshold() == true) {
+                    if (AEInputCheckTriggered(AEVK_RBUTTON) || 0 == AESysDoesWindowExist()) {
+                        portalSystem.CheckMouseClick();
+                    } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
+                        portalSystem.ResetIframe();
+                    }
+                }
+                if (AEInputCheckTriggered(AEVK_MBUTTON)) {
+                    portalSystem.RotatePortal();
+                }
             }
             // Inputs to save level
             if (AEInputCheckReleased(AEVK_S)) {
@@ -354,6 +368,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 levelManager.saveStartEndInfo(startEndPointSystem.startPoints_,
                                               startEndPointSystem.endPoint_);
                 levelManager.saveCollectibleInfo(collectibleSystem.GetCollectibles());
+                levelManager.savePortalInfo(portalSystem);
                 levelManager.writeToFile(levelManager.getCurrentLevel());
             }
 
@@ -667,9 +682,19 @@ void UnloadLevel() {
     Terrain::freeMeshLibrary();
     AEGfxDestroyFont(font);
 
-    AEGfxTextureUnload(pTerrainDirtTex);
-    AEGfxTextureUnload(pTerrainStoneTex);
-    AEGfxTextureUnload(pTerrainMagicTex);
+    // unload terrain textures
+    if (pTerrainDirtTex) {
+        AEGfxTextureUnload(pTerrainDirtTex);
+        pTerrainDirtTex = nullptr;
+    }
+    if (pTerrainStoneTex) {
+        AEGfxTextureUnload(pTerrainStoneTex);
+        pTerrainStoneTex = nullptr;
+    }
+    if (pTerrainMagicTex) {
+        AEGfxTextureUnload(pTerrainMagicTex);
+        pTerrainMagicTex = nullptr;
+    }
 
     levelManager.freeLevelEditor();
     levelManager.SetCurrentLevel(0);
@@ -677,4 +702,5 @@ void UnloadLevel() {
     // UI buttons
     buttonRestart.unload();
     buttonQuit.unload();
+
 }

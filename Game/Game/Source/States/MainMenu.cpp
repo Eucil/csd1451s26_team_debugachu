@@ -8,7 +8,9 @@
 #include "FluidSystem.h"
 #include "StartEndPoint.h"
 #include "Terrain.h"
+#include "PortalSystem.h"
 #include "States/LevelManager.h"
+
 
 // UI includes
 #include "Button.h"
@@ -22,11 +24,14 @@ static bool fileExist;
 // Background simulation variables
 static Terrain* bgDirt = nullptr;
 static Terrain* bgStone = nullptr;
+static Terrain* bgMagic = nullptr;
 static AEGfxTexture* pBgDirtTex{nullptr};
 static AEGfxTexture* pBgStoneTex{nullptr};
+static AEGfxTexture* pBgMagicTex{nullptr};
 
 static FluidSystem bgFluidSystem;
 static StartEndPoint bgStartEndPoint;
+static PortalSystem bgPortalSystem;
 
 // Auto spawn fluid without player input
 static f32 autoSpawnTimer = 0.0f;
@@ -67,6 +72,7 @@ void LoadMainMenu() {
 
     pBgDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
     pBgStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
+    pBgMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
 
     // Setup buttons - position them vertically
     startButton.loadMesh();
@@ -89,12 +95,16 @@ void InitializeMainMenu() {
 
     // Initialize simulation systems
     bgFluidSystem.Initialize();
+    bgPortalSystem.Initialize(); 
 
     // Setup terrain
     bgDirt = new Terrain(TerrainMaterial::Dirt, pBgDirtTex, {0.0f, 0.0f}, height, width,
                           tileSize, true);
     bgStone = new Terrain(TerrainMaterial::Stone, pBgStoneTex, {0.0f, 0.0f}, height, width,
                           tileSize, true);
+    bgMagic = new Terrain(TerrainMaterial::Magic, pBgMagicTex, {0.0f, 0.0f}, height, width,
+                          tileSize, false);
+
     // Initialise JSON data into the background terrain cells
     if (fileExist) {
         levelManager.parseTerrainInfo(bgDirt->getNodes(), "Dirt");
@@ -111,9 +121,18 @@ void InitializeMainMenu() {
     bgStone->initCellsCollider();
     bgStone->updateTerrain();
 
+    if (fileExist) {
+        levelManager.parseTerrainInfo(bgMagic->getNodes(), "Magic");
+    }
+    bgMagic->initCellsTransform();
+    bgMagic->initCellsGraphics();
+    bgMagic->initCellsCollider();
+    bgMagic->updateTerrain();
+
     bgStartEndPoint.Initialize();
     if (fileExist) {
         levelManager.parseStartEndInfo(bgStartEndPoint);
+        levelManager.parsePortalInfo(bgPortalSystem);
     }
 
     for (auto& startPoint : bgStartEndPoint.startPoints_) {
@@ -132,29 +151,47 @@ void InitializeMainMenu() {
 }
 
 static void BgSpawnWater(f32 deltaTime) {
-    static f32 global_spawn_timer = 0.0f;
-    global_spawn_timer -= deltaTime;
+    // STATE VARIABLES
+    static bool isWaiting = true; 
+    static f32 stateTimer = 3.5f;    // Wait 3.5 seconds before the very first burst
+    static f32 particleTimer = 0.0f; // Tracks how fast individual drops fall
+    static int particlesSpawned = 0; // Explicitly counts how many dropped
 
-    // Only spawn if enough time has passed
-    if (global_spawn_timer <= 0.0f) {
-        global_spawn_timer = 0.025f; // Keep the same flow rate as your main game
+    if (isWaiting) {
+        stateTimer -= deltaTime;
+        // When the wait is over, open the tap and reset the counter
+        if (stateTimer <= 0.0f) {
+            isWaiting = false;
+            particlesSpawned = 0;
+            particleTimer = 0.0f; // Force the first drop to spawn instantly
+        }
+    } else { // The tap is ON
+        particleTimer -= deltaTime;
 
-        for (auto& startPoint : bgStartEndPoint.startPoints_) {
-            // Only process if the pipe is currently turned ON by our toggle timer
-            if (startPoint.release_water_ && startPoint.type_ == StartEndType::Pipe) {
+        while (particleTimer <= 0.0f && particlesSpawned < 10) {
+            particleTimer += 0.05f; // Cooldown between drops
+            particlesSpawned++;    
 
-                f32 randRadius = 5.0f;
-                f32 x_offset = startPoint.transform_.pos_.x +
-                               AERandFloat() * startPoint.transform_.scale_.x -
-                               (startPoint.transform_.scale_.x / 2.f);
+            for (auto& startPoint : bgStartEndPoint.startPoints_) {
+                if (startPoint.type_ == StartEndType::Pipe) {
 
-                AEVec2 position = {x_offset, startPoint.transform_.pos_.y -
-                                                 (startPoint.transform_.scale_.y / 2.f) -
-                                                 randRadius};
+                    f32 randRadius = 8.0f;
+                    f32 x_offset = startPoint.transform_.pos_.x +
+                                   AERandFloat() * startPoint.transform_.scale_.x -
+                                   (startPoint.transform_.scale_.x / 2.f);
 
-                // Spawn the particle into our background fluid system
-                bgFluidSystem.SpawnParticle(position.x, position.y, randRadius, FluidType::Water);
+                    f32 y_offset = startPoint.transform_.pos_.y -
+                                   (startPoint.transform_.scale_.y / 2.f) - randRadius;
+
+                    bgFluidSystem.SpawnParticle(x_offset, y_offset, randRadius, FluidType::Water);
+                }
             }
+        }
+
+        // Once we hit 10 particles, turn the tap OFF and wait 9 seconds
+        if (particlesSpawned >= 10) {
+            isWaiting = true;
+            stateTimer = 9.0f;
         }
     }
 }
@@ -214,32 +251,24 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
     bgStartEndPoint.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
 
     
-    static f32 waterToggleTimer = 3.0f; // Time in seconds before switching
-    static bool waterIsFlowing = true;
-
-    waterToggleTimer -= deltaTime;
-    if (waterToggleTimer <= 0.0f) {
-        waterIsFlowing = !waterIsFlowing; 
-        waterToggleTimer = 3.0f;         
-
-        // Apply the new state to all background pipes
-        for (auto& startPoint : bgStartEndPoint.startPoints_) {
-            startPoint.release_water_ = waterIsFlowing;
-        }
-    }
     BgSpawnWater(deltaTime);
     // Update the fluid physics against the loaded terrain
     // @todo fix this
     bgFluidSystem.Update(deltaTime, *bgDirt);
     bgFluidSystem.Update(deltaTime, *bgStone);
+    bgFluidSystem.Update(deltaTime, *bgMagic);
 
+    bgPortalSystem.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
 }
 
 void DrawMainMenu() {
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
     bgDirt->renderTerrain();
     bgStone->renderTerrain();
-    bgStartEndPoint.DrawColor(); 
+    bgMagic->renderTerrain();
+
+    bgStartEndPoint.DrawColor();
+    bgPortalSystem.DrawColor();
     bgFluidSystem.DrawColor();
 
     // Draw all buttons with different colors
@@ -256,14 +285,35 @@ void DrawMainMenu() {
 void FreeMainMenu() {
     bgFluidSystem.Free();
     bgStartEndPoint.Free();
+    bgPortalSystem.Free();
 
     delete bgDirt;
     bgDirt = nullptr;
     delete bgStone;
     bgStone = nullptr;
+    delete bgMagic;
+    bgMagic = nullptr;
 }
 
 void UnloadMainMenu() {
+
+    // free terrain mesh
+    Terrain::freeMeshLibrary();
+
+    // unload background terrain textures
+    if (pBgDirtTex) {
+        AEGfxTextureUnload(pBgDirtTex);
+        pBgDirtTex = nullptr;
+    }
+    if (pBgStoneTex) {
+        AEGfxTextureUnload(pBgStoneTex);
+        pBgStoneTex = nullptr;
+    }
+    if (pBgMagicTex) {
+        AEGfxTextureUnload(pBgMagicTex);
+        pBgMagicTex = nullptr;
+    }
+
     // Free all meshes
     startButton.unload();
     howToPlayButton.unload();
@@ -272,6 +322,12 @@ void UnloadMainMenu() {
     quitButton.unload();
 
     // Free fonts
-    AEGfxDestroyFont(titleFont);
-    AEGfxDestroyFont(buttonFont);
+    if (titleFont) {
+        AEGfxDestroyFont(titleFont);
+        titleFont = 0; 
+    }
+    if (buttonFont) {
+        AEGfxDestroyFont(buttonFont);
+        buttonFont = 0;
+    }
 }
