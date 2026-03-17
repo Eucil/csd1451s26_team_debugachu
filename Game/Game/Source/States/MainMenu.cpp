@@ -85,6 +85,7 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
         // Credits button
         if (creditsButton.checkMouseClick()) {
             std::cout << "Credits button clicked\n";
+            GSM.nextState_ = StateId::Credits;
             // TODO: Implement credits screen or state
             // GSM.nextState_ = StateId::Credits;
         }
