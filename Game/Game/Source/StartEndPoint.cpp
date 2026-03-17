@@ -1,5 +1,6 @@
 #include "AEEngine.h"
 
+#include "AudioSystem.h"
 #include "StartEndPoint.h"
 #include "Utils.h"
 
@@ -405,6 +406,9 @@ void StartEndPoint::CheckMouseClick() {
             // std::cout << "Mouse is over start point!\n";
             startPoint.release_water_ = !startPoint.release_water_;
             startPoint.release_water_iframe_ = true;
+
+            // Play faucet squeak sound
+            gAudioSystem.playSound("faucet_squeak", "sfx", 0.25f, 1.0f);
             break;
         }
     }

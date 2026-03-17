@@ -8,6 +8,7 @@
 
 #include <AEEngine.h>
 
+#include "AudioSystem.h"
 #include "Button.h"
 #include "Collectible.h"
 #include "CollisionSystem.h"
@@ -108,6 +109,11 @@ void LoadLevel() {
 
     // Once level is loaded, make sure it is not paused
     pauseSystem.resume();
+
+    // Audio System
+    gAudioSystem.loadSound("faucet_squeak", "Assets/Audio/faucet_squeak.mp3");
+    gAudioSystem.loadSound("wormhole_place", "Assets/Audio/wormhole_place.mp3");
+    gAudioSystem.loadSound("dirt_break", "Assets/Audio/dirt_break.mp3");
 }
 
 void InitializeLevel() {
@@ -704,4 +710,8 @@ void UnloadLevel() {
     // UI buttons
     buttonRestart.unload();
     buttonQuit.unload();
+
+    // Audio system
+    gAudioSystem.unloadAllSounds();
+    gAudioSystem.unloadAllMusic();
 }
