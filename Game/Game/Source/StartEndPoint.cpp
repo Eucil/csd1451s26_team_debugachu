@@ -295,6 +295,9 @@ void StartEndPoint::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
             particlesCollected_++;
             // Remove this particle from the pool
             particleIt = particlePool.erase(particleIt); // Erase returns the next valid iterator
+
+            // Play pop sound
+            gAudioSystem.playSound("pop", "sfx", 0.8f, 1.0f);
         } else {
             ++particleIt; // Increment iterator only if no deletion occurred
         }
