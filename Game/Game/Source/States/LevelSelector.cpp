@@ -297,7 +297,7 @@ void DrawLevelSelector() {
     AEGfxSetBackgroundColor(1.0f, 1.0f, 1.0f);
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
     AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);     
     AEGfxSetTransparency(1.0f);
 
