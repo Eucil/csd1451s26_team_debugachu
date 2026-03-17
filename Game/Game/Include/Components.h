@@ -16,7 +16,7 @@ struct Graphics {
     f32 red_{1.0f};
     f32 green_{1.0f};
     f32 blue_{1.0f};
-    f32 alpha_{0.0f};
+    f32 alpha_{1.0f};
 };
 
 struct RigidBody2D {

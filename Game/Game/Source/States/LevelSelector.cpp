@@ -55,6 +55,7 @@ void LoadLevelSelector() {
     f32 text_g = configManager.getFloat("LevelSelector", "default", "text_g", 1.f);
     f32 text_b = configManager.getFloat("LevelSelector", "default", "text_b", 1.f);
     f32 text_a = configManager.getFloat("LevelSelector", "default", "text_a", 1.f);
+    f32 extra_offset_x = 0.f;
 
     for (int i{}, x{}, y{}; i < static_cast<int>(Level::None); ++i, ++x) {
         // Push back button and text
@@ -62,14 +63,18 @@ void LoadLevelSelector() {
             y++;
             x = 0;
         }
+        if (i % 9 == 0 && i != 0) {
+            extra_offset_x += 0.03f;
+        }
         Button tempButton;
         AEVec2 buttonPos = {button_startpos_x + (button_x_offset * x),
                             button_startpos_y - (button_y_offset * y)};
         tempButton.setTransform(buttonPos, button_scale);
         tempButton.loadMesh();
-        tempButton.loadTexture("Assets/Textures/pale_blue_button.png");
+        tempButton.loadTexture("Assets/Textures/brown_square_50_50.png");
 
-        tempButton.setText(std::to_string(i + 1), buttonPos.x / text_pos_divisor_x - text_x_offset,
+        tempButton.setText(std::to_string(i + 1),
+                           buttonPos.x / text_pos_divisor_x - text_x_offset - extra_offset_x,
                            buttonPos.y / text_pos_divisor_y - text_y_offset, text_scale, text_r,
                            text_g, text_b, text_a);
         editorButtonPool_.push_back(tempButton);
@@ -231,8 +236,10 @@ void DrawLevelSelector() {
     // Draw button with different color base on level editor mode
     for (int i = 0; i < static_cast<int>(Level::None); ++i) {
         if (levelManager.playableLevels_[i]) {
+            editorButtonPool_[i].setRGBA(1.0f, 1.0f, 1.f, 1.f); // Pale blue for playable levels
             editorButtonPool_[i].draw(font);
         } else {
+            editorButtonPool_[i].setRGBA(0.5f, 0.5f, 0.5f, 1.f); // Grey for non-playable levels
             editorButtonPool_[i].draw(font);
         }
     }

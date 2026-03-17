@@ -28,6 +28,7 @@ public:
     Transform getTransform() const;
     void setText(const std::string& content, const f32& x, const f32& y, const f32& scale,
                  const f32& r, const f32& g, const f32& b, const f32& a);
+    void setRGBA(const f32& r, const f32& g, const f32& b, const f32& a);
     void updateTransform();
     void draw(s8 font);
     void unload();

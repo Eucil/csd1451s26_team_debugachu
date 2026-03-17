@@ -2,16 +2,31 @@
 
 #include "Button.h"
 #include "Collectible.h"
+#include "PortalSystem.h"
 #include "StartEndPoint.h"
 #include "Terrain.h"
-#include "PortalSystem.h"
 
 #include <AEEngine.h>
 #include <filesystem>
 #include <json/json.h>
 #include <vector>
 
-enum class Level { Level1 = 1, Level2, Level3, Level4, Level5, Level6, Level7, Level8, None, Level99 = 99};
+enum class Level {
+    Level1,
+    Level2,
+    Level3,
+    Level4,
+    Level5,
+    Level6,
+    Level7,
+    Level8,
+    Level9,
+    Level10,
+    Level11,
+    Level12,
+    None,
+    Level99 = 99
+};
 enum class editorMode { Edit, Delete, Create, None };
 enum class GameBlock { Dirt, Stone, Magic, StartPoint, EndPoint, Collectible, Portal, None };
 

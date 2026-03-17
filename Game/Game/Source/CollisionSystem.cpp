@@ -104,7 +104,9 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
     // any particles that Pass 1's fluid-fluid pressure pushed into walls.
     // A single pass sometimes misses particles that get pushed in gradually
     // over many frames — the second sweep catches those before they clip through.
-    for (int terrainPass = 0; terrainPass < 2; ++terrainPass) {
+    // 1 for now since particles don't move far enough in a single substep to change grid cells, but
+    // if we add fast-moving forces later we may want to increase this.
+    for (int terrainPass = 0; terrainPass < 1; ++terrainPass) {
         // Only rebuild the grid on the first sweep — Pass 2 doesn't move particles
         // far enough to change their grid cell between the two sweeps, so rebuilding
         // a second time would be wasted work.

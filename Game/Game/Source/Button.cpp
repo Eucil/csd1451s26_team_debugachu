@@ -57,6 +57,13 @@ void Button::setText(const std::string& content, const f32& x, const f32& y, con
     text_.a_ = a;
 }
 
+void Button::setRGBA(const f32& r, const f32& g, const f32& b, const f32& a) {
+    graphics_.red_ = r;
+    graphics_.green_ = g;
+    graphics_.blue_ = b;
+    graphics_.alpha_ = a;
+}
+
 void Button::updateTransform() {
     AEMtx33 scaleMtx, rotMtx, transMtx;
     AEMtx33Scale(&scaleMtx, transform_.scale_.x, transform_.scale_.y);
@@ -71,7 +78,7 @@ void Button::draw(s8 font) {
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(1.0f);
-    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxSetColorToMultiply(graphics_.red_, graphics_.green_, graphics_.blue_, graphics_.alpha_);
     AEGfxSetTransform(transform_.worldMtx_.m);
     AEGfxTextureSet(graphics_.texture_, 0.0f, 0.0f);
     AEGfxMeshDraw(graphics_.mesh_, AE_GFX_MDM_TRIANGLES);
