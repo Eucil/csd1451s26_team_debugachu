@@ -49,7 +49,6 @@ private:
 public:
     // Can have multiple start points but only one end point
     std::vector<StartEnd> startPoints_;
-    std::vector<int> free_start_point_indices_;
     StartEnd endPoint_ = {};
     AEVec2 startendScale_ = {50.0f, 50.0f};
 

@@ -71,7 +71,7 @@ void LoadLevel() {
     pTerrainMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
 
     // Setup texts
-    rotationText = TextData{"", 0.6f, 0.9f};
+    rotationText = TextData{"", 0.7f, 0.92f, 0.5f};
     font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
 
     // tc added start
@@ -127,7 +127,6 @@ void InitializeLevel() {
     // std::cout << "Initialize level 3\n";
     fluidSystem.Initialize();
     portalSystem.Initialize();
-    mossSystem.Load(font);
     mossSystem.Initialize();
 
     dirt = new Terrain(TerrainMaterial::Dirt, pTerrainDirtTex, {0.0f, 0.0f}, height, width,
@@ -164,44 +163,6 @@ void InitializeLevel() {
     if (fileExist) {
         levelManager.parseStartEndInfo(startEndPointSystem);
     }
-
-    // ===== FIX: Remove invalid start points at (0,0) =====
-    auto& startPoints = startEndPointSystem.startPoints_;
-    std::vector<StartEnd> validStartPoints;
-
-    printf("=== CLEANING START POINTS ===\n");
-    printf("Before cleaning: %zu start points\n", startPoints.size());
-
-    for (size_t i = 0; i < startPoints.size(); i++) {
-        StartEnd& sp = startPoints[i];
-
-        // Keep only start points that are active
-        if (!sp.active_) {
-            printf("  Removing inactive start point\n");
-            continue;
-        }
-
-        // Check if position is at (0,0) or very close
-        float epsilon = 0.1f;
-        bool isAtOrigin =
-            (fabs(sp.transform_.pos_.x) < epsilon && fabs(sp.transform_.pos_.y) < epsilon);
-
-        if (isAtOrigin) {
-            printf("  Removing zombie start point at (0,0)\n");
-            continue;
-        }
-
-        // If we get here, the start point is valid
-        validStartPoints.push_back(sp);
-        printf("  Keeping start point at (%.1f, %.1f) with %.0f water\n", sp.transform_.pos_.x,
-               sp.transform_.pos_.y, sp.water_remaining_);
-    }
-
-    // Replace with cleaned list
-    startPoints = validStartPoints;
-    printf("After cleaning: %zu start points\n", startPoints.size());
-    printf("Total water: %.0f\n", totalWaterRemaining);
-    printf("==============================\n");
 
     printf("=== WATER DEBUG ===\n");
     printf("Number of start points: %zu\n", startEndPointSystem.startPoints_.size());
@@ -354,7 +315,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
         }
 
         // Press Q to go to main menu
-        if (AEInputCheckTriggered(AEVK_Q) || 0 == AESysDoesWindowExist()) {
+        if (AEInputCheckTriggered(AEVK_ESCAPE) || 0 == AESysDoesWindowExist()) {
             std::cout << "Q triggered\n";
             GSM.nextState_ = StateId::MainMenu;
         }
@@ -485,9 +446,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                     portalSystem.ResetIframe();
                 }
             }
-            if (AEInputCheckTriggered(AEVK_MBUTTON)) {
-                portalSystem.RotatePortal();
-            }
+            portalSystem.RotatePortal();
         }
 
         for (auto& startPoint : startEndPointSystem.startPoints_) {
@@ -717,6 +676,9 @@ void DrawLevel() {
             break;
         case GameBlock::Stone:
             levelManager.drawBrushPreview(TerrainMaterial::Stone);
+            break;
+        case GameBlock::Magic:
+            levelManager.drawBrushPreview(TerrainMaterial::Magic);
             break;
         case GameBlock::StartPoint:
             startEndPointSystem.DrawColorPreview(StartEndType::Pipe);
