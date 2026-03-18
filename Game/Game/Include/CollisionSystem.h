@@ -21,11 +21,6 @@ class CollisionSystem {
 public:
     static void terrainToFluidCollision(Terrain& terrain, FluidSystem& fluidSystem, f32 dt = {});
 
-    // Notify CollisionSystem that terrain collider data has changed.
-    // This causes cellHasColliders[] to be recomputed on the next
-    // terrainToFluidCollision call, ensuring particles don't clip through
-    // newly built terrain or fall through newly dug holes.
-
 private:
     using BucketEntry = std::pair<FluidType, u32>;
 
@@ -47,8 +42,8 @@ private:
     // Point in triangle (barycentric)
     static bool pointInTriangle(const AEVec2& p, const AEVec2& a, const AEVec2& b, const AEVec2& c);
 
-    // Generates a CollisionContact struct containing information about the collision (normal,
-    // penetration).
+    // Helper function (terrainToFluidCollision): 
+    // Generates a CollisionContact struct containing information about the collision (normal, penetration).
     static CollisionInfo cellToFluidParticleCollision(const Cell& cell,
                                                       const FluidParticle& fluidParticle);
 
@@ -57,7 +52,7 @@ private:
                                    const AEVec2& boxCenter, const AEVec2& halfExt,
                                    AEVec2& outNormal, f32& outPenetration);
 
-    // Narrow phase: circle vs triangle in world (closest point on triangle)
+    // Helper function (cellToFluidParticleCollision): circle vs Triangle in world
     static bool detectCircleVsTriangle(const AEVec2& circleCenter, f32 radius,
                                        const AEVec2& velocity, const AEVec2& v0, const AEVec2& v1,
                                        const AEVec2& v2, AEVec2& outNormal, f32& outPenetration);

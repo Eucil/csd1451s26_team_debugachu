@@ -57,12 +57,13 @@ void FluidSystem::Initialize() {
         particlePools_[i].reserve(1000);
     }
 
-    // @todo To change to read values from a json file instead and load them into private containers
+    // @todo To change to read values from a json file instead and load them into private containers instead of using magic numbers
     // Initialize physics for each fluid type
     InitializePhysics(1.0f, -500.0f, {0.0f, 0.0f}, FluidType::Water);
     InitializePhysics(1.0f, -200.0f, {0.0f, 0.0f}, FluidType::Lava);
 
-    // Initialize graphics for each fluid type
+    // Initialize graphics for each fluid type 
+    // 3 Layers per particle to make our particles look more like water visually. (white, light blue, dark blue)
     InitializeGraphics(CreateCircleMesh(10, 0.5f), nullptr, 2, 1.0f, 1.0f, 1.0f, 1.0f,
                        FluidType::Water, 0);
     InitializeGraphics(CreateCircleMesh(10, 0.47f), nullptr, 2, 0.4f, 0.7f, 1.0f, 1.0f,
@@ -115,11 +116,11 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         p.physics_.velocity_.y += gravity * dt;
 
         // ================================================ //
-        // OPTIMISATION: ANTI-TUNNELLING CAP
+        // OPTIMISATION: ANTI-TUNNELLING CAP (FOR FAST PARTICLES)
         // ================================================ //
         // Without this, particles falling from a great height can reach very high speeds,
         // which can cause them to tunnel through terrain colliders.
-        const f32 TERMINAL_FALL_SPEED = -500.0f;
+        const f32 TERMINAL_FALL_SPEED = -500.0f; 
         if (p.physics_.velocity_.y < TERMINAL_FALL_SPEED) {
             p.physics_.velocity_.y = TERMINAL_FALL_SPEED;
         }
@@ -142,6 +143,7 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         f32 currentSpeedSq = (p.physics_.velocity_.x * p.physics_.velocity_.x) +
                              (p.physics_.velocity_.y * p.physics_.velocity_.y);
 
+        // If currentSpeedSq is lower than 0.5f, we are moving very slowly and can stop to save performance.
         if (currentSpeedSq < thresholdVel) {
             p.physics_.velocity_.x = 0.0f;
             p.physics_.velocity_.y = 0.0f;
@@ -163,6 +165,7 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         currentSpeedSq = (p.physics_.velocity_.x * p.physics_.velocity_.x) +
                          (p.physics_.velocity_.y * p.physics_.velocity_.y);
 
+        // Prevents compounded velocity from UpdateCollision from pushing particles to extreme speeds that can cause tunneling.
         // ================================================ //
         // 3. ANTI-TUNNELING: CAP MAXIMUM SPEED
         // ================================================ //
@@ -171,7 +174,7 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
             // Calculate actual speed to normalize.
             f32 actualSpeed = std::sqrt(currentSpeedSq);
 
-            // Normalize and multiply by our hard speed limit
+            // Normalize and multiply by our hard speed limit to get a normalized direction vector with capped speed.
             p.physics_.velocity_.x = (p.physics_.velocity_.x / actualSpeed) * MAX_SPEED;
             p.physics_.velocity_.y = (p.physics_.velocity_.y / actualSpeed) * MAX_SPEED;
         }

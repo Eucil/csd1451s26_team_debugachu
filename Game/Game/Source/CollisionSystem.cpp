@@ -220,12 +220,12 @@ bool CollisionSystem::pointInTriangle(const AEVec2& p, const AEVec2& a, const AE
     // This scalar value represents the exact surface area of the parallelogram they form.
     // Formula: AB x BC = Area of Parallelogram
     //
-    // Because it is a signed area, the positive or negative sign tells us the "winding order"
+    // Because it is a signed area, the positive or negative sign tells us the "winding order" (rotation is ANTI-CLOCKWISE)
     //
     // This refers to which direction the edge vector would need to rotate to face point P.
     //
-    // For example, the value obtained in cross1 is a scalar value for how much rotation should be
-    // applied to edgeAB to reach AP
+    // For example, if point P is on the bottom right of the triangle and AB refers to the edge along the x-axis,
+    // cross1 will be positive, meaning that AB would need to rotate left (anti-clockwise) to face point P.
     const f32 cross1 = (edgeAB.x * vectorAP.y) - (edgeAB.y * vectorAP.x);
     const f32 cross2 = (edgeBC.x * vectorBP.y) - (edgeBC.y * vectorBP.x);
     const f32 cross3 = (edgeCA.x * vectorCP.y) - (edgeCA.y * vectorCP.x);

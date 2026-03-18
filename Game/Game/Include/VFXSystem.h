@@ -28,6 +28,7 @@ struct VFXParticle {
     f32 maxLifeTime_{1.0f};
 
     bool active_{false}; // Used for object pooling
+    char padding[4];
 };
 
 struct EmitterConfig {
