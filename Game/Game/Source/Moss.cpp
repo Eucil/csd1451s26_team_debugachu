@@ -38,7 +38,6 @@ Moss::Moss(AEVec2 pos, MossType type) {
 
 void MossSystem::Load(s8 font) {
     font_ = font;
-    CreateMeshes();
     // Verify mesh was created
     if (!spikyMossMesh_) {
         printf("ERROR: Failed to create moss mesh!\n");
@@ -46,6 +45,7 @@ void MossSystem::Load(s8 font) {
 }
 
 void MossSystem::Initialize() {
+    CreateMeshes();
     mosses_.clear();
     globalTimer_ = 0.0f;
 }
