@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstdio>
 
+// constructor to set posit, scale, rotation,collider type, radius
 Collectible::Collectible() {
     transform_.pos_ = {0.0f, 0.0f};
     transform_.scale_ = {30.0f, 30.0f};
@@ -20,6 +21,8 @@ Collectible::Collectible() {
     rotationSpeed_ = 1.0f;
 }
 
+// constructor to take posit and param
+// Sets position to given coord
 Collectible::Collectible(AEVec2 pos, CollectibleType type) {
     transform_.pos_ = pos;
     transform_.scale_ = {30.0f, 30.0f};
@@ -29,6 +32,9 @@ Collectible::Collectible(AEVec2 pos, CollectibleType type) {
     collider_.shapeData_.circle_.radius = 15.0f;
     collider_.shapeData_.circle_.offset_ = {0.0f, 0.0f};
 
+    // type_ set to parameter value (Star, Gem, or Leaf)
+    //   active_ = true - collectible exists in world
+    // collected_ = false - not yet collected
     type_ = type;
     active_ = true;
     collected_ = false;
@@ -36,6 +42,8 @@ Collectible::Collectible(AEVec2 pos, CollectibleType type) {
     rotationSpeed_ = 1.0f + (AERandFloat() * 2.0f); // Random rotation speed
 }
 
+// Load system w font
+// reads UI posit from JSON config file
 void CollectibleSystem::Load(s8 font) {
     font_ = font;
     collectionText_.x_ =
@@ -48,6 +56,11 @@ void CollectibleSystem::Load(s8 font) {
         configManager.getString("Collectible", "default", "collectionText_.x_", "Items: 0/3");
 }
 
+// CreateMeshes() - builds the 3D shapes for collectibles
+// collectedCount_ = 0 - reset collected counter
+// totalCollectibles_ = 0 - reset total count
+// globalTimer_ = 0 - reset animation timer
+// collectibles_.clear() - remove all collectibles from previous level
 void CollectibleSystem::Initialize() {
     CreateMeshes();
     collectedCount_ = 0;
@@ -57,6 +70,9 @@ void CollectibleSystem::Initialize() {
     collectibles_.clear();
 }
 
+// AEGfxMeshStart() - starts building a mesh
+// outerRadius = 0.5f - distance from center to star tips
+// innerRadius = 0.25f - distance from center to inner points
 void CollectibleSystem::CreateMeshes() {
     // Star mesh (5-pointed star shape)
     AEGfxMeshStart();
@@ -64,12 +80,14 @@ void CollectibleSystem::CreateMeshes() {
     constexpr f32 outerRadius = 0.5f;
     constexpr f32 innerRadius = 0.25f;
 
+    // calculations to create a star shape
     for (int i = 0; i < starPoints; i++) {
         f32 angle1 = (i * 2.0f * 3.14159f / starPoints) - 3.14159f / 2.0f;
         f32 angle2 = ((i + 1) * 2.0f * 3.14159f / starPoints) - 3.14159f / 2.0f;
         f32 midAngle = (angle1 + angle2) / 2.0f;
 
-        // Outer points
+        // Using cosine and sine to convert angles to coordinates
+        // Multiply by outerRadius to get tip positions
         f32 x1 = cosf(angle1) * outerRadius;
         f32 y1 = sinf(angle1) * outerRadius;
         f32 x2 = cosf(angle2) * outerRadius;
@@ -78,13 +96,16 @@ void CollectibleSystem::CreateMeshes() {
         // Inner point
         f32 xi = cosf(midAngle) * innerRadius;
         f32 yi = sinf(midAngle) * innerRadius;
-
+        // adds a triangle to the mesh
         AEGfxTriAdd(0.0f, 0.0f, 0xFFFFFF00, 0.5f, 0.5f, x1, y1, 0xFFFFFF00, x1 + 0.5f, y1 + 0.5f,
                     xi, yi, 0xFFFFFF00, xi + 0.5f, yi + 0.5f);
-
+        // Add second triangle and end mesh
+        // Together they form one point of the star
         AEGfxTriAdd(0.0f, 0.0f, 0xFFFFFF00, 0.5f, 0.5f, xi, yi, 0xFFFFFF00, xi + 0.5f, yi + 0.5f,
                     x2, y2, 0xFFFFFF00, x2 + 0.5f, y2 + 0.5f);
     }
+    // AEGfxMeshEnd() completes mesh and returns pointer
+    // starMesh_ stores this mesh for later drawing
     starMesh_ = AEGfxMeshEnd();
 
     // Gem mesh (diamond shape)
@@ -117,26 +138,32 @@ void CollectibleSystem::CreateMeshes() {
     leafMesh_ = AEGfxMeshEnd();
 }
 
+// Add collectible to level
 void CollectibleSystem::LoadLevelCollectibles(AEVec2 pos, CollectibleType type) {
 
+    // emplace_back constructs collectible directly in vector
+    // Updates total count based on vector size
     collectibles_.emplace_back(pos, type);
 
     totalCollectibles_ = static_cast<int>(collectibles_.size());
 }
 
+// collision check start
 bool CollectibleSystem::CheckCollisionWithWater(const Collectible& collectible,
                                                 const FluidParticle& particle) {
     if (!collectible.active_ || collectible.collected_)
         return false;
 
     // Circle-circle collision
+    // delta.x = particle.x - collectible.x
+    // delta.y = particle.y - collectible.y
     AEVec2 delta = {particle.transform_.pos_.x - collectible.transform_.pos_.x,
                     particle.transform_.pos_.y - collectible.transform_.pos_.y};
 
     f32 distSq = delta.x * delta.x + delta.y * delta.y;
     f32 radiusSum = particle.collider_.shapeData_.circle_.radius +
                     collectible.collider_.shapeData_.circle_.radius;
-
+    // If squared distance < squared sum of radii ? Collision
     return distSq < (radiusSum * radiusSum);
 }
 
@@ -153,6 +180,7 @@ void CollectibleSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool)
         c.transform_.scale_ = {30.0f * pulse, 30.0f * pulse};
 
         // Rotation effect
+        // Creates continuous spinning effect
         c.transform_.rotationRad_ += dt * c.rotationSpeed_;
 
         // Update transform matrix
@@ -167,11 +195,10 @@ void CollectibleSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool)
         // Check collision with water particles
         for (const auto& particle : particlePool) {
             if (CheckCollisionWithWater(c, particle)) {
+                // if collision, mark collected, increment count, exit particle loop
                 c.collected_ = true;
                 collectedCount_++;
 
-                // Play collection sound or spawn particle effect here
-                // vfxSystem.SpawnVFX(VFXType::Collect, c.transform_.pos_);
                 gAudioSystem.playSound("ding", "sfx", 1.0f, 1.0f);
 
                 break;
@@ -209,6 +236,8 @@ void CollectibleSystem::DrawCollectible(const Collectible& c) {
     }
 }
 
+// Loop through all collectibles, Skip inactive or collected ones,
+// Call DrawCollectible for each active one
 void CollectibleSystem::Draw() {
     // Draw collectibles
     for (const auto& c : collectibles_) {
@@ -223,6 +252,7 @@ void CollectibleSystem::DrawUI() {
     collectionText_.draw(font_);
 }
 
+// Free each mesh if it exists
 void CollectibleSystem::Free() {
     if (starMesh_) {
         AEGfxMeshFree(starMesh_);
