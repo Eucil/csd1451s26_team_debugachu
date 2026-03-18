@@ -19,6 +19,7 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
     static std::vector<std::vector<BucketEntry>> fluidGrid;
     static size_t cachedTotalCells = 0;
 
+    // Resize fluidGrid once based on terrainGrid
     if (cachedTotalCells != totalCells) {
         fluidGrid.resize(totalCells);
         cachedTotalCells = totalCells;
@@ -47,10 +48,10 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
     // ====================================================================
     // PASS 1: FLUID vs FLUID (Soft Constraints)
     // ====================================================================
-    // Resolves particle-to-particle overlap first. This is a "soft" constraint
-    // because the positions can still end up inside terrain after this pass —
-    // Pass 2 corrects that. Fluid-fluid is done first so that pressure from
+    // Resolves particle-to-particle overlap first. Fluid-fluid is done first so that pressure from
     // stacked particles is resolved before terrain pushes them out.
+
+    // Currently, fluidGrid is empty so we populate it first
     buildGrid(fluidGrid, fluidSystem, gridBottomLeftPos, gridCols, gridRows, gridSize);
     for (size_t cell = 0; cell < totalCells; ++cell) {
         if (fluidGrid[cell].empty())
@@ -100,16 +101,14 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
     // ====================================================================
     // PASS 2: FLUID vs TERRAIN (Hard Constraints)
     // ====================================================================
-    // Strictly enforces terrain boundaries. Runs TWICE per substep to catch
-    // any particles that Pass 1's fluid-fluid pressure pushed into walls.
-    // A single pass sometimes misses particles that get pushed in gradually
-    // over many frames — the second sweep catches those before they clip through.
-    // 1 for now since particles don't move far enough in a single substep to change grid cells, but
-    // if we add fast-moving forces later we may want to increase this.
+    // Strictly enforces terrain boundaries.
+    // A substep just for solving fluid to terrain collisions
+    // Runs TWICE per substep to catch any particles that Pass 1's fluid-fluid pressure pushed into
+    // walls.
+
     for (int terrainPass = 0; terrainPass < 1; ++terrainPass) {
-        // Only rebuild the grid on the first sweep — Pass 2 doesn't move particles
-        // far enough to change their grid cell between the two sweeps, so rebuilding
-        // a second time would be wasted work.
+        // Only rebuild the grid on the first iteration, the second iteration doesn't move particles
+        // far enough to change their grid cell, so rebuilding a second time would be inefficient.
         if (terrainPass == 0)
             buildGrid(fluidGrid, fluidSystem, gridBottomLeftPos, gridCols, gridRows, gridSize);
 
@@ -142,10 +141,13 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
 
                     Cell& neighbourTerrainCell = terrain.getCells()[neighbourIndex];
 
+                    // Loops through every particle within the selected cell
                     for (const BucketEntry& a : fluidGrid[cell]) {
                         FluidParticle& fluidParticleA =
                             fluidSystem.GetParticlePool(a.first)[a.second];
 
+                        // Returns contact info based on whether there is collision detected or not
+                        // (If not, nothing happens at all)
                         CollisionInfo contact =
                             cellToFluidParticleCollision(neighbourTerrainCell, fluidParticleA);
                         if (contact.hasCollision)
@@ -193,7 +195,12 @@ AEVec2 CollisionSystem::closestPointOnSegment(const AEVec2& a, const AEVec2& b, 
 
     const AEVec2 ap = vSub(p, a);
     f32 t = vDot(ap, ab) / abLenSq;
+
+    // t refers to the normalized projection direction vector
     t = (std::max)(0.0f, (std::min)(1.0f, t));
+
+    // returns Point A of the triangle + (AB direction vector * normalized projection direction
+    // vector)
     return vAdd(a, vMul(ab, t));
 }
 
@@ -220,12 +227,14 @@ bool CollisionSystem::pointInTriangle(const AEVec2& p, const AEVec2& a, const AE
     // This scalar value represents the exact surface area of the parallelogram they form.
     // Formula: AB x BC = Area of Parallelogram
     //
-    // Because it is a signed area, the positive or negative sign tells us the "winding order" (rotation is ANTI-CLOCKWISE)
+    // Because it is a signed area, the positive or negative sign tells us the "winding order"
+    // (rotation is ANTI-CLOCKWISE)
     //
     // This refers to which direction the edge vector would need to rotate to face point P.
     //
-    // For example, if point P is on the bottom right of the triangle and AB refers to the edge along the x-axis,
-    // cross1 will be positive, meaning that AB would need to rotate left (anti-clockwise) to face point P.
+    // For example, if point P is on the bottom right of the triangle and AB refers to the edge
+    // along the x-axis, cross1 will be positive, meaning that AB would need to rotate left
+    // (anti-clockwise) to face point P.
     const f32 cross1 = (edgeAB.x * vectorAP.y) - (edgeAB.y * vectorAP.x);
     const f32 cross2 = (edgeBC.x * vectorBP.y) - (edgeBC.y * vectorBP.x);
     const f32 cross3 = (edgeCA.x * vectorCP.y) - (edgeCA.y * vectorCP.x);
