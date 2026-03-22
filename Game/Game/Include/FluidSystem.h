@@ -1,9 +1,12 @@
 #pragma once
-#include "AEEngine.h"
-#include "Components.h"
-#include "Terrain.h"
+
 #include <initializer_list>
 #include <vector>
+
+#include <AEEngine.h>
+
+#include "Components.h"
+#include "Terrain.h"
 
 enum class FluidType { Water, Lava, Count };
 
@@ -16,16 +19,16 @@ struct FluidParticle {
         type_; //  <--- water, lava, etc
                // currently only being used for identifying the particle type for setters/getters
 
-    bool portal_iframe_{false};            // <--- to prevent immediate re-teleportation
-    f32 portal_iframe_timer_{0.15f};       // <--- timer for portal iframe
-    f32 portal_iframe_maxduration_{0.15f}; // <--- duration of portal iframe in seconds
+    bool portalIframe_{false};            // <--- to prevent immediate re-teleportation
+    f32 portalIframeTimer_{0.15f};       // <--- timer for portal iframe
+    f32 portalIframeMaxduration_{0.15f}; // <--- duration of portal iframe in seconds
 
     FluidParticle(f32 posX, f32 posY, f32 radius, FluidType type);
 };
 
 class FluidSystem {
 public:
-    u32 particleMaxCount{300};
+    u32 particleMaxCount_{300};
 
     void Initialize();
 

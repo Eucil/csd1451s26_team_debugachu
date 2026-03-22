@@ -13,7 +13,7 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
     const size_t totalCells = static_cast<size_t>(gridRows) * static_cast<size_t>(gridCols);
 
     // OPTIMISATION: Static vectors persist between calls so they are only allocated ONCE.
-    // Without static, C++ would allocate and destroy these vectors every single call —
+    // Without static, C++ would allocate and destroy these vectors every single call ï¿½
     // this function runs 8 times per frame (4 substeps x 2 terrains), so that's
     // 8 heap allocations avoided per frame.
     static std::vector<std::vector<BucketEntry>> fluidGrid;
@@ -25,7 +25,7 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
         cachedTotalCells = totalCells;
     }
 
-    // cellHasColliders lives inside each Terrain instance — dirt and stone
+    // cellHasColliders lives inside each Terrain instance ï¿½ dirt and stone
     // each have their own copy so they never contaminate each other.
     // The dirty flag on the terrain tells us when to recompute.
     std::vector<bool>& cellHasColliders = terrain.getCachedHasColliders();
@@ -88,7 +88,7 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
 
                         // Memory address comparison ensures each pair (A,B) is only
                         // resolved once. Without this, we would resolve (A,B) when A
-                        // visits B, and again when B visits A — double the work.
+                        // visits B, and again when B visits A ï¿½ double the work.
                         if (&fluidParticleA < &fluidParticleB) {
                             resolveFluidParticlePair(fluidParticleA, fluidParticleB);
                         }
@@ -133,7 +133,7 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
                         static_cast<size_t>(nx);
 
                     // OPTIMISATION: Skip cells with no terrain colliders entirely.
-                    // The vast majority of grid cells are empty air — skipping them
+                    // The vast majority of grid cells are empty air ï¿½ skipping them
                     // avoids running the expensive triangle/AABB detection math
                     // on cells that can never produce a collision.
                     if (!cellHasColliders[neighbourIndex])
@@ -150,9 +150,9 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
                         // (If not, nothing happens at all)
                         CollisionInfo contact =
                             cellToFluidParticleCollision(neighbourTerrainCell, fluidParticleA);
-                        if (contact.hasCollision)
-                            pushOutAndSlide(fluidParticleA, contact.normal, contact.penetration,
-                                            fluidParticleA.collider_.shapeData_.circle_.radius, dt);
+                        if (contact.hasCollision_)
+                            pushOutAndSlide(fluidParticleA, contact.normal_, contact.penetration_,
+                                            fluidParticleA.collider_.shapeData_.circle_.radius_, dt);
                     }
                 }
             }
@@ -252,11 +252,11 @@ bool CollisionSystem::pointInTriangle(const AEVec2& p, const AEVec2& a, const AE
 CollisionInfo CollisionSystem::cellToFluidParticleCollision(const Cell& cell,
                                                             const FluidParticle& fluidParticle) {
 
-    CollisionInfo contact;
+    CollisionInfo contact{};
 
     const AEVec2 circleCenter =
         vAdd(fluidParticle.transform_.pos_, fluidParticle.collider_.shapeData_.circle_.offset_);
-    const f32 radius = fluidParticle.collider_.shapeData_.circle_.radius;
+    const f32 radius = fluidParticle.collider_.shapeData_.circle_.radius_;
     const AEVec2 velocity = fluidParticle.physics_.velocity_;
 
     for (u32 i = 0; i < 3; ++i) {
@@ -312,9 +312,9 @@ CollisionInfo CollisionSystem::cellToFluidParticleCollision(const Cell& cell,
         // check for collisions again.
 
         if (hit) {
-            contact.hasCollision = true;
-            contact.normal = vNormalizeOr(n, AEVec2{0.0f, 1.0f});
-            contact.penetration = penetration;
+            contact.hasCollision_ = true;
+            contact.normal_ = vNormalizeOr(n, AEVec2{0.0f, 1.0f});
+            contact.penetration_ = penetration;
             return contact;
         }
     }
@@ -330,6 +330,7 @@ bool CollisionSystem::detectCircleVsTriangle(const AEVec2& circleCenter, f32 rad
 
     // Find the closest point on the triangle's perimeter so that we know which side of the triangle
     // to focus on later on Right now, the position of our particle within the cell is UNKNOWN!!!
+    (void)velocity;
     const AEVec2 c0 = closestPointOnSegment(v0, v1, circleCenter);
     const AEVec2 c1 = closestPointOnSegment(v1, v2, circleCenter);
     const AEVec2 c2 = closestPointOnSegment(v2, v0, circleCenter);
@@ -397,6 +398,7 @@ bool CollisionSystem::detectCircleVsAABB(const AEVec2& circleCenter, f32 radius,
                                          const AEVec2& halfExt, AEVec2& outNormal,
                                          f32& outPenetration) {
 
+    (void)velocity;
     // Calculate the closest point on the box to the circle center
     const f32 boxLeft = boxCenter.x - halfExt.x;
     const f32 boxRight = boxCenter.x + halfExt.x;
@@ -482,6 +484,8 @@ bool CollisionSystem::detectCircleVsAABB(const AEVec2& circleCenter, f32 radius,
 void CollisionSystem::pushOutAndSlide(FluidParticle& p, const AEVec2& n, f32 penetration,
                                       f32 radius, f32 dt) {
 
+    (void)radius;
+    (void)dt;
     // We add a tiny slop to prevent floating point errors from causing continuous micro-collisions
     const f32 slop = 0.01f;
     f32 push = (std::max)(0.0f, penetration + slop);
@@ -499,20 +503,20 @@ void CollisionSystem::pushOutAndSlide(FluidParticle& p, const AEVec2& n, f32 pen
 
         // FLOOR IMPACT SPREAD: When a particle hits a floor (normal pointing upward),
         // convert a portion of the downward impact speed into horizontal velocity.
-        // This drives the spreading/flowing behaviour — without this, water just piles
+        // This drives the spreading/flowing behaviour ï¿½ without this, water just piles
         // up vertically instead of spreading sideways like real water.
         // If the particle is already moving horizontally, amplify that direction so
         // flow is consistent rather than randomly reversing.
         if (n.y > 0.5f) {
             f32 impactSpeed = std::abs(vn);
-            // Always picks a random direction — previously amplified existing horizontal drift
+            // Always picks a random direction ï¿½ previously amplified existing horizontal drift
             // which caused all water to bias rightward. Random direction ensures symmetric
             // spreading so water flows equally left and right
             f32 spreadDir = ((rand() % 2) == 0 ? 1.0f : -1.0f);
             p.physics_.velocity_.x += spreadDir * impactSpeed * 0.2f;
         }
 
-        // Very light friction — nearly zero energy removal per collision so horizontal
+        // Very light friction ï¿½ nearly zero energy removal per collision so horizontal
         // momentum from the floor spread persists and particles keep flowing.
         // Previously 0.98f which compounded across substeps to remove ~18% velocity/frame.
         f32 randomFriction = 0.999f + ((rand() % 100) * 0.000001f);
@@ -539,7 +543,7 @@ void CollisionSystem::resolveFluidParticlePair(FluidParticle& p1, FluidParticle&
     }
 
     // Calculate minimum distance between p1 and p2 for collision to occur
-    f32 minDist = p1.collider_.shapeData_.circle_.radius + p2.collider_.shapeData_.circle_.radius;
+    f32 minDist = p1.collider_.shapeData_.circle_.radius_ + p2.collider_.shapeData_.circle_.radius_;
     f32 distSq = dx * dx + dy * dy;
 
     // Check collision
@@ -591,9 +595,9 @@ void CollisionSystem::resolveFluidParticlePair(FluidParticle& p1, FluidParticle&
         // can accumulate more displacement than the terrain collider detection range (4.2px),
         // causing the particle to skip past terrain entirely.
         // MAX_UPWARD_PUSH prevents the original upward tunneling bug.
-        // MAX_HORIZONTAL_PUSH prevents the same issue through vertical walls.
+        // kMaxHorizontalPush prevents the same issue through vertical walls.
         const f32 MAX_UPWARD_PUSH = 2.0f;
-        const f32 MAX_HORIZONTAL_PUSH = 2.0f;
+        const f32 kMaxHorizontalPush = 2.0f;
         f32 p1MoveX = moveX * p1Weight;
         f32 p2MoveX = moveX * p2Weight;
         f32 p1MoveY = moveY * p1Weight;
@@ -602,14 +606,14 @@ void CollisionSystem::resolveFluidParticlePair(FluidParticle& p1, FluidParticle&
             p1MoveY = MAX_UPWARD_PUSH;
         if (-p2MoveY > MAX_UPWARD_PUSH)
             p2MoveY = -MAX_UPWARD_PUSH;
-        if (p1MoveX > MAX_HORIZONTAL_PUSH)
-            p1MoveX = MAX_HORIZONTAL_PUSH;
-        if (p1MoveX < -MAX_HORIZONTAL_PUSH)
-            p1MoveX = -MAX_HORIZONTAL_PUSH;
-        if (p2MoveX > MAX_HORIZONTAL_PUSH)
-            p2MoveX = MAX_HORIZONTAL_PUSH;
-        if (p2MoveX < -MAX_HORIZONTAL_PUSH)
-            p2MoveX = -MAX_HORIZONTAL_PUSH;
+        if (p1MoveX > kMaxHorizontalPush)
+            p1MoveX = kMaxHorizontalPush;
+        if (p1MoveX < -kMaxHorizontalPush)
+            p1MoveX = -kMaxHorizontalPush;
+        if (p2MoveX > kMaxHorizontalPush)
+            p2MoveX = kMaxHorizontalPush;
+        if (p2MoveX < -kMaxHorizontalPush)
+            p2MoveX = -kMaxHorizontalPush;
         p1.transform_.pos_.x += p1MoveX;
         p1.transform_.pos_.y += p1MoveY;
         p2.transform_.pos_.x -= p2MoveX;
@@ -634,7 +638,7 @@ void CollisionSystem::resolveFluidParticlePair(FluidParticle& p1, FluidParticle&
             // -2.0f  : Perfectly Elastic
             // MIN_BOUNCE_THRESHOLD: Only apply the velocity impulse when particles are
             // approaching each other fast enough to matter. Settled particles in a pile
-            // constantly have tiny approach velocities from repulsion nudges — firing the
+            // constantly have tiny approach velocities from repulsion nudges ï¿½ firing the
             // impulse on those causes the vigorous left-right oscillation in dense groups.
             // At 15.0f, only genuine impacts trigger the bounce response.
             const f32 MIN_BOUNCE_THRESHOLD = 15.0f;

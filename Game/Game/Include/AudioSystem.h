@@ -75,7 +75,7 @@ public:
             return;
 
         // Clamp volume to [0, 100]
-        groupVolumes_[groupKey] = AEClamp(groupVolumes_[groupKey] + delta, 0, 100);
+        groupVolumes_[groupKey] = static_cast<s32>(AEClamp(static_cast<f32>(groupVolumes_[groupKey]) + delta, 0.0f, 100.0f));
         AEAudioSetGroupVolume(groups_.at(groupKey), groupVolumes_[groupKey] / 100.0f);
     }
 
@@ -131,4 +131,4 @@ private:
     std::unordered_map<std::string, s32> groupVolumes_;
 };
 
-extern AudioSystem gAudioSystem;
+extern AudioSystem g_audioSystem;

@@ -1,16 +1,17 @@
 #pragma once
 
+#include <filesystem>
+#include <vector>
+
+#include <AEEngine.h>
+#include <json/json.h>
+
 #include "Button.h"
 #include "Collectible.h"
 #include "Moss.h"
 #include "PortalSystem.h"
 #include "StartEndPoint.h"
 #include "Terrain.h"
-
-#include <AEEngine.h>
-#include <filesystem>
-#include <json/json.h>
-#include <vector>
 
 enum class Level {
     Level1,
@@ -28,7 +29,7 @@ enum class Level {
     None,
     Level99 = 99
 };
-enum class editorMode { Edit, Delete, Create, None };
+enum class EditorMode { Edit, Delete, Create, None };
 enum class GameBlock { Dirt, Stone, Magic, StartPoint, EndPoint, Collectible, Portal, Moss, None };
 
 class LevelManager {
@@ -38,8 +39,8 @@ public:
 
     // Getters and setters
     //=================================================================
-    editorMode getLevelEditorMode() const;
-    void setLevelEditorMode(editorMode mode);
+    EditorMode getLevelEditorMode() const;
+    void setLevelEditorMode(EditorMode mode);
     int getCurrentLevel() const;
     void SetCurrentLevel(int level);
     GameBlock getCurrentGameBlock() const;
@@ -106,7 +107,7 @@ public:
     //=================================================================
 
 private:
-    editorMode levelEditorMode_{editorMode::None};
+    EditorMode levelEditorMode_{EditorMode::None};
     int currentLevel_{0};
     GameBlock currentGameBlock_{GameBlock::None};
 
@@ -120,7 +121,7 @@ private:
     std::vector<Button> editorButtonPool_;
 
     // Brush mesh
-    AEGfxVertexList* circleMesh = nullptr;
+    AEGfxVertexList* circleMesh_ = nullptr;
 
     // For saving and reading level data
     Json::Value savingRoot_{};

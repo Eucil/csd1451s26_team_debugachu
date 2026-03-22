@@ -22,22 +22,22 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     AESysReset();
 
     // Initalise config manager
-    configManager.init("Assets/GameData/FileConfigs");
-    configManager.init("Assets/GameData/UI");
+    g_configManager.init("Assets/GameData/FileConfigs");
+    g_configManager.init("Assets/GameData/UI");
 
     GameStateManager GSM;
     GSM.init(StateId::MainMenu);
 
     // Audio system
-    gAudioSystem.createGroup("sfx");
-    gAudioSystem.createGroup("bgm");
+    g_audioSystem.createGroup("sfx");
+    g_audioSystem.createGroup("bgm");
 
-    gAudioSystem.loadSound("faucet_squeak", "Assets/Audio/faucet_squeak.mp3");
-    gAudioSystem.loadSound("wormhole_place", "Assets/Audio/wormhole_place.mp3");
-    gAudioSystem.loadSound("dirt_break", "Assets/Audio/dirt_break.mp3");
-    gAudioSystem.loadSound("ding", "Assets/Audio/ding.mp3");
-    gAudioSystem.loadSound("click", "Assets/Audio/click.mp3");
-    gAudioSystem.loadSound("pop", "Assets/Audio/pop.mp3");
+    g_audioSystem.loadSound("faucet_squeak", "Assets/Audio/faucet_squeak.mp3");
+    g_audioSystem.loadSound("wormhole_place", "Assets/Audio/wormhole_place.mp3");
+    g_audioSystem.loadSound("dirt_break", "Assets/Audio/dirt_break.mp3");
+    g_audioSystem.loadSound("ding", "Assets/Audio/ding.mp3");
+    g_audioSystem.loadSound("click", "Assets/Audio/click.mp3");
+    g_audioSystem.loadSound("pop", "Assets/Audio/pop.mp3");
 
     // Game Loop
     while (GSM.currentState_ != StateId::Quit) {
@@ -79,11 +79,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         GSM.currentState_ = GSM.nextState_;
     }
     // Audio system
-    gAudioSystem.stopGroup("sfx");
-    gAudioSystem.stopGroup("bgm");
-    gAudioSystem.unloadAllSounds();
-    gAudioSystem.unloadAllMusic();
-    gAudioSystem.unloadAllGroups();
+    g_audioSystem.stopGroup("sfx");
+    g_audioSystem.stopGroup("bgm");
+    g_audioSystem.unloadAllSounds();
+    g_audioSystem.unloadAllMusic();
+    g_audioSystem.unloadAllGroups();
 
     AESysExit();
 }

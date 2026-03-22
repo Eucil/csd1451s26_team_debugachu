@@ -1,8 +1,11 @@
 #pragma once
-#include "AEEngine.h"
+
+#include <vector>
+
+#include <AEEngine.h>
+
 #include "Components.h"
 #include "FluidSystem.h"
-#include <vector>
 
 struct Portal {
 
@@ -10,11 +13,11 @@ struct Portal {
 
     Collider2D collider_;
 
-    Portal* linked_portal_{nullptr};
+    Portal* linkedPortal_{nullptr};
 
-    f32 red{};
-    f32 green{};
-    f32 blue{};
+    f32 red_{};
+    f32 green_{};
+    f32 blue_{};
 
     Portal();
     Portal(AEVec2 pos, AEVec2 scale, f32 rotationDeg);
@@ -22,17 +25,17 @@ struct Portal {
 
 class PortalSystem {
 private:
-    AEGfxVertexList* rectMesh = nullptr;
+    AEGfxVertexList* rectMesh_ = nullptr;
 
     // Can have multiple portals
-    std::vector<Portal*> portal_vec;
+    std::vector<Portal*> portalVec_;
     Portal* current_portal_{nullptr};
 
     // graphic configs for each StartEnd type
     Graphics graphicsConfigs_;
 
-    bool click_iframe{false};
-    f32 rotation_value = 0.0f;
+    bool clickIframe_{false};
+    f32 rotationValue_ = 0.0f;
 
 public:
     void Initialize();

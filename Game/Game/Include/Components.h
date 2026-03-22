@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AEEngine.h"
+#include <AEEngine.h>
 
 struct Transform {
     AEVec2 pos_{0.0f, 0.0f};
@@ -31,7 +31,7 @@ enum class ColliderShape { Empty, Circle, Box, Triangle };
 
 struct CircleColliderData {
     AEVec2 offset_;
-    f32 radius;
+    f32 radius_;
 };
 
 struct BoxColliderData {

@@ -1,5 +1,4 @@
 #include "States/LevelSelector.h"
-#include "States/LevelManager.h"
 
 #include <iostream>
 
@@ -9,6 +8,7 @@
 #include "Button.h"
 #include "ConfigManager.h"
 #include "GameStateManager.h"
+#include "States/LevelManager.h"
 #include "Utils.h"
 
 static s8 font;
@@ -71,29 +71,29 @@ void LoadLevelSelector() {
     }
 
     // Setup texts
-    f32 button_startpos_x =
-        configManager.getFloat("LevelSelector", "default", "button_startpos_x", -600.f);
-    f32 button_startpos_y =
-        configManager.getFloat("LevelSelector", "default", "button_startpos_y", 200.f);
-    f32 button_x_offset =
-        configManager.getFloat("LevelSelector", "default", "button_x_offset", 400.f);
-    f32 button_y_offset =
-        configManager.getFloat("LevelSelector", "default", "button_y_offset", 200.f);
-    AEVec2 button_scale = {};
-    button_scale.x = configManager.getFloat("LevelSelector", "default", "button_scale_x", 200.f);
-    button_scale.y = configManager.getFloat("LevelSelector", "default", "button_scale_y", 150.f);
-    f32 text_pos_divisor_x =
-        configManager.getFloat("LevelSelector", "default", "text_pos_divisor_x", 800.f);
-    f32 text_pos_divisor_y =
-        configManager.getFloat("LevelSelector", "default", "text_pos_divisor_y", 450.f);
-    f32 text_x_offset = configManager.getFloat("LevelSelector", "default", "text_x_offset", 0.025f);
-    f32 text_y_offset = configManager.getFloat("LevelSelector", "default", "text_y_offset", 0.05f);
-    f32 text_scale = configManager.getFloat("LevelSelector", "default", "text_scale", 1.f);
-    f32 text_r = configManager.getFloat("LevelSelector", "default", "text_r", 1.f);
-    f32 text_g = configManager.getFloat("LevelSelector", "default", "text_g", 1.f);
-    f32 text_b = configManager.getFloat("LevelSelector", "default", "text_b", 1.f);
-    f32 text_a = configManager.getFloat("LevelSelector", "default", "text_a", 1.f);
-    f32 extra_offset_x = 0.f;
+    f32 buttonStartposX =
+        g_configManager.getFloat("LevelSelector", "default", "buttonStartposX", -600.f);
+    f32 buttonStartposY =
+        g_configManager.getFloat("LevelSelector", "default", "buttonStartposY", 200.f);
+    f32 buttonXOffset =
+        g_configManager.getFloat("LevelSelector", "default", "buttonXOffset", 400.f);
+    f32 buttonYOffset =
+        g_configManager.getFloat("LevelSelector", "default", "buttonYOffset", 200.f);
+    AEVec2 buttonScale = {};
+    buttonScale.x = g_configManager.getFloat("LevelSelector", "default", "buttonScale_x", 200.f);
+    buttonScale.y = g_configManager.getFloat("LevelSelector", "default", "buttonScale_y", 150.f);
+    f32 textPosDivisorX =
+        g_configManager.getFloat("LevelSelector", "default", "textPosDivisorX", 800.f);
+    f32 textPosDivisorY =
+        g_configManager.getFloat("LevelSelector", "default", "textPosDivisorY", 450.f);
+    f32 textXOffset = g_configManager.getFloat("LevelSelector", "default", "textXOffset", 0.025f);
+    f32 textYOffset = g_configManager.getFloat("LevelSelector", "default", "textYOffset", 0.05f);
+    f32 textScale = g_configManager.getFloat("LevelSelector", "default", "textScale", 1.f);
+    f32 textR = g_configManager.getFloat("LevelSelector", "default", "textR", 1.f);
+    f32 textG = g_configManager.getFloat("LevelSelector", "default", "textG", 1.f);
+    f32 textB = g_configManager.getFloat("LevelSelector", "default", "textB", 1.f);
+    f32 textA = g_configManager.getFloat("LevelSelector", "default", "textA", 1.f);
+    f32 extraOffsetX = 0.f;
 
     for (int i{}, x{}, y{}; i < static_cast<int>(Level::None); ++i, ++x) {
         // Push back button and text
@@ -102,19 +102,19 @@ void LoadLevelSelector() {
             x = 0;
         }
         if (i % 9 == 0 && i != 0) {
-            extra_offset_x += 0.03f;
+            extraOffsetX += 0.03f;
         }
         Button tempButton;
-        AEVec2 buttonPos = {button_startpos_x + (button_x_offset * x),
-                            button_startpos_y - (button_y_offset * y)};
-        tempButton.setTransform(buttonPos, button_scale);
+        AEVec2 buttonPos = {buttonStartposX + (buttonXOffset * x),
+                            buttonStartposY - (buttonYOffset * y)};
+        tempButton.setTransform(buttonPos, buttonScale);
         tempButton.loadMesh();
         tempButton.loadTexture("Assets/Textures/brown_square_50_50.png");
 
         tempButton.setText(std::to_string(i + 1),
-                           buttonPos.x / text_pos_divisor_x - text_x_offset - extra_offset_x,
-                           buttonPos.y / text_pos_divisor_y - text_y_offset, text_scale, text_r,
-                           text_g, text_b, text_a);
+                           buttonPos.x / textPosDivisorX - textXOffset - extraOffsetX,
+                           buttonPos.y / textPosDivisorY - textYOffset, textScale, textR,
+                           textG, textB, textA);
         editorButtonPool_.push_back(tempButton);
     }
 }
@@ -159,36 +159,36 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
     }
 
     if ((AEInputCheckTriggered(AEVK_E) || 0 == AESysDoesWindowExist()) && !creatingLevel) {
-        if (levelManager.getLevelEditorMode() == editorMode::Edit) {
-            levelManager.setLevelEditorMode(editorMode::None);
+        if (levelManager.getLevelEditorMode() == EditorMode::Edit) {
+            levelManager.setLevelEditorMode(EditorMode::None);
             std::cout << "Level editor mode disabled\n";
             titleText.content_ = "SELECT LEVEL";
         } else {
-            levelManager.setLevelEditorMode(editorMode::Edit);
+            levelManager.setLevelEditorMode(EditorMode::Edit);
             std::cout << "Level editor mode enabled\n";
             titleText.content_ = "LEVEL EDITOR MODE";
         }
     }
 
     if ((AEInputCheckTriggered(AEVK_C) || 0 == AESysDoesWindowExist()) && !creatingLevel) {
-        if (levelManager.getLevelEditorMode() == editorMode::Create) {
-            levelManager.setLevelEditorMode(editorMode::None);
+        if (levelManager.getLevelEditorMode() == EditorMode::Create) {
+            levelManager.setLevelEditorMode(EditorMode::None);
             std::cout << "Create level mode disabled\n";
             titleText.content_ = "SELECT LEVEL";
         } else {
-            levelManager.setLevelEditorMode(editorMode::Create);
+            levelManager.setLevelEditorMode(EditorMode::Create);
             std::cout << "Create level mode enabled\n";
             titleText.content_ = "CREATE LEVEL";
         }
     }
     if ((AEInputCheckTriggered(AEVK_D) || 0 == AESysDoesWindowExist()) && !creatingLevel) {
         // Add level deletion logic here
-        if (levelManager.getLevelEditorMode() == editorMode::Delete) {
-            levelManager.setLevelEditorMode(editorMode::None);
+        if (levelManager.getLevelEditorMode() == EditorMode::Delete) {
+            levelManager.setLevelEditorMode(EditorMode::None);
             std::cout << "Delete level mode disabled\n";
             titleText.content_ = "SELECT LEVEL";
         } else {
-            levelManager.setLevelEditorMode(editorMode::Delete);
+            levelManager.setLevelEditorMode(EditorMode::Delete);
             std::cout << "Delete level mode enabled\n";
             titleText.content_ = "DELETE LEVEL";
         }
@@ -207,19 +207,19 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
 
                 // Handle level selection based on editor mode
                 switch (levelManager.getLevelEditorMode()) {
-                case editorMode::None:
+                case EditorMode::None:
                     // If none, just play the level if it's playable
                     if (levelManager.playableLevels_[i]) {
                         levelManager.SetCurrentLevel(i + 1);
                         GSM.nextState_ = StateId::Level;
                     }
                     break;
-                case editorMode::Edit:
+                case EditorMode::Edit:
                     // If edit, go to level editor with selected level
                     levelManager.SetCurrentLevel(i + 1);
                     GSM.nextState_ = StateId::Level;
                     break;
-                case editorMode::Create:
+                case EditorMode::Create:
                     // If create, allow user to input width, height and tilesize before creating
                     std::cout << "Level editor mode: Create\n";
                     creatingLevel = true;
@@ -230,7 +230,7 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
                     inputStr = "";
                     levelInput = i + 1;
                     break;
-                case editorMode::Delete:
+                case EditorMode::Delete:
                     // If delete, delete the level data and update playable levels
                     std::cout << "Level editor mode: Delete\n";
                     levelManager.deleteLevelData(i + 1);
@@ -276,7 +276,7 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
                 levelManager.createLevelData(levelInput, static_cast<int>(width),
                                              static_cast<int>(height), static_cast<int>(tileSize));
                 creatingLevel = false;
-                levelManager.setLevelEditorMode(editorMode::None);
+                levelManager.setLevelEditorMode(EditorMode::None);
                 titleText.content_ = "SELECT LEVEL";
                 levelManager.checkLevelData();
             }

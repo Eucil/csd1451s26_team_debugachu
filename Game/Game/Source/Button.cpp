@@ -1,5 +1,3 @@
-#pragma once
-
 #include "Button.h"
 
 #include <fstream>
@@ -21,7 +19,7 @@ void Button::loadMesh() { graphics_.mesh_ = CreateRectMesh(); }
 // Usage example:
 // obj.initFromJson("level_buttons", "buttons", "Restart");
 void Button::initFromJson(const std::string& file, const std::string& section) {
-    const Json::Value& buttonSection = configManager.getSection(file, section);
+    const Json::Value& buttonSection = g_configManager.getSection(file, section);
     transform_.pos_.x = buttonSection["position"]["x"].asFloat();
     transform_.pos_.y = buttonSection["position"]["y"].asFloat();
     transform_.scale_.x = buttonSection["scale"]["x"].asFloat();
@@ -131,14 +129,14 @@ bool Button::checkMouseClick() const {
     // Check if left mouse click
     if (AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
         // Check by checking if mouse pos falls within the button's collider box
-        f32 rect_half_width{transform_.scale_.x / 2.0f};
-        f32 rect_half_height{transform_.scale_.y / 2.0f};
-        if (mouseX >= (transform_.pos_.x - rect_half_width) &&
-            mouseX <= (transform_.pos_.x + rect_half_width) &&
-            mouseY >= (transform_.pos_.y - rect_half_height) &&
-            mouseY <= (transform_.pos_.y + rect_half_height)) {
+        f32 rectHalfWidth{transform_.scale_.x / 2.0f};
+        f32 rectHalfHeight{transform_.scale_.y / 2.0f};
+        if (mouseX >= (transform_.pos_.x - rectHalfWidth) &&
+            mouseX <= (transform_.pos_.x + rectHalfWidth) &&
+            mouseY >= (transform_.pos_.y - rectHalfHeight) &&
+            mouseY <= (transform_.pos_.y + rectHalfHeight)) {
 
-            gAudioSystem.playSound("click", "sfx", 0.4f, 1.0f);
+            g_audioSystem.playSound("click", "sfx", 0.4f, 1.0f);
             return true;
         }
     }
@@ -158,7 +156,7 @@ void TextData::draw(s8 font) const {
 }
 
 void TextData::initFromJson(const std::string& file, const std::string& section) {
-    const Json::Value& textSection = configManager.getSection(file, section);
+    const Json::Value& textSection = g_configManager.getSection(file, section);
     content_ = textSection["content"].asString();
     x_ = textSection["x"].asFloat();
     y_ = textSection["y"].asFloat();

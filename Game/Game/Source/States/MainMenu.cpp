@@ -143,8 +143,8 @@ void InitializeMainMenu() {
     }
 
     for (auto& startPoint : bgStartEndPoint.startPoints_) {
-        startPoint.infinite_water_ = true;
-        startPoint.release_water_ = true;
+        startPoint.infiniteWater_ = true;
+        startPoint.releaseWater_ = true;
     }
 
     // UI buttons
@@ -183,14 +183,14 @@ static void BgSpawnWater(f32 deltaTime) {
                 if (startPoint.type_ == StartEndType::Pipe) {
 
                     f32 randRadius = 8.0f;
-                    f32 x_offset = startPoint.transform_.pos_.x +
+                    f32 xOffset = startPoint.transform_.pos_.x +
                                    AERandFloat() * startPoint.transform_.scale_.x -
                                    (startPoint.transform_.scale_.x / 2.f);
 
-                    f32 y_offset = startPoint.transform_.pos_.y -
+                    f32 yOffset = startPoint.transform_.pos_.y -
                                    (startPoint.transform_.scale_.y / 2.f) - randRadius;
 
-                    bgFluidSystem.SpawnParticle(x_offset, y_offset, randRadius, FluidType::Water);
+                    bgFluidSystem.SpawnParticle(xOffset, yOffset, randRadius, FluidType::Water);
                 }
             }
         }
@@ -250,7 +250,7 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
         bool hitDirt = bgDirt->destroyAtMouse(20.0f);
         if (hitDirt) {
             bgVfxSystem.SpawnContinuous(VFXType::DirtBurst, GetMouseWorldPos(), deltaTime, 0.1f);
-            gAudioSystem.playSound("dirt_break", "sfx", 0.25f, 1.0f);
+            g_audioSystem.playSound("dirt_break", "sfx", 0.25f, 1.0f);
         } else {
             bgVfxSystem.ResetSpawnTimer();
         }

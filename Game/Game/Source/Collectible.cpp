@@ -1,10 +1,11 @@
 #include "Collectible.h"
-#include "AudioSystem.h"
-#include "ConfigManager.h"
-#include "Utils.h"
 
 #include <cmath>
 #include <cstdio>
+
+#include "AudioSystem.h"
+#include "ConfigManager.h"
+#include "Utils.h"
 
 // constructor to set posit, scale, rotation,collider type, radius
 Collectible::Collectible() {
@@ -13,7 +14,7 @@ Collectible::Collectible() {
     transform_.rotationRad_ = 0.0f;
 
     collider_.colliderShape_ = ColliderShape::Circle;
-    collider_.shapeData_.circle_.radius = 15.0f;
+    collider_.shapeData_.circle_.radius_ = 15.0f;
     collider_.shapeData_.circle_.offset_ = {0.0f, 0.0f};
 
     type_ = CollectibleType::Star;
@@ -29,7 +30,7 @@ Collectible::Collectible(AEVec2 pos, CollectibleType type) {
     transform_.rotationRad_ = 0.0f;
 
     collider_.colliderShape_ = ColliderShape::Circle;
-    collider_.shapeData_.circle_.radius = 15.0f;
+    collider_.shapeData_.circle_.radius_ = 15.0f;
     collider_.shapeData_.circle_.offset_ = {0.0f, 0.0f};
 
     // type_ set to parameter value (Star, Gem, or Leaf)
@@ -47,13 +48,13 @@ Collectible::Collectible(AEVec2 pos, CollectibleType type) {
 void CollectibleSystem::Load(s8 font) {
     font_ = font;
     collectionText_.x_ =
-        configManager.getFloat("Collectible", "default", "collectionText_.x_", -0.6f);
+        g_configManager.getFloat("Collectible", "default", "collectionText_.x_", -0.6f);
     collectionText_.y_ =
-        configManager.getFloat("Collectible", "default", "collectionText_.y_", 0.92f);
+        g_configManager.getFloat("Collectible", "default", "collectionText_.y_", 0.92f);
     collectionText_.scale_ =
-        configManager.getFloat("Collectible", "default", "collectionText_.scale_", 0.5f);
+        g_configManager.getFloat("Collectible", "default", "collectionText_.scale_", 0.5f);
     collectionText_.content_ =
-        configManager.getString("Collectible", "default", "collectionText_.x_", "Items: 0/3");
+        g_configManager.getString("Collectible", "default", "collectionText_.x_", "Items: 0/3");
 }
 
 // CreateMeshes() - builds the 3D shapes for collectibles
@@ -71,31 +72,31 @@ void CollectibleSystem::Initialize() {
 }
 
 // AEGfxMeshStart() - starts building a mesh
-// outerRadius = 0.5f - distance from center to star tips
-// innerRadius = 0.25f - distance from center to inner points
+// kOuterRadius = 0.5f - distance from center to star tips
+// kInnerRadius = 0.25f - distance from center to inner points
 void CollectibleSystem::CreateMeshes() {
     // Star mesh (5-pointed star shape)
     AEGfxMeshStart();
-    constexpr int starPoints = 5;
-    constexpr f32 outerRadius = 0.5f;
-    constexpr f32 innerRadius = 0.25f;
+    constexpr int kStarPoints = 5;
+    constexpr f32 kOuterRadius = 0.5f;
+    constexpr f32 kInnerRadius = 0.25f;
 
     // calculations to create a star shape
-    for (int i = 0; i < starPoints; i++) {
-        f32 angle1 = (i * 2.0f * 3.14159f / starPoints) - 3.14159f / 2.0f;
-        f32 angle2 = ((i + 1) * 2.0f * 3.14159f / starPoints) - 3.14159f / 2.0f;
+    for (int i = 0; i < kStarPoints; i++) {
+        f32 angle1 = (i * 2.0f * 3.14159f / kStarPoints) - 3.14159f / 2.0f;
+        f32 angle2 = ((i + 1) * 2.0f * 3.14159f / kStarPoints) - 3.14159f / 2.0f;
         f32 midAngle = (angle1 + angle2) / 2.0f;
 
         // Using cosine and sine to convert angles to coordinates
-        // Multiply by outerRadius to get tip positions
-        f32 x1 = cosf(angle1) * outerRadius;
-        f32 y1 = sinf(angle1) * outerRadius;
-        f32 x2 = cosf(angle2) * outerRadius;
-        f32 y2 = sinf(angle2) * outerRadius;
+        // Multiply by kOuterRadius to get tip positions
+        f32 x1 = cosf(angle1) * kOuterRadius;
+        f32 y1 = sinf(angle1) * kOuterRadius;
+        f32 x2 = cosf(angle2) * kOuterRadius;
+        f32 y2 = sinf(angle2) * kOuterRadius;
 
         // Inner point
-        f32 xi = cosf(midAngle) * innerRadius;
-        f32 yi = sinf(midAngle) * innerRadius;
+        f32 xi = cosf(midAngle) * kInnerRadius;
+        f32 yi = sinf(midAngle) * kInnerRadius;
         // adds a triangle to the mesh
         AEGfxTriAdd(0.0f, 0.0f, 0xFFFFFF00, 0.5f, 0.5f, x1, y1, 0xFFFFFF00, x1 + 0.5f, y1 + 0.5f,
                     xi, yi, 0xFFFFFF00, xi + 0.5f, yi + 0.5f);
@@ -119,10 +120,10 @@ void CollectibleSystem::CreateMeshes() {
 
     // Leaf mesh (simple teardrop shape)
     AEGfxMeshStart();
-    constexpr int leafSegments = 12;
-    for (int i = 0; i < leafSegments; i++) {
-        f32 angle1 = (i * 2.0f * 3.14159f / leafSegments);
-        f32 angle2 = ((i + 1) * 2.0f * 3.14159f / leafSegments);
+    constexpr int kLeafSegments = 12;
+    for (int i = 0; i < kLeafSegments; i++) {
+        f32 angle1 = (i * 2.0f * 3.14159f / kLeafSegments);
+        f32 angle2 = ((i + 1) * 2.0f * 3.14159f / kLeafSegments);
 
         f32 r1 = 0.3f + 0.2f * sinf(angle1 * 2.0f);
         f32 r2 = 0.3f + 0.2f * sinf(angle2 * 2.0f);
@@ -161,8 +162,8 @@ bool CollectibleSystem::CheckCollisionWithWater(const Collectible& collectible,
                     particle.transform_.pos_.y - collectible.transform_.pos_.y};
 
     f32 distSq = delta.x * delta.x + delta.y * delta.y;
-    f32 radiusSum = particle.collider_.shapeData_.circle_.radius +
-                    collectible.collider_.shapeData_.circle_.radius;
+    f32 radiusSum = particle.collider_.shapeData_.circle_.radius_ +
+                    collectible.collider_.shapeData_.circle_.radius_;
     // If squared distance < squared sum of radii ? Collision
     return distSq < (radiusSum * radiusSum);
 }
@@ -199,7 +200,7 @@ void CollectibleSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool)
                 c.collected_ = true;
                 collectedCount_++;
 
-                gAudioSystem.playSound("ding", "sfx", 1.0f, 1.0f);
+                g_audioSystem.playSound("ding", "sfx", 1.0f, 1.0f);
 
                 break;
             }
@@ -278,19 +279,19 @@ void CollectibleSystem::spawnAtMousePos() {
 void CollectibleSystem::destroyAtMousePos() {
     // Get mouse position
     AEVec2 mousePos = GetMouseWorldPos();
-    f32 mouse_x = static_cast<f32>(mousePos.x);
-    f32 mouse_y = static_cast<f32>(mousePos.y);
+    f32 mouseX = static_cast<f32>(mousePos.x);
+    f32 mouseY = static_cast<f32>(mousePos.y);
 
     // Check if mouse is over any start point
     for (auto it = collectibles_.begin(); it != collectibles_.end(); ++it) {
         if (!it->active_ || it->collected_)
             continue;
 
-        f32 radius = it->collider_.shapeData_.circle_.radius;
-        if (mouse_x >= (it->transform_.pos_.x - radius) &&
-            mouse_x <= (it->transform_.pos_.x + radius) &&
-            mouse_y >= (it->transform_.pos_.y - radius) &&
-            mouse_y <= (it->transform_.pos_.y + radius)) {
+        f32 radius = it->collider_.shapeData_.circle_.radius_;
+        if (mouseX >= (it->transform_.pos_.x - radius) &&
+            mouseX <= (it->transform_.pos_.x + radius) &&
+            mouseY >= (it->transform_.pos_.y - radius) &&
+            mouseY <= (it->transform_.pos_.y + radius)) {
             collectibles_.erase(it);
             totalCollectibles_ = static_cast<int>(collectibles_.size());
             return;

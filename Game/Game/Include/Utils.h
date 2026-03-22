@@ -1,7 +1,9 @@
 #pragma once
-#include "AEEngine.h"
+
 #include <cmath>
 #include <string>
+
+#include <AEEngine.h>
 
 /*
 usage: call AEGfxMeshStart -> AddCircleMesh -> meshPtr = AEGfxMeshEnd; -> waterParticle.mesh_ =

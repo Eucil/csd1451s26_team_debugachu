@@ -1,7 +1,9 @@
 #include "WinScreen.h"
-#include "Utils.h"
-#include <States/LevelManager.h>
+
 #include <cstdio>
+
+#include "States/LevelManager.h"
+#include "Utils.h"
 
 void WinScreen::Load(s8 font) {
     font_ = font;

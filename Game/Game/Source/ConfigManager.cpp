@@ -1,9 +1,10 @@
 #include "ConfigManager.h"
+
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 
-ConfigManager configManager;
+ConfigManager g_configManager;
 
 void ConfigManager::init(const std::string& fileDir) {
 
@@ -14,15 +15,15 @@ void ConfigManager::init(const std::string& fileDir) {
     }
 
     // Automatically load every .json file found in the directory
-    for (const auto& file_input : std::filesystem::directory_iterator(fileDir)) {
+    for (const auto& fileInput : std::filesystem::directory_iterator(fileDir)) {
         // Skip non-json files
-        if (file_input.path().extension() != ".json")
+        if (fileInput.path().extension() != ".json")
             continue;
 
         // Extract filename without extension to use as key in configs_ map
         std::string fileName =
-            file_input.path().stem().string(); // e.g. "terrain" from "terrain.json"
-        loadFile(file_input.path().string(), fileName);
+            fileInput.path().stem().string(); // e.g. "terrain" from "terrain.json"
+        loadFile(fileInput.path().string(), fileName);
     }
 }
 

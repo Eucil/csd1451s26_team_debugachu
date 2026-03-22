@@ -12,9 +12,9 @@
 #include "Terrain.h"
 
 struct CollisionInfo {
-    bool hasCollision = false;
-    AEVec2 normal = {0.0f, 1.0f};
-    f32 penetration = 0.0f;
+    bool hasCollision_ = false;
+    AEVec2 normal_ = {0.0f, 1.0f};
+    f32 penetration_ = 0.0f;
 };
 
 class CollisionSystem {

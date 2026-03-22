@@ -1,19 +1,20 @@
-#include "AEEngine.h"
-
 #include "Utils.h"
+
 #include <string>
+
+#include <AEEngine.h>
 
 AEGfxVertexList* CreateCircleMesh(u32 slices, f32 radius) {
     AEGfxMeshStart();
 
     // 1. Constants
-    f32 angle_step = (3.14159265f * 2.0f) / static_cast<f32>(slices);
+    f32 angleStep = (3.14159265f * 2.0f) / static_cast<f32>(slices);
 
     // 2. Loop to create pizza slices
     for (u32 i = 0; i < slices; i++) {
         // Calculate angles
-        f32 theta1 = i * angle_step;
-        f32 theta2 = (i + 1) * angle_step;
+        f32 theta1 = i * angleStep;
+        f32 theta2 = (i + 1) * angleStep;
 
         // Calculate Vertex A (Current) -> Renamed to ax, ay
         f32 ax = std::cos(theta1) * radius;
@@ -58,11 +59,11 @@ AEGfxVertexList* CreateRectMesh() {
 }
 
 AEVec2 GetMouseWorldPos() {
-    s32 mouse_x = 0, mouse_y = 0;
-    AEInputGetCursorPosition(&mouse_x, &mouse_y);
+    s32 mouseX = 0, mouseY = 0;
+    AEInputGetCursorPosition(&mouseX, &mouseY);
     AEVec2 worldPos{};
-    worldPos.x = (f32)mouse_x - (AEGfxGetWindowWidth() / 2.0f);
-    worldPos.y = (AEGfxGetWindowHeight() / 2.0f) - (f32)mouse_y;
+    worldPos.x = (f32)mouseX - (AEGfxGetWindowWidth() / 2.0f);
+    worldPos.y = (AEGfxGetWindowHeight() / 2.0f) - (f32)mouseY;
 
     return worldPos;
 }

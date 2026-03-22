@@ -1,8 +1,11 @@
 #pragma once
-#include "AEEngine.h"
+
+#include <vector>
+
+#include <AEEngine.h>
+
 #include "Components.h"
 #include "Utils.h"
-#include <vector>
 enum class VFXType {
     DirtBurst,
     // Add magic particles, portal particles wtv
@@ -28,7 +31,7 @@ struct VFXParticle {
     f32 maxLifeTime_{1.0f};
 
     bool active_{false}; // Used for object pooling
-    char padding[4];
+    char padding_[4];
 };
 
 struct EmitterConfig {

@@ -1,8 +1,11 @@
 #pragma once
-#include "AEEngine.h"
+
+#include <vector>
+
+#include <AEEngine.h>
+
 #include "Components.h"
 #include "FluidSystem.h"
-#include <vector>
 
 enum class StartEndType { Pipe, Flower, Count };
 
@@ -18,15 +21,15 @@ struct StartEnd {
 
     GoalDirection direction_;
 
-    bool release_water_{false};
-    bool release_water_iframe_{false};
+    bool releaseWater_{false};
+    bool releaseWaterIframe_{false};
 
     bool active_{true};
 
     // tc added start
-    float water_capacity_{100.0f};  // Total water available for this start point
-    float water_remaining_{100.0f}; // Water remaining
-    bool infinite_water_{false};    // Debug/infinite mode
+    float waterCapacity_{100.0f};  // Total water available for this start point
+    float waterRemaining_{100.0f}; // Water remaining
+    bool infiniteWater_{false};    // Debug/infinite mode
     // tc added end
 
     StartEnd();
@@ -35,14 +38,14 @@ struct StartEnd {
 
 class StartEndPoint {
 private:
-    AEGfxVertexList* rectMesh = nullptr;
+    AEGfxVertexList* rectMesh_ = nullptr;
 
     // graphic configs for each StartEnd type
     Graphics graphicsConfigs_[static_cast<int>(StartEndType::Count)];
 
     // tc added start
     //  Water indicator UI
-    AEGfxVertexList* bar_mesh_{nullptr};
+    AEGfxVertexList* barMesh_{nullptr};
     s8 font_;
     // tc added end
 
@@ -92,7 +95,7 @@ public:
 
     void ResetIframe();
 
-    bool CheckWinCondition(s32 particle_max_count);
+    bool CheckWinCondition(s32 particleMaxCount);
 
     // tc added start
     //  getter/setter for water

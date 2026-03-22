@@ -1,4 +1,6 @@
-#include "AEEngine.h"
+#pragma once
+
+#include <AEEngine.h>
 
 class UIFader {
 private:

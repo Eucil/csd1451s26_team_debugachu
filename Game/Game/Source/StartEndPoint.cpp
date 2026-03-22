@@ -1,12 +1,13 @@
-#include "AEEngine.h"
-
-#include "AudioSystem.h"
 #include "StartEndPoint.h"
-#include "Utils.h"
 
 #include <cmath>
 #include <cstdio>
 #include <iostream>
+
+#include <AEEngine.h>
+
+#include "AudioSystem.h"
+#include "Utils.h"
 
 StartEnd::StartEnd() {
     // Set up transform
@@ -15,14 +16,14 @@ StartEnd::StartEnd() {
     transform_.rotationRad_ = {0.0f};
 
     // Set up world matrix
-    AEMtx33 scale_mtx, rot_mtx, trans_mtx;
+    AEMtx33 scaleMtx, rotMtx, transMtx;
 
-    AEMtx33Scale(&scale_mtx, transform_.scale_.x, transform_.scale_.y);
-    AEMtx33Rot(&rot_mtx, transform_.rotationRad_);
-    AEMtx33Trans(&trans_mtx, transform_.pos_.x, transform_.pos_.y);
+    AEMtx33Scale(&scaleMtx, transform_.scale_.x, transform_.scale_.y);
+    AEMtx33Rot(&rotMtx, transform_.rotationRad_);
+    AEMtx33Trans(&transMtx, transform_.pos_.x, transform_.pos_.y);
 
-    AEMtx33Concat(&transform_.worldMtx_, &rot_mtx, &scale_mtx);
-    AEMtx33Concat(&transform_.worldMtx_, &trans_mtx, &transform_.worldMtx_);
+    AEMtx33Concat(&transform_.worldMtx_, &rotMtx, &scaleMtx);
+    AEMtx33Concat(&transform_.worldMtx_, &transMtx, &transform_.worldMtx_);
 
     // Set collider
     collider_.colliderShape_ = ColliderShape::Box;
@@ -31,14 +32,14 @@ StartEnd::StartEnd() {
     // Set object type
     type_ = {StartEndType::Pipe};
     direction_ = {GoalDirection::Up};
-    release_water_ = false;
-    release_water_iframe_ = {false};
+    releaseWater_ = false;
+    releaseWaterIframe_ = {false};
     active_ = {false};
 
     //// tc added start
-    water_capacity_ = 100.0f;
-    water_remaining_ = 100.0f;
-    infinite_water_ = false;
+    waterCapacity_ = 100.0f;
+    waterRemaining_ = 100.0f;
+    infiniteWater_ = false;
     //// tc added end
 }
 
@@ -50,14 +51,14 @@ StartEnd::StartEnd(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndType type,
     transform_.rotationRad_ = rotation;
 
     // Set up world matrix
-    AEMtx33 scale_mtx, rot_mtx, trans_mtx;
+    AEMtx33 scaleMtx, rotMtx, transMtx;
 
-    AEMtx33Scale(&scale_mtx, transform_.scale_.x, transform_.scale_.y);
-    AEMtx33Rot(&rot_mtx, transform_.rotationRad_);
-    AEMtx33Trans(&trans_mtx, transform_.pos_.x, transform_.pos_.y);
+    AEMtx33Scale(&scaleMtx, transform_.scale_.x, transform_.scale_.y);
+    AEMtx33Rot(&rotMtx, transform_.rotationRad_);
+    AEMtx33Trans(&transMtx, transform_.pos_.x, transform_.pos_.y);
 
-    AEMtx33Concat(&transform_.worldMtx_, &rot_mtx, &scale_mtx);
-    AEMtx33Concat(&transform_.worldMtx_, &trans_mtx, &transform_.worldMtx_);
+    AEMtx33Concat(&transform_.worldMtx_, &rotMtx, &scaleMtx);
+    AEMtx33Concat(&transform_.worldMtx_, &transMtx, &transform_.worldMtx_);
 
     // Set collider
     collider_.colliderShape_ = ColliderShape::Box;
@@ -67,25 +68,25 @@ StartEnd::StartEnd(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndType type,
     type_ = type;
     direction_ = direction;
 
-    release_water_ = {false};
-    release_water_iframe_ = {false};
+    releaseWater_ = {false};
+    releaseWaterIframe_ = {false};
 
     // tc added start
     active_ = true;
-    water_capacity_ = 100.0f;
-    water_remaining_ = 100.0f;
-    infinite_water_ = false;
+    waterCapacity_ = 100.0f;
+    waterRemaining_ = 100.0f;
+    infiniteWater_ = false;
     // tc added end
 }
 
 void StartEndPoint::Initialize() {
     // Make mesh
-    rectMesh = CreateRectMesh();
+    rectMesh_ = CreateRectMesh();
 
     // Assign rect mesh to all StartEnd types
     for (int i{0}; i < static_cast<int>(StartEndType::Count); ++i) {
-        if (rectMesh != nullptr) {
-            graphicsConfigs_[i].mesh_ = rectMesh;
+        if (rectMesh_ != nullptr) {
+            graphicsConfigs_[i].mesh_ = rectMesh_;
         }
     }
     particlesCollected_ = {0};
@@ -94,7 +95,7 @@ void StartEndPoint::Initialize() {
 // tc added start
 void StartEndPoint::InitializeUI(s8 font) {
     font_ = font;
-    bar_mesh_ = CreateRectMesh();
+    barMesh_ = CreateRectMesh();
 }
 // tc added end
 
@@ -109,11 +110,11 @@ void StartEndPoint::SetupPoint(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndT
 
 // tc added start
 void StartEndPoint::DrawWaterIndicator(const StartEnd& startPoint, const AEVec2& screenPos) {
-    if (!bar_mesh_ || font_ == 0)
+    if (!barMesh_ || font_ == 0)
         return;
 
     // Calculate water percentage
-    float percentage = startPoint.water_remaining_ / startPoint.water_capacity_;
+    float percentage = startPoint.waterRemaining_ / startPoint.waterCapacity_;
     if (percentage < 0.0f)
         percentage = 0.0f;
 
@@ -124,44 +125,44 @@ void StartEndPoint::DrawWaterIndicator(const StartEnd& startPoint, const AEVec2&
     float barY = startPoint.transform_.pos_.y + 40.0f; // Position above the start point
 
     // Draw background bar (gray)
-    AEMtx33 scale_mtx, trans_mtx, world_mtx;
+    AEMtx33 scaleMtx, transMtx, worldMtx;
 
-    AEMtx33Scale(&scale_mtx, barWidth, barHeight);
-    AEMtx33Trans(&trans_mtx, barX, barY);
+    AEMtx33Scale(&scaleMtx, barWidth, barHeight);
+    AEMtx33Trans(&transMtx, barX, barY);
 
     // Method 1: Use AEMtx33Mult (if available)
     // If your engine has AEMtx33Mult, use this:
-    // AEMtx33Mult(&world_mtx, &trans_mtx, &scale_mtx);
+    // AEMtx33Mult(&worldMtx, &transMtx, &scaleMtx);
 
     // Method 2: Use two-step concatenation (more compatible)
-    AEMtx33Identity(&world_mtx);                       // Start with identity
-    AEMtx33Concat(&world_mtx, &scale_mtx, &world_mtx); // Apply scale
-    AEMtx33Concat(&world_mtx, &trans_mtx, &world_mtx); // Apply translation
+    AEMtx33Identity(&worldMtx);                       // Start with identity
+    AEMtx33Concat(&worldMtx, &scaleMtx, &worldMtx); // Apply scale
+    AEMtx33Concat(&worldMtx, &transMtx, &worldMtx); // Apply translation
 
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(0.3f);
     AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f);
-    AEGfxSetTransform(world_mtx.m);
-    AEGfxMeshDraw(bar_mesh_, AE_GFX_MDM_TRIANGLES);
+    AEGfxSetTransform(worldMtx.m);
+    AEGfxMeshDraw(barMesh_, AE_GFX_MDM_TRIANGLES);
 
     // Draw fill bar (blue) -
     float fillWidth = barWidth * percentage;
     float fillX = barX - (barWidth - fillWidth) / 2.0f;
 
-    AEMtx33Trans(&trans_mtx, fillX, barY);
-    AEMtx33Scale(&world_mtx, fillWidth, barHeight);
-    AEMtx33Concat(&world_mtx, &trans_mtx, &world_mtx);
+    AEMtx33Trans(&transMtx, fillX, barY);
+    AEMtx33Scale(&worldMtx, fillWidth, barHeight);
+    AEMtx33Concat(&worldMtx, &transMtx, &worldMtx);
 
     AEGfxSetTransparency(0.8f);
     AEGfxSetColorToMultiply(0.0f, 0.5f, 1.0f, 1.0f);
-    AEGfxSetTransform(world_mtx.m);
-    AEGfxMeshDraw(bar_mesh_, AE_GFX_MDM_TRIANGLES);
+    AEGfxSetTransform(worldMtx.m);
+    AEGfxMeshDraw(barMesh_, AE_GFX_MDM_TRIANGLES);
 
     // Draw text showing remaining/total
     char buffer[32];
-    snprintf(buffer, sizeof(buffer), "%.0f/%.0f", startPoint.water_remaining_,
-             startPoint.water_capacity_);
+    snprintf(buffer, sizeof(buffer), "%.0f/%.0f", startPoint.waterRemaining_,
+             startPoint.waterCapacity_);
 
     // Simple screen coordinate conversion
     float textX = barX / 800.0f; // Assuming half screen width is 800
@@ -174,21 +175,21 @@ void StartEndPoint::DrawWaterIndicator(const StartEnd& startPoint, const AEVec2&
 
 float StartEndPoint::GetWaterRemaining(int startPointIndex) const {
     if (startPointIndex >= 0 && startPointIndex < static_cast<int>(startPoints_.size())) {
-        return startPoints_[startPointIndex].water_remaining_;
+        return startPoints_[startPointIndex].waterRemaining_;
     }
     return 0.0f;
 }
 
 void StartEndPoint::SetWaterRemaining(int startPointIndex, float amount) {
     if (startPointIndex >= 0 && startPointIndex < static_cast<int>(startPoints_.size())) {
-        startPoints_[startPointIndex].water_remaining_ = amount;
-        if (startPoints_[startPointIndex].water_remaining_ >
-            startPoints_[startPointIndex].water_capacity_) {
-            startPoints_[startPointIndex].water_remaining_ =
-                startPoints_[startPointIndex].water_capacity_;
+        startPoints_[startPointIndex].waterRemaining_ = amount;
+        if (startPoints_[startPointIndex].waterRemaining_ >
+            startPoints_[startPointIndex].waterCapacity_) {
+            startPoints_[startPointIndex].waterRemaining_ =
+                startPoints_[startPointIndex].waterCapacity_;
         }
-        if (startPoints_[startPointIndex].water_remaining_ < 0.0f) {
-            startPoints_[startPointIndex].water_remaining_ = 0.0f;
+        if (startPoints_[startPointIndex].waterRemaining_ < 0.0f) {
+            startPoints_[startPointIndex].waterRemaining_ = 0.0f;
         }
     }
 }
@@ -196,7 +197,7 @@ void StartEndPoint::SetWaterRemaining(int startPointIndex, float amount) {
 void StartEndPoint::RefillAllWater() {
     for (auto& startPoint : startPoints_) {
         if (startPoint.active_ && startPoint.type_ == StartEndType::Pipe) {
-            startPoint.water_remaining_ = startPoint.water_capacity_;
+            startPoint.waterRemaining_ = startPoint.waterCapacity_;
         }
     }
 }
@@ -204,7 +205,7 @@ void StartEndPoint::RefillAllWater() {
 void StartEndPoint::ToggleInfiniteWater() {
     for (auto& startPoint : startPoints_) {
         if (startPoint.active_ && startPoint.type_ == StartEndType::Pipe) {
-            startPoint.infinite_water_ = !startPoint.infinite_water_;
+            startPoint.infiniteWater_ = !startPoint.infiniteWater_;
         }
     }
 }
@@ -223,29 +224,29 @@ void StartEndPoint::SpawnAtMousePos(StartEndType type, GoalDirection direction) 
 void StartEndPoint::DeleteAtMousePos() {
     // Get mouse position
     AEVec2 mousePos = GetMouseWorldPos();
-    f32 mouse_x = static_cast<f32>(mousePos.x);
-    f32 mouse_y = static_cast<f32>(mousePos.y);
+    f32 mouseX = static_cast<f32>(mousePos.x);
+    f32 mouseY = static_cast<f32>(mousePos.y);
     // Check if mouse is over any start point
     for (size_t i = 0; i < startPoints_.size(); ++i) {
         auto& startPoint = startPoints_[i];
-        f32 rect_half_width = startPoint.collider_.shapeData_.box_.size_.x / 2.0f;
-        f32 rect_half_height = startPoint.collider_.shapeData_.box_.size_.y / 2.0f;
-        if (mouse_x >= (startPoint.transform_.pos_.x - rect_half_width) &&
-            mouse_x <= (startPoint.transform_.pos_.x + rect_half_width) &&
-            mouse_y >= (startPoint.transform_.pos_.y - rect_half_height) &&
-            mouse_y <= (startPoint.transform_.pos_.y + rect_half_height)) {
+        f32 rectHalfWidth = startPoint.collider_.shapeData_.box_.size_.x / 2.0f;
+        f32 rectHalfHeight = startPoint.collider_.shapeData_.box_.size_.y / 2.0f;
+        if (mouseX >= (startPoint.transform_.pos_.x - rectHalfWidth) &&
+            mouseX <= (startPoint.transform_.pos_.x + rectHalfWidth) &&
+            mouseY >= (startPoint.transform_.pos_.y - rectHalfHeight) &&
+            mouseY <= (startPoint.transform_.pos_.y + rectHalfHeight)) {
             // Delete this start point
             startPoints_.erase(startPoints_.begin() + i);
             return;
         }
     }
     // Check if mouse is over end point
-    f32 rect_half_width = endPoint_.collider_.shapeData_.box_.size_.x / 2.0f;
-    f32 rect_half_height = endPoint_.collider_.shapeData_.box_.size_.y / 2.0f;
-    if (mouse_x >= (endPoint_.transform_.pos_.x - rect_half_width) &&
-        mouse_x <= (endPoint_.transform_.pos_.x + rect_half_width) &&
-        mouse_y >= (endPoint_.transform_.pos_.y - rect_half_height) &&
-        mouse_y <= (endPoint_.transform_.pos_.y + rect_half_height)) {
+    f32 rectHalfWidth = endPoint_.collider_.shapeData_.box_.size_.x / 2.0f;
+    f32 rectHalfHeight = endPoint_.collider_.shapeData_.box_.size_.y / 2.0f;
+    if (mouseX >= (endPoint_.transform_.pos_.x - rectHalfWidth) &&
+        mouseX <= (endPoint_.transform_.pos_.x + rectHalfWidth) &&
+        mouseY >= (endPoint_.transform_.pos_.y - rectHalfHeight) &&
+        mouseY <= (endPoint_.transform_.pos_.y + rectHalfHeight)) {
         endPoint_ = StartEnd();
     }
 }
@@ -253,20 +254,20 @@ void StartEndPoint::DeleteAtMousePos() {
 bool StartEndPoint::CollisionCheckWithWater(StartEnd startend, FluidParticle particle) {
     // Circle to Rectangle Collision Detection
     // Find the closest point to the circle within the rectangle
-    f32 rect_half_width = startend.collider_.shapeData_.box_.size_.x / 2.0f;
-    f32 rect_half_height = startend.collider_.shapeData_.box_.size_.y / 2.0f;
+    f32 rectHalfWidth = startend.collider_.shapeData_.box_.size_.x / 2.0f;
+    f32 rectHalfHeight = startend.collider_.shapeData_.box_.size_.y / 2.0f;
     f32 closest_x =
-        fmaxf(startend.transform_.pos_.x - rect_half_width,
-              fminf(particle.transform_.pos_.x, startend.transform_.pos_.x + rect_half_width));
+        fmaxf(startend.transform_.pos_.x - rectHalfWidth,
+              fminf(particle.transform_.pos_.x, startend.transform_.pos_.x + rectHalfWidth));
     f32 closest_y =
-        fmaxf(startend.transform_.pos_.y - rect_half_height,
-              fminf(particle.transform_.pos_.y, startend.transform_.pos_.y + rect_half_height));
+        fmaxf(startend.transform_.pos_.y - rectHalfHeight,
+              fminf(particle.transform_.pos_.y, startend.transform_.pos_.y + rectHalfHeight));
     // Calculate the distance between the circle's center and this closest point
     f32 distance_x = particle.transform_.pos_.x - closest_x;
     f32 distance_y = particle.transform_.pos_.y - closest_y;
     // If the distance is less than the circle's radius, an intersection occurs
     f32 distance_squared = (distance_x * distance_x) + (distance_y * distance_y);
-    f32 radius = particle.collider_.shapeData_.circle_.radius;
+    f32 radius = particle.collider_.shapeData_.circle_.radius_;
 
     return distance_squared < (radius * radius);
 }
@@ -297,7 +298,7 @@ void StartEndPoint::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
             particleIt = particlePool.erase(particleIt); // Erase returns the next valid iterator
 
             // Play pop sound
-            gAudioSystem.playSound("pop", "sfx", 0.8f, 1.0f);
+            g_audioSystem.playSound("pop", "sfx", 0.8f, 1.0f);
         } else {
             ++particleIt; // Increment iterator only if no deletion occurred
         }
@@ -329,14 +330,14 @@ void StartEndPoint::DrawColorPreview(StartEndType type) {
     AEVec2 mousePos = GetMouseWorldPos();
 
     // Set up world matrix
-    AEMtx33 scale_mtx, rot_mtx, trans_mtx, world_mtx;
+    AEMtx33 scaleMtx, rotMtx, transMtx, worldMtx;
 
-    AEMtx33Scale(&scale_mtx, startendScale_.x, startendScale_.y);
-    AEMtx33Rot(&rot_mtx, 0.0f);
-    AEMtx33Trans(&trans_mtx, mousePos.x, mousePos.y);
+    AEMtx33Scale(&scaleMtx, startendScale_.x, startendScale_.y);
+    AEMtx33Rot(&rotMtx, 0.0f);
+    AEMtx33Trans(&transMtx, mousePos.x, mousePos.y);
 
-    AEMtx33Concat(&world_mtx, &rot_mtx, &scale_mtx);
-    AEMtx33Concat(&world_mtx, &trans_mtx, &world_mtx);
+    AEMtx33Concat(&worldMtx, &rotMtx, &scaleMtx);
+    AEMtx33Concat(&worldMtx, &transMtx, &worldMtx);
 
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -349,21 +350,21 @@ void StartEndPoint::DrawColorPreview(StartEndType type) {
         AEGfxSetColorToMultiply(1.0f, 0.0f, 0.0f, 1.0f); // Red color for end point preview
         break;
     }
-    AEGfxSetTransform(world_mtx.m);
+    AEGfxSetTransform(worldMtx.m);
     AEGfxMeshDraw(graphicsConfigs_[static_cast<int>(type)].mesh_, AE_GFX_MDM_TRIANGLES);
 }
 
 void StartEndPoint::Free() {
 
-    if (rectMesh) {
-        AEGfxMeshFree(rectMesh);
-        rectMesh = nullptr;
+    if (rectMesh_) {
+        AEGfxMeshFree(rectMesh_);
+        rectMesh_ = nullptr;
     }
 
     // tc added start
-    if (bar_mesh_) {
-        AEGfxMeshFree(bar_mesh_);
-        bar_mesh_ = nullptr;
+    if (barMesh_) {
+        AEGfxMeshFree(barMesh_);
+        barMesh_ = nullptr;
     }
     // tc added end
 
@@ -386,25 +387,25 @@ void StartEndPoint::Free() {
 void StartEndPoint::CheckMouseClick() {
     // Get mouse position
     AEVec2 mousePos = GetMouseWorldPos();
-    f32 mouse_x = static_cast<f32>(mousePos.x);
-    f32 mouse_y = static_cast<f32>(mousePos.y);
+    f32 mouseX = static_cast<f32>(mousePos.x);
+    f32 mouseY = static_cast<f32>(mousePos.y);
 
     // Use mouse pos to check collision with start point
     // Check by checking if mouse pos falls within the start point's collider box
     for (auto& startPoint : startPoints_) {
-        f32 rect_half_width = startPoint.collider_.shapeData_.box_.size_.x / 2.0f;
-        f32 rect_half_height = startPoint.collider_.shapeData_.box_.size_.y / 2.0f;
-        if (mousePos.x >= (startPoint.transform_.pos_.x - rect_half_width) &&
-            mousePos.x <= (startPoint.transform_.pos_.x + rect_half_width) &&
-            mousePos.y >= (startPoint.transform_.pos_.y - rect_half_height) &&
-            mousePos.y <= (startPoint.transform_.pos_.y + rect_half_height) &&
-            startPoint.release_water_iframe_ == false) {
+        f32 rectHalfWidth = startPoint.collider_.shapeData_.box_.size_.x / 2.0f;
+        f32 rectHalfHeight = startPoint.collider_.shapeData_.box_.size_.y / 2.0f;
+        if (mousePos.x >= (startPoint.transform_.pos_.x - rectHalfWidth) &&
+            mousePos.x <= (startPoint.transform_.pos_.x + rectHalfWidth) &&
+            mousePos.y >= (startPoint.transform_.pos_.y - rectHalfHeight) &&
+            mousePos.y <= (startPoint.transform_.pos_.y + rectHalfHeight) &&
+            startPoint.releaseWaterIframe_ == false) {
             // std::cout << "Mouse is over start point!\n";
-            startPoint.release_water_ = !startPoint.release_water_;
-            startPoint.release_water_iframe_ = true;
+            startPoint.releaseWater_ = !startPoint.releaseWater_;
+            startPoint.releaseWaterIframe_ = true;
 
             // Play faucet squeak sound
-            gAudioSystem.playSound("faucet_squeak", "sfx", 0.25f, 1.0f);
+            g_audioSystem.playSound("faucet_squeak", "sfx", 0.25f, 1.0f);
             break;
         }
     }
@@ -412,14 +413,14 @@ void StartEndPoint::CheckMouseClick() {
 
 void StartEndPoint::ResetIframe() {
     for (auto& startPoint : startPoints_) {
-        if (startPoint.release_water_iframe_) {
-            startPoint.release_water_iframe_ = false;
+        if (startPoint.releaseWaterIframe_) {
+            startPoint.releaseWaterIframe_ = false;
         }
     }
 }
 
-bool StartEndPoint::CheckWinCondition(s32 particle_max_count) {
-    if (particlesCollected_ >= (particle_max_count / 3.f)) {
+bool StartEndPoint::CheckWinCondition(s32 particleMaxCount) {
+    if (particlesCollected_ >= (particleMaxCount / 3.f)) {
         return true;
     }
     return false;

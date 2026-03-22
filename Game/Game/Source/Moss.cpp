@@ -1,7 +1,9 @@
 #include "Moss.h"
-#include "Utils.h"
+
 #include <cmath>
 #include <cstdio>
+
+#include "Utils.h"
 
 Moss::Moss() {
     transform_.pos_ = {0.0f, 0.0f};
@@ -9,7 +11,7 @@ Moss::Moss() {
     transform_.rotationRad_ = 0.0f;
 
     collider_.colliderShape_ = ColliderShape::Circle;
-    collider_.shapeData_.circle_.radius = 20.0f;
+    collider_.shapeData_.circle_.radius_ = 20.0f;
     collider_.shapeData_.circle_.offset_ = {0.0f, 0.0f};
 
     type_ = MossType::Spiky;
@@ -25,7 +27,7 @@ Moss::Moss(AEVec2 pos, MossType type) {
     transform_.rotationRad_ = 0.0f;
 
     collider_.colliderShape_ = ColliderShape::Circle;
-    collider_.shapeData_.circle_.radius = 20.0f;
+    collider_.shapeData_.circle_.radius_ = 20.0f;
     collider_.shapeData_.circle_.offset_ = {0.0f, 0.0f};
 
     type_ = MossType::Spiky;
@@ -54,19 +56,19 @@ void MossSystem::CreateMeshes() {
 
     // Spiky moss mesh (dark green)
     AEGfxMeshStart();
-    constexpr int spikes = 8;
-    for (int i = 0; i < spikes; i++) {
-        float angle1 = (i * 2.0f * 3.14159f / spikes);
-        float angle2 = ((i + 1) * 2.0f * 3.14159f / spikes);
+    constexpr int kSpikes = 8;
+    for (int i = 0; i < kSpikes; i++) {
+        float angle1 = (i * 2.0f * 3.14159f / kSpikes);
+        float angle2 = ((i + 1) * 2.0f * 3.14159f / kSpikes);
 
         float x1 = cosf(angle1) * 0.5f;
         float y1 = sinf(angle1) * 0.5f;
         float x2 = cosf(angle2) * 0.5f;
         float y2 = sinf(angle2) * 0.5f;
 
-        // Create spikes
-        float spikeX = cosf(angle1 + 3.14159f / spikes) * 0.7f;
-        float spikeY = sinf(angle1 + 3.14159f / spikes) * 0.7f;
+        // Create kSpikes
+        float spikeX = cosf(angle1 + 3.14159f / kSpikes) * 0.7f;
+        float spikeY = sinf(angle1 + 3.14159f / kSpikes) * 0.7f;
 
         AEGfxTriAdd(0.0f, 0.0f, 0xFF00AA00, 0.5f, 0.5f, x1, y1, 0xFF00AA00, x1 + 0.5f, y1 + 0.5f,
                     spikeX, spikeY, 0xFF00AA00, spikeX + 0.5f, spikeY + 0.5f);
@@ -101,13 +103,14 @@ bool MossSystem::CheckCollisionWithWater(const Moss& moss, const FluidParticle& 
 
     f32 distSq = delta.x * delta.x + delta.y * delta.y;
     f32 radiusSum =
-        particle.collider_.shapeData_.circle_.radius + moss.collider_.shapeData_.circle_.radius;
+        particle.collider_.shapeData_.circle_.radius_ + moss.collider_.shapeData_.circle_.radius_;
 
     return distSq < (radiusSum * radiusSum);
 }
 
 void MossSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool,
                         StartEndPoint& startEndPointSystem) {
+    (void)startEndPointSystem;
     globalTimer_ += dt;
 
     for (auto& m : mosses_) {
@@ -218,18 +221,18 @@ void MossSystem::spawnAtMousePos() {
 
 void MossSystem::destroyAtMousePos() {
     AEVec2 mousePos = GetMouseWorldPos();
-    float mouse_x = mousePos.x;
-    float mouse_y = mousePos.y;
+    float mouseX = mousePos.x;
+    float mouseY = mousePos.y;
 
     for (auto it = mosses_.begin(); it != mosses_.end(); ++it) {
         if (!it->active_ || it->currentHealth_ <= 0.0f)
             continue;
 
-        float radius = it->collider_.shapeData_.circle_.radius;
-        if (mouse_x >= (it->transform_.pos_.x - radius) &&
-            mouse_x <= (it->transform_.pos_.x + radius) &&
-            mouse_y >= (it->transform_.pos_.y - radius) &&
-            mouse_y <= (it->transform_.pos_.y + radius)) {
+        float radius = it->collider_.shapeData_.circle_.radius_;
+        if (mouseX >= (it->transform_.pos_.x - radius) &&
+            mouseX <= (it->transform_.pos_.x + radius) &&
+            mouseY >= (it->transform_.pos_.y - radius) &&
+            mouseY <= (it->transform_.pos_.y + radius)) {
             mosses_.erase(it);
             return;
         }

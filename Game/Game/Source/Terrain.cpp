@@ -1,10 +1,11 @@
 #include "Terrain.h"
-#include "CollisionSystem.h"
 
 #include <iostream>
 #include <vector>
 
 #include <AEEngine.h>
+
+#include "CollisionSystem.h"
 
 AEGfxVertexList* Terrain::meshLibrary_[16]{nullptr}; // There are 16 possible meshes
 Collider2D Terrain::colliderLibrary_[16][3]{}; // There are 16 possible colliders, [3] as each cell
@@ -173,20 +174,20 @@ void Terrain::renderTerrain() {
 
 void Terrain::createMeshLibrary() {
     // Corners (Positions)
-    constexpr f32 xLeft{-0.5f}, xRight{0.5f}, yBottom{-0.5f}, yTop{0.5f};
+    constexpr f32 kXLeft{-0.5f}, kXRight{0.5f}, kYBottom{-0.5f}, kYTop{0.5f};
 
     // Corners (Texture coordinates)
-    constexpr f32 xTexLeft{xLeft * (1.0f / 16.0f) + (1 / 16.0f * 2.0f)};
-    constexpr f32 xTexRight{xRight * (1.0f / 16.0f) + (1 / 16.0f * 2.0f)};
-    constexpr f32 yTexBottom{yBottom * -(1.0f / 16.0f) + (1 / 16.0f * 2.0f)};
-    constexpr f32 yTexTop{yTop * -(1.0f / 16.0f) + (1 / 16.0f * 2.0f)};
+    constexpr f32 kXTekXLeft{kXLeft * (1.0f / 16.0f) + (1 / 16.0f * 2.0f)};
+    constexpr f32 kXTekXRight{kXRight * (1.0f / 16.0f) + (1 / 16.0f * 2.0f)};
+    constexpr f32 kYTexBottom{kYBottom * -(1.0f / 16.0f) + (1 / 16.0f * 2.0f)};
+    constexpr f32 kYTexTop{kYTop * -(1.0f / 16.0f) + (1 / 16.0f * 2.0f)};
 
     // Midpoints (Positions)
-    constexpr f32 xMiddle{0.0f}, yMiddle{0.0f};
+    constexpr f32 kXMiddle{0.0f}, kYMiddle{0.0f};
 
     // Midpoints (Texture coordinates)
-    constexpr f32 xTexMiddle{xMiddle * (1.0f / 16.0f) + (1 / 16.0f * 2.0f)};
-    constexpr f32 yTexMiddle{yMiddle * -(1.0f / 16.0f) + (1 / 16.0f * 2.0f)};
+    constexpr f32 kXTekXMiddle{kXMiddle * (1.0f / 16.0f) + (1 / 16.0f * 2.0f)};
+    constexpr f32 kYTekXMiddle{kYMiddle * -(1.0f / 16.0f) + (1 / 16.0f * 2.0f)};
 
     u32 color{0xFFFFFFFF};
 
@@ -197,108 +198,108 @@ void Terrain::createMeshLibrary() {
             break; // Empty
 
         case 1: // BL
-            AEGfxTriAdd(xLeft, yBottom, color, xTexLeft, yTexBottom, xMiddle, yBottom, color,
-                        xTexMiddle, yTexBottom, xLeft, yMiddle, color, xTexLeft, yTexMiddle);
+            AEGfxTriAdd(kXLeft, kYBottom, color, kXTekXLeft, kYTexBottom, kXMiddle, kYBottom, color,
+                        kXTekXMiddle, kYTexBottom, kXLeft, kYMiddle, color, kXTekXLeft, kYTekXMiddle);
             break;
 
         case 2: // BR
-            AEGfxTriAdd(xRight, yBottom, color, xTexRight, yTexBottom, xRight, yMiddle, color,
-                        xTexRight, yTexMiddle, xMiddle, yBottom, color, xTexMiddle, yTexBottom);
+            AEGfxTriAdd(kXRight, kYBottom, color, kXTekXRight, kYTexBottom, kXRight, kYMiddle, color,
+                        kXTekXRight, kYTekXMiddle, kXMiddle, kYBottom, color, kXTekXMiddle, kYTexBottom);
             break;
 
         case 3: // BL and BR (Bottom rectangle)
-            AEGfxTriAdd(xLeft, yBottom, color, xTexLeft, yTexBottom, xRight, yBottom, color,
-                        xTexRight, yTexBottom, xLeft, yMiddle, color, xTexLeft, yTexMiddle);
-            AEGfxTriAdd(xRight, yBottom, color, xTexRight, yTexBottom, xRight, yMiddle, color,
-                        xTexRight, yTexMiddle, xLeft, yMiddle, color, xTexLeft, yTexMiddle);
+            AEGfxTriAdd(kXLeft, kYBottom, color, kXTekXLeft, kYTexBottom, kXRight, kYBottom, color,
+                        kXTekXRight, kYTexBottom, kXLeft, kYMiddle, color, kXTekXLeft, kYTekXMiddle);
+            AEGfxTriAdd(kXRight, kYBottom, color, kXTekXRight, kYTexBottom, kXRight, kYMiddle, color,
+                        kXTekXRight, kYTekXMiddle, kXLeft, kYMiddle, color, kXTekXLeft, kYTekXMiddle);
             break;
 
         case 4: // TR
-            AEGfxTriAdd(xRight, yTop, color, xTexRight, yTexTop, xMiddle, yTop, color, xTexMiddle,
-                        yTexTop, xRight, yMiddle, color, xTexRight, yTexMiddle);
+            AEGfxTriAdd(kXRight, kYTop, color, kXTekXRight, kYTexTop, kXMiddle, kYTop, color, kXTekXMiddle,
+                        kYTexTop, kXRight, kYMiddle, color, kXTekXRight, kYTekXMiddle);
             break;
 
         case 5: // BL and TR
-            AEGfxTriAdd(xLeft, yBottom, color, xTexLeft, yTexBottom, xMiddle, yBottom, color,
-                        xTexMiddle, yTexBottom, xLeft, yMiddle, color, xTexLeft, yTexMiddle);
-            AEGfxTriAdd(xRight, yTop, color, xTexRight, yTexTop, xMiddle, yTop, color, xTexMiddle,
-                        yTexTop, xRight, yMiddle, color, xTexRight, yTexMiddle);
+            AEGfxTriAdd(kXLeft, kYBottom, color, kXTekXLeft, kYTexBottom, kXMiddle, kYBottom, color,
+                        kXTekXMiddle, kYTexBottom, kXLeft, kYMiddle, color, kXTekXLeft, kYTekXMiddle);
+            AEGfxTriAdd(kXRight, kYTop, color, kXTekXRight, kYTexTop, kXMiddle, kYTop, color, kXTekXMiddle,
+                        kYTexTop, kXRight, kYMiddle, color, kXTekXRight, kYTekXMiddle);
             break;
 
         case 6: // BR and TR (Right rectangle)
-            AEGfxTriAdd(xMiddle, yBottom, color, xTexMiddle, yTexBottom, xRight, yBottom, color,
-                        xTexRight, yTexBottom, xMiddle, yTop, color, xTexMiddle, yTexTop);
-            AEGfxTriAdd(xRight, yBottom, color, xTexRight, yTexBottom, xRight, yTop, color,
-                        xTexRight, yTexTop, xMiddle, yTop, color, xTexMiddle, yTexTop);
+            AEGfxTriAdd(kXMiddle, kYBottom, color, kXTekXMiddle, kYTexBottom, kXRight, kYBottom, color,
+                        kXTekXRight, kYTexBottom, kXMiddle, kYTop, color, kXTekXMiddle, kYTexTop);
+            AEGfxTriAdd(kXRight, kYBottom, color, kXTekXRight, kYTexBottom, kXRight, kYTop, color,
+                        kXTekXRight, kYTexTop, kXMiddle, kYTop, color, kXTekXMiddle, kYTexTop);
             break;
 
         case 7: // BL, BR, and TR
-            AEGfxTriAdd(xLeft, yBottom, color, xTexLeft, yTexBottom, xRight, yBottom, color,
-                        xTexRight, yTexBottom, xLeft, yMiddle, color, xTexLeft, yTexMiddle);
-            AEGfxTriAdd(xRight, yBottom, color, xTexRight, yTexBottom, xRight, yTop, color,
-                        xTexRight, yTexTop, xLeft, yMiddle, color, xTexLeft, yTexMiddle);
-            AEGfxTriAdd(xRight, yTop, color, xTexRight, yTexTop, xMiddle, yTop, color, xTexMiddle,
-                        yTexTop, xLeft, yMiddle, color, xTexLeft, yTexMiddle);
+            AEGfxTriAdd(kXLeft, kYBottom, color, kXTekXLeft, kYTexBottom, kXRight, kYBottom, color,
+                        kXTekXRight, kYTexBottom, kXLeft, kYMiddle, color, kXTekXLeft, kYTekXMiddle);
+            AEGfxTriAdd(kXRight, kYBottom, color, kXTekXRight, kYTexBottom, kXRight, kYTop, color,
+                        kXTekXRight, kYTexTop, kXLeft, kYMiddle, color, kXTekXLeft, kYTekXMiddle);
+            AEGfxTriAdd(kXRight, kYTop, color, kXTekXRight, kYTexTop, kXMiddle, kYTop, color, kXTekXMiddle,
+                        kYTexTop, kXLeft, kYMiddle, color, kXTekXLeft, kYTekXMiddle);
             break;
 
         case 8: // TL
-            AEGfxTriAdd(xLeft, yTop, color, xTexLeft, yTexTop, xLeft, yMiddle, color, xTexLeft,
-                        yTexMiddle, xMiddle, yTop, color, xTexMiddle, yTexTop);
+            AEGfxTriAdd(kXLeft, kYTop, color, kXTekXLeft, kYTexTop, kXLeft, kYMiddle, color, kXTekXLeft,
+                        kYTekXMiddle, kXMiddle, kYTop, color, kXTekXMiddle, kYTexTop);
             break;
 
         case 9: // BL and TL (Left rectangle)
-            AEGfxTriAdd(xLeft, yBottom, color, xTexLeft, yTexBottom, xMiddle, yBottom, color,
-                        xTexMiddle, yTexBottom, xLeft, yTop, color, xTexLeft, yTexTop);
-            AEGfxTriAdd(xMiddle, yBottom, color, xTexMiddle, yTexBottom, xMiddle, yTop, color,
-                        xTexMiddle, yTexTop, xLeft, yTop, color, xTexLeft, yTexTop);
+            AEGfxTriAdd(kXLeft, kYBottom, color, kXTekXLeft, kYTexBottom, kXMiddle, kYBottom, color,
+                        kXTekXMiddle, kYTexBottom, kXLeft, kYTop, color, kXTekXLeft, kYTexTop);
+            AEGfxTriAdd(kXMiddle, kYBottom, color, kXTekXMiddle, kYTexBottom, kXMiddle, kYTop, color,
+                        kXTekXMiddle, kYTexTop, kXLeft, kYTop, color, kXTekXLeft, kYTexTop);
             break;
 
         case 10: // BR and TL
-            AEGfxTriAdd(xRight, yBottom, color, xTexRight, yTexBottom, xRight, yMiddle, color,
-                        xTexRight, yTexMiddle, xMiddle, yBottom, color, xTexMiddle, yTexBottom);
-            AEGfxTriAdd(xLeft, yTop, color, xTexLeft, yTexTop, xLeft, yMiddle, color, xTexLeft,
-                        yTexMiddle, xMiddle, yTop, color, xTexMiddle, yTexTop);
+            AEGfxTriAdd(kXRight, kYBottom, color, kXTekXRight, kYTexBottom, kXRight, kYMiddle, color,
+                        kXTekXRight, kYTekXMiddle, kXMiddle, kYBottom, color, kXTekXMiddle, kYTexBottom);
+            AEGfxTriAdd(kXLeft, kYTop, color, kXTekXLeft, kYTexTop, kXLeft, kYMiddle, color, kXTekXLeft,
+                        kYTekXMiddle, kXMiddle, kYTop, color, kXTekXMiddle, kYTexTop);
             break;
 
         case 11: // BL, BR, and TL
-            AEGfxTriAdd(xLeft, yBottom, color, xTexLeft, yTexBottom, xRight, yBottom, color,
-                        xTexRight, yTexBottom, xLeft, yTop, color, xTexLeft, yTexTop);
-            AEGfxTriAdd(xRight, yBottom, color, xTexRight, yTexBottom, xRight, yMiddle, color,
-                        xTexRight, yTexMiddle, xLeft, yTop, color, xTexLeft, yTexTop);
-            AEGfxTriAdd(xRight, yMiddle, color, xTexRight, yTexMiddle, xMiddle, yTop, color,
-                        xTexMiddle, yTexTop, xLeft, yTop, color, xTexLeft, yTexTop);
+            AEGfxTriAdd(kXLeft, kYBottom, color, kXTekXLeft, kYTexBottom, kXRight, kYBottom, color,
+                        kXTekXRight, kYTexBottom, kXLeft, kYTop, color, kXTekXLeft, kYTexTop);
+            AEGfxTriAdd(kXRight, kYBottom, color, kXTekXRight, kYTexBottom, kXRight, kYMiddle, color,
+                        kXTekXRight, kYTekXMiddle, kXLeft, kYTop, color, kXTekXLeft, kYTexTop);
+            AEGfxTriAdd(kXRight, kYMiddle, color, kXTekXRight, kYTekXMiddle, kXMiddle, kYTop, color,
+                        kXTekXMiddle, kYTexTop, kXLeft, kYTop, color, kXTekXLeft, kYTexTop);
             break;
 
         case 12: // TR and TL (Top rectangle)
-            AEGfxTriAdd(xLeft, yMiddle, color, xTexLeft, yTexMiddle, xRight, yMiddle, color,
-                        xTexRight, yTexMiddle, xLeft, yTop, color, xTexLeft, yTexTop);
-            AEGfxTriAdd(xRight, yMiddle, color, xTexRight, yTexMiddle, xRight, yTop, color,
-                        xTexRight, yTexTop, xLeft, yTop, color, xTexLeft, yTexTop);
+            AEGfxTriAdd(kXLeft, kYMiddle, color, kXTekXLeft, kYTekXMiddle, kXRight, kYMiddle, color,
+                        kXTekXRight, kYTekXMiddle, kXLeft, kYTop, color, kXTekXLeft, kYTexTop);
+            AEGfxTriAdd(kXRight, kYMiddle, color, kXTekXRight, kYTekXMiddle, kXRight, kYTop, color,
+                        kXTekXRight, kYTexTop, kXLeft, kYTop, color, kXTekXLeft, kYTexTop);
             break;
 
         case 13: // BL, TR, and TL
-            AEGfxTriAdd(xLeft, yBottom, color, xTexLeft, yTexBottom, xMiddle, yBottom, color,
-                        xTexMiddle, yTexBottom, xLeft, yTop, color, xTexLeft, yTexTop);
-            AEGfxTriAdd(xMiddle, yBottom, color, xTexMiddle, yTexBottom, xRight, yMiddle, color,
-                        xTexRight, yTexMiddle, xLeft, yTop, color, xTexLeft, yTexTop);
-            AEGfxTriAdd(xRight, yMiddle, color, xTexRight, yTexMiddle, xRight, yTop, color,
-                        xTexRight, yTexTop, xLeft, yTop, color, xTexLeft, yTexTop);
+            AEGfxTriAdd(kXLeft, kYBottom, color, kXTekXLeft, kYTexBottom, kXMiddle, kYBottom, color,
+                        kXTekXMiddle, kYTexBottom, kXLeft, kYTop, color, kXTekXLeft, kYTexTop);
+            AEGfxTriAdd(kXMiddle, kYBottom, color, kXTekXMiddle, kYTexBottom, kXRight, kYMiddle, color,
+                        kXTekXRight, kYTekXMiddle, kXLeft, kYTop, color, kXTekXLeft, kYTexTop);
+            AEGfxTriAdd(kXRight, kYMiddle, color, kXTekXRight, kYTekXMiddle, kXRight, kYTop, color,
+                        kXTekXRight, kYTexTop, kXLeft, kYTop, color, kXTekXLeft, kYTexTop);
             break;
 
         case 14: // BR, TR, and TL
-            AEGfxTriAdd(xMiddle, yBottom, color, xTexMiddle, yTexBottom, xRight, yBottom, color,
-                        xTexRight, yTexBottom, xLeft, yMiddle, color, xTexLeft, yTexMiddle);
-            AEGfxTriAdd(xRight, yBottom, color, xTexRight, yTexBottom, xRight, yTop, color,
-                        xTexRight, yTexTop, xLeft, yMiddle, color, xTexLeft, yTexMiddle);
-            AEGfxTriAdd(xRight, yTop, color, xTexRight, yTexTop, xLeft, yTop, color, xTexLeft,
-                        yTexTop, xLeft, yMiddle, color, xTexLeft, yTexMiddle);
+            AEGfxTriAdd(kXMiddle, kYBottom, color, kXTekXMiddle, kYTexBottom, kXRight, kYBottom, color,
+                        kXTekXRight, kYTexBottom, kXLeft, kYMiddle, color, kXTekXLeft, kYTekXMiddle);
+            AEGfxTriAdd(kXRight, kYBottom, color, kXTekXRight, kYTexBottom, kXRight, kYTop, color,
+                        kXTekXRight, kYTexTop, kXLeft, kYMiddle, color, kXTekXLeft, kYTekXMiddle);
+            AEGfxTriAdd(kXRight, kYTop, color, kXTekXRight, kYTexTop, kXLeft, kYTop, color, kXTekXLeft,
+                        kYTexTop, kXLeft, kYMiddle, color, kXTekXLeft, kYTekXMiddle);
             break;
 
         case 15: // Full square
-            AEGfxTriAdd(xLeft, yBottom, color, xTexLeft, yTexBottom, xRight, yBottom, color,
-                        xTexRight, yTexBottom, xLeft, yTop, color, xTexLeft, yTexTop);
-            AEGfxTriAdd(xRight, yBottom, color, xTexRight, yTexBottom, xRight, yTop, color,
-                        xTexRight, yTexTop, xLeft, yTop, color, xTexLeft, yTexTop);
+            AEGfxTriAdd(kXLeft, kYBottom, color, kXTekXLeft, kYTexBottom, kXRight, kYBottom, color,
+                        kXTekXRight, kYTexBottom, kXLeft, kYTop, color, kXTekXLeft, kYTexTop);
+            AEGfxTriAdd(kXRight, kYBottom, color, kXTekXRight, kYTexBottom, kXRight, kYTop, color,
+                        kXTekXRight, kYTexTop, kXLeft, kYTop, color, kXTekXLeft, kYTexTop);
             break;
         }
         meshLibrary_[i] = AEGfxMeshEnd();
@@ -314,10 +315,10 @@ void Terrain::freeMeshLibrary() {
 void Terrain::createColliderLibrary() {
 
     // Corners
-    constexpr f32 xLeft{-0.5f}, xRight{0.5f}, yBottom{-0.5f}, yTop{0.5f};
+    constexpr f32 kXLeft{-0.5f}, kXRight{0.5f}, kYBottom{-0.5f}, kYTop{0.5f};
 
     // Midpoints
-    constexpr f32 xMiddle{0.0f}, yMiddle{0.0f};
+    constexpr f32 kXMiddle{0.0f}, kYMiddle{0.0f};
 
     for (u32 i{0}; i < 16; ++i) {
         // Reset all to empty first
@@ -333,20 +334,20 @@ void Terrain::createColliderLibrary() {
 
         case 1: // BL
             colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xLeft, yBottom};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xMiddle,
-                                                                                    yBottom};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {kXLeft, kYBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {kXMiddle,
+                                                                                    kYBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {kXLeft, kYMiddle};
             break;
 
         case 2: // BR
             colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight,
-                                                                                    yBottom};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xRight,
-                                                                                    yMiddle};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xMiddle,
-                                                                                    yBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {kXRight,
+                                                                                    kYBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {kXRight,
+                                                                                    kYMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {kXMiddle,
+                                                                                    kYBottom};
             break;
 
         case 3: // BL and BR (Bottom rectangle)
@@ -357,26 +358,26 @@ void Terrain::createColliderLibrary() {
 
         case 4: // TR
             colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight, yTop};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xMiddle, yTop};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xRight,
-                                                                                    yMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {kXRight, kYTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {kXMiddle, kYTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {kXRight,
+                                                                                    kYMiddle};
             break;
 
         case 5: // BL and TR
             // BL
             colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xLeft, yBottom};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xMiddle,
-                                                                                    yBottom};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {kXLeft, kYBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {kXMiddle,
+                                                                                    kYBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {kXLeft, kYMiddle};
             colliderCount++;
             // TR
             colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight, yTop};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xMiddle, yTop};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xRight,
-                                                                                    yMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {kXRight, kYTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {kXMiddle, kYTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {kXRight,
+                                                                                    kYMiddle};
             break;
 
         case 6: // BR and TR (Right rectangle)
@@ -387,28 +388,28 @@ void Terrain::createColliderLibrary() {
 
         case 7: // BL, BR, and TR
             colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xLeft, yBottom};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xRight,
-                                                                                    yBottom};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {kXLeft, kYBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {kXRight,
+                                                                                    kYBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {kXLeft, kYMiddle};
             colliderCount++;
             colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight,
-                                                                                    yBottom};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xRight, yTop};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {kXRight,
+                                                                                    kYBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {kXRight, kYTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {kXLeft, kYMiddle};
             colliderCount++;
             colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight, yTop};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xMiddle, yTop};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {kXRight, kYTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {kXMiddle, kYTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {kXLeft, kYMiddle};
             break;
 
         case 8: // TL
             colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xLeft, yTop};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xLeft, yMiddle};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xMiddle, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {kXLeft, kYTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {kXLeft, kYMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {kXMiddle, kYTop};
             break;
 
         case 9: // BL and TL (Left rectangle)
@@ -420,39 +421,39 @@ void Terrain::createColliderLibrary() {
         case 10: // BR and TL
             // BR
             colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight,
-                                                                                    yBottom};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xRight,
-                                                                                    yMiddle};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xMiddle,
-                                                                                    yBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {kXRight,
+                                                                                    kYBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {kXRight,
+                                                                                    kYMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {kXMiddle,
+                                                                                    kYBottom};
             colliderCount++;
             // TL
             colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xLeft, yTop};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xLeft, yMiddle};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xMiddle, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {kXLeft, kYTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {kXLeft, kYMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {kXMiddle, kYTop};
             break;
 
         case 11: // BL, BR, and TL
             colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xLeft, yBottom};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xRight,
-                                                                                    yBottom};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {kXLeft, kYBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {kXRight,
+                                                                                    kYBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {kXLeft, kYTop};
             colliderCount++;
             colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight,
-                                                                                    yBottom};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xRight,
-                                                                                    yMiddle};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {kXRight,
+                                                                                    kYBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {kXRight,
+                                                                                    kYMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {kXLeft, kYTop};
             colliderCount++;
             colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight,
-                                                                                    yMiddle};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xMiddle, yTop};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {kXRight,
+                                                                                    kYMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {kXMiddle, kYTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {kXLeft, kYTop};
             break;
 
         case 12: // TR and TL (Top rectangle)
@@ -464,43 +465,43 @@ void Terrain::createColliderLibrary() {
 
         case 13: // BL, TR, and TL
             colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xLeft, yBottom};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xMiddle,
-                                                                                    yBottom};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {kXLeft, kYBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {kXMiddle,
+                                                                                    kYBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {kXLeft, kYTop};
             colliderCount++;
             colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xMiddle,
-                                                                                    yBottom};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xRight,
-                                                                                    yMiddle};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {kXMiddle,
+                                                                                    kYBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {kXRight,
+                                                                                    kYMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {kXLeft, kYTop};
             colliderCount++;
             colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight,
-                                                                                    yMiddle};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xRight, yTop};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {kXRight,
+                                                                                    kYMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {kXRight, kYTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {kXLeft, kYTop};
             break;
 
         case 14: // BR, TR, and TL
             colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xMiddle,
-                                                                                    yBottom};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xRight,
-                                                                                    yBottom};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {kXMiddle,
+                                                                                    kYBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {kXRight,
+                                                                                    kYBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {kXLeft, kYMiddle};
             colliderCount++;
             colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight,
-                                                                                    yBottom};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xRight, yTop};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {kXRight,
+                                                                                    kYBottom};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {kXRight, kYTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {kXLeft, kYMiddle};
             colliderCount++;
             colliderLibrary_[i][colliderCount].colliderShape_ = ColliderShape::Triangle;
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {xRight, yTop};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {xLeft, yTop};
-            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {xLeft, yMiddle};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[0] = {kXRight, kYTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[1] = {kXLeft, kYTop};
+            colliderLibrary_[i][colliderCount].shapeData_.triangle_.vertices_[2] = {kXLeft, kYMiddle};
             break;
 
         case 15: // Full square

@@ -1,8 +1,11 @@
 #pragma once
-#include <AEEngine.h>
-#include <json/json.h>
+
 #include <string>
 #include <unordered_map>
+#include <vector>
+
+#include <AEEngine.h>
+#include <json/json.h>
 
 class ConfigManager {
 public:
@@ -38,4 +41,4 @@ private:
     std::unordered_map<std::string, Json::Value> configs_;
 };
 
-extern ConfigManager configManager;
+extern ConfigManager g_configManager;

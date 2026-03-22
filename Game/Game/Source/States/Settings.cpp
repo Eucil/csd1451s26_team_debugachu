@@ -55,16 +55,16 @@ void initializeSettings() {
 void updateSettings(GameStateManager& GSM, f32 deltaTime) {
     // Check for button presses to change audio group
     if (buttonIncreaseSfxVolume.checkMouseClick()) {
-        gAudioSystem.adjustGroupVolume("sfx", +10);
+        g_audioSystem.adjustGroupVolume("sfx", +10);
     }
     if (buttonDecreaseSfxVolume.checkMouseClick()) {
-        gAudioSystem.adjustGroupVolume("sfx", -10);
+        g_audioSystem.adjustGroupVolume("sfx", -10);
     }
     if (buttonIncreaseBgmVolume.checkMouseClick()) {
-        gAudioSystem.adjustGroupVolume("bgm", +10);
+        g_audioSystem.adjustGroupVolume("bgm", +10);
     }
     if (buttonDecreaseBgmVolume.checkMouseClick()) {
-        gAudioSystem.adjustGroupVolume("bgm", -10);
+        g_audioSystem.adjustGroupVolume("bgm", -10);
     }
 
     // Check for button press to go back to main menu
@@ -73,8 +73,8 @@ void updateSettings(GameStateManager& GSM, f32 deltaTime) {
     }
 
     // Get volume amounts
-    sfxVolumeAmountText.content_ = std::to_string(gAudioSystem.getGroupVolume("sfx")) + "%";
-    bgmVolumeAmountText.content_ = std::to_string(gAudioSystem.getGroupVolume("bgm")) + "%";
+    sfxVolumeAmountText.content_ = std::to_string(g_audioSystem.getGroupVolume("sfx")) + "%";
+    bgmVolumeAmountText.content_ = std::to_string(g_audioSystem.getGroupVolume("bgm")) + "%";
 
     buttonIncreaseSfxVolume.updateTransform();
     buttonDecreaseSfxVolume.updateTransform();

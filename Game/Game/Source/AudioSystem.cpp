@@ -5,4 +5,4 @@
 
 #include <AEEngine.h>
 
-AudioSystem gAudioSystem;
+AudioSystem g_audioSystem;

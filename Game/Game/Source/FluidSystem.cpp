@@ -1,11 +1,12 @@
-#include "AEEngine.h"
-
-#include "CollisionSystem.h"
 #include "FluidSystem.h"
-#include "Utils.h"
 
 #include <cmath>
 #include <iostream>
+
+#include <AEEngine.h>
+
+#include "CollisionSystem.h"
+#include "Utils.h"
 
 // ==========================================
 // FluidParticle
@@ -18,7 +19,7 @@ FluidParticle::FluidParticle(f32 posX, f32 posY, f32 radius, FluidType type) {
     transform_.rotationRad_ = 0.0f;
 
     collider_.colliderShape_ = ColliderShape::Circle;
-    collider_.shapeData_.circle_.radius =
+    collider_.shapeData_.circle_.radius_ =
         radius * 0.6f; // * 0.6f so that collider is smaller than mesh
 
     type_ = type;
@@ -98,12 +99,11 @@ void FluidSystem::UpdateTransforms(std::vector<FluidParticle>& particlePool) {
 void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt) {
 
     //  load new constants with the previously set config values
-    f32 mass = particlePool[0].physics_.mass_;
     f32 gravity = particlePool[0].physics_.gravity_;
 
     // Set maximum allowed speed
-    const f32 MAX_SPEED = 800.0f;
-    const f32 MAX_SPEED_SQ = MAX_SPEED * MAX_SPEED;
+    const f32 kMaxSpeed = 800.0f;
+    const f32 kMaxSpeedSq = kMaxSpeed * kMaxSpeed;
 
     for (auto& p : particlePool) {
 
@@ -120,18 +120,18 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         // ================================================ //
         // Without this, particles falling from a great height can reach very high speeds,
         // which can cause them to tunnel through terrain colliders.
-        const f32 TERMINAL_FALL_SPEED = -500.0f; 
-        if (p.physics_.velocity_.y < TERMINAL_FALL_SPEED) {
-            p.physics_.velocity_.y = TERMINAL_FALL_SPEED;
+        const f32 kTerminalFallSpeed = -500.0f; 
+        if (p.physics_.velocity_.y < kTerminalFallSpeed) {
+            p.physics_.velocity_.y = kTerminalFallSpeed;
         }
 
         // Same cap applied horizontally to prevent tunneling from high horizontal speeds (e.g. from
         // being pushed by a fast-moving floor or explosion).
-        const f32 MAX_HORIZONTAL_SPEED = 300.0f;
-        if (p.physics_.velocity_.x > MAX_HORIZONTAL_SPEED)
-            p.physics_.velocity_.x = MAX_HORIZONTAL_SPEED;
-        if (p.physics_.velocity_.x < -MAX_HORIZONTAL_SPEED)
-            p.physics_.velocity_.x = -MAX_HORIZONTAL_SPEED;
+        const f32 kMaxHorizontalSpeed = 300.0f;
+        if (p.physics_.velocity_.x > kMaxHorizontalSpeed)
+            p.physics_.velocity_.x = kMaxHorizontalSpeed;
+        if (p.physics_.velocity_.x < -kMaxHorizontalSpeed)
+            p.physics_.velocity_.x = -kMaxHorizontalSpeed;
 
         // ================================================ //
         // OPTIMISATION: STOPS VERY SLOW PARTICLES
@@ -150,7 +150,7 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         }
 
         // ANTI-OSCILLATION: Only apply noise to nearly-stopped particles.
-        // Previously noise ran on every particle every substep — in dense settled
+        // Previously noise ran on every particle every substep ï¿½ in dense settled
         // groups this caused all particles to randomly oscillate together, creating
         // the vigorous left-right swinging behaviour.
         // Now noise only fires when a particle is nearly still (speed < ~2.2 units/s)
@@ -169,14 +169,14 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         // ================================================ //
         // 3. ANTI-TUNNELING: CAP MAXIMUM SPEED
         // ================================================ //
-        if (currentSpeedSq > MAX_SPEED_SQ) {
-            // If currentSpeedSq > MAX_SPEED, we are going too fast.
+        if (currentSpeedSq > kMaxSpeedSq) {
+            // If currentSpeedSq > kMaxSpeed, we are going too fast.
             // Calculate actual speed to normalize.
             f32 actualSpeed = std::sqrt(currentSpeedSq);
 
             // Normalize and multiply by our hard speed limit to get a normalized direction vector with capped speed.
-            p.physics_.velocity_.x = (p.physics_.velocity_.x / actualSpeed) * MAX_SPEED;
-            p.physics_.velocity_.y = (p.physics_.velocity_.y / actualSpeed) * MAX_SPEED;
+            p.physics_.velocity_.x = (p.physics_.velocity_.x / actualSpeed) * kMaxSpeed;
+            p.physics_.velocity_.y = (p.physics_.velocity_.y / actualSpeed) * kMaxSpeed;
         }
 
         // ================================================ //
@@ -193,12 +193,12 @@ void FluidSystem::UpdatePortalIframes(f32 dt, std::vector<FluidParticle>& partic
     // Loop through all particles in the current pool
     for (auto& p : particlePool) {
         // If the particle is in iframe, reduce the iframe timer
-        if (p.portal_iframe_) {
-            p.portal_iframe_timer_ -= dt;
+        if (p.portalIframe_) {
+            p.portalIframeTimer_ -= dt;
             // If the timer reaches zero, disable iframe
-            if (p.portal_iframe_timer_ <= 0.0f) {
-                p.portal_iframe_ = false;
-                p.portal_iframe_timer_ = p.portal_iframe_maxduration_;
+            if (p.portalIframeTimer_ <= 0.0f) {
+                p.portalIframe_ = false;
+                p.portalIframeTimer_ = p.portalIframeMaxduration_;
             }
         }
     }
@@ -299,7 +299,9 @@ void FluidSystem::SpawnParticle(f32 posX, f32 posY, f32 radius, FluidType type) 
     particlePools_[i].push_back(newParticle);
 }
 
-u32 FluidSystem::GetParticleCount(FluidType type) { return particlePools_[(u32)type].size(); }
+u32 FluidSystem::GetParticleCount(FluidType type) {
+    return static_cast<u32>(particlePools_[(u32)type].size());
+}
 
 std::vector<FluidParticle>& FluidSystem::GetParticlePool(FluidType type) {
     return particlePools_[(int)type];

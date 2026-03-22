@@ -1,7 +1,8 @@
 #include "VFXSystem.h"
-#include "ConfigManager.h"
 
 #include <iostream>
+
+#include "ConfigManager.h"
 
 // private
 // only used when a game event requires a particle to be spawned
@@ -34,22 +35,22 @@ void VFXSystem::Initialize(u32 maxParticles, u32 maxEmitters) {
     Graphics dirtGfx;
     dirtGfx.mesh_ = circleMesh;
     dirtGfx.texture_ = nullptr; // AEGfxTextureLoad("Assets/dirt_particle.png");
-    dirtGfx.layer_ = configManager.getInt("VFXSystem", "dirtGFX", "layer", 5);
+    dirtGfx.layer_ = g_configManager.getInt("VFXSystem", "dirtGFX", "layer", 5);
     SetGraphicsConfig(VFXType::DirtBurst, dirtGfx);
 
     // Emitter setup
     EmitterConfig dirtConfig;
-    dirtConfig.spawnCount_ = configManager.getInt("VFXSystem", "dirtConfig", "spawnCount_", 10);
-    dirtConfig.minLife_ = configManager.getFloat("VFXSystem", "dirtConfig", "minLife_", 0.3f);
-    dirtConfig.maxLife_ = configManager.getFloat("VFXSystem", "dirtConfig", "maxLife_", 0.6f);
-    dirtConfig.minSpeed_ = configManager.getFloat("VFXSystem", "dirtConfig", "minSpeed_", 50.0f);
-    dirtConfig.maxSpeed_ = configManager.getFloat("VFXSystem", "dirtConfig", "maxSpeed_", 150.0f);
-    dirtConfig.minScale_ = configManager.getFloat("VFXSystem", "dirtConfig", "minScale_", 10.0f);
-    dirtConfig.maxScale_ = configManager.getFloat("VFXSystem", "dirtConfig", "maxScale_", 11.5f);
-    dirtConfig.r_ = configManager.getFloat("VFXSystem", "dirtConfig", "r_", 0.3f);
-    dirtConfig.g_ = configManager.getFloat("VFXSystem", "dirtConfig", "g_", 0.2f);
-    dirtConfig.b_ = configManager.getFloat("VFXSystem", "dirtConfig", "b_", 0.1f);
-    dirtConfig.a_ = configManager.getFloat("VFXSystem", "dirtConfig", "a_", 1.0f);
+    dirtConfig.spawnCount_ = g_configManager.getInt("VFXSystem", "dirtConfig", "spawnCount_", 10);
+    dirtConfig.minLife_ = g_configManager.getFloat("VFXSystem", "dirtConfig", "minLife_", 0.3f);
+    dirtConfig.maxLife_ = g_configManager.getFloat("VFXSystem", "dirtConfig", "maxLife_", 0.6f);
+    dirtConfig.minSpeed_ = g_configManager.getFloat("VFXSystem", "dirtConfig", "minSpeed_", 50.0f);
+    dirtConfig.maxSpeed_ = g_configManager.getFloat("VFXSystem", "dirtConfig", "maxSpeed_", 150.0f);
+    dirtConfig.minScale_ = g_configManager.getFloat("VFXSystem", "dirtConfig", "minScale_", 10.0f);
+    dirtConfig.maxScale_ = g_configManager.getFloat("VFXSystem", "dirtConfig", "maxScale_", 11.5f);
+    dirtConfig.r_ = g_configManager.getFloat("VFXSystem", "dirtConfig", "r_", 0.3f);
+    dirtConfig.g_ = g_configManager.getFloat("VFXSystem", "dirtConfig", "g_", 0.2f);
+    dirtConfig.b_ = g_configManager.getFloat("VFXSystem", "dirtConfig", "b_", 0.1f);
+    dirtConfig.a_ = g_configManager.getFloat("VFXSystem", "dirtConfig", "a_", 1.0f);
     SetEmitterConfig(VFXType::DirtBurst, dirtConfig);
 }
 

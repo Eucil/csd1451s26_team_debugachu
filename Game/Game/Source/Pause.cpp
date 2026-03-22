@@ -55,7 +55,7 @@ void PauseSystem::updateTransform() {
 void PauseSystem::loadMesh() { graphics_.mesh_ = CreateRectMesh(); }
 
 void PauseSystem::initFromJson(const std::string& file, const std::string& section) {
-    const Json::Value& pauseSection = configManager.getSection(file, section);
+    const Json::Value& pauseSection = g_configManager.getSection(file, section);
     graphics_.red_ = pauseSection["graphics"]["red"].asFloat();
     graphics_.green_ = pauseSection["graphics"]["green"].asFloat();
     graphics_.blue_ = pauseSection["graphics"]["blue"].asFloat();

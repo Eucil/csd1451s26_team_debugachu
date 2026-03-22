@@ -1,26 +1,29 @@
 #include "States/LevelManager.h"
-#include "ConfigManager.h"
-#include "Moss.h"
-#include "Utils.h"
+
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+
 #include <json/json.h>
+
+#include "ConfigManager.h"
+#include "Moss.h"
+#include "Utils.h"
 
 LevelManager levelManager;
 
 void LevelManager::init() {
-    levelEditorMode_ = static_cast<editorMode>(configManager.getInt(
-        "LevelManager", "default", "levelEditorMode_", static_cast<int>(editorMode::None)));
-    currentLevel_ = configManager.getInt("LevelManager", "default", "currentLevel_", 0);
-    currentGameBlock_ = static_cast<GameBlock>(configManager.getInt(
+    levelEditorMode_ = static_cast<EditorMode>(g_configManager.getInt(
+        "LevelManager", "default", "levelEditorMode_", static_cast<int>(EditorMode::None)));
+    currentLevel_ = g_configManager.getInt("LevelManager", "default", "currentLevel_", 0);
+    currentGameBlock_ = static_cast<GameBlock>(g_configManager.getInt(
         "LevelManager", "default", "currentGameBlock_", static_cast<int>(GameBlock::None)));
 
     // For level editor UI
     editorButtonStartPosX_ =
-        configManager.getFloat("LevelManager", "default", "editorButtonStartPosX_", 775.0f);
+        g_configManager.getFloat("LevelManager", "default", "editorButtonStartPosX_", 775.0f);
     displayEditorContainer_ =
-        configManager.getBool("LevelManager", "default", "displayEditorContainer_", true);
+        g_configManager.getBool("LevelManager", "default", "displayEditorContainer_", true);
 }
 
 void LevelManager::initEditorUI() {
@@ -44,15 +47,15 @@ void LevelManager::initEditorUI() {
     updateInnerButtonPosition();
 
     // Setup brush preview
-    circleMesh = CreateCircleMesh(20, 0.5f);
+    circleMesh_ = CreateCircleMesh(20, 0.5f);
 
     savingRoot_ = Json::Value();
     readingRoot_ = Json::Value();
 }
 
-editorMode LevelManager::getLevelEditorMode() const { return levelEditorMode_; }
+EditorMode LevelManager::getLevelEditorMode() const { return levelEditorMode_; }
 
-void LevelManager::setLevelEditorMode(editorMode mode) { levelEditorMode_ = mode; }
+void LevelManager::setLevelEditorMode(EditorMode mode) { levelEditorMode_ = mode; }
 
 int LevelManager::getCurrentLevel() const { return currentLevel_; }
 
@@ -85,16 +88,16 @@ void LevelManager::updateEditorButtonPosition() {
 void LevelManager::updateContainerPosition() {
     // Update builder button position
     // And make sure builder container follows the button
-    AEVec2 container_pos{};
-    container_pos.x =
+    AEVec2 containerPos{};
+    containerPos.x =
         (editorButton_.getTransform().pos_.x + editorButton_.getTransform().scale_.x / 2) +
         (editorContainer_.getTransform().scale_.x / 2);
 
-    container_pos.y = editorButton_.getTransform().pos_.y -
+    containerPos.y = editorButton_.getTransform().pos_.y -
                       (editorContainer_.getTransform().scale_.y / 2) +
                       (editorButton_.getTransform().scale_.y / 2);
 
-    editorContainer_.setTransform(container_pos, editorContainer_.getTransform().scale_,
+    editorContainer_.setTransform(containerPos, editorContainer_.getTransform().scale_,
                                   editorContainer_.getTransform().rotationRad_);
 
     editorContainer_.updateTransform();
@@ -141,7 +144,7 @@ void LevelManager::updateInnerButtonPosition() {
 }
 
 void LevelManager::updateLevelEditor() {
-    if (levelEditorMode_ != editorMode::Edit) {
+    if (levelEditorMode_ != EditorMode::Edit) {
         return;
     }
 
@@ -164,15 +167,15 @@ void LevelManager::updateLevelEditor() {
     }
 
     // Get scroll input for brush size adjustment
-    s32 scroll_input{};
-    AEInputMouseWheelDelta(&scroll_input);
-    if (scroll_input > 0) {
+    s32 scrollInput{};
+    AEInputMouseWheelDelta(&scrollInput);
+    if (scrollInput > 0) {
         brushRadius_ += 5.0f; // Increase brush size
         if (brushRadius_ > 100.0f) {
             brushRadius_ = 100.0f; // Cap maximum brush size
         }
         std::cout << "Scroll up detected. Brush radius: " << brushRadius_ << "\n";
-    } else if (scroll_input < 0) {
+    } else if (scrollInput < 0) {
         brushRadius_ -= 5.0f; // Decrease brush size
         if (brushRadius_ < 20.0f) {
             brushRadius_ = 20.0f; // Cap minimum brush size
@@ -183,7 +186,7 @@ void LevelManager::updateLevelEditor() {
 
 void LevelManager::renderLevelEditorUI(s8 font) {
 
-    if (levelEditorMode_ != editorMode::Edit) {
+    if (levelEditorMode_ != EditorMode::Edit) {
         std::cout << "Not in edit mode, skipping render\n";
         return;
     }
@@ -204,7 +207,7 @@ void LevelManager::renderLevelEditorUI(s8 font) {
 void LevelManager::freeLevelEditor() {
     editorButton_.unload();
     editorContainer_.unload();
-    AEGfxMeshFree(circleMesh);
+    AEGfxMeshFree(circleMesh_);
 
     for (int i = 0; i < static_cast<int>(GameBlock::None); ++i) {
         editorButtonPool_[i].unload();
@@ -308,7 +311,7 @@ void LevelManager::saveTerrainInfo(std::vector<float>& nodes, const std::string&
 }
 
 void LevelManager::saveStartEndInfo(std::vector<StartEnd>& startPoints, StartEnd& endPoint) {
-    Json::Value startPointsJson_array(Json::arrayValue);
+    Json::Value startPointsJsonArray(Json::arrayValue);
     for (const auto& startPoint : startPoints) {
         Json::Value startPointJson;
         startPointJson["posX"] = startPoint.transform_.pos_.x;
@@ -318,9 +321,9 @@ void LevelManager::saveStartEndInfo(std::vector<StartEnd>& startPoints, StartEnd
         startPointJson["rotation"] = startPoint.transform_.rotationRad_;
         startPointJson["type"] = static_cast<int>(startPoint.type_);
         startPointJson["direction"] = static_cast<int>(startPoint.direction_);
-        startPointsJson_array.append(startPointJson);
+        startPointsJsonArray.append(startPointJson);
     }
-    savingRoot_["Objects"]["startPoints"] = startPointsJson_array;
+    savingRoot_["Objects"]["startPoints"] = startPointsJsonArray;
 
     Json::Value endPointJson;
     endPointJson["posX"] = endPoint.transform_.pos_.x;
@@ -335,18 +338,18 @@ void LevelManager::saveStartEndInfo(std::vector<StartEnd>& startPoints, StartEnd
 
 void LevelManager::saveCollectibleInfo(std::vector<Collectible>& collectibles) {
 
-    Json::Value collectiblesJson_array(Json::arrayValue);
+    Json::Value collectiblesJsonArray(Json::arrayValue);
     for (const auto& collectible : collectibles) {
         Json::Value collectibleJson;
         collectibleJson["posX"] = collectible.transform_.pos_.x;
         collectibleJson["posY"] = collectible.transform_.pos_.y;
         collectibleJson["type"] = static_cast<int>(collectible.type_);
-        collectiblesJson_array.append(collectibleJson);
+        collectiblesJsonArray.append(collectibleJson);
     }
-    savingRoot_["Objects"]["collectibles"] = collectiblesJson_array;
+    savingRoot_["Objects"]["collectibles"] = collectiblesJsonArray;
 }
 void LevelManager::saveMossInfo(std::vector<Moss>& mosses) {
-    Json::Value mossJson_array(Json::arrayValue);
+    Json::Value mossJsonArray(Json::arrayValue);
     for (const auto& moss : mosses) {
         Json::Value mossJson;
         mossJson["posX"] = moss.transform_.pos_.x;
@@ -355,9 +358,9 @@ void LevelManager::saveMossInfo(std::vector<Moss>& mosses) {
         mossJson["health"] = moss.currentHealth_;
         mossJson["maxHealth"] = moss.maxHealth_;
         mossJson["absorptionRate"] = moss.absorptionRate_;
-        mossJson_array.append(mossJson);
+        mossJsonArray.append(mossJson);
     }
-    savingRoot_["Objects"]["moss"] = mossJson_array;
+    savingRoot_["Objects"]["moss"] = mossJsonArray;
 }
 
 void LevelManager::parseMossInfo(MossSystem& mossSystem) {
@@ -378,7 +381,7 @@ void LevelManager::parseMossInfo(MossSystem& mossSystem) {
 }
 
 void LevelManager::savePortalInfo(PortalSystem& portalSystem) {
-    Json::Value portalsJson_array(Json::arrayValue);
+    Json::Value portalsJsonArray(Json::arrayValue);
 
     for (const auto& portal : portalSystem.GetPortals()) {
         Json::Value portalJson;
@@ -388,10 +391,10 @@ void LevelManager::savePortalInfo(PortalSystem& portalSystem) {
         portalJson["scaleY"] = portal->transform_.scale_.y;
         portalJson["rotation"] = portal->transform_.rotationRad_;
 
-        portalsJson_array.append(portalJson);
+        portalsJsonArray.append(portalJson);
     }
 
-    savingRoot_["Objects"]["portals"] = portalsJson_array;
+    savingRoot_["Objects"]["portals"] = portalsJsonArray;
 }
 
 void LevelManager::writeToFile(int level) {
@@ -511,10 +514,10 @@ void LevelManager::parseStartEndInfo(StartEndPoint& startEndPointSystem) {
                            startPointsJson[i]["posY"].asFloat()};
                 AEVec2 scale{startPointsJson[i]["scaleX"].asFloat(),
                              startPointsJson[i]["scaleY"].asFloat()};
-                f32 rotationRad_ = startPointsJson[i]["rotation"].asFloat();
+                f32 rotationRad = startPointsJson[i]["rotation"].asFloat();
                 auto type = static_cast<StartEndType>(startPointsJson[i]["type"].asInt());
                 auto dir = static_cast<GoalDirection>(startPointsJson[i]["direction"].asInt());
-                startEndPointSystem.SetupPoint(pos, scale, rotationRad_, type, dir);
+                startEndPointSystem.SetupPoint(pos, scale, rotationRad, type, dir);
             }
         } else {
             std::cout << "Start points not found in JSON\n";
@@ -525,10 +528,10 @@ void LevelManager::parseStartEndInfo(StartEndPoint& startEndPointSystem) {
             const Json::Value& endPointJson = objects["endPoint"];
             AEVec2 pos{endPointJson["posX"].asFloat(), endPointJson["posY"].asFloat()};
             AEVec2 scale{endPointJson["scaleX"].asFloat(), endPointJson["scaleY"].asFloat()};
-            f32 rotationRad_ = endPointJson["rotation"].asFloat();
+            f32 rotationRad = endPointJson["rotation"].asFloat();
             auto type = static_cast<StartEndType>(endPointJson["type"].asInt());
             auto dir = static_cast<GoalDirection>(endPointJson["direction"].asInt());
-            startEndPointSystem.SetupPoint(pos, scale, rotationRad_, type, dir);
+            startEndPointSystem.SetupPoint(pos, scale, rotationRad, type, dir);
         } else {
             std::cout << "End point not found in JSON\n";
         }
@@ -586,14 +589,14 @@ void LevelManager::drawBrushPreview(TerrainMaterial terrainType) {
     AEVec2 mousePos = GetMouseWorldPos();
 
     // Set up world matrix
-    AEMtx33 scale_mtx, rot_mtx, trans_mtx, world_mtx;
+    AEMtx33 scaleMtx, rotMtx, transMtx, worldMtx;
 
-    AEMtx33Scale(&scale_mtx, brushRadius_ * 2, brushRadius_ * 2);
-    AEMtx33Rot(&rot_mtx, 0.0f);
-    AEMtx33Trans(&trans_mtx, mousePos.x, mousePos.y);
+    AEMtx33Scale(&scaleMtx, brushRadius_ * 2, brushRadius_ * 2);
+    AEMtx33Rot(&rotMtx, 0.0f);
+    AEMtx33Trans(&transMtx, mousePos.x, mousePos.y);
 
-    AEMtx33Concat(&world_mtx, &rot_mtx, &scale_mtx);
-    AEMtx33Concat(&world_mtx, &trans_mtx, &world_mtx);
+    AEMtx33Concat(&worldMtx, &rotMtx, &scaleMtx);
+    AEMtx33Concat(&worldMtx, &transMtx, &worldMtx);
 
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -610,6 +613,6 @@ void LevelManager::drawBrushPreview(TerrainMaterial terrainType) {
         break;
     }
 
-    AEGfxSetTransform(world_mtx.m);
-    AEGfxMeshDraw(circleMesh, AE_GFX_MDM_TRIANGLES);
+    AEGfxSetTransform(worldMtx.m);
+    AEGfxMeshDraw(circleMesh_, AE_GFX_MDM_TRIANGLES);
 }
