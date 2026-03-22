@@ -26,7 +26,7 @@ void LevelManager::init() {
         g_configManager.getBool("LevelManager", "default", "displayEditorContainer_", true);
 }
 
-void LevelManager::initEditorUI() {
+void LevelManager::initEditorUI(s8 font) {
     // Setup Editor UI
     editorButton_.loadMesh();
     editorButton_.loadTexture("Assets/Textures/pale_blue_button.png");
@@ -34,7 +34,9 @@ void LevelManager::initEditorUI() {
     editorContainer_.loadTexture("Assets/Textures/pink_button.png");
 
     editorButton_.initFromJson("level_manager_buttons", "editorButton_");
+    editorButton_.setTextFont(font);
     editorContainer_.initFromJson("level_manager_buttons", "editorContainer_");
+    editorContainer_.setTextFont(font);
     // Set container position relative to button
     updateEditorButtonPosition();
     updateContainerPosition();
@@ -43,6 +45,7 @@ void LevelManager::initEditorUI() {
     for (int i = 0; i < static_cast<int>(GameBlock::None); ++i) {
         editorButtonPool_[i].loadMesh();
         editorButtonPool_[i].loadTexture("Assets/Textures/pale_blue_button.png");
+        editorButtonPool_[i].setTextFont(font);
     }
     updateInnerButtonPosition();
 
@@ -184,7 +187,7 @@ void LevelManager::updateLevelEditor() {
     }
 }
 
-void LevelManager::renderLevelEditorUI(s8 font) {
+void LevelManager::renderLevelEditorUI() {
 
     if (levelEditorMode_ != EditorMode::Edit) {
         std::cout << "Not in edit mode, skipping render\n";
@@ -192,14 +195,14 @@ void LevelManager::renderLevelEditorUI(s8 font) {
     }
 
     // Render builder button
-    editorButton_.draw(font);
+    editorButton_.draw();
 
     // Render builder container and buttons within if displayEditorContainer_ is true
     if (displayEditorContainer_) {
-        editorContainer_.draw(font);
+        editorContainer_.draw();
         // Render buttons in button pool
         for (int i = 0; i < static_cast<int>(GameBlock::None); ++i) {
-            editorButtonPool_[i].draw(font);
+            editorButtonPool_[i].draw();
         }
     }
 }

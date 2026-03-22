@@ -89,15 +89,19 @@ void LoadLevel() {
     totalWaterText.y_ = 0.92f;
     totalWaterText.scale_ = 0.5f;
     totalWaterText.content_ = "Water: 0/0";
+    totalWaterText.font_ = font;
 
     goalText.x_ = 0.2f;
     goalText.y_ = 0.92f;
     goalText.scale_ = 0.5f;
     goalText.content_ = "Goal: 0%";
+    goalText.font_ = font;
+
+    rotationText.font_ = font;
 
     // tc added end
 
-    levelManager.initEditorUI();
+    levelManager.initEditorUI(font);
 
     if (levelManager.getLevelData(levelManager.getCurrentLevel())) {
         levelManager.parseMapInfo(width, height, tileSize);
@@ -191,7 +195,9 @@ void InitializeLevel() {
 
     // UI buttons
     buttonRestart.initFromJson("level_buttons", "Restart");
+    buttonRestart.setTextFont(font);
     buttonQuit.initFromJson("level_buttons", "Quit");
+    buttonQuit.setTextFont(font);
 
     // Pause system
     pauseSystem.initFromJson("pause_system", "Background");
@@ -660,7 +666,7 @@ void DrawLevel() {
     mossSystem.Draw();
 
     if (levelManager.getLevelEditorMode() == EditorMode::Edit) {
-        levelManager.renderLevelEditorUI(font);
+        levelManager.renderLevelEditorUI();
         switch (levelManager.getCurrentGameBlock()) {
         case GameBlock::Dirt:;
             levelManager.drawBrushPreview(TerrainMaterial::Dirt);
@@ -685,8 +691,8 @@ void DrawLevel() {
     // DRAW ALL UI ELEMENT LAST
     collectibleSystem.DrawUI();
     // Show total water counter with progress bar and goal progress bar
-    totalWaterText.draw(font);
-    goalText.draw(font);
+    totalWaterText.draw();
+    goalText.draw();
 
     // Water progress bar below the water text with dark blue border
     DrawTotalWaterBar(totalWaterText.x_ + 0.35f, totalWaterText.y_ - 0.09f, totalWaterRemaining,
@@ -698,15 +704,15 @@ void DrawLevel() {
 
     rotationText.content_ =
         "Portal Rotation:" + std::to_string(static_cast<s32>(portalSystem.GetRotationValue()));
-    rotationText.draw(font);
+    rotationText.draw();
     winScreen.Draw();
     if (pauseSystem.isPaused()) { // Game is paused
         // Backgroun
         pauseSystem.renderBackground();
 
         // UI buttons
-        buttonRestart.draw(font);
-        buttonQuit.draw(font);
+        buttonRestart.draw();
+        buttonQuit.draw();
     } else { // Game is not paused
     }
 }

@@ -55,6 +55,7 @@ void CollectibleSystem::Load(s8 font) {
         g_configManager.getFloat("Collectible", "default", "collectionText_.scale_", 0.5f);
     collectionText_.content_ =
         g_configManager.getString("Collectible", "default", "collectionText_.x_", "Items: 0/3");
+    collectionText_.font_ = font_;
 }
 
 // CreateMeshes() - builds the 3D shapes for collectibles
@@ -250,7 +251,7 @@ void CollectibleSystem::Draw() {
 
 void CollectibleSystem::DrawUI() {
     // Draw collection counter
-    collectionText_.draw(font_);
+    collectionText_.draw();
 }
 
 // Free each mesh if it exists

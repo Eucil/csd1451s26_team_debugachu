@@ -35,7 +35,7 @@ enum class GameBlock { Dirt, Stone, Magic, StartPoint, EndPoint, Collectible, Po
 class LevelManager {
 public:
     void init();
-    void initEditorUI();
+    void initEditorUI(s8 font);
 
     // Getters and setters
     //=================================================================
@@ -54,7 +54,7 @@ public:
     void updateContainerPosition();
     void updateInnerButtonPosition();
     void updateLevelEditor();
-    void renderLevelEditorUI(s8 font);
+    void renderLevelEditorUI();
     void drawBrushPreview(TerrainMaterial terrainType);
     //=================================================================
 

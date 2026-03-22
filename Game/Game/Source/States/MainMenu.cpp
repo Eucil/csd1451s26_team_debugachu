@@ -153,12 +153,18 @@ void InitializeMainMenu() {
 
 	// UI buttons
 	startButton.initFromJson("main_menu_buttons", "Start");
+	startButton.setTextFont(buttonFont);
 	howToPlayButton.initFromJson("main_menu_buttons", "HowToPlay");
+	howToPlayButton.setTextFont(buttonFont);
 	settingsButton.initFromJson("main_menu_buttons", "Settings");
+	settingsButton.setTextFont(buttonFont);
 	creditsButton.initFromJson("main_menu_buttons", "Credits");
+	creditsButton.setTextFont(buttonFont);
 	quitButton.initFromJson("main_menu_buttons", "Quit");
+	quitButton.setTextFont(buttonFont);
 
 	titleText.initFromJson("main_menu_texts", "Title");
+	titleText.font_ = titleFont;
 }
 
 static void BgSpawnWater(f32 deltaTime) {
@@ -303,14 +309,14 @@ void DrawMainMenu() {
 	bgCollectibleSystem.Draw();
 
 	// Draw all buttons with different colors
-	startButton.draw(buttonFont);
-	howToPlayButton.draw(buttonFont);
-	settingsButton.draw(buttonFont);
-	creditsButton.draw(buttonFont);
-	quitButton.draw(buttonFont);
+	startButton.draw();
+	howToPlayButton.draw();
+	settingsButton.draw();
+	creditsButton.draw();
+	quitButton.draw();
 
 	// Draw game title
-	titleText.draw(titleFont);
+	titleText.draw();
 
 	bgFluidSystem.DrawColor();
 }

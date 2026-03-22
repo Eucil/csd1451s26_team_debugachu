@@ -27,8 +27,11 @@ void WinScreen::Load(s8 font) {
 
     // Initialize text
     titleText_ = TextData{"VICTORY!", -0.17f, 0.3f, 1.5f, 1.0f, 1.0f, 0.0f, 1.0f};
+    titleText_.font_ = font_;
     collectiblesText_ = TextData{"", -0.21f, 0.1f, 0.8f, 1.0f, 1.0f, 1.0f, 1.0f};
+    collectiblesText_.font_ = font_;
     statsText_ = TextData{"", -0.34f, -0.1f, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f};
+    statsText_.font_ = font_;
 
     isVisible_ = false;
 }
@@ -48,12 +51,15 @@ void WinScreen::Show(int collected, int total, int currentLevel) {
 
     restartButton_.setTransform({-200.0f, -140.0f}, {160.0f, 70.0f});
     restartButton_.setText("Restart", -0.31f, -0.32f, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f);
+    restartButton_.setTextFont(font_);
 
     nextLevelButton_.setTransform({0.0f, -140.0f}, {160.0f, 70.0f});
     nextLevelButton_.setText("Next Level", -0.09f, -0.32f, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f);
+    nextLevelButton_.setTextFont(font_);
 
     mainMenuButton_.setTransform({200.0f, -140.0f}, {160.0f, 70.0f});
     mainMenuButton_.setText("Main Menu", 0.17f, -0.32f, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f);
+    mainMenuButton_.setTextFont(font_);
 
     // Update transforms
     nextLevelButton_.updateTransform();
@@ -129,8 +135,8 @@ void WinScreen::Draw() {
 
     // Draw text
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-    titleText_.draw(font_);
-    collectiblesText_.draw(font_);
+    titleText_.draw();
+    collectiblesText_.draw();
 
     // Draw stats based on collectibles
     if (collectiblesCollected_ == totalCollectibles_) {
@@ -143,12 +149,12 @@ void WinScreen::Draw() {
         statsText_.content_ = buffer;
         statsText_.scale_ = 0.8f;
     }
-    statsText_.draw(font_);
+    statsText_.draw();
 
     // Draw buttons
-    nextLevelButton_.draw(font_);
-    restartButton_.draw(font_);
-    mainMenuButton_.draw(font_);
+    nextLevelButton_.draw();
+    restartButton_.draw();
+    mainMenuButton_.draw();
 }
 
 void WinScreen::Free() {

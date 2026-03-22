@@ -115,8 +115,12 @@ void LoadLevelSelector() {
                            buttonPos.x / textPosDivisorX - textXOffset - extraOffsetX,
                            buttonPos.y / textPosDivisorY - textYOffset, textScale, textR,
                            textG, textB, textA);
+        tempButton.setTextFont(font);
         editorButtonPool_.push_back(tempButton);
     }
+
+    titleText.font_ = font;
+    inputPrompt.font_ = font;
 }
 
 void InitializeLevelSelector() {
@@ -315,17 +319,17 @@ void DrawLevelSelector() {
     for (int i = 0; i < static_cast<int>(Level::None); ++i) {
         if (levelManager.playableLevels_[i]) {
             editorButtonPool_[i].setRGBA(1.0f, 1.0f, 1.f, 1.f); // Pale blue for playable levels
-            editorButtonPool_[i].draw(font);
+            editorButtonPool_[i].draw();
         } else {
             editorButtonPool_[i].setRGBA(0.5f, 0.5f, 0.5f, 1.f); // Grey for non-playable levels
-            editorButtonPool_[i].draw(font);
+            editorButtonPool_[i].draw();
         }
     }
 
-    titleText.draw(font);
+    titleText.draw();
 
     if (creatingLevel) {
-        inputPrompt.draw(font);
+        inputPrompt.draw();
     }
 
     // If mouse is within a button, hoveredLevelIndex = button level.

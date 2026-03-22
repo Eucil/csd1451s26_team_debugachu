@@ -42,6 +42,8 @@ void Button::setTransform(const AEVec2& pos, const AEVec2& scale, f32 rotationRa
     transform_.rotationRad_ = rotationRad;
 }
 
+void Button::setTextFont(s8 font) { text_.font_ = font; }
+
 Transform Button::getTransform() const { return transform_; }
 
 void Button::setText(const std::string& content, const f32& x, const f32& y, const f32& scale,
@@ -70,9 +72,20 @@ void Button::updateTransform() {
     AEMtx33Trans(&transMtx, transform_.pos_.x, transform_.pos_.y);
     AEMtx33Concat(&transform_.worldMtx_, &rotMtx, &scaleMtx);
     AEMtx33Concat(&transform_.worldMtx_, &transMtx, &transform_.worldMtx_);
+
+    // Center text within the button (text coords are normalized -1 to +1, bottom-left anchored).
+    if (text_.font_ != 0) {
+        f32 centerX = transform_.pos_.x / (AEGfxGetWindowWidth() / 2.0f);
+        f32 centerY = transform_.pos_.y / (AEGfxGetWindowHeight() / 2.0f);
+        f32 textWidth, textHeight;
+        AEGfxGetPrintSize(text_.font_, text_.content_.c_str(), text_.scale_, &textWidth,
+                          &textHeight);
+        text_.x_ = centerX - textWidth / 2.0f;
+        text_.y_ = centerY - textHeight / 2.0f;
+    }
 }
 
-void Button::draw(s8 font) {
+void Button::draw() {
     // SAFETY CHECK: Make sure mesh exists
     if (graphics_.mesh_ == nullptr) {
         printf("ERROR: Button mesh is null! Content: %s\n", text_.content_.c_str());
@@ -101,8 +114,8 @@ void Button::draw(s8 font) {
     }
 
     // Render text
-    if (font != 0) {
-        text_.draw(font);
+    if (text_.font_ != 0) {
+        text_.draw();
     }
 }
 
@@ -144,15 +157,14 @@ bool Button::checkMouseClick() const {
     return false;
 }
 
-void TextData::draw(s8 font) const {
-    // Add null check
-    if (font == 0) {
+void TextData::draw() const {
+    if (font_ == 0) {
         printf("ERROR: Attempting to draw text with null font!\n");
         return;
     }
 
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-    AEGfxPrint(font, content_.c_str(), x_, y_, scale_, r_, g_, b_, a_);
+    AEGfxPrint(font_, content_.c_str(), x_, y_, scale_, r_, g_, b_, a_);
 }
 
 void TextData::initFromJson(const std::string& file, const std::string& section) {

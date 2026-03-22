@@ -39,17 +39,27 @@ void loadSettings() {
 
 void initializeSettings() {
     buttonIncreaseSfxVolume.initFromJson("settings_buttons", "IncreaseSfxVolume");
+    buttonIncreaseSfxVolume.setTextFont(font);
     buttonDecreaseSfxVolume.initFromJson("settings_buttons", "DecreaseSfxVolume");
+    buttonDecreaseSfxVolume.setTextFont(font);
     buttonIncreaseBgmVolume.initFromJson("settings_buttons", "IncreaseBgmVolume");
+    buttonIncreaseBgmVolume.setTextFont(font);
     buttonDecreaseBgmVolume.initFromJson("settings_buttons", "DecreaseBgmVolume");
+    buttonDecreaseBgmVolume.setTextFont(font);
 
     buttonBack.initFromJson("settings_buttons", "Back");
+    buttonBack.setTextFont(font);
 
     headerText.initFromJson("settings_text", "Header");
+    headerText.font_ = font;
     sfxVolumeText.initFromJson("settings_text", "SfxVolume");
+    sfxVolumeText.font_ = font;
     bgmVolumeText.initFromJson("settings_text", "BgmVolume");
+    bgmVolumeText.font_ = font;
     sfxVolumeAmountText.initFromJson("settings_text", "SfxVolumeAmount");
+    sfxVolumeAmountText.font_ = font;
     bgmVolumeAmountText.initFromJson("settings_text", "BgmVolumeAmount");
+    bgmVolumeAmountText.font_ = font;
 }
 
 void updateSettings(GameStateManager& GSM, f32 deltaTime) {
@@ -85,18 +95,18 @@ void updateSettings(GameStateManager& GSM, f32 deltaTime) {
 }
 
 void drawSettings() {
-    buttonIncreaseSfxVolume.draw(font);
-    buttonDecreaseSfxVolume.draw(font);
-    buttonIncreaseBgmVolume.draw(font);
-    buttonDecreaseBgmVolume.draw(font);
+    buttonIncreaseSfxVolume.draw();
+    buttonDecreaseSfxVolume.draw();
+    buttonIncreaseBgmVolume.draw();
+    buttonDecreaseBgmVolume.draw();
 
-    buttonBack.draw(font);
+    buttonBack.draw();
 
-    headerText.draw(font);
-    sfxVolumeText.draw(font);
-    bgmVolumeText.draw(font);
-    sfxVolumeAmountText.draw(font);
-    bgmVolumeAmountText.draw(font);
+    headerText.draw();
+    sfxVolumeText.draw();
+    bgmVolumeText.draw();
+    sfxVolumeAmountText.draw();
+    bgmVolumeAmountText.draw();
 }
 
 void freeSettings() {}

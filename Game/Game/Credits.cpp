@@ -97,6 +97,7 @@ void LoadCredits() {
     backButton.initFromJson("main_menu_buttons", "Back");
     backButton.setTransform({-650.0f, -350.0f}, {150.0f, 50.0f});
     backButton.setText("Back", -0.875f, -0.8f, 0.75f, 1.0f, 1.0f, 1.0f, 1.0f);
+    backButton.setTextFont(font);
 }
 
 void InitializeCredits() {
@@ -297,7 +298,7 @@ void DrawCredits() {
     }
 
     // Draw back button
-    backButton.draw(font);
+    backButton.draw();
 }
 
 void FreeCredits() {
