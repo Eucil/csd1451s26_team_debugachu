@@ -4,8 +4,6 @@
     "scale": { "x": 400.0, "y": 80.0 },
     "text": {
       "content": "Start",
-      "x": -0.12,
-      "y": 0.50,
       "scale": 1.0,
       "red": 1.0,
       "green": 1.0,
@@ -18,8 +16,6 @@
     "scale": { "x": 400.0, "y": 80.0 },
     "text": {
       "content": "How to Play",
-      "x": -0.22,
-      "y": 0.19,
       "scale": 0.92,
       "red": 1.0,
       "green": 1.0,
@@ -32,8 +28,6 @@
     "scale": { "x": 400.0, "y": 80.0 },
     "text": {
       "content": "Settings",
-      "x": -0.16,
-      "y": -0.13,
       "scale": 1.00,
       "red": 1.0,
       "green": 1.0,
@@ -46,8 +40,6 @@
     "scale": { "x": 400.0, "y": 80.0 },
     "text": {
       "content": "Credits",
-      "x": -0.16,
-      "y": -0.43,
       "scale": 1.0,
       "red": 1.0,
       "green": 1.0,
@@ -60,8 +52,6 @@
     "scale": { "x": 400.0, "y": 80.0 },
     "text": {
       "content": "Quit",
-      "x": -0.10,
-      "y": -0.75,
       "scale": 1.0,
       "red": 1.0,
       "green": 1.0,
@@ -74,8 +64,6 @@
     "scale": {"x": 50.0, "y": 50.0},
     "text": {
       "content": "BACK",
-      "x": 0.0,
-      "y": -0.10,
       "scale": 0.2,
       "red": 1.0,
       "green": 1.0,

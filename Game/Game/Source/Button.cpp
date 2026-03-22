@@ -27,8 +27,6 @@ void Button::initFromJson(const std::string& file, const std::string& section) {
 
     const Json::Value& t = buttonSection["text"];
     text_.content_ = t["content"].asString();
-    text_.x_ = t["x"].asFloat();
-    text_.y_ = t["y"].asFloat();
     text_.scale_ = t["scale"].asFloat();
     text_.r_ = t["red"].asFloat();
     text_.g_ = t["green"].asFloat();
