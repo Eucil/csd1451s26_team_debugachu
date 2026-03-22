@@ -240,11 +240,11 @@ static void SpawnWaterWithLimit(f32 deltaTime) {
 
                         // Calculate random x offset within the start point's width
                         f32 xOffset = startPoint.transform_.pos_.x +
-                                       AERandFloat() * startPoint.transform_.scale_.x -
-                                       (startPoint.transform_.scale_.x / 2.f);
+                                      AERandFloat() * startPoint.transform_.scale_.x -
+                                      (startPoint.transform_.scale_.x / 2.f);
                         AEVec2 position = {xOffset, startPoint.transform_.pos_.y -
-                                                         (startPoint.transform_.scale_.y / 2.f) -
-                                                         (randRadius)};
+                                                        (startPoint.transform_.scale_.y / 2.f) -
+                                                        (randRadius)};
 
                         // Spawn the water particle
                         fluidSystem.SpawnParticle(position.x, position.y, randRadius,
@@ -258,44 +258,13 @@ static void SpawnWaterWithLimit(f32 deltaTime) {
 // tc added end
 
 void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
-    // tc added start
-    totalWaterRemaining = 0.0f;
-    totalWaterCapacity = 0.0f;
-    for (const auto& startPoint : startEndPointSystem.startPoints_) {
-        if (startPoint.active_ && startPoint.type_ == StartEndType::Pipe) {
-            totalWaterRemaining += startPoint.waterRemaining_;
-            totalWaterCapacity += startPoint.waterCapacity_;
-        }
-    }
-    char buffer[64];
-    snprintf(buffer, sizeof(buffer), "Water: %.0f/%.0f", totalWaterRemaining, totalWaterCapacity);
-    totalWaterText.content_ = buffer;
-
-    // Calculate goal percentage based on particles collected vs max particles
-    goalPercentage = (static_cast<f32>(startEndPointSystem.particlesCollected_) /
-                      static_cast<f32>(fluidSystem.particleMaxCount_ / 3)) *
-                     100.0f;
-    if (goalPercentage > 100.0f)
-        goalPercentage = 100.0f;
-
-    char goalBuffer[32];
-    snprintf(goalBuffer, sizeof(goalBuffer), "Goal: %.0f%%", goalPercentage);
-    goalText.content_ = goalBuffer;
-
-    if (AEInputCheckTriggered(AEVK_F)) {
-        // Refill all start points
-        startEndPointSystem.RefillAllWater();
-    }
-
-    if (AEInputCheckTriggered(AEVK_G)) {
-        // Toggle infinite water for all start points
-        startEndPointSystem.ToggleInfiniteWater();
-    }
-    // tc added end
-
     // std::cout << "Update level 3\n";
 
-    if (pauseSystem.isPaused()) { // Game is paused
+    if (pauseSystem.isPaused()) {
+        // ====================
+        // Game is paused
+        // ====================
+
         if (AEInputCheckTriggered(AEVK_P) || 0 == AESysDoesWindowExist()) {
             std::cout << "P triggered\n";
             pauseSystem.resume();
@@ -312,7 +281,11 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
         buttonRestart.updateTransform();
         buttonQuit.updateTransform();
 
-    } else { // Game is not paused
+    } else {
+        // ====================
+        // Game is not paused
+        // ====================
+
         // Press P to pause
         if (AEInputCheckTriggered(AEVK_P) || 0 == AESysDoesWindowExist()) {
             std::cout << "P triggered\n";
@@ -332,8 +305,11 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
         }
 
         // Keyboard/Mouse inputs for level editor and gameplay
-        // If in editor mode, edit level
         if (levelManager.getLevelEditorMode() == EditorMode::Edit) {
+            // ====================
+            // Level editor mode
+            // ====================
+
             // Inputs to build level
             if (!levelManager.getDisplayBuilderContainer()) {
                 f32 brush_size = levelManager.brushRadius_;
@@ -420,7 +396,10 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
             }
 
         } else {
-            // Else do inputs for gameplay instead
+            // ====================
+            // Gameplay mode
+            // ====================
+
             if (AEInputCheckCurr(AEVK_LBUTTON)) {
                 bool hitDirt = dirt->destroyAtMouse(20.0f);
                 // Only run the VFX timer if we actually dug through dirt
@@ -453,68 +432,104 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 }
             }
             portalSystem.RotatePortal();
-        }
 
-        for (auto& startPoint : startEndPointSystem.startPoints_) {
-            if (startPoint.releaseWater_) {
-                static f32 spawnTimer = 0.0f;
-                spawnTimer -= deltaTime;
-                if (spawnTimer <= 0.0f) {
-
-                    // RESET TIMER: Set this to how fast you want water to flow
-                    // Original: 0.005f;
-                    spawnTimer = 0.025f;
-
-                    // f32 randRadius = 13.0f - (noise * 100.0f);
-                    f32 randRadius = 7.0f;
-
-                    f32 xOffset = startPoint.transform_.pos_.x +
-                                   AERandFloat() * startPoint.transform_.scale_.x -
-                                   (startPoint.transform_.scale_.x / 2.f);
-                    AEVec2 position = {xOffset, startPoint.transform_.pos_.y -
-                                                     (startPoint.transform_.scale_.y / 2.f) -
-                                                     (randRadius)};
-
-                    // Call the water spawn function
-                    // tc added end
-                    // fluidSystem.SpawnParticle(position.x, position.y, randRadius,
-                    // FluidType::Water);
+            // tc added start
+            totalWaterRemaining = 0.0f;
+            totalWaterCapacity = 0.0f;
+            for (const auto& startPoint : startEndPointSystem.startPoints_) {
+                if (startPoint.active_ && startPoint.type_ == StartEndType::Pipe) {
+                    totalWaterRemaining += startPoint.waterRemaining_;
+                    totalWaterCapacity += startPoint.waterCapacity_;
                 }
-                SpawnWaterWithLimit(deltaTime);
             }
+            char buffer[64];
+            snprintf(buffer, sizeof(buffer), "Water: %.0f/%.0f", totalWaterRemaining,
+                     totalWaterCapacity);
+            totalWaterText.content_ = buffer;
+
+            // Calculate goal percentage based on particles collected vs max particles
+            goalPercentage = (static_cast<f32>(startEndPointSystem.particlesCollected_) /
+                              static_cast<f32>(fluidSystem.particleMaxCount_ / 3)) *
+                             100.0f;
+            if (goalPercentage > 100.0f)
+                goalPercentage = 100.0f;
+
+            char goalBuffer[32];
+            snprintf(goalBuffer, sizeof(goalBuffer), "Goal: %.0f%%", goalPercentage);
+            goalText.content_ = goalBuffer;
+
+            if (AEInputCheckTriggered(AEVK_F)) {
+                // Refill all start points
+                startEndPointSystem.RefillAllWater();
+            }
+
+            if (AEInputCheckTriggered(AEVK_G)) {
+                // Toggle infinite water for all start points
+                startEndPointSystem.ToggleInfiniteWater();
+            }
+            // tc added end
+
+            for (auto& startPoint : startEndPointSystem.startPoints_) {
+                if (startPoint.releaseWater_) {
+                    static f32 spawnTimer = 0.0f;
+                    spawnTimer -= deltaTime;
+                    if (spawnTimer <= 0.0f) {
+
+                        // RESET TIMER: Set this to how fast you want water to flow
+                        // Original: 0.005f;
+                        spawnTimer = 0.025f;
+
+                        // f32 randRadius = 13.0f - (noise * 100.0f);
+                        f32 randRadius = 7.0f;
+
+                        f32 xOffset = startPoint.transform_.pos_.x +
+                                      AERandFloat() * startPoint.transform_.scale_.x -
+                                      (startPoint.transform_.scale_.x / 2.f);
+                        AEVec2 position = {xOffset, startPoint.transform_.pos_.y -
+                                                        (startPoint.transform_.scale_.y / 2.f) -
+                                                        (randRadius)};
+
+                        // Call the water spawn function
+                        // tc added end
+                        // fluidSystem.SpawnParticle(position.x, position.y, randRadius,
+                        // FluidType::Water);
+                    }
+                    SpawnWaterWithLimit(deltaTime);
+                }
+            }
+
+            // tc added start - Update collectibles
+            collectibleSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
+            mossSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
+                              startEndPointSystem);
+
+            // Check if all items collected
+            if (collectibleSystem.CheckAllCollected()) {
+                std::cout << "All items collected!\n";
+                // You can trigger level complete here
+            }
+
+            // fluidSystem.UpdateMain(deltaTime);
+            // fluidSystem.Update(deltaTime, *dirt);
+            // fluidSystem.Update(deltaTime, *stone);
+            fluidSystem.Update(deltaTime, {dirt, stone});
+            startEndPointSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
+            portalSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
+            vfxSystem.Update(deltaTime);
+
+            levelManager.updateLevelEditor();
+
+            if (startEndPointSystem.CheckWinCondition(fluidSystem.particleMaxCount_) &&
+                !winScreen.IsVisible()) {
+                std::cout << "WIN - Showing win screen\n";
+                winScreen.Show(collectibleSystem.GetCollectedCount(),
+                               collectibleSystem.GetTotalCount(), levelManager.getCurrentLevel());
+            }
+            winScreen.Update(GSM);
+            // Pause system
+            pauseSystem.setTransformFillScreen();
+            pauseSystem.updateTransform();
         }
-
-        // tc added start - Update collectibles
-        collectibleSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
-        mossSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
-                          startEndPointSystem);
-
-        // Check if all items collected
-        if (collectibleSystem.CheckAllCollected()) {
-            std::cout << "All items collected!\n";
-            // You can trigger level complete here
-        }
-
-        // fluidSystem.UpdateMain(deltaTime);
-        // fluidSystem.Update(deltaTime, *dirt);
-        // fluidSystem.Update(deltaTime, *stone);
-        fluidSystem.Update(deltaTime, {dirt, stone});
-        startEndPointSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
-        portalSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
-        vfxSystem.Update(deltaTime);
-
-        levelManager.updateLevelEditor();
-
-        if (startEndPointSystem.CheckWinCondition(fluidSystem.particleMaxCount_) &&
-            !winScreen.IsVisible()) {
-            std::cout << "WIN - Showing win screen\n";
-            winScreen.Show(collectibleSystem.GetCollectedCount(), collectibleSystem.GetTotalCount(),
-                           levelManager.getCurrentLevel());
-        }
-        winScreen.Update(GSM);
-        // Pause system
-        pauseSystem.setTransformFillScreen();
-        pauseSystem.updateTransform();
     }
 }
 
