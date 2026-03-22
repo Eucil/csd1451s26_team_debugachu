@@ -214,70 +214,78 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
         GSM.nextState_ = StateId::Restart;
     }
 
-    // Mouse click handling for all buttons
-    if (AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
-        // Start button - goes to Level 1 (or you could make it go to a level select)
-        if (startButton.checkMouseClick()) {
-            std::cout << "Start button clicked - Going to Level Selector\n";
-            transitionManager.StartTsunami(&GSM, StateId::LevelSelector);
-        }
+    if (!transitionManager.IsTransitioning()) {
+        // Mouse click handling for all buttons
+        if (AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
+            // Start button - goes to Level 1 (or you could make it go to a level select)
+            if (startButton.checkMouseClick()) {
+                std::cout << "Start button clicked - Going to Level Selector\n";
+                transitionManager.StartTsunami(&GSM, StateId::LevelSelector);
+            }
 
-        // How To Play button
-        if (howToPlayButton.checkMouseClick()) {
-            std::cout << "How To Play button clicked\n";
-            // TODO: Implement how to play screen or state
-            // For now, just print or you could set a new state
-            // GSM.nextState_ = StateId::HowToPlay;
-        }
+            // How To Play button
+            if (howToPlayButton.checkMouseClick()) {
+                std::cout << "How To Play button clicked\n";
+                // TODO: Implement how to play screen or state
+                // For now, just print or you could set a new state
+                // GSM.nextState_ = StateId::HowToPlay;
+            }
 
-        // Settings button
-        if (settingsButton.checkMouseClick()) {
-            std::cout << "Settings button clicked\n";
-            GSM.nextState_ = StateId::Settings;
-        }
+            // Settings button
+            if (settingsButton.checkMouseClick()) {
+                std::cout << "Settings button clicked\n";
+                GSM.nextState_ = StateId::Settings;
+            }
 
-        // Credits button
-        if (creditsButton.checkMouseClick()) {
-            std::cout << "Credits button clicked\n";
-            GSM.nextState_ = StateId::Credits;
-        }
+            // Credits button
+            if (creditsButton.checkMouseClick()) {
+                std::cout << "Credits button clicked\n";
+                GSM.nextState_ = StateId::Credits;
+            }
 
-        // Quit button
-        if (quitButton.checkMouseClick()) {
-            std::cout << "Quit button clicked - Exiting game\n";
-            GSM.nextState_ = StateId::Quit;
+            // Quit button
+            if (quitButton.checkMouseClick()) {
+                std::cout << "Quit button clicked - Exiting game\n";
+                GSM.nextState_ = StateId::Quit;
+            }
         }
-    }
-    if (AEInputCheckCurr(AEVK_LBUTTON)) {
+        if (AEInputCheckCurr(AEVK_LBUTTON)) {
 
-        bool hitDirt = bgDirt->destroyAtMouse(20.0f);
-        if (hitDirt) {
-            bgVfxSystem.SpawnContinuous(VFXType::DirtBurst, GetMouseWorldPos(), deltaTime, 0.1f);
-            gAudioSystem.playSound("dirt_break", "sfx", 0.25f, 1.0f);
+            bool hitDirt = bgDirt->destroyAtMouse(20.0f);
+            if (hitDirt) {
+                bgVfxSystem.SpawnContinuous(VFXType::DirtBurst, GetMouseWorldPos(), deltaTime,
+                                            0.1f);
+                gAudioSystem.playSound("dirt_break", "sfx", 0.25f, 1.0f);
+            } else {
+                bgVfxSystem.ResetSpawnTimer();
+            }
         } else {
             bgVfxSystem.ResetSpawnTimer();
         }
+
+        startButton.updateTransform();
+        howToPlayButton.updateTransform();
+        settingsButton.updateTransform();
+        creditsButton.updateTransform();
+        quitButton.updateTransform();
+        bgCollectibleSystem.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
+
+        // Update the pipes to spawn water
+        bgStartEndPoint.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
+
+        BgSpawnWater(deltaTime);
+        // Update the fluid physics against the loaded terrain
+        // @todo fix this
+        bgFluidSystem.Update(deltaTime, {bgDirt, bgStone});
+
+        bgPortalSystem.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
+        bgVfxSystem.Update(deltaTime);
     } else {
-        bgVfxSystem.ResetSpawnTimer();
+        // 1. Pass an empty list {} so the wave completely ignores the terrain
+        // 2. Multiply deltaTime by 2.5f to make the gravity and falling 2.5x faster!
+        f32 fastForwardTime = deltaTime * 5.0f;
+        bgFluidSystem.Update(fastForwardTime, {});
     }
-
-    startButton.updateTransform();
-    howToPlayButton.updateTransform();
-    settingsButton.updateTransform();
-    creditsButton.updateTransform();
-    quitButton.updateTransform();
-    bgCollectibleSystem.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
-
-    // Update the pipes to spawn water
-    bgStartEndPoint.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
-
-    BgSpawnWater(deltaTime);
-    // Update the fluid physics against the loaded terrain
-    // @todo fix this
-    bgFluidSystem.Update(deltaTime, {bgDirt, bgStone});
-
-    bgPortalSystem.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
-    bgVfxSystem.Update(deltaTime);
     transitionManager.Update(deltaTime);    
 }
 

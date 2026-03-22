@@ -51,7 +51,7 @@ public:
         }
 
         // Phase 2: Trigger the state change once the screen is covered
-        if (tsunamiTimer_ >= 5.0) {
+        if (tsunamiTimer_ >= 6.0) {
             gsm_->nextState_ = targetState_;
 
             // Reset itself so it's ready for the next time this state is loaded
