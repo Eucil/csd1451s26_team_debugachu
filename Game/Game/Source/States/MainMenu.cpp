@@ -16,6 +16,7 @@
 // UI includes
 #include "Button.h"
 #include "GameStateManager.h"
+#include "States/Transition.h"
 
 // Json file reading variables
 static int height, width, tileSize;
@@ -34,6 +35,7 @@ static StartEndPoint bgStartEndPoint;
 static PortalSystem bgPortalSystem;
 static VFXSystem bgVfxSystem;
 static CollectibleSystem bgCollectibleSystem;
+static TransitionManager transitionManager;
 
 // Auto spawn fluid without player input
 static f32 autoSpawnTimer = 0.0f;
@@ -146,7 +148,8 @@ void InitializeMainMenu() {
         startPoint.infinite_water_ = true;
         startPoint.release_water_ = true;
     }
-
+    transitionManager.Initialize(&bgFluidSystem);
+    
     // UI buttons
     startButton.initFromJson("main_menu_buttons", "Start");
     howToPlayButton.initFromJson("main_menu_buttons", "HowToPlay");
@@ -216,7 +219,7 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
         // Start button - goes to Level 1 (or you could make it go to a level select)
         if (startButton.checkMouseClick()) {
             std::cout << "Start button clicked - Going to Level Selector\n";
-            GSM.nextState_ = StateId::LevelSelector;
+            transitionManager.StartTsunami(&GSM, StateId::LevelSelector);
         }
 
         // How To Play button
@@ -257,6 +260,7 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
     } else {
         bgVfxSystem.ResetSpawnTimer();
     }
+
     startButton.updateTransform();
     howToPlayButton.updateTransform();
     settingsButton.updateTransform();
@@ -274,6 +278,7 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
 
     bgPortalSystem.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
     bgVfxSystem.Update(deltaTime);
+    transitionManager.Update(deltaTime);    
 }
 
 void DrawMainMenu() {
@@ -284,7 +289,7 @@ void DrawMainMenu() {
 
     bgStartEndPoint.DrawColor();
     bgPortalSystem.DrawColor();
-    bgFluidSystem.DrawColor();
+    
     bgVfxSystem.Draw();
     bgCollectibleSystem.Draw();
 
@@ -297,6 +302,8 @@ void DrawMainMenu() {
 
     // Draw game title
     titleText.draw(titleFont);
+
+    bgFluidSystem.DrawColor();
 }
 
 void FreeMainMenu() {

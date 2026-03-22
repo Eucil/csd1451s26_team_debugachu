@@ -59,6 +59,7 @@
     <ClInclude Include="Include\States\MainMenu.h" />
     <ClInclude Include="Include\States\Settings.h" />
     <ClInclude Include="Include\Terrain.h" />
+    <ClInclude Include="Include\States\Transition.h" />
     <ClInclude Include="Include\Utils.h" />
     <ClInclude Include="Include\VFXSystem.h" />
     <ClInclude Include="Include\WinScreen.h" />

@@ -90,6 +90,9 @@
     <ClCompile Include="Source\WinScreen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\States\Settings.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Docs\Standards.md">
@@ -164,6 +167,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\WinScreen.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\States\Settings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\States\Transition.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

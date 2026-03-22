@@ -30,10 +30,10 @@ void VFXSystem::Initialize(u32 maxParticles, u32 maxEmitters) {
     }
 
     // All data below are readed from json file
-    AEGfxVertexList* circleMesh = CreateCircleMesh(20, 0.5f);
+    AEGfxVertexList* particleMesh = CreateRectMesh();
     Graphics dirtGfx;
-    dirtGfx.mesh_ = circleMesh;
-    dirtGfx.texture_ = nullptr; // AEGfxTextureLoad("Assets/dirt_particle.png");
+    dirtGfx.mesh_ = particleMesh;
+    dirtGfx.texture_ = nullptr; // AEGfxTextureLoad("Assets/Textures/Dirt02.png");
     dirtGfx.layer_ = configManager.getInt("VFXSystem", "dirtGFX", "layer", 5);
     SetGraphicsConfig(VFXType::DirtBurst, dirtGfx);
 
