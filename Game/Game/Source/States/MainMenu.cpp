@@ -149,7 +149,7 @@ void InitializeMainMenu() {
         startPoint.release_water_ = true;
     }
     transitionManager.Initialize(&bgFluidSystem);
-    
+
     // UI buttons
     startButton.initFromJson("main_menu_buttons", "Start");
     howToPlayButton.initFromJson("main_menu_buttons", "HowToPlay");
@@ -281,12 +281,10 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
         bgPortalSystem.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
         bgVfxSystem.Update(deltaTime);
     } else {
-        // 1. Pass an empty list {} so the wave completely ignores the terrain
-        // 2. Multiply deltaTime by 2.5f to make the gravity and falling 2.5x faster!
-        f32 fastForwardTime = deltaTime * 5.0f;
+        f32 fastForwardTime = deltaTime * 4.0f;
         bgFluidSystem.Update(fastForwardTime, {});
     }
-    transitionManager.Update(deltaTime);    
+    transitionManager.Update(deltaTime);
 }
 
 void DrawMainMenu() {
@@ -297,7 +295,7 @@ void DrawMainMenu() {
 
     bgStartEndPoint.DrawColor();
     bgPortalSystem.DrawColor();
-    
+
     bgVfxSystem.Draw();
     bgCollectibleSystem.Draw();
 
@@ -335,7 +333,9 @@ void UnloadMainMenu() {
     Terrain::freeMeshLibrary();
 
     // unload background terrain textures
-    if (pBgDirtTex) {
+    /*
+
+        if (pBgDirtTex) {
         AEGfxTextureUnload(pBgDirtTex);
         pBgDirtTex = nullptr;
     }
@@ -347,7 +347,19 @@ void UnloadMainMenu() {
         AEGfxTextureUnload(pBgMagicTex);
         pBgMagicTex = nullptr;
     }
+    */
 
+    /*
+        if (titleFont) {
+        AEGfxDestroyFont(titleFont);
+        titleFont = 0;
+    }
+    if (buttonFont) {
+        AEGfxDestroyFont(buttonFont);
+        buttonFont = 0;
+    }
+
+    */
     // Free all meshes
     startButton.unload();
     howToPlayButton.unload();
@@ -356,12 +368,4 @@ void UnloadMainMenu() {
     quitButton.unload();
 
     // Free fonts
-    if (titleFont) {
-        AEGfxDestroyFont(titleFont);
-        titleFont = 0;
-    }
-    if (buttonFont) {
-        AEGfxDestroyFont(buttonFont);
-        buttonFont = 0;
-    }
 }

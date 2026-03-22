@@ -44,14 +44,14 @@ public:
         if (tsunamiTimer_ < 1.2f) {
             for (int i = 0; i < 15; ++i) {
                 f32 randomX = (AERandFloat() * windowW) - (windowW / 2.0f);
-                f32 randomRadius = 40.0f + (AERandFloat() * 30.0f);
+                f32 randomRadius = 60.0f + (AERandFloat() * 30.0f);
                 fluidSystem_->SpawnParticle(randomX, (windowH / 2.0f) + 80.0f, randomRadius,
                                             FluidType::Water);
             }
         }
 
         // Phase 2: Trigger the state change once the screen is covered
-        if (tsunamiTimer_ >= 6.0) {
+        if (tsunamiTimer_ >= 1.7) {
             gsm_->nextState_ = targetState_;
 
             // Reset itself so it's ready for the next time this state is loaded
@@ -62,8 +62,7 @@ public:
 
     // Getters
     bool IsTransitioning() const { return isTransitioning_; }
-};  
-
+};
 
 /*
 #include "AEEngine.h"
