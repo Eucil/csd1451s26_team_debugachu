@@ -72,7 +72,9 @@ public:
             fpFree_ = freeSettings;
             fpUnload_ = unloadSettings;
             break;
+
         }
+
     }
 
     void callLoad() {

@@ -58,13 +58,14 @@ void FluidSystem::Initialize() {
         particlePools_[i].reserve(1000);
     }
 
-    // @todo To change to read values from a json file instead and load them into private containers instead of using magic numbers
-    // Initialize physics for each fluid type
+    // @todo To change to read values from a json file instead and load them into private containers
+    // instead of using magic numbers Initialize physics for each fluid type
     InitializePhysics(1.0f, -500.0f, {0.0f, 0.0f}, FluidType::Water);
     InitializePhysics(1.0f, -200.0f, {0.0f, 0.0f}, FluidType::Lava);
 
-    // Initialize graphics for each fluid type 
-    // 3 Layers per particle to make our particles look more like water visually. (white, light blue, dark blue)
+    // Initialize graphics for each fluid type
+    // 3 Layers per particle to make our particles look more like water visually. (white, light
+    // blue, dark blue)
     InitializeGraphics(CreateCircleMesh(10, 0.5f), nullptr, 2, 1.0f, 1.0f, 1.0f, 1.0f,
                        FluidType::Water, 0);
     InitializeGraphics(CreateCircleMesh(10, 0.47f), nullptr, 2, 0.4f, 0.7f, 1.0f, 1.0f,
@@ -143,14 +144,15 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         f32 currentSpeedSq = (p.physics_.velocity_.x * p.physics_.velocity_.x) +
                              (p.physics_.velocity_.y * p.physics_.velocity_.y);
 
-        // If currentSpeedSq is lower than 0.5f, we are moving very slowly and can stop to save performance.
+        // If currentSpeedSq is lower than 0.5f, we are moving very slowly and can stop to save
+        // performance.
         if (currentSpeedSq < thresholdVel) {
             p.physics_.velocity_.x = 0.0f;
             p.physics_.velocity_.y = 0.0f;
         }
 
         // ANTI-OSCILLATION: Only apply noise to nearly-stopped particles.
-        // Previously noise ran on every particle every substep � in dense settled
+        // Previously noise ran on every particle every substep - in dense settled
         // groups this caused all particles to randomly oscillate together, creating
         // the vigorous left-right swinging behaviour.
         // Now noise only fires when a particle is nearly still (speed < ~2.2 units/s)
@@ -165,7 +167,8 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         currentSpeedSq = (p.physics_.velocity_.x * p.physics_.velocity_.x) +
                          (p.physics_.velocity_.y * p.physics_.velocity_.y);
 
-        // Prevents compounded velocity from UpdateCollision from pushing particles to extreme speeds that can cause tunneling.
+        // Prevents compounded velocity from UpdateCollision from pushing particles to extreme
+        // speeds that can cause tunneling.
         // ================================================ //
         // 3. ANTI-TUNNELING: CAP MAXIMUM SPEED
         // ================================================ //
@@ -309,7 +312,7 @@ std::vector<FluidParticle>& FluidSystem::GetParticlePool(FluidType type) {
 
 void FluidSystem::Update(f32 dt, std::initializer_list<Terrain*> terrains) {
     // DT clamp
-    if (dt > 0.016f) {
+    if (dt > 0.016f && dt < 0.016f * 5.0f) {
         dt = 0.016f;
     }
 
