@@ -14,6 +14,7 @@
     <ClCompile Include="Credits.cpp" />
     <ClCompile Include="Source\Animations.cpp" />
     <ClCompile Include="Source\AudioSystem.cpp" />
+    <ClCompile Include="Source\DebugSystem.cpp" />
     <ClCompile Include="Source\Moss.cpp" />
     <ClCompile Include="Source\Pause.cpp" />
     <ClCompile Include="Source\Button.cpp" />
@@ -46,6 +47,7 @@
     <ClInclude Include="Include\CollisionSystem.h" />
     <ClInclude Include="Include\Components.h" />
     <ClInclude Include="Include\ConfigManager.h" />
+    <ClInclude Include="Include\DebugSystem.h" />
     <ClInclude Include="Include\FluidSystem.h" />
     <ClInclude Include="Include\GameStateManager.h" />
     <ClInclude Include="Include\Moss.h" />
