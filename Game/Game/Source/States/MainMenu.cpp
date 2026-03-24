@@ -4,14 +4,14 @@
 
 #include <AEEngine.h>
 
-// Background simulation includes
-#include "AudioSystem.h"
+// Destructible Terrain
 #include "FluidSystem.h"
 #include "PortalSystem.h"
 #include "StartEndPoint.h"
 #include "States/LevelManager.h"
 #include "Terrain.h"
 #include "VFXSystem.h"
+#include "AudioSystem.h"
 
 // UI includes
 #include "Animations.h"

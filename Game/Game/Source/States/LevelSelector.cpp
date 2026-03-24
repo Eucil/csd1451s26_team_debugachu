@@ -24,11 +24,7 @@ static int bgHeight, bgWidth, bgTileSize;
 static bool bgFileExist;
 
 static Terrain* bgDirt = nullptr;
-static Terrain* bgStone = nullptr;
-static Terrain* bgMagic = nullptr;
 static AEGfxTexture* pBgDirtTex{nullptr};
-static AEGfxTexture* pBgStoneTex{nullptr};
-static AEGfxTexture* pBgMagicTex{nullptr};
 static VFXSystem bgVfxSystem;
 
 // Map Preview Variables
@@ -70,8 +66,8 @@ void LoadLevelSelector() {
     Terrain::createColliderLibrary();
 
     pBgDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
-    pBgStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
-    pBgMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
+   // pBgStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
+    //pBgMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
 
 
     // Calculate window bounds
@@ -155,6 +151,11 @@ void InitializeLevelSelector() {
     levelManager.init();
     levelManager.checkLevelData();
 
+    titleText.content_ = "SELECT LEVEL";
+
+
+    // Initialize destructible Background
+    bgVfxSystem.Initialize(800, 20);
     if (levelManager.getLevelData(100)) {
         levelManager.parseMapInfo(bgWidth, bgHeight, bgTileSize);
         bgFileExist = true;
@@ -164,18 +165,8 @@ void InitializeLevelSelector() {
         bgTileSize = 20;
         bgFileExist = false;
     }
-
-    titleText.content_ = "SELECT LEVEL";
-
-    // Initialize destructible Background
-    bgVfxSystem.Initialize(800, 20);
-
     bgDirt = new Terrain(TerrainMaterial::Dirt, pBgDirtTex, {0.0f, 0.0f}, bgHeight, bgWidth,
                          bgTileSize, true);
-    bgStone = new Terrain(TerrainMaterial::Stone, pBgStoneTex, {0.0f, 0.0f}, bgHeight, bgWidth,
-                          bgTileSize, true);
-    bgMagic = new Terrain(TerrainMaterial::Magic, pBgMagicTex, {0.0f, 0.0f}, bgHeight, bgWidth,
-                          bgTileSize, false);
 
     if (bgFileExist) {
         levelManager.parseTerrainInfo(bgDirt->getNodes(), "Dirt");
@@ -184,23 +175,6 @@ void InitializeLevelSelector() {
     bgDirt->initCellsGraphics();
     bgDirt->initCellsCollider();
     bgDirt->updateTerrain();
-
-    if (bgFileExist) {
-        levelManager.parseTerrainInfo(bgStone->getNodes(), "Stone");
-    }
-    bgStone->initCellsTransform();
-    bgStone->initCellsGraphics();
-    bgStone->initCellsCollider();
-    bgStone->updateTerrain();
-
-    if (bgFileExist) {
-        levelManager.parseTerrainInfo(bgMagic->getNodes(), "Magic");
-    }
-    bgMagic->initCellsTransform();
-    bgMagic->initCellsGraphics();
-    bgMagic->initCellsCollider();
-    bgMagic->updateTerrain();
-    // ------------------------------------------
 }
 
 void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
@@ -392,8 +366,6 @@ void DrawLevelSelector() {
     AEGfxSetTransparency(1.0f);
 
     bgDirt->renderTerrain();
-    bgStone->renderTerrain();
-    bgMagic->renderTerrain();
     bgVfxSystem.Draw();
 
     // Draw button with different color base on level editor mode
@@ -486,10 +458,7 @@ void FreeLevelSelector() {
 
     delete bgDirt;
     bgDirt = nullptr;
-    delete bgStone;
-    bgStone = nullptr;
-    delete bgMagic;
-    bgMagic = nullptr;
+
 }
 
 void UnloadLevelSelector() {
@@ -527,13 +496,6 @@ void UnloadLevelSelector() {
         AEGfxTextureUnload(pBgDirtTex);
         pBgDirtTex = nullptr;
     }
-    if (pBgStoneTex) {
-        AEGfxTextureUnload(pBgStoneTex);
-        pBgStoneTex = nullptr;
-    }
-    if (pBgMagicTex) {
-        AEGfxTextureUnload(pBgMagicTex);
-        pBgMagicTex = nullptr;
-    }
+
     animManager.FreeAll();
 }

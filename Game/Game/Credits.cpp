@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstring>
 
+
 // Helper function to calculate centered X position
 static float GetCenteredX(const char* text, float textSize) {
     if (!text || strlen(text) == 0)
