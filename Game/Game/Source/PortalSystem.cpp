@@ -66,10 +66,16 @@ void PortalSystem::Initialize() {
 
     rectMesh_ = CreateRectMesh();
     graphicsConfigs_.mesh_ = rectMesh_;
+    graphicsConfigs_.texture_ = AEGfxTextureLoad("Assets/Textures/makeshift_portal.png");
 
+    portalScale_ = {30.0f, 60.0f};
     rotationValue_ = 0.0f;
     current_portal_ = nullptr;
     clickIframe_ = false;
+
+    nextRed_ = AERandFloat();
+    nextGreen_ = AERandFloat();
+    nextBlue_ = AERandFloat();
 }
 
 void PortalSystem::SetupPortal(AEVec2 pos, AEVec2 scale, f32 rotationDeg) {
@@ -78,6 +84,9 @@ void PortalSystem::SetupPortal(AEVec2 pos, AEVec2 scale, f32 rotationDeg) {
 
     if (current_portal_ == nullptr) {
         current_portal_ = portalToAdd;
+        portalToAdd->red_ = nextRed_;
+        portalToAdd->green_ = nextGreen_;
+        portalToAdd->blue_ = nextBlue_;
     } else {
         // Link the current portal to the new portal
         current_portal_->linkedPortal_ = portalToAdd;
@@ -88,6 +97,11 @@ void PortalSystem::SetupPortal(AEVec2 pos, AEVec2 scale, f32 rotationDeg) {
         portalToAdd->blue_ = current_portal_->blue_;
         // Reset current_portal_ to nullptr to look for next unlinked portal
         current_portal_ = nullptr;
+
+        // Get next set of colors for the next portal pair
+        nextRed_ = AERandFloat();
+        nextGreen_ = AERandFloat();
+        nextBlue_ = AERandFloat();
     }
 }
 
@@ -153,9 +167,9 @@ void PortalSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
                 // Teleport the particle to the linked portal's position
                 // Get relative position to entrance portal
                 f32 relativePosX = (particle.transform_.pos_.x - portal->transform_.pos_.x) /
-                                     portal->transform_.scale_.x;
+                                   portal->transform_.scale_.x;
                 f32 relativePosY = (particle.transform_.pos_.y - portal->transform_.pos_.y) /
-                                     portal->transform_.scale_.y;
+                                   portal->transform_.scale_.y;
 
                 // Rotate relative position based on portal rotations
                 f32 cosEntry = AECos(portal->transform_.rotationRad_);
@@ -188,26 +202,70 @@ void PortalSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
     }
 }
 
-void PortalSystem::DrawColor() {
-    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+void PortalSystem::Draw() {
 
-    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetTransparency(1.0f);
-    // Render start points
-    for (auto& portal : portalVec_) {
-        AEGfxSetColorToMultiply(portal->red_, portal->green_, portal->blue_, 1.0f);
-        AEGfxSetTransform(portal->transform_.worldMtx_.m);
-        AEGfxMeshDraw(graphicsConfigs_.mesh_, AE_GFX_MDM_TRIANGLES);
+    // If texture doesn't exist, draw as color
+    if (graphicsConfigs_.texture_ == nullptr) {
+        AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(1.0f);
+        // Render start points
+        for (auto& portal : portalVec_) {
+            AEGfxSetColorToMultiply(portal->red_, portal->green_, portal->blue_, 1.0f);
+            AEGfxSetTransform(portal->transform_.worldMtx_.m);
+            AEGfxMeshDraw(graphicsConfigs_.mesh_, AE_GFX_MDM_TRIANGLES);
+        }
+    } else {
+        // Normal texture rendering
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(1.0f);
+        for (auto& portal : portalVec_) {
+            AEGfxSetColorToMultiply(portal->red_, portal->green_, portal->blue_, 1.0f);
+            AEGfxSetTransform(portal->transform_.worldMtx_.m);
+            AEGfxTextureSet(graphicsConfigs_.texture_, 0.0f, 0.0f);
+            AEGfxMeshDraw(graphicsConfigs_.mesh_, AE_GFX_MDM_TRIANGLES);
+        }
     }
 }
 
-void PortalSystem::DrawTexture() {}
+void PortalSystem::DrawPreview() {
+    // Get mouse position in world space
+    AEVec2 mousePos_ = GetMouseWorldPos();
+
+    // Build world matrix for the preview portal
+    AEMtx33 scaleMtx, rotMtx, transMtx, worldMtx;
+    AEMtx33Scale(&scaleMtx, portalScale_.x, portalScale_.y);
+    AEMtx33Rot(&rotMtx, AEDegToRad(rotationValue_));
+    AEMtx33Trans(&transMtx, static_cast<f32>(mousePos_.x), static_cast<f32>(mousePos_.y));
+    AEMtx33Concat(&worldMtx, &rotMtx, &scaleMtx);
+    AEMtx33Concat(&worldMtx, &transMtx, &worldMtx);
+
+    // RGB set based on next portal colors
+    // If current_portal exist, use its colors
+    f32 r = nextRed_, g = nextGreen_, b = nextBlue_;
+    if (current_portal_ != nullptr) {
+        r = current_portal_->red_;
+        g = current_portal_->green_;
+        b = current_portal_->blue_;
+    }
+
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(0.5f);
+    AEGfxSetColorToMultiply(r, g, b, 1.0f);
+    AEGfxSetTransform(worldMtx.m);
+    AEGfxTextureSet(graphicsConfigs_.texture_, 0.0f, 0.0f);
+    AEGfxMeshDraw(graphicsConfigs_.mesh_, AE_GFX_MDM_TRIANGLES);
+}
 
 void PortalSystem::Free() {
 
     AEGfxMeshFree(rectMesh_);
     rectMesh_ = nullptr;
     graphicsConfigs_.mesh_ = nullptr;
+    AEGfxTextureUnload(graphicsConfigs_.texture_);
+
     for (auto& portal : portalVec_) {
         portal->linkedPortal_ = nullptr;
         delete portal;
@@ -222,10 +280,7 @@ void PortalSystem::CheckMouseClick() {
         return;
     }
     // Get mouse position
-    s32 mouseX = 0, mouseY = 0;
-    AEInputGetCursorPosition(&mouseX, &mouseY);
-    mouseX -= AEGfxGetWindowWidth() / 2;
-    mouseY = (AEGfxGetWindowHeight() / 2) - mouseY;
+    AEVec2 mousePos_ = GetMouseWorldPos();
 
     // Use mouse pos to check collision with portal
     // Check by checking if mouse pos falls within the portal's collider box
@@ -234,10 +289,10 @@ void PortalSystem::CheckMouseClick() {
         Portal* currentPortal = *portal;
         f32 rectHalfWidth = currentPortal->collider_.shapeData_.box_.size_.x / 2.0f;
         f32 rectHalfHeight = currentPortal->collider_.shapeData_.box_.size_.y / 2.0f;
-        if (mouseX >= (currentPortal->transform_.pos_.x - rectHalfWidth) &&
-            mouseX <= (currentPortal->transform_.pos_.x + rectHalfWidth) &&
-            mouseY >= (currentPortal->transform_.pos_.y - rectHalfHeight) &&
-            mouseY <= (currentPortal->transform_.pos_.y + rectHalfHeight)) {
+        if (mousePos_.x >= (currentPortal->transform_.pos_.x - rectHalfWidth) &&
+            mousePos_.x <= (currentPortal->transform_.pos_.x + rectHalfWidth) &&
+            mousePos_.y >= (currentPortal->transform_.pos_.y - rectHalfHeight) &&
+            mousePos_.y <= (currentPortal->transform_.pos_.y + rectHalfHeight)) {
             // std::cout << "Mouse is over portal!\n";
             //  Remove portal
             if (currentPortal->linkedPortal_ != nullptr) {
@@ -257,9 +312,8 @@ void PortalSystem::CheckMouseClick() {
         }
     }
     // Else setup new portal at mouse position
-    AEVec2 portalPos = {static_cast<f32>(mouseX), static_cast<f32>(mouseY)};
-    AEVec2 portalScale = {30.0f, 60.0f};
-    SetupPortal(portalPos, portalScale, rotationValue_);
+    AEVec2 portalPos = {static_cast<f32>(mousePos_.x), static_cast<f32>(mousePos_.y)};
+    SetupPortal(portalPos, portalScale_, rotationValue_);
     g_audioSystem.playSound("wormhole_place", "sfx", 2.0f, 1.0f);
     clickIframe_ = true;
 }
@@ -281,6 +335,6 @@ void PortalSystem::RotatePortal() {
     }
 }
 
-f32 PortalSystem::GetRotationValue() { return rotationValue_; }
+f32 PortalSystem::GetRotationValue() const { return rotationValue_; }
 
 const std::vector<Portal*>& PortalSystem::GetPortals() const { return portalVec_; }

@@ -34,8 +34,14 @@ private:
     // graphic configs for each StartEnd type
     Graphics graphicsConfigs_;
 
+    f32 nextRed_{};
+    f32 nextGreen_{};
+    f32 nextBlue_{};
+
+    AEVec2 portalScale_{};
     bool clickIframe_{false};
-    f32 rotationValue_ = 0.0f;
+    f32 rotationValue_{};
+    int portalLimit_{};
 
 public:
     void Initialize();
@@ -46,9 +52,9 @@ public:
 
     void Update(f32 dt, std::vector<FluidParticle>& particlePool);
 
-    void DrawColor();
+    void Draw();
 
-    void DrawTexture();
+    void DrawPreview();
 
     void Free();
 
@@ -58,7 +64,7 @@ public:
 
     void RotatePortal();
 
-    f32 GetRotationValue();
+    f32 GetRotationValue() const;
 
     const std::vector<Portal*>& GetPortals() const;
 };

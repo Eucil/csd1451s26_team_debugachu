@@ -97,8 +97,8 @@ void LevelManager::updateContainerPosition() {
         (editorContainer_.getTransform().scale_.x / 2);
 
     containerPos.y = editorButton_.getTransform().pos_.y -
-                      (editorContainer_.getTransform().scale_.y / 2) +
-                      (editorButton_.getTransform().scale_.y / 2);
+                     (editorContainer_.getTransform().scale_.y / 2) +
+                     (editorButton_.getTransform().scale_.y / 2);
 
     editorContainer_.setTransform(containerPos, editorContainer_.getTransform().scale_,
                                   editorContainer_.getTransform().rotationRad_);
@@ -588,13 +588,18 @@ void LevelManager::parsePortalInfo(PortalSystem& portalSystem) {
     }
 }
 
-void LevelManager::drawBrushPreview(TerrainMaterial terrainType) {
+void LevelManager::drawBrushPreview(TerrainMaterial terrainType, f32 radius_) {
     AEVec2 mousePos = GetMouseWorldPos();
 
     // Set up world matrix
     AEMtx33 scaleMtx, rotMtx, transMtx, worldMtx;
 
-    AEMtx33Scale(&scaleMtx, brushRadius_ * 2, brushRadius_ * 2);
+    // If no radius_ is passed in, use brushRadius_
+    if (radius_ != 0.0f) {
+        AEMtx33Scale(&scaleMtx, radius_ * 2, radius_ * 2);
+    } else {
+        AEMtx33Scale(&scaleMtx, brushRadius_ * 2, brushRadius_ * 2);
+    }
     AEMtx33Rot(&rotMtx, 0.0f);
     AEMtx33Trans(&transMtx, mousePos.x, mousePos.y);
 

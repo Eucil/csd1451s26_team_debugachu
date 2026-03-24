@@ -292,7 +292,7 @@ void DrawMainMenu() {
     bgMagic->renderTerrain();
 
     bgStartEndPoint.DrawColor();
-    bgPortalSystem.DrawColor();
+    bgPortalSystem.Draw();
 
     bgVfxSystem.Draw();
     bgCollectibleSystem.Draw();
@@ -331,33 +331,29 @@ void UnloadMainMenu() {
     Terrain::freeMeshLibrary();
 
     // unload background terrain textures
-    /*
 
-            if (pBgDirtTex) {
-            AEGfxTextureUnload(pBgDirtTex);
-            pBgDirtTex = nullptr;
+    if (pBgDirtTex) {
+        AEGfxTextureUnload(pBgDirtTex);
+        pBgDirtTex = nullptr;
     }
     if (pBgStoneTex) {
-            AEGfxTextureUnload(pBgStoneTex);
-            pBgStoneTex = nullptr;
+        AEGfxTextureUnload(pBgStoneTex);
+        pBgStoneTex = nullptr;
     }
     if (pBgMagicTex) {
-            AEGfxTextureUnload(pBgMagicTex);
-            pBgMagicTex = nullptr;
+        AEGfxTextureUnload(pBgMagicTex);
+        pBgMagicTex = nullptr;
     }
-    */
 
-    /*
-            if (titleFont) {
-            AEGfxDestroyFont(titleFont);
-            titleFont = 0;
+    if (titleFont) {
+        AEGfxDestroyFont(titleFont);
+        titleFont = 0;
     }
     if (buttonFont) {
-            AEGfxDestroyFont(buttonFont);
-            buttonFont = 0;
+        AEGfxDestroyFont(buttonFont);
+        buttonFont = 0;
     }
 
-    */
     // Free all meshes
     startButton.unload();
     howToPlayButton.unload();

@@ -325,6 +325,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 // ====================
                 // Level editor mode
                 // ====================
+                levelManager.updateLevelEditor();
 
                 // Inputs to build level
                 if (!levelManager.getDisplayBuilderContainer()) {
@@ -535,8 +536,6 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 portalSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
                 vfxSystem.Update(deltaTime);
 
-                levelManager.updateLevelEditor();
-
                 if (startEndPointSystem.CheckWinCondition(fluidSystem.particleMaxCount_) &&
                     !winScreen.IsVisible()) {
                     std::cout << "WIN - Showing win screen\n";
@@ -695,13 +694,16 @@ void DrawLevel() {
     // std::cout << "Draw level 2\n";
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
+    // ====================
+    // Gameplay mode
+    // ====================
     fluidSystem.DrawColor();
     startEndPointSystem.DrawColor();
 
     dirt->renderTerrain();
     stone->renderTerrain();
     magic->renderTerrain();
-    portalSystem.DrawColor();
+    portalSystem.Draw();
     vfxSystem.Draw();
 
     // tc added start
@@ -710,6 +712,18 @@ void DrawLevel() {
     // Draw moss
     mossSystem.Draw();
 
+    // Add preview render in gameplay
+    // Only show portal preview if mouse is near magic terrain, otherwise always show dirt preview
+    if (magic->isNearestNodeToMouseAtThreshold() == true) {
+        // Draw portal preview if mouse is near magic terrain
+        portalSystem.DrawPreview();
+    } else {
+        levelManager.drawBrushPreview(TerrainMaterial::Dirt, 20.f);
+    }
+
+    // ====================
+    // Editor Mode mode
+    // ====================
     if (levelManager.getLevelEditorMode() == EditorMode::Edit) {
         levelManager.renderLevelEditorUI();
         switch (levelManager.getCurrentGameBlock()) {
@@ -733,7 +747,9 @@ void DrawLevel() {
         }
     }
 
-    // DRAW ALL UI ELEMENT LAST
+    // ====================
+    // UI Elements
+    // ====================
     collectibleSystem.DrawUI();
     // Show total water counter with progress bar and goal progress bar
     totalWaterText.draw();

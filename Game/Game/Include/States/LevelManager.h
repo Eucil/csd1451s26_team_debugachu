@@ -55,7 +55,7 @@ public:
     void updateInnerButtonPosition();
     void updateLevelEditor();
     void renderLevelEditorUI();
-    void drawBrushPreview(TerrainMaterial terrainType);
+    void drawBrushPreview(TerrainMaterial terrainType, f32 radius_ = 0.0f);
     //=================================================================
 
     // Free functions
