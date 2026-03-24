@@ -44,9 +44,9 @@ private:
     int portalLimit_{};
 
 public:
-    void Initialize();
+    void Initialize(int const& portalMax = 0);
 
-    void SetupPortal(AEVec2 pos, AEVec2 scale, f32 rotationDeg);
+    bool SetupPortal(AEVec2 pos, AEVec2 scale, f32 rotationDeg);
 
     bool CollisionCheckWithWater(Portal portal, FluidParticle particle);
 
@@ -67,4 +67,6 @@ public:
     f32 GetRotationValue() const;
 
     const std::vector<Portal*>& GetPortals() const;
+
+    int GetPortalLimit() const;
 };

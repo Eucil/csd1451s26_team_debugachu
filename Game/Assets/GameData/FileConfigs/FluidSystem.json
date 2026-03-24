@@ -1,0 +1,14 @@
+{
+  "Water" : 
+  {
+    "mass" : 1.0,
+    "gravity" : -500.0,
+    "velocity" : [0, 0]
+  },
+  "Lava" : 
+  {
+    "mass" : 1.0,
+    "gravity" : -200.0,
+    "velocity" : [0, 0]
+  }
+}

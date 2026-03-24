@@ -72,12 +72,13 @@ public:
     // Functions for deleting and create level data
     //=================================================================
     void deleteLevelData(int level);
-    void createLevelData(int level, int width = 80, int height = 45, int tilesize = 20);
+    void createLevelData(int level, int width = 80, int height = 45, int tilesize = 20,
+                         int portalLimit = 0);
     //=================================================================
 
     // Functions for saving/writing level data to JSON
     //=================================================================
-    void saveMapInfo(int& width, int& height, int& tilesize);
+    void saveMapInfo(int width, int height, int tilesize, int portalLimit);
     void saveTerrainInfo(std::vector<float>& nodes, const std::string& terrainType);
     void saveStartEndInfo(std::vector<StartEnd>& startPoints, StartEnd& endPoint);
     void saveCollectibleInfo(std::vector<Collectible>& collectibles);
@@ -90,7 +91,7 @@ public:
     //=================================================================
     bool getLevelData(int level);
     void checkLevelData();
-    void parseMapInfo(int& width, int& height, int& tilesize);
+    void parseMapInfo(int& width, int& height, int& tilesize, int& portalLimit);
     void parseTerrainInfo(std::vector<float>& nodes, std::string terrainType);
     void parseStartEndInfo(StartEndPoint& startEndPointSystem);
     void parseCollectibleInfo(CollectibleSystem& collectibleSystem);

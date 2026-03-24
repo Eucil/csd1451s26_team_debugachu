@@ -6,6 +6,7 @@
 #include <AEEngine.h>
 
 #include "AudioSystem.h"
+#include "ConfigManager.h"
 #include "Utils.h"
 
 Portal::Portal() {
@@ -62,7 +63,7 @@ Portal::Portal(AEVec2 pos, AEVec2 scale, f32 rotationDeg) {
     linkedPortal_ = nullptr;
 }
 
-void PortalSystem::Initialize() {
+void PortalSystem::Initialize(int const& portalMax) {
 
     rectMesh_ = CreateRectMesh();
     graphicsConfigs_.mesh_ = rectMesh_;
@@ -73,12 +74,21 @@ void PortalSystem::Initialize() {
     current_portal_ = nullptr;
     clickIframe_ = false;
 
+    portalScale_ =
+        g_configManager.getAEVec2("PortalSystem", "default", "portalScale_", AEVec2{30.f, 60.f});
+    portalLimit_ = portalMax;
+
     nextRed_ = AERandFloat();
     nextGreen_ = AERandFloat();
     nextBlue_ = AERandFloat();
 }
 
-void PortalSystem::SetupPortal(AEVec2 pos, AEVec2 scale, f32 rotationDeg) {
+bool PortalSystem::SetupPortal(AEVec2 pos, AEVec2 scale, f32 rotationDeg) {
+    // Limit number of portals that can be placed
+    if (portalVec_.size() >= static_cast<size_t>(portalLimit_)) {
+        return false;
+    }
+
     Portal* portalToAdd = new Portal(pos, scale, rotationDeg);
     portalVec_.push_back(portalToAdd);
 
@@ -103,6 +113,7 @@ void PortalSystem::SetupPortal(AEVec2 pos, AEVec2 scale, f32 rotationDeg) {
         nextGreen_ = AERandFloat();
         nextBlue_ = AERandFloat();
     }
+    return true;
 }
 
 bool PortalSystem::CollisionCheckWithWater(Portal portal, FluidParticle particle) {
@@ -313,8 +324,9 @@ void PortalSystem::CheckMouseClick() {
     }
     // Else setup new portal at mouse position
     AEVec2 portalPos = {static_cast<f32>(mousePos_.x), static_cast<f32>(mousePos_.y)};
-    SetupPortal(portalPos, portalScale_, rotationValue_);
-    g_audioSystem.playSound("wormhole_place", "sfx", 2.0f, 1.0f);
+    if (SetupPortal(portalPos, portalScale_, rotationValue_)) {
+        g_audioSystem.playSound("wormhole_place", "sfx", 2.0f, 1.0f);
+    }
     clickIframe_ = true;
 }
 
@@ -338,3 +350,5 @@ void PortalSystem::RotatePortal() {
 f32 PortalSystem::GetRotationValue() const { return rotationValue_; }
 
 const std::vector<Portal*>& PortalSystem::GetPortals() const { return portalVec_; }
+
+int PortalSystem::GetPortalLimit() const { return portalLimit_; }

@@ -6,6 +6,7 @@
 #include <AEEngine.h>
 
 #include "CollisionSystem.h"
+#include "ConfigManager.h"
 #include "Utils.h"
 
 // ==========================================
@@ -60,8 +61,16 @@ void FluidSystem::Initialize() {
 
     // @todo To change to read values from a json file instead and load them into private containers
     // instead of using magic numbers Initialize physics for each fluid type
-    InitializePhysics(1.0f, -500.0f, {0.0f, 0.0f}, FluidType::Water);
-    InitializePhysics(1.0f, -200.0f, {0.0f, 0.0f}, FluidType::Lava);
+    InitializePhysics(
+        g_configManager.getFloat("FluidSystem", "Water", "mass", 1.0f),
+        g_configManager.getFloat("FluidSystem", "Water", "gravity", -500.0f),
+        g_configManager.getAEVec2("FluidSystem", "Water", "velocity", AEVec2{0.0f, 0.0f}),
+        FluidType::Water);
+    InitializePhysics(
+        g_configManager.getFloat("FluidSystem", "Lava", "mass", 1.0f),
+        g_configManager.getFloat("FluidSystem", "Lava", "gravity", -200.0f),
+        g_configManager.getAEVec2("FluidSystem", "Lava", "velocity", AEVec2{0.0f, 0.0f}),
+        FluidType::Lava);
 
     // Initialize graphics for each fluid type
     // 3 Layers per particle to make our particles look more like water visually. (white, light
@@ -121,7 +130,7 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         // ================================================ //
         // Without this, particles falling from a great height can reach very high speeds,
         // which can cause them to tunnel through terrain colliders.
-        const f32 kTerminalFallSpeed = -500.0f; 
+        const f32 kTerminalFallSpeed = -500.0f;
         if (p.physics_.velocity_.y < kTerminalFallSpeed) {
             p.physics_.velocity_.y = kTerminalFallSpeed;
         }
@@ -177,7 +186,8 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
             // Calculate actual speed to normalize.
             f32 actualSpeed = std::sqrt(currentSpeedSq);
 
-            // Normalize and multiply by our hard speed limit to get a normalized direction vector with capped speed.
+            // Normalize and multiply by our hard speed limit to get a normalized direction vector
+            // with capped speed.
             p.physics_.velocity_.x = (p.physics_.velocity_.x / actualSpeed) * kMaxSpeed;
             p.physics_.velocity_.y = (p.physics_.velocity_.y / actualSpeed) * kMaxSpeed;
         }

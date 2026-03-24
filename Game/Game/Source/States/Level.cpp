@@ -46,7 +46,7 @@ static WinScreen winScreen;
 static TextData rotationText;
 static s8 font;
 
-static int height, width, tileSize;
+static int height, width, tileSize, portalLimit;
 static bool fileExist;
 
 static VFXSystem vfxSystem;
@@ -105,7 +105,7 @@ void LoadLevel() {
     levelManager.initEditorUI(font);
 
     if (levelManager.getLevelData(levelManager.getCurrentLevel())) {
-        levelManager.parseMapInfo(width, height, tileSize);
+        levelManager.parseMapInfo(width, height, tileSize, portalLimit);
         fileExist = true;
     } else {
         std::cout << "Failed to load level data\n";
@@ -113,6 +113,7 @@ void LoadLevel() {
         width = 80;
         height = 45;
         tileSize = 20;
+        portalLimit = 0;
         fileExist = false;
     }
 
@@ -133,7 +134,7 @@ void LoadLevel() {
 void InitializeLevel() {
     // std::cout << "Initialize level 3\n";
     fluidSystem.Initialize();
-    portalSystem.Initialize();
+    portalSystem.Initialize(portalLimit);
     mossSystem.Initialize();
 
     dirt = new Terrain(TerrainMaterial::Dirt, pTerrainDirtTex, {0.0f, 0.0f}, height, width,
@@ -401,7 +402,8 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 }
                 // Inputs to save level
                 if (AEInputCheckReleased(AEVK_S)) {
-                    levelManager.saveMapInfo(width, height, tileSize);
+                    levelManager.saveMapInfo(width, height, tileSize,
+                                             portalSystem.GetPortalLimit());
                     levelManager.saveTerrainInfo(dirt->getNodes(), "Dirt");
                     levelManager.saveTerrainInfo(stone->getNodes(), "Stone");
                     levelManager.saveTerrainInfo(magic->getNodes(), "Magic");

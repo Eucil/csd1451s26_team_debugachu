@@ -295,15 +295,17 @@ void LevelManager::deleteLevelData(int level) {
     savingRoot_.clear();
 }
 
-void LevelManager::createLevelData(int level, int width, int height, int tilesize) {
-    saveMapInfo(width, height, tilesize);
+void LevelManager::createLevelData(int level, int width, int height, int tilesize,
+                                   int portalLimit) {
+    saveMapInfo(width, height, tilesize, portalLimit);
     writeToFile(level);
 }
 
-void LevelManager::saveMapInfo(int& width, int& height, int& tilesize) {
+void LevelManager::saveMapInfo(int width, int height, int tilesize, int portalLimit) {
     savingRoot_["Map"]["width"] = width;
     savingRoot_["Map"]["height"] = height;
     savingRoot_["Map"]["tileSize"] = tilesize;
+    savingRoot_["Map"]["portalLimit"] = portalLimit;
 }
 void LevelManager::saveTerrainInfo(std::vector<float>& nodes, const std::string& terrainType) {
     Json::Value terrainJson(Json::arrayValue);
@@ -469,12 +471,13 @@ void LevelManager::checkLevelData() {
     }
 }
 
-void LevelManager::parseMapInfo(int& width, int& height, int& tilesize) {
+void LevelManager::parseMapInfo(int& width, int& height, int& tilesize, int& portalLimit) {
     if (readingRoot_.isMember("Map")) {
         std::cout << "Parsing map info...\n";
         width = readingRoot_["Map"]["width"].asInt();
         height = readingRoot_["Map"]["height"].asInt();
         tilesize = readingRoot_["Map"]["tileSize"].asInt();
+        portalLimit = readingRoot_["Map"]["portalLimit"].asInt();
     } else {
         std::cout << "Map info not found in JSON\n";
     }

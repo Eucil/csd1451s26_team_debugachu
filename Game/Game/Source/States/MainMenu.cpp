@@ -19,7 +19,7 @@
 #include "States/Transition.h"
 
 // Json file reading variables
-static int height, width, tileSize;
+static int height, width, tileSize, portalLimit;
 static bool fileExist;
 
 // Background simulation variables
@@ -58,7 +58,7 @@ void LoadMainMenu() {
     // Load background simulation level map
     //@todo add lvl99 to levelmanager
     if (levelManager.getLevelData(99)) {
-        levelManager.parseMapInfo(width, height, tileSize);
+        levelManager.parseMapInfo(width, height, tileSize, portalLimit);
         fileExist = true;
     } else {
         std::cout << "Failed to load level data\n";
@@ -66,6 +66,7 @@ void LoadMainMenu() {
         width = 80;
         height = 45;
         tileSize = 20;
+        portalLimit = 0;
         fileExist = false;
     }
     // Load fonts
@@ -100,7 +101,7 @@ void InitializeMainMenu() {
 
     // Initialize simulation systems
     bgFluidSystem.Initialize();
-    bgPortalSystem.Initialize();
+    bgPortalSystem.Initialize(portalLimit);
     bgVfxSystem.Initialize(800, 20);
     bgCollectibleSystem.Initialize();
 
