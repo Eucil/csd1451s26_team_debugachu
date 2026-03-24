@@ -291,8 +291,8 @@ void DrawMainMenu() {
     bgStone->renderTerrain();
     bgMagic->renderTerrain();
 
-    bgStartEndPoint.DrawColor();
-    bgPortalSystem.DrawColor();
+    bgStartEndPoint.DrawTexture(0);
+    bgPortalSystem.DrawTexture();
 
     bgVfxSystem.Draw();
     bgCollectibleSystem.Draw();

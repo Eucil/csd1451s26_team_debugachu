@@ -696,12 +696,12 @@ void DrawLevel() {
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
     fluidSystem.DrawColor();
-    startEndPointSystem.DrawColor();
+    startEndPointSystem.DrawTexture(fluidSystem.particleMaxCount_);
 
     dirt->renderTerrain();
     stone->renderTerrain();
     magic->renderTerrain();
-    portalSystem.DrawColor();
+    portalSystem.DrawTexture();
     vfxSystem.Draw();
 
     // tc added start

@@ -89,6 +89,24 @@ void StartEndPoint::Initialize() {
             graphicsConfigs_[i].mesh_ = rectMesh_;
         }
     }
+
+    // Load textures
+    graphicsConfigs_[static_cast<int>(StartEndType::Pipe)].texture_ =
+        AEGfxTextureLoad("Assets/Textures/overgrown_pipe_end.png");
+
+    graphicsConfigs_[static_cast<int>(StartEndType::Flower)].texture_ =
+        AEGfxTextureLoad("Assets/Textures/pink_flower_sprite_sheet.png");
+
+    // Build a mesh that covers one frame (U: 0 to 1/3)
+    // use AEGfxTextureSet offset to pick the frame
+    constexpr f32 kFrameWidth = 1.0f / 3.0f;
+    AEGfxMeshStart();
+    AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f, 0.5f, -0.5f, 0xFFFFFFFF, kFrameWidth, 1.0f,
+                -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
+    AEGfxTriAdd(0.5f, -0.5f, 0xFFFFFFFF, kFrameWidth, 1.0f, 0.5f, 0.5f, 0xFFFFFFFF, kFrameWidth,
+                0.0f, -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
+    flowerMesh_ = AEGfxMeshEnd();
+
     particlesCollected_ = {0};
 }
 
@@ -135,7 +153,7 @@ void StartEndPoint::DrawWaterIndicator(const StartEnd& startPoint, const AEVec2&
     // AEMtx33Mult(&worldMtx, &transMtx, &scaleMtx);
 
     // Method 2: Use two-step concatenation (more compatible)
-    AEMtx33Identity(&worldMtx);                       // Start with identity
+    AEMtx33Identity(&worldMtx);                     // Start with identity
     AEMtx33Concat(&worldMtx, &scaleMtx, &worldMtx); // Apply scale
     AEMtx33Concat(&worldMtx, &transMtx, &worldMtx); // Apply translation
 
@@ -323,7 +341,38 @@ void StartEndPoint::DrawColor() {
     AEGfxMeshDraw(graphicsConfigs_[(int)endPoint_.type_].mesh_, AE_GFX_MDM_TRIANGLES);
 }
 
-void StartEndPoint::DrawTexture() {}
+void StartEndPoint::DrawTexture(s32 particleMaxCount) {
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+
+    // Draw start points (pipe)
+    Graphics& pipeGfx = graphicsConfigs_[static_cast<int>(StartEndType::Pipe)];
+    AEGfxTextureSet(pipeGfx.texture_, 0.0f, 0.0f);
+    for (auto& startPoint : startPoints_) {
+        AEGfxSetTransform(startPoint.transform_.worldMtx_.m);
+        AEGfxMeshDraw(pipeGfx.mesh_, AE_GFX_MDM_TRIANGLES);
+    }
+
+    // Select flower frame based on percentage of the goal (goal = particleMaxCount / 3)
+    constexpr f32 kFrameWidth = 1.0f / 3.0f;
+    int frame = 0;
+    if (particleMaxCount > 0) {
+        f32 goalCount = static_cast<f32>(particleMaxCount) / 3.0f;
+        f32 pct = static_cast<f32>(particlesCollected_) / goalCount;
+        if (pct >= 0.66f)
+            frame = 2;
+        else if (pct >= 0.33f)
+            frame = 1;
+    }
+
+    // Draw end point (flower), UV offset selects the frame
+    Graphics& flowerGfx = graphicsConfigs_[static_cast<int>(StartEndType::Flower)];
+    AEGfxTextureSet(flowerGfx.texture_, kFrameWidth * frame, 0.0f);
+    AEGfxSetTransform(endPoint_.transform_.worldMtx_.m);
+    AEGfxMeshDraw(flowerMesh_, AE_GFX_MDM_TRIANGLES);
+}
 
 void StartEndPoint::DrawColorPreview(StartEndType type) {
     // Set transform matrix based on mouse position
@@ -359,6 +408,11 @@ void StartEndPoint::Free() {
     if (rectMesh_) {
         AEGfxMeshFree(rectMesh_);
         rectMesh_ = nullptr;
+    }
+
+    if (flowerMesh_) {
+        AEGfxMeshFree(flowerMesh_);
+        flowerMesh_ = nullptr;
     }
 
     // tc added start

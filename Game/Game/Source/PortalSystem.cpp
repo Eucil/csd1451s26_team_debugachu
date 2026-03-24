@@ -66,6 +66,7 @@ void PortalSystem::Initialize() {
 
     rectMesh_ = CreateRectMesh();
     graphicsConfigs_.mesh_ = rectMesh_;
+    graphicsConfigs_.texture_ = AEGfxTextureLoad("Assets/Textures/wormhole.png");
 
     rotationValue_ = 0.0f;
     current_portal_ = nullptr;
@@ -201,13 +202,28 @@ void PortalSystem::DrawColor() {
     }
 }
 
-void PortalSystem::DrawTexture() {}
+void PortalSystem::DrawTexture() {
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(1.0f);
+    AEGfxTextureSet(graphicsConfigs_.texture_, 0.0f, 0.0f);
+    for (auto& portal : portalVec_) {
+        AEGfxSetColorToMultiply(portal->red_, portal->green_, portal->blue_, 1.0f);
+        AEGfxSetTransform(portal->transform_.worldMtx_.m);
+        AEGfxMeshDraw(graphicsConfigs_.mesh_, AE_GFX_MDM_TRIANGLES);
+    }
+}
 
 void PortalSystem::Free() {
 
     AEGfxMeshFree(rectMesh_);
     rectMesh_ = nullptr;
     graphicsConfigs_.mesh_ = nullptr;
+
+    if (graphicsConfigs_.texture_ != nullptr) {
+        AEGfxTextureUnload(graphicsConfigs_.texture_);
+        graphicsConfigs_.texture_ = nullptr;
+    }
     for (auto& portal : portalVec_) {
         portal->linkedPortal_ = nullptr;
         delete portal;

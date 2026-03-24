@@ -39,6 +39,7 @@ struct StartEnd {
 class StartEndPoint {
 private:
     AEGfxVertexList* rectMesh_ = nullptr;
+    AEGfxVertexList* flowerMesh_ = nullptr;
 
     // graphic configs for each StartEnd type
     Graphics graphicsConfigs_[static_cast<int>(StartEndType::Count)];
@@ -85,7 +86,7 @@ public:
     void DrawWaterIndicator(const StartEnd& startPoint, const AEVec2& screenPos);
     // tc added end
 
-    void DrawTexture();
+    void DrawTexture(s32 particleMaxCount);
 
     void DrawColorPreview(StartEndType type);
 
