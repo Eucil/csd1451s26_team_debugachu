@@ -1,4 +1,4 @@
-#include "States/Level.h"
+﻿#include "States/Level.h"
 
 #include <fstream>
 #include <iomanip>
@@ -55,6 +55,7 @@ static Button buttonRestart;
 static Button buttonQuit;
 
 static PauseSystem pauseSystem;
+static bool winTriggered = false; // latches true once win fires this session
 
 // tc added start
 static CollectibleSystem collectibleSystem;
@@ -196,6 +197,7 @@ void InitializeLevel() {
     }
 
     vfxSystem.Initialize(800, 20);
+    winTriggered = false; // reset win latch for this level
 
     // UI buttons
     buttonRestart.initFromJson("level_buttons", "Restart");
@@ -537,8 +539,12 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
 
                 levelManager.updateLevelEditor();
 
+                // winTriggered latches true the first time the win condition fires.
+                // Without it, CheckWinCondition returns true every frame and
+                // Show() re-fires after Hide() before the state transition occurs.
                 if (startEndPointSystem.CheckWinCondition(fluidSystem.particleMaxCount_) &&
-                    !winScreen.IsVisible()) {
+                    !winTriggered) {
+                    winTriggered = true;
                     std::cout << "WIN - Showing win screen\n";
                     winScreen.Show(collectibleSystem.GetCollectedCount(),
                                    collectibleSystem.GetTotalCount(),
@@ -813,7 +819,9 @@ void UnloadLevel() {
     }
 
     levelManager.freeLevelEditor();
-    levelManager.SetCurrentLevel(0);
+    // NOTE: Do NOT reset currentLevel_ to 0 here.
+    // WinScreen sets it to nextLevel_ before triggering StateId::Level.
+    // Resetting it here would wipe that value and always reload Level 0.
 
     // UI buttons
     buttonRestart.unload();

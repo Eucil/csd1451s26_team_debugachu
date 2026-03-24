@@ -3,12 +3,24 @@
 #include <AEEngine.h>
 
 #include "States/Credits.h"
+#include "States/HowToPlay.h"
 #include "States/Level.h"
 #include "States/LevelSelector.h"
 #include "States/MainMenu.h"
 #include "States/Settings.h"
 
-enum class StateId { Quit, Next, Restart, MainMenu, LevelSelector, Level, Credits, Settings };
+enum class StateId {
+    Quit,
+    Next,
+    Restart,
+    NextLevel,
+    MainMenu,
+    LevelSelector,
+    Level,
+    Credits,
+    Settings,
+    HowToPlay
+};
 
 class GameState {
 public:
@@ -72,9 +84,27 @@ public:
             fpFree_ = freeSettings;
             fpUnload_ = unloadSettings;
             break;
-
+        case StateId::NextLevel:
+            // NextLevel is a distinct value from Level so the main loop's
+            // while (currentState_ == nextState_) condition breaks and
+            // triggers a full Free/Unload/Load/Initialize cycle.
+            // The Level functions are reused -- only the state ID differs.
+            fpLoad_ = LoadLevel;
+            fpInitialize_ = InitializeLevel;
+            fpUpdate_ = UpdateLevel;
+            fpDraw_ = DrawLevel;
+            fpFree_ = FreeLevel;
+            fpUnload_ = UnloadLevel;
+            break;
+        case StateId::HowToPlay:
+            fpLoad_ = LoadHowToPlay;
+            fpInitialize_ = InitializeHowToPlay;
+            fpUpdate_ = UpdateHowToPlay;
+            fpDraw_ = DrawHowToPlay;
+            fpFree_ = FreeHowToPlay;
+            fpUnload_ = UnloadHowToPlay;
+            break;
         }
-
     }
 
     void callLoad() {

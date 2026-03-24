@@ -4,84 +4,39 @@
 
 #include <AEEngine.h>
 
-// Background simulation includes
 #include "AudioSystem.h"
-#include "FluidSystem.h"
-#include "PortalSystem.h"
-#include "StartEndPoint.h"
-#include "States/LevelManager.h"
-#include "Terrain.h"
-#include "VFXSystem.h"
+#include "MenuBackground.h" // shared background
+#include "Utils.h"
 
 // UI includes
 #include "Button.h"
 #include "GameStateManager.h"
 #include "States/Transition.h"
 
-// Json file reading variables
-static int height, width, tileSize;
-static bool fileExist;
-
-// Background simulation variables
-static Terrain* bgDirt = nullptr;
-static Terrain* bgStone = nullptr;
-static Terrain* bgMagic = nullptr;
-static AEGfxTexture* pBgDirtTex{nullptr};
-static AEGfxTexture* pBgStoneTex{nullptr};
-static AEGfxTexture* pBgMagicTex{nullptr};
-
-static FluidSystem bgFluidSystem;
-static StartEndPoint bgStartEndPoint;
-static PortalSystem bgPortalSystem;
-static VFXSystem bgVfxSystem;
-static CollectibleSystem bgCollectibleSystem;
-
-// Auto spawn fluid without player input
-static f32 autoSpawnTimer = 0.0f;
-
-// TC added start
+// ----------------------------------------------------------------------------
+// UI-only state  (background lives in MenuBackground)
+// ----------------------------------------------------------------------------
 static Button startButton;
 static Button howToPlayButton;
 static Button settingsButton;
 static Button creditsButton;
 static Button quitButton;
-
 static TextData titleText;
 
-static s8 titleFont;
-static s8 buttonFont;
-// TC added end
-static s8 font;
+static s8 titleFont = 0;
+static s8 buttonFont = 0;
 
 void LoadMainMenu() {
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
-    // Load background simulation level map
-    //@todo add lvl99 to levelmanager
-    if (levelManager.getLevelData(99)) {
-        levelManager.parseMapInfo(width, height, tileSize);
-        fileExist = true;
-    } else {
-        std::cout << "Failed to load level data\n";
-        std::cout << "Using default values\n";
-        width = 80;
-        height = 45;
-        tileSize = 20;
-        fileExist = false;
-    }
-    // Load fonts
+
+    // Load the shared animated background (terrain, fluid, portals, etc.)
+    MenuBackground::Load();
+
+    // Load fonts for UI
     titleFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 72);
     buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 33);
-    font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
 
-    // Load background simulation textures
-    Terrain::createMeshLibrary();
-    Terrain::createColliderLibrary();
-
-    pBgDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
-    pBgStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
-    pBgMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
-
-    // Setup buttons - position them vertically
+    // Load button assets
     startButton.loadMesh();
     startButton.loadTexture("Assets/Textures/brown_button.png");
     howToPlayButton.loadMesh();
@@ -92,63 +47,13 @@ void LoadMainMenu() {
     creditsButton.loadTexture("Assets/Textures/brown_button.png");
     quitButton.loadMesh();
     quitButton.loadTexture("Assets/Textures/brown_button.png");
-
-    bgCollectibleSystem.Load(font);
 }
 
 void InitializeMainMenu() {
+    // Initialize the shared background simulation
+    MenuBackground::Initialize();
 
-    // Initialize simulation systems
-    bgFluidSystem.Initialize();
-    bgPortalSystem.Initialize();
-    bgVfxSystem.Initialize(800, 20);
-    bgCollectibleSystem.Initialize();
-
-    // Setup terrain
-    bgDirt =
-        new Terrain(TerrainMaterial::Dirt, pBgDirtTex, {0.0f, 0.0f}, height, width, tileSize, true);
-    bgStone = new Terrain(TerrainMaterial::Stone, pBgStoneTex, {0.0f, 0.0f}, height, width,
-                          tileSize, true);
-    bgMagic = new Terrain(TerrainMaterial::Magic, pBgMagicTex, {0.0f, 0.0f}, height, width,
-                          tileSize, false);
-
-    // Initialise JSON data into the background terrain cells
-    if (fileExist) {
-        levelManager.parseTerrainInfo(bgDirt->getNodes(), "Dirt");
-    }
-    bgDirt->initCellsTransform();
-    bgDirt->initCellsGraphics();
-    bgDirt->initCellsCollider();
-    bgDirt->updateTerrain();
-    if (fileExist) {
-        levelManager.parseTerrainInfo(bgStone->getNodes(), "Stone");
-    }
-    bgStone->initCellsTransform();
-    bgStone->initCellsGraphics();
-    bgStone->initCellsCollider();
-    bgStone->updateTerrain();
-
-    if (fileExist) {
-        levelManager.parseTerrainInfo(bgMagic->getNodes(), "Magic");
-    }
-    bgMagic->initCellsTransform();
-    bgMagic->initCellsGraphics();
-    bgMagic->initCellsCollider();
-    bgMagic->updateTerrain();
-
-    bgStartEndPoint.Initialize();
-    if (fileExist) {
-        levelManager.parseStartEndInfo(bgStartEndPoint);
-        levelManager.parsePortalInfo(bgPortalSystem);
-        levelManager.parseCollectibleInfo(bgCollectibleSystem);
-    }
-
-    for (auto& startPoint : bgStartEndPoint.startPoints_) {
-        startPoint.infiniteWater_ = true;
-        startPoint.releaseWater_ = true;
-    }
-
-    // UI buttons
+    // Initialize UI buttons from JSON
     startButton.initFromJson("main_menu_buttons", "Start");
     startButton.setTextFont(buttonFont);
     howToPlayButton.initFromJson("main_menu_buttons", "HowToPlay");
@@ -164,206 +69,92 @@ void InitializeMainMenu() {
     titleText.font_ = titleFont;
 }
 
-static void BgSpawnWater(f32 deltaTime) {
-    // STATE VARIABLES
-    static bool isWaiting = true;
-    static f32 stateTimer = 3.5f;    // Wait 3.5 seconds before the very first burst
-    static f32 particleTimer = 0.0f; // Tracks how fast individual drops fall
-    static int particlesSpawned = 0; // Explicitly counts how many dropped
-
-    if (isWaiting) {
-        stateTimer -= deltaTime;
-        // When the wait is over, open the tap and reset the counter
-        if (stateTimer <= 0.0f) {
-            isWaiting = false;
-            particlesSpawned = 0;
-            particleTimer = 0.0f; // Force the first drop to spawn instantly
-        }
-    } else { // The tap is ON
-        particleTimer -= deltaTime;
-
-        while (particleTimer <= 0.0f && particlesSpawned < 10) {
-            particleTimer += 0.05f; // Cooldown between drops
-            particlesSpawned++;
-
-            for (auto& startPoint : bgStartEndPoint.startPoints_) {
-                if (startPoint.type_ == StartEndType::Pipe) {
-
-                    f32 randRadius = 8.0f;
-                    f32 xOffset = startPoint.transform_.pos_.x +
-                                  AERandFloat() * startPoint.transform_.scale_.x -
-                                  (startPoint.transform_.scale_.x / 2.f);
-
-                    f32 yOffset = startPoint.transform_.pos_.y -
-                                  (startPoint.transform_.scale_.y / 2.f) - randRadius;
-
-                    bgFluidSystem.SpawnParticle(xOffset, yOffset, randRadius, FluidType::Water);
-                }
-            }
-        }
-
-        // Once we hit 10 particles, turn the tap OFF and wait 9 seconds
-        if (particlesSpawned >= 10) {
-            isWaiting = true;
-            stateTimer = 9.0f;
-        }
-    }
-}
-
 void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
-    (void)deltaTime; // Unused parameter, but required by function signature
-    // Keep keyboard shortcuts for development/testing
     if (AEInputCheckTriggered(AEVK_R) || 0 == AESysDoesWindowExist()) {
         std::cout << "R triggered - Restart\n";
         GSM.nextState_ = StateId::Restart;
     }
 
-    // Mouse click handling for all buttons
+    // Button click handling
     if (AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
-        // Start button - goes to Level 1 (or you could make it go to a level select)
         if (startButton.checkMouseClick()) {
             std::cout << "Start button clicked - Going to Level Selector\n";
-            // transitionManager.StartTsunami(&GSM, StateId::LevelSelector);
-            //
             GSM.nextState_ = StateId::LevelSelector;
         }
-
-        // How To Play button
         if (howToPlayButton.checkMouseClick()) {
             std::cout << "How To Play button clicked\n";
-            // TODO: Implement how to play screen or state
-            // For now, just print or you could set a new state
-            // GSM.nextState_ = StateId::HowToPlay;
+            GSM.nextState_ = StateId::HowToPlay;
         }
-
-        // Settings button
         if (settingsButton.checkMouseClick()) {
             std::cout << "Settings button clicked\n";
             GSM.nextState_ = StateId::Settings;
         }
-
-        // Credits button
         if (creditsButton.checkMouseClick()) {
             std::cout << "Credits button clicked\n";
             GSM.nextState_ = StateId::Credits;
         }
-
-        // Quit button
         if (quitButton.checkMouseClick()) {
             std::cout << "Quit button clicked - Exiting game\n";
             GSM.nextState_ = StateId::Quit;
         }
     }
-    if (AEInputCheckCurr(AEVK_LBUTTON)) {
 
-        bool hitDirt = bgDirt->destroyAtMouse(20.0f);
+    // ------------------------------------------------------------
+    // Left-click held: destroy dirt + VFX + audio
+    // DestroyDirtAtMouse handles both the terrain destruction and
+    // spawning the visual VFX burst. We only need to play the sound.
+    // ------------------------------------------------------------
+    if (AEInputCheckCurr(AEVK_LBUTTON)) {
+        bool hitDirt = MenuBackground::DestroyDirtAtMouse(20.0f);
         if (hitDirt) {
-            bgVfxSystem.SpawnContinuous(VFXType::DirtBurst, GetMouseWorldPos(), deltaTime, 0.1f);
             g_audioSystem.playSound("dirt_break", "sfx", 0.25f, 1.0f);
-        } else {
-            bgVfxSystem.ResetSpawnTimer();
         }
-    } else {
-        bgVfxSystem.ResetSpawnTimer();
     }
+
+    // Update button transforms
     startButton.updateTransform();
     howToPlayButton.updateTransform();
     settingsButton.updateTransform();
     creditsButton.updateTransform();
     quitButton.updateTransform();
-    bgCollectibleSystem.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
 
-    // Update the pipes to spawn water
-    bgStartEndPoint.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
-
-    BgSpawnWater(deltaTime);
-    // Update the fluid physics against the loaded terrain
-    // @todo fix this
-    bgFluidSystem.Update(deltaTime, {bgDirt, bgStone});
-
-    bgPortalSystem.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
-    bgVfxSystem.Update(deltaTime);
+    // Update shared background (fluid, portals, collectibles, VFX)
+    MenuBackground::Update(deltaTime);
 }
 
 void DrawMainMenu() {
-    AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
-    bgDirt->renderTerrain();
-    bgStone->renderTerrain();
-    bgMagic->renderTerrain();
+    // Draw shared background (terrain, fluid, portals, collectibles, VFX)
+    MenuBackground::Draw();
 
-    bgStartEndPoint.DrawColor();
-    bgPortalSystem.DrawColor();
-
-    bgVfxSystem.Draw();
-    bgCollectibleSystem.Draw();
-
-    // Draw all buttons with different colors
+    // Draw UI on top
     startButton.draw();
     howToPlayButton.draw();
     settingsButton.draw();
     creditsButton.draw();
     quitButton.draw();
 
-    // Draw game title
     titleText.draw();
-
-    bgFluidSystem.DrawColor();
 }
 
-void FreeMainMenu() {
-    bgFluidSystem.Free();
-    bgStartEndPoint.Free();
-    bgPortalSystem.Free();
-    bgVfxSystem.Free();
-    bgCollectibleSystem.Free();
-
-    delete bgDirt;
-    bgDirt = nullptr;
-    delete bgStone;
-    bgStone = nullptr;
-    delete bgMagic;
-    bgMagic = nullptr;
-}
+void FreeMainMenu() { MenuBackground::Free(); }
 
 void UnloadMainMenu() {
+    // Unload shared GPU assets
+    MenuBackground::Unload();
 
-    // free terrain mesh
-    Terrain::freeMeshLibrary();
-
-    // unload background terrain textures
-    /*
-
-            if (pBgDirtTex) {
-            AEGfxTextureUnload(pBgDirtTex);
-            pBgDirtTex = nullptr;
-    }
-    if (pBgStoneTex) {
-            AEGfxTextureUnload(pBgStoneTex);
-            pBgStoneTex = nullptr;
-    }
-    if (pBgMagicTex) {
-            AEGfxTextureUnload(pBgMagicTex);
-            pBgMagicTex = nullptr;
-    }
-    */
-
-    /*
-            if (titleFont) {
-            AEGfxDestroyFont(titleFont);
-            titleFont = 0;
-    }
-    if (buttonFont) {
-            AEGfxDestroyFont(buttonFont);
-            buttonFont = 0;
-    }
-
-    */
-    // Free all meshes
+    // Unload button assets
     startButton.unload();
     howToPlayButton.unload();
     settingsButton.unload();
     creditsButton.unload();
     quitButton.unload();
 
-    // Free fonts
+    if (titleFont) {
+        AEGfxDestroyFont(titleFont);
+        titleFont = 0;
+    }
+    if (buttonFont) {
+        AEGfxDestroyFont(buttonFont);
+        buttonFont = 0;
+    }
 }
