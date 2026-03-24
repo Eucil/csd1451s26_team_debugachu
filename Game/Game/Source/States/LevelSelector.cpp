@@ -6,14 +6,30 @@
 
 #include "Animations.h"
 #include "Button.h"
+#include "GameStateManager.h"
 #include "ConfigManager.h"
 #include "GameStateManager.h"
 #include "States/LevelManager.h"
 #include "Utils.h"
 
+// Destructible Background
+#include "Terrain.h"
+#include "VFXSystem.h"
+#include "AudioSystem.h"
+
 static s8 font;
-static AEGfxTexture* bgTexture = nullptr;
-static AEGfxVertexList* bgMesh = nullptr; 
+
+// Destructible Background Variables
+static int bgHeight, bgWidth, bgTileSize;
+static bool bgFileExist;
+
+static Terrain* bgDirt = nullptr;
+static Terrain* bgStone = nullptr;
+static Terrain* bgMagic = nullptr;
+static AEGfxTexture* pBgDirtTex{nullptr};
+static AEGfxTexture* pBgStoneTex{nullptr};
+static AEGfxTexture* pBgMagicTex{nullptr};
+static VFXSystem bgVfxSystem;
 
 // Map Preview Variables
 static std::vector<AEGfxTexture*> previewTextures;
@@ -22,6 +38,13 @@ static AEGfxVertexList* previewMesh = nullptr;
 static int hoveredLevelIndex = -1; // -1 means the mouse is not in a button
 static UIFader previewFader(8.0f); // Fast fade in/out, 8.0f refers to speed of fade out
 static int displayLevelIndex = -1;
+
+
+// Animations
+static AnimationManager animManager;
+static ScreenFaderManager screenFader;
+static UIFader someOtherCoolAnimation;
+
 
 static std::vector<Button> editorButtonPool_;
 static TextData titleText{
@@ -42,7 +65,14 @@ static TextData inputPrompt{
 
 void LoadLevelSelector() {
     font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
-    bgTexture = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
+
+    Terrain::createMeshLibrary();
+    Terrain::createColliderLibrary();
+
+    pBgDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
+    pBgStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
+    pBgMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
+
 
     // Calculate window bounds
     f32 halfW = AEGfxGetWindowWidth() / 2.0f;
@@ -52,14 +82,6 @@ void LoadLevelSelector() {
     f32 uRepeat = AEGfxGetWindowWidth() / 64.0f;
     f32 vRepeat = AEGfxGetWindowHeight() / 64.0f;
 
-    AEGfxMeshStart();
-    // Triangle 1 for background
-    AEGfxTriAdd(-halfW, -halfH, 0xFFFFFFFF, 0.0f, vRepeat, halfW, -halfH, 0xFFFFFFFF, uRepeat,
-                vRepeat, -halfW, halfH, 0xFFFFFFFF, 0.0f, 0.0f);
-    // Triangle 2 for background
-    AEGfxTriAdd(halfW, -halfH, 0xFFFFFFFF, uRepeat, vRepeat, halfW, halfH, 0xFFFFFFFF, uRepeat,
-                0.0f, -halfW, halfH, 0xFFFFFFFF, 0.0f, 0.0f);
-    bgMesh = AEGfxMeshEnd();
 
     previewMesh = CreateRectMesh();
     defaultPreviewTex = AEGfxTextureLoad("Assets/Textures/pink_button.png");
@@ -121,16 +143,64 @@ void LoadLevelSelector() {
 
     titleText.font_ = font;
     inputPrompt.font_ = font;
+    animManager.Clear();
+    animManager.Add(&screenFader);
+    animManager.Add(&someOtherCoolAnimation);
+    animManager.InitializeAll();
 }
 
 void InitializeLevelSelector() {
     // Todo
     // std::cout << "Initialize Level Selector\n";
     levelManager.init();
-
     levelManager.checkLevelData();
 
+    if (levelManager.getLevelData(100)) {
+        levelManager.parseMapInfo(bgWidth, bgHeight, bgTileSize);
+        bgFileExist = true;
+    } else {
+        bgWidth = 80;
+        bgHeight = 45;
+        bgTileSize = 20;
+        bgFileExist = false;
+    }
+
     titleText.content_ = "SELECT LEVEL";
+
+    // Initialize destructible Background
+    bgVfxSystem.Initialize(800, 20);
+
+    bgDirt = new Terrain(TerrainMaterial::Dirt, pBgDirtTex, {0.0f, 0.0f}, bgHeight, bgWidth,
+                         bgTileSize, true);
+    bgStone = new Terrain(TerrainMaterial::Stone, pBgStoneTex, {0.0f, 0.0f}, bgHeight, bgWidth,
+                          bgTileSize, true);
+    bgMagic = new Terrain(TerrainMaterial::Magic, pBgMagicTex, {0.0f, 0.0f}, bgHeight, bgWidth,
+                          bgTileSize, false);
+
+    if (bgFileExist) {
+        levelManager.parseTerrainInfo(bgDirt->getNodes(), "Dirt");
+    }
+    bgDirt->initCellsTransform();
+    bgDirt->initCellsGraphics();
+    bgDirt->initCellsCollider();
+    bgDirt->updateTerrain();
+
+    if (bgFileExist) {
+        levelManager.parseTerrainInfo(bgStone->getNodes(), "Stone");
+    }
+    bgStone->initCellsTransform();
+    bgStone->initCellsGraphics();
+    bgStone->initCellsCollider();
+    bgStone->updateTerrain();
+
+    if (bgFileExist) {
+        levelManager.parseTerrainInfo(bgMagic->getNodes(), "Magic");
+    }
+    bgMagic->initCellsTransform();
+    bgMagic->initCellsGraphics();
+    bgMagic->initCellsCollider();
+    bgMagic->updateTerrain();
+    // ------------------------------------------
 }
 
 void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
@@ -215,7 +285,8 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
                     // If none, just play the level if it's playable
                     if (levelManager.playableLevels_[i]) {
                         levelManager.SetCurrentLevel(i + 1);
-                        GSM.nextState_ = StateId::Level;
+                        screenFader.StartFadeOut(&GSM, StateId::Level);
+                        //GSM.nextState_ = StateId::Level;
                     }
                     break;
                 case EditorMode::Edit:
@@ -246,6 +317,22 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
             }
         }
     }
+    // Digging for destructible background
+    if (!creatingLevel) {
+        if (AEInputCheckCurr(AEVK_LBUTTON)) {
+            bool hitDirt = bgDirt->destroyAtMouse(20.0f);
+            if (hitDirt) {
+                bgVfxSystem.SpawnContinuous(VFXType::DirtBurst, GetMouseWorldPos(), deltaTime,
+                                            0.1f);
+                g_audioSystem.playSound("dirt_break", "sfx", 0.25f, 1.0f);
+            } else {
+                bgVfxSystem.ResetSpawnTimer();
+            }
+        } else {
+            bgVfxSystem.ResetSpawnTimer();
+        }
+    }
+    bgVfxSystem.Update(deltaTime);
 
     if (creatingLevel) {
         if (AEInputCheckReleased(AEVK_Q) || 0 == AESysDoesWindowExist()) {
@@ -291,29 +378,23 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
     for (int i = 0; i < static_cast<int>(Level::None); ++i) {
         editorButtonPool_[i].updateTransform();
     }
+    animManager.UpdateAll(deltaTime);
 }
 
 void DrawLevelSelector() {
     // Todo
     // std::cout << "Draw Level Selector\n";
-    
-    // Default AE settings
-    AEGfxSetBackgroundColor(1.0f, 1.0f, 1.0f);
+    AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);     
+    AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
     AEGfxSetTransparency(1.0f);
 
-
-    if (bgTexture && bgMesh) {
-        AEMtx33 identity;
-        AEMtx33Identity(&identity);
-        AEGfxSetTransform(identity.m);
-        AEGfxSetTransparency(1.0f);
-        AEGfxTextureSet(bgTexture, 0, 0);
-        AEGfxMeshDraw(bgMesh, AE_GFX_MDM_TRIANGLES);
-    }
+    bgDirt->renderTerrain();
+    bgStone->renderTerrain();
+    bgMagic->renderTerrain();
+    bgVfxSystem.Draw();
 
     // Draw button with different color base on level editor mode
     for (int i = 0; i < static_cast<int>(Level::None); ++i) {
@@ -395,11 +476,20 @@ void DrawLevelSelector() {
             AEGfxMeshDraw(previewMesh, AE_GFX_MDM_TRIANGLES);
         }
     }
+    animManager.DrawAll();
 }
 
 void FreeLevelSelector() {
     // Todo
     // std::cout << "Free main menu\n";
+    bgVfxSystem.Free();
+
+    delete bgDirt;
+    bgDirt = nullptr;
+    delete bgStone;
+    bgStone = nullptr;
+    delete bgMagic;
+    bgMagic = nullptr;
 }
 
 void UnloadLevelSelector() {
@@ -429,12 +519,21 @@ void UnloadLevelSelector() {
         AEGfxTextureUnload(defaultPreviewTex);
         defaultPreviewTex = nullptr;
     }
-    if (bgTexture) {
-        AEGfxTextureUnload(bgTexture);
-        bgTexture = nullptr;
+
+
+    // Unload destructible background
+    Terrain::freeMeshLibrary();
+    if (pBgDirtTex) {
+        AEGfxTextureUnload(pBgDirtTex);
+        pBgDirtTex = nullptr;
     }
-    if (bgMesh) {
-        AEGfxMeshFree(bgMesh);
-        bgMesh = nullptr;
+    if (pBgStoneTex) {
+        AEGfxTextureUnload(pBgStoneTex);
+        pBgStoneTex = nullptr;
     }
+    if (pBgMagicTex) {
+        AEGfxTextureUnload(pBgMagicTex);
+        pBgMagicTex = nullptr;
+    }
+    animManager.FreeAll();
 }

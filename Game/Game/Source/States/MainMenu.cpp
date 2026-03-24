@@ -14,9 +14,9 @@
 #include "VFXSystem.h"
 
 // UI includes
+#include "Animations.h"
 #include "Button.h"
 #include "GameStateManager.h"
-#include "States/Transition.h"
 
 // Json file reading variables
 static int height, width, tileSize;
@@ -39,19 +39,24 @@ static CollectibleSystem bgCollectibleSystem;
 // Auto spawn fluid without player input
 static f32 autoSpawnTimer = 0.0f;
 
-// TC added start
+// Buttons
 static Button startButton;
 static Button howToPlayButton;
 static Button settingsButton;
 static Button creditsButton;
 static Button quitButton;
 
+// Text/Font
 static TextData titleText;
-
 static s8 titleFont;
 static s8 buttonFont;
-// TC added end
 static s8 font;
+
+// Animations
+static AnimationManager animManager;
+static ScreenFaderManager screenFader;
+static UIFader someOtherCoolAnimation;
+
 
 void LoadMainMenu() {
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
@@ -160,8 +165,15 @@ void InitializeMainMenu() {
     quitButton.initFromJson("main_menu_buttons", "Quit");
     quitButton.setTextFont(buttonFont);
 
+    // Text/Fonts
     titleText.initFromJson("main_menu_texts", "Title");
     titleText.font_ = titleFont;
+
+    // Animations
+    animManager.Clear(); 
+    animManager.Add(&screenFader);
+    animManager.Add(&someOtherCoolAnimation);
+    animManager.InitializeAll();
 }
 
 static void BgSpawnWater(f32 deltaTime) {
@@ -223,9 +235,8 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
         // Start button - goes to Level 1 (or you could make it go to a level select)
         if (startButton.checkMouseClick()) {
             std::cout << "Start button clicked - Going to Level Selector\n";
-            // transitionManager.StartTsunami(&GSM, StateId::LevelSelector);
-            //
-            GSM.nextState_ = StateId::LevelSelector;
+
+            screenFader.StartFadeOut(&GSM, StateId::LevelSelector);
         }
 
         // How To Play button
@@ -233,7 +244,7 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
             std::cout << "How To Play button clicked\n";
             // TODO: Implement how to play screen or state
             // For now, just print or you could set a new state
-            // GSM.nextState_ = StateId::HowToPlay;
+            // screenFader.StartFadeOut(&GSM, StateId::HowToPlay);
         }
 
         // Settings button
@@ -246,12 +257,14 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
         if (creditsButton.checkMouseClick()) {
             std::cout << "Credits button clicked\n";
             GSM.nextState_ = StateId::Credits;
+            screenFader.StartFadeOut(&GSM, StateId::Credits);
         }
 
         // Quit button
         if (quitButton.checkMouseClick()) {
             std::cout << "Quit button clicked - Exiting game\n";
             GSM.nextState_ = StateId::Quit;
+            screenFader.StartFadeOut(&GSM, StateId::Quit);
         }
     }
     if (AEInputCheckCurr(AEVK_LBUTTON)) {
@@ -283,6 +296,8 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
 
     bgPortalSystem.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
     bgVfxSystem.Update(deltaTime);
+
+    animManager.UpdateAll(deltaTime);
 }
 
 void DrawMainMenu() {
@@ -308,6 +323,7 @@ void DrawMainMenu() {
     titleText.draw();
 
     bgFluidSystem.DrawColor();
+    animManager.DrawAll();
 }
 
 void FreeMainMenu() {
@@ -316,7 +332,7 @@ void FreeMainMenu() {
     bgPortalSystem.Free();
     bgVfxSystem.Free();
     bgCollectibleSystem.Free();
-
+    animManager.FreeAll();
     delete bgDirt;
     bgDirt = nullptr;
     delete bgStone;
