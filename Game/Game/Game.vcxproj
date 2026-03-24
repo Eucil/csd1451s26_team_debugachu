@@ -32,6 +32,7 @@
     <ClCompile Include="Source\States\Level.cpp" />
     <ClCompile Include="Source\States\LevelManager.cpp" />
     <ClCompile Include="Source\States\LevelSelector.cpp" />
+    <ClCompile Include="Source\States\LogoScreen.cpp" />
     <ClCompile Include="Source\States\MainMenu.cpp" />
     <ClCompile Include="Source\States\Settings.cpp" />
     <ClCompile Include="Source\Terrain.cpp" />
@@ -64,6 +65,7 @@
     <ClInclude Include="Include\States\Level.h" />
     <ClInclude Include="Include\States\LevelManager.h" />
     <ClInclude Include="Include\States\LevelSelector.h" />
+    <ClInclude Include="Include\States\LogoScreen.h" />
     <ClInclude Include="Include\States\MainMenu.h" />
     <ClInclude Include="Include\States\Settings.h" />
     <ClInclude Include="Include\Terrain.h" />

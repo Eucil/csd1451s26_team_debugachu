@@ -26,7 +26,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     g_configManager.init("Assets/GameData/UI");
 
     GameStateManager GSM;
-    GSM.init(StateId::MainMenu);
+    GSM.init(StateId::LogoScreen);
 
     // Audio system
     g_audioSystem.createGroup("sfx");

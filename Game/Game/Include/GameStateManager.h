@@ -6,6 +6,7 @@
 #include "States/HowToPlay.h"
 #include "States/Level.h"
 #include "States/LevelSelector.h"
+#include "States/LogoScreen.h"
 #include "States/MainMenu.h"
 #include "States/Settings.h"
 
@@ -14,6 +15,7 @@ enum class StateId {
     Next,
     Restart,
     NextLevel,
+    LogoScreen,
     MainMenu,
     LevelSelector,
     Level,
@@ -44,6 +46,14 @@ public:
 
     void update(StateId updateStateId) {
         switch (updateStateId) {
+        case StateId::LogoScreen:
+            fpLoad_ = LoadLogoScreen;
+            fpInitialize_ = InitializeLogoScreen;
+            fpUpdate_ = UpdateLogoScreen;
+            fpDraw_ = DrawLogoScreen;
+            fpFree_ = FreeLogoScreen;
+            fpUnload_ = UnloadLogoScreen;
+            break;
         case StateId::MainMenu:
             fpLoad_ = LoadMainMenu;
             fpInitialize_ = InitializeMainMenu;
