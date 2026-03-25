@@ -67,7 +67,7 @@ void PortalSystem::Initialize(int const& portalMax) {
 
     rectMesh_ = CreateRectMesh();
     graphicsConfigs_.mesh_ = rectMesh_;
-    graphicsConfigs_.texture_ = AEGfxTextureLoad("Assets/Textures/makeshift_portal.png");
+    graphicsConfigs_.texture_ = AEGfxTextureLoad("Assets/Textures/wormhole.png");
 
     portalScale_ = {30.0f, 60.0f};
     rotationValue_ = 0.0f;
@@ -275,8 +275,11 @@ void PortalSystem::Free() {
     AEGfxMeshFree(rectMesh_);
     rectMesh_ = nullptr;
     graphicsConfigs_.mesh_ = nullptr;
-    AEGfxTextureUnload(graphicsConfigs_.texture_);
 
+    if (graphicsConfigs_.texture_ != nullptr) {
+        AEGfxTextureUnload(graphicsConfigs_.texture_);
+        graphicsConfigs_.texture_ = nullptr;
+    }
     for (auto& portal : portalVec_) {
         portal->linkedPortal_ = nullptr;
         delete portal;

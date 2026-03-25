@@ -700,7 +700,7 @@ void DrawLevel() {
     // Gameplay mode
     // ====================
     fluidSystem.DrawColor();
-    startEndPointSystem.DrawColor();
+    startEndPointSystem.DrawTexture(fluidSystem.particleMaxCount_);
 
     dirt->renderTerrain();
     stone->renderTerrain();
