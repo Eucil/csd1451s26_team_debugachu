@@ -24,6 +24,8 @@
 #include "Terrain.h"
 #include "VFXSystem.h"
 #include "WinScreen.h"
+#include "Animations.h"
+
 
 static Terrain* dirt = nullptr;
 static Terrain* stone = nullptr;
@@ -65,6 +67,11 @@ static f32 totalWaterCapacity = 0.0f;
 static f32 goalPercentage = 0.0f;
 static AEGfxVertexList* g_barMesh = nullptr; // Global bar mesh for cleanup
 // tc added end
+
+// Animations
+static AnimationManager animManager;
+static ScreenFaderManager screenFader;
+static UIFader someOtherCoolAnimation;
 
 void LoadLevel() {
     // std::cout << "Load level 3\n";
@@ -209,6 +216,12 @@ void InitializeLevel() {
 
     // Debug system
     g_debugSystem.initFromJson("debug_system", "DebugOverlay");
+
+    // Animations
+    animManager.Clear();
+    animManager.Add(&screenFader);
+    animManager.Add(&someOtherCoolAnimation);
+    animManager.InitializeAll();
 }
 
 // tc added start - Function to handle water spawning with limit
@@ -287,11 +300,13 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 pauseSystem.resume();
             }
             if (buttonRestart.checkMouseClick()) {
-                GSM.nextState_ = StateId::Restart;
+                screenFader.StartFadeOut(&GSM, StateId::Restart);
+                //GSM.nextState_ = StateId::Restart;
                 pauseSystem.resume();
             }
             if (buttonQuit.checkMouseClick()) {
-                GSM.nextState_ = StateId::MainMenu;
+                screenFader.StartFadeOut(&GSM, StateId::MainMenu);
+               // GSM.nextState_ = StateId::MainMenu;
             }
 
             // UI buttons
@@ -414,7 +429,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                     levelManager.savePortalInfo(portalSystem);
                     levelManager.writeToFile(levelManager.getCurrentLevel());
                 }
-
+                levelManager.updateLevelEditor();
             } else {
                 // ====================
                 // Gameplay mode
@@ -562,6 +577,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
 
         g_debugSystem.update();
     }
+    animManager.UpdateAll(deltaTime);
 }
 
 // tc added start - Enhanced total water counter with a progress bar and dark blue border
@@ -783,6 +799,8 @@ void DrawLevel() {
         g_debugSystem.draw();
     } else { // Debug system is not open
     }
+    // Animations
+    animManager.DrawAll();
 }
 
 void FreeLevel() {
@@ -792,7 +810,7 @@ void FreeLevel() {
     startEndPointSystem.Free();
     portalSystem.Free();
     vfxSystem.Free();
-
+    animManager.FreeAll();
     // tc added start
     mossSystem.Free();
     collectibleSystem.Free();
@@ -844,4 +862,5 @@ void UnloadLevel() {
     g_debugSystem.unload();
 
     winScreen.Unload();
+
 }

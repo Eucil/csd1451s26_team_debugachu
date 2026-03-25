@@ -7,6 +7,11 @@
 #include "GameStateManager.h"
 #include "States/LevelManager.h"
 
+// Destructible Background
+#include "AudioSystem.h"
+#include "Terrain.h"
+#include "VFXSystem.h"
+
 static Button buttonIncreaseSfxVolume;
 static Button buttonDecreaseSfxVolume;
 static Button buttonIncreaseBgmVolume;
@@ -20,6 +25,18 @@ static TextData sfxVolumeText;
 static TextData bgmVolumeText;
 static TextData sfxVolumeAmountText;
 static TextData bgmVolumeAmountText;
+
+// Destructible Background Variables
+static int bgHeight, bgWidth, bgTileSize, bgPortalLimit;
+static bool bgFileExist;
+
+static Terrain* bgDirt = nullptr;
+static Terrain* bgStone = nullptr;
+static Terrain* bgMagic = nullptr;
+static AEGfxTexture* pBgDirtTex{nullptr};
+static AEGfxTexture* pBgStoneTex{nullptr};
+static AEGfxTexture* pBgMagicTex{nullptr};
+static VFXSystem bgVfxSystem;
 
 void loadSettings() {
     font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
@@ -35,6 +52,14 @@ void loadSettings() {
 
     buttonBack.loadMesh();
     buttonBack.loadTexture("Assets/Textures/brown_square_24_24.png");
+
+    // Destructible Terrain
+    Terrain::createMeshLibrary();
+    Terrain::createColliderLibrary();
+
+    pBgDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
+    pBgStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
+    pBgMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
 }
 
 void initializeSettings() {
@@ -60,6 +85,31 @@ void initializeSettings() {
     sfxVolumeAmountText.font_ = font;
     bgmVolumeAmountText.initFromJson("settings_text", "BgmVolumeAmount");
     bgmVolumeAmountText.font_ = font;
+
+    // Initialize destructible Background
+    levelManager.init();
+    levelManager.checkLevelData();
+
+    bgVfxSystem.Initialize(800, 20);
+    if (levelManager.getLevelData(100)) {
+        levelManager.parseMapInfo(bgWidth, bgHeight, bgTileSize, bgPortalLimit);
+        bgFileExist = true;
+    } else {
+        bgWidth = 80;
+        bgHeight = 45;
+        bgTileSize = 20;
+        bgFileExist = false;
+    }
+    bgDirt = new Terrain(TerrainMaterial::Dirt, pBgDirtTex, {0.0f, 0.0f}, bgHeight, bgWidth,
+                         bgTileSize, true);
+
+    if (bgFileExist) {
+        levelManager.parseTerrainInfo(bgDirt->getNodes(), "Dirt");
+    }
+    bgDirt->initCellsTransform();
+    bgDirt->initCellsGraphics();
+    bgDirt->initCellsCollider();
+    bgDirt->updateTerrain();
 }
 
 void updateSettings(GameStateManager& GSM, f32 deltaTime) {
@@ -92,9 +142,26 @@ void updateSettings(GameStateManager& GSM, f32 deltaTime) {
     buttonDecreaseBgmVolume.updateTransform();
 
     buttonBack.updateTransform();
+
+    if (AEInputCheckCurr(AEVK_LBUTTON)) {
+        bool hitDirt = bgDirt->destroyAtMouse(20.0f);
+        if (hitDirt) {
+            bgVfxSystem.SpawnContinuous(VFXType::DirtBurst, GetMouseWorldPos(), deltaTime, 0.1f);
+            g_audioSystem.playSound("dirt_break", "sfx", 0.25f, 1.0f);
+        } else {
+            bgVfxSystem.ResetSpawnTimer();
+        }
+    } else {
+        bgVfxSystem.ResetSpawnTimer();
+    }
+    bgVfxSystem.Update(deltaTime);
 }
 
 void drawSettings() {
+
+    bgDirt->renderTerrain();
+    bgVfxSystem.Draw();
+
     buttonIncreaseSfxVolume.draw();
     buttonDecreaseSfxVolume.draw();
     buttonIncreaseBgmVolume.draw();
@@ -109,7 +176,12 @@ void drawSettings() {
     bgmVolumeAmountText.draw();
 }
 
-void freeSettings() {}
+void freeSettings() {
+    bgVfxSystem.Free();
+
+    delete bgDirt;
+    bgDirt = nullptr;
+}
 
 void unloadSettings() {
     AEGfxDestroyFont(font);
@@ -120,4 +192,11 @@ void unloadSettings() {
     buttonDecreaseBgmVolume.unload();
 
     buttonBack.unload();
+
+    // Unload destructible background
+    Terrain::freeMeshLibrary();
+    if (pBgDirtTex) {
+        AEGfxTextureUnload(pBgDirtTex);
+        pBgDirtTex = nullptr;
+    }
 }
