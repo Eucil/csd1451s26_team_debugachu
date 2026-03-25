@@ -200,17 +200,17 @@ void InitializeHowToPlay() {
 
     // Next button - bottom right
     nextButton.setTextFont(bodyFont);
-    nextButton.setTransform({300.0f, -350.0f}, {220.0f, 60.0f});
+    nextButton.setTransform({300.0f, -300.0f}, {220.0f, 60.0f});
     nextButton.setText("NEXT >", 0.f, 0.f, 0.65f, 1.0f, 1.0f, 1.0f, 1.0f);
 
     // Back button - bottom left
     backButton.setTextFont(bodyFont);
-    backButton.setTransform({-300.0f, -350.0f}, {220.0f, 60.0f});
+    backButton.setTransform({-300.0f, -300.0f}, {220.0f, 60.0f});
     backButton.setText("< BACK", 0.f, 0.f, 0.65f, 1.0f, 1.0f, 1.0f, 1.0f);
 
     // Exit button - bottom center
     exitButton.setTextFont(bodyFont);
-    exitButton.setTransform({0.0f, -350.0f}, {220.0f, 60.0f});
+    exitButton.setTransform({0.0f, -300.0f}, {220.0f, 60.0f});
     exitButton.setText("MENU", 0.f, 0.f, 0.65f, 1.0f, 1.0f, 1.0f, 1.0f);
 }
 
@@ -299,9 +299,9 @@ void DrawHowToPlay() {
     // 6. Page indicator (e.g. "2 / 4")
     DrawPageIndicator();
 
-    // 7. Navigation hint at very bottom
-    DrawCenteredText(bodyFont, "[ < ] [ > ] or ARROW KEYS to navigate", -0.55f, 0.5f, 0.5f, 0.5f,
-                     0.5f);
+    //// 7. Navigation hint at very bottom
+    // DrawCenteredText(bodyFont, "[ < ] [ > ] or ARROW KEYS to navigate", -0.55f, 0.5f, 0.5f, 0.5f,
+    //                  0.5f);
 
     // 8. Navigation buttons
     nextButton.draw();

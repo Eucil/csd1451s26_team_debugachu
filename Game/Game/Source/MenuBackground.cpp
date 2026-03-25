@@ -142,7 +142,7 @@ void MenuBackground::Load() {
 
 void MenuBackground::Initialize() {
     bgFluidSystem.Initialize();
-    bgPortalSystem.Initialize();
+    bgPortalSystem.Initialize(portalLimit);
     bgVfxSystem.Initialize(800, 20);
     bgCollectibleSystem.Initialize();
 
@@ -206,7 +206,7 @@ void MenuBackground::Draw() {
     bgStone->renderTerrain();
     bgMagic->renderTerrain();
 
-    bgStartEndPoint.DrawColor();
+    bgStartEndPoint.DrawTexture(0);
     bgPortalSystem.Draw();
 
     bgVfxSystem.Draw();
