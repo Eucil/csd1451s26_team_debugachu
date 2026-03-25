@@ -3,12 +3,26 @@
 #include <AEEngine.h>
 
 #include "States/Credits.h"
+#include "States/HowToPlay.h"
 #include "States/Level.h"
 #include "States/LevelSelector.h"
+#include "States/LogoScreen.h"
 #include "States/MainMenu.h"
 #include "States/Settings.h"
 
-enum class StateId { Quit, Next, Restart, MainMenu, LevelSelector, Level, Credits, Settings };
+enum class StateId {
+    Quit,
+    Next,
+    Restart,
+    NextLevel,
+    LogoScreen,
+    MainMenu,
+    LevelSelector,
+    Level,
+    Credits,
+    Settings,
+    HowToPlay
+};
 
 class GameState {
 public:
@@ -32,6 +46,14 @@ public:
 
     void update(StateId updateStateId) {
         switch (updateStateId) {
+        case StateId::LogoScreen:
+            fpLoad_ = LoadLogoScreen;
+            fpInitialize_ = InitializeLogoScreen;
+            fpUpdate_ = UpdateLogoScreen;
+            fpDraw_ = DrawLogoScreen;
+            fpFree_ = FreeLogoScreen;
+            fpUnload_ = UnloadLogoScreen;
+            break;
         case StateId::MainMenu:
             fpLoad_ = LoadMainMenu;
             fpInitialize_ = InitializeMainMenu;
@@ -72,9 +94,27 @@ public:
             fpFree_ = freeSettings;
             fpUnload_ = unloadSettings;
             break;
-
+        case StateId::NextLevel:
+            // NextLevel is a distinct value from Level so the main loop's
+            // while (currentState_ == nextState_) condition breaks and
+            // triggers a full Free/Unload/Load/Initialize cycle.
+            // The Level functions are reused -- only the state ID differs.
+            fpLoad_ = LoadLevel;
+            fpInitialize_ = InitializeLevel;
+            fpUpdate_ = UpdateLevel;
+            fpDraw_ = DrawLevel;
+            fpFree_ = FreeLevel;
+            fpUnload_ = UnloadLevel;
+            break;
+        case StateId::HowToPlay:
+            fpLoad_ = LoadHowToPlay;
+            fpInitialize_ = InitializeHowToPlay;
+            fpUpdate_ = UpdateHowToPlay;
+            fpDraw_ = DrawHowToPlay;
+            fpFree_ = FreeHowToPlay;
+            fpUnload_ = UnloadHowToPlay;
+            break;
         }
-
     }
 
     void callLoad() {

@@ -27,9 +27,13 @@ private:
     int totalCollectibles_{0};
     int currentLevel_{0};
     int nextLevel_{0};
+    bool hasNextLevel_{false}; // true when a playable next level exists
 
 public:
     void Load(s8 font);
+
+    // currentLevel should be the 1-based level number currently being played
+    // (i.e. the same value stored in levelManager.getCurrentLevel())
     void Show(int collected, int total, int currentLevel);
     void Hide();
     bool IsVisible() const { return isVisible_; }

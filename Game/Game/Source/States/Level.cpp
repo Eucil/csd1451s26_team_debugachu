@@ -1,4 +1,4 @@
-#include "States/Level.h"
+﻿#include "States/Level.h"
 
 #include <fstream>
 #include <iomanip>
@@ -7,6 +7,7 @@
 
 #include <AEEngine.h>
 
+#include "Animations.h"
 #include "AudioSystem.h"
 #include "Button.h"
 #include "Collectible.h"
@@ -24,8 +25,6 @@
 #include "Terrain.h"
 #include "VFXSystem.h"
 #include "WinScreen.h"
-#include "Animations.h"
-
 
 static Terrain* dirt = nullptr;
 static Terrain* stone = nullptr;
@@ -57,6 +56,7 @@ static Button buttonRestart;
 static Button buttonQuit;
 
 static PauseSystem pauseSystem;
+static bool winTriggered = false; // latches true once win fires this session
 
 // tc added start
 static CollectibleSystem collectibleSystem;
@@ -204,6 +204,7 @@ void InitializeLevel() {
     }
 
     vfxSystem.Initialize(800, 20);
+    winTriggered = false; // reset win latch for this level
 
     // UI buttons
     buttonRestart.initFromJson("level_buttons", "Restart");
@@ -301,12 +302,12 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
             }
             if (buttonRestart.checkMouseClick()) {
                 screenFader.StartFadeOut(&GSM, StateId::Restart);
-                //GSM.nextState_ = StateId::Restart;
+                // GSM.nextState_ = StateId::Restart;
                 pauseSystem.resume();
             }
             if (buttonQuit.checkMouseClick()) {
                 screenFader.StartFadeOut(&GSM, StateId::MainMenu);
-               // GSM.nextState_ = StateId::MainMenu;
+                // GSM.nextState_ = StateId::MainMenu;
             }
 
             // UI buttons
@@ -429,7 +430,6 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                     levelManager.savePortalInfo(portalSystem);
                     levelManager.writeToFile(levelManager.getCurrentLevel());
                 }
-                levelManager.updateLevelEditor();
             } else {
                 // ====================
                 // Gameplay mode
@@ -554,7 +554,8 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 vfxSystem.Update(deltaTime);
 
                 if (startEndPointSystem.CheckWinCondition(fluidSystem.particleMaxCount_) &&
-                    !winScreen.IsVisible()) {
+                    !winTriggered) {
+                    winTriggered = true;
                     std::cout << "WIN - Showing win screen\n";
                     winScreen.Show(collectibleSystem.GetCollectedCount(),
                                    collectibleSystem.GetTotalCount(),
@@ -731,12 +732,15 @@ void DrawLevel() {
     mossSystem.Draw();
 
     // Add preview render in gameplay
-    // Only show portal preview if mouse is near magic terrain, otherwise always show dirt preview
-    if (magic->isNearestNodeToMouseAtThreshold() == true) {
-        // Draw portal preview if mouse is near magic terrain
-        portalSystem.DrawPreview();
-    } else {
-        levelManager.drawBrushPreview(TerrainMaterial::Dirt, 20.f);
+    if (levelManager.getLevelEditorMode() == EditorMode::None) {
+        // Only show portal preview if mouse is near magic terrain, otherwise always show dirt
+        // preview
+        if (magic->isNearestNodeToMouseAtThreshold() == true) {
+            // Draw portal preview if mouse is near magic terrain
+            portalSystem.DrawPreview();
+        } else {
+            levelManager.drawBrushPreview(TerrainMaterial::Dirt, 20.f);
+        }
     }
 
     // ====================
@@ -849,7 +853,9 @@ void UnloadLevel() {
     }
 
     levelManager.freeLevelEditor();
-    levelManager.SetCurrentLevel(0);
+    // NOTE: Do NOT reset currentLevel_ to 0 here.
+    // WinScreen sets it to nextLevel_ before triggering StateId::Level.
+    // Resetting it here would wipe that value and always reload Level 0.
 
     // UI buttons
     buttonRestart.unload();
@@ -862,5 +868,4 @@ void UnloadLevel() {
     g_debugSystem.unload();
 
     winScreen.Unload();
-
 }
