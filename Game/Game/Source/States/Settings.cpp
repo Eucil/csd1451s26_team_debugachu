@@ -199,4 +199,12 @@ void unloadSettings() {
         AEGfxTextureUnload(pBgDirtTex);
         pBgDirtTex = nullptr;
     }
+    if (pBgStoneTex) {
+        AEGfxTextureUnload(pBgStoneTex);
+        pBgStoneTex = nullptr;
+    }
+    if (pBgMagicTex) {
+        AEGfxTextureUnload(pBgMagicTex);
+        pBgMagicTex = nullptr;
+    }
 }
