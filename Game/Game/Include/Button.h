@@ -11,6 +11,7 @@ struct TextData {
     std::string content_{};
     float x_{0.f}, y_{0.f};
     float scale_{1.f};
+    float lineSpacing_{1.f};
     float r_{1.f}, g_{1.f}, b_{1.f}, a_{1.f};
     s8 font_{0};
 

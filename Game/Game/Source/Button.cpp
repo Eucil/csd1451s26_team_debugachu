@@ -2,7 +2,9 @@
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
+#include <vector>
 
 #include <AEEngine.h>
 #include <json/json.h>
@@ -162,18 +164,38 @@ void TextData::draw(bool center) {
         return;
     }
 
-    f32 drawX = x_;
-    f32 drawY = y_;
-    // Center text if enabled (text coords are normalized -1 to +1, bottom-left anchored).
-    if (center) {
-        f32 textWidth, textHeight;
-        AEGfxGetPrintSize(font_, content_.c_str(), scale_, &textWidth, &textHeight);
-        drawX -= (textWidth / 2.0f);
-        drawY -= (textHeight / 2.0f);
+    // Splits content on '\n'
+    std::vector<std::string> lines;
+    std::istringstream ss(content_);
+    std::string token;
+    while (std::getline(ss, token, '\n')) {
+        lines.push_back(token);
+    }
+    if (lines.empty()) {
+        lines.push_back(content_);
     }
 
+    f32 lineW{0.0f};
+    f32 lineH{0.0f};
+    AEGfxGetPrintSize(font_, lines[0].empty() ? " " : lines[0].c_str(), scale_, &lineW, &lineH);
+    f32 step = lineH * lineSpacing_;
+    f32 totalHeight = step * static_cast<f32>(lines.size());
+
+    // For centered mode:
+    // start at the top of the vertically centered block
+    f32 startY = center ? (y_ + totalHeight / 2.0f - step) : y_;
+
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-    AEGfxPrint(font_, content_.c_str(), drawX, drawY, scale_, r_, g_, b_, a_);
+    for (int i = 0; i < static_cast<int>(lines.size()); ++i) {
+        f32 drawX = x_;
+        f32 drawY = startY - i * step;
+        if (center) {
+            f32 w, h;
+            AEGfxGetPrintSize(font_, lines[i].empty() ? " " : lines[i].c_str(), scale_, &w, &h);
+            drawX = x_ - w / 2.0f;
+        }
+        AEGfxPrint(font_, lines[i].c_str(), drawX, drawY, scale_, r_, g_, b_, a_);
+    }
 }
 
 void TextData::initFromJson(const std::string& file, const std::string& section) {
@@ -182,6 +204,10 @@ void TextData::initFromJson(const std::string& file, const std::string& section)
     x_ = textSection["x"].asFloat();
     y_ = textSection["y"].asFloat();
     scale_ = textSection["scale"].asFloat();
+
+    // lineSpacing is optional, not all JSON file will have it thus let it have a default
+    lineSpacing_ = textSection.get("lineSpacing", 1.0f).asFloat();
+
     r_ = textSection["red"].asFloat();
     g_ = textSection["green"].asFloat();
     b_ = textSection["blue"].asFloat();
