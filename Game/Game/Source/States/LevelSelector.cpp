@@ -39,15 +39,15 @@ static AnimationManager animManager;
 static ScreenFaderManager screenFader;
 static UIFader someOtherCoolAnimation;
 
-static std::vector<Button> editorButtonPool_;
+static std::vector<Button> levelButtonPool_;
 static TextData titleText{
     "SELECT LEVEL",
-    -0.4f,
+    0.0f,
     0.8f,
 };
 
 static bool creatingLevel = false;
-static f32 width{}, height{}, tileSize{};
+static int inputWidth{}, inputHeight{}, inputTileSize{}, inputPortalLimit{};
 static int confirmInput{}, levelInput{};
 static std::string inputStr;
 static TextData inputPrompt{
@@ -55,6 +55,9 @@ static TextData inputPrompt{
     -0.4f,
     -0.8f,
 };
+
+static Button buttonRestart;
+static Button buttonQuit;
 
 void LoadLevelSelector() {
     font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
@@ -128,7 +131,7 @@ void LoadLevelSelector() {
             std::to_string(i + 1), buttonPos.x / textPosDivisorX - textXOffset - extraOffsetX,
             buttonPos.y / textPosDivisorY - textYOffset, textScale, textR, textG, textB, textA);
         tempButton.setTextFont(font);
-        editorButtonPool_.push_back(tempButton);
+        levelButtonPool_.push_back(tempButton);
     }
 
     titleText.font_ = font;
@@ -177,10 +180,10 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
 
     hoveredLevelIndex = -1;
     for (int i = 0; i < static_cast<int>(Level::None); ++i) {
-        editorButtonPool_[i].updateTransform();
+        levelButtonPool_[i].updateTransform();
         bool isPlayable = (levelManager.playableLevels_[i]);
         // If the mouse is colliding with this specific button, save its index
-        if (editorButtonPool_[i].isHovered() && isPlayable) {
+        if (levelButtonPool_[i].isHovered() && isPlayable) {
             hoveredLevelIndex = i;
         }
     }
@@ -242,7 +245,7 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
     if ((AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) && !creatingLevel) {
         for (int i = 0; i < static_cast<int>(Level::None); ++i) {
             // Clicks for level selection and editor
-            if (editorButtonPool_[i].checkMouseClick()) {
+            if (levelButtonPool_[i].checkMouseClick()) {
                 std::cout << "Level " << (i + 1) << " button clicked\n";
 
                 // Handle level selection based on editor mode
@@ -264,9 +267,10 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
                     // If create, allow user to input width, height and tilesize before creating
                     std::cout << "Level editor mode: Create\n";
                     creatingLevel = true;
-                    width = 0.f;
-                    height = 0.f;
-                    tileSize = 0.f;
+                    inputWidth = 0;
+                    inputHeight = 0;
+                    inputTileSize = 0;
+                    inputPortalLimit = 0;
                     confirmInput = 0;
                     inputStr = "";
                     levelInput = i + 1;
@@ -312,7 +316,7 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
             inputPrompt.content_ = "Width: " + inputStr;
             if (AEInputCheckReleased(AEVK_RETURN)) {
                 confirmInput++;
-                width = std::stof(inputStr);
+                inputWidth = std::stoi(inputStr);
                 inputStr = "";
             }
             break;
@@ -321,7 +325,7 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
             inputPrompt.content_ = "Height: " + inputStr;
             if (AEInputCheckReleased(AEVK_RETURN)) {
                 confirmInput++;
-                height = std::stof(inputStr);
+                inputHeight = std::stoi(inputStr);
                 inputStr = "";
             }
             break;
@@ -329,9 +333,19 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
             inputNumbers(inputStr);
             inputPrompt.content_ = "Tile Size: " + inputStr;
             if (AEInputCheckReleased(AEVK_RETURN)) {
-                tileSize = std::stof(inputStr);
-                levelManager.createLevelData(levelInput, static_cast<int>(width),
-                                             static_cast<int>(height), static_cast<int>(tileSize));
+                confirmInput++;
+                inputTileSize = std::stoi(inputStr);
+                inputStr = "";
+            }
+            break;
+        case 3:
+            inputNumbers(inputStr);
+            inputPrompt.content_ = "Portal Limit: " + inputStr;
+            if (AEInputCheckReleased(AEVK_RETURN)) {
+                inputPortalLimit = std::stof(inputStr);
+                levelManager.createLevelData(
+                    levelInput, static_cast<int>(inputWidth), static_cast<int>(inputHeight),
+                    static_cast<int>(inputTileSize), static_cast<int>(inputPortalLimit));
                 creatingLevel = false;
                 levelManager.setLevelEditorMode(EditorMode::None);
                 titleText.content_ = "SELECT LEVEL";
@@ -342,7 +356,7 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
     }
 
     for (int i = 0; i < static_cast<int>(Level::None); ++i) {
-        editorButtonPool_[i].updateTransform();
+        levelButtonPool_[i].updateTransform();
     }
     animManager.UpdateAll(deltaTime);
 }
@@ -363,15 +377,15 @@ void DrawLevelSelector() {
     // Draw button with different color base on level editor mode
     for (int i = 0; i < static_cast<int>(Level::None); ++i) {
         if (levelManager.playableLevels_[i]) {
-            editorButtonPool_[i].setRGBA(1.0f, 1.0f, 1.f, 1.f); // Pale blue for playable levels
-            editorButtonPool_[i].draw();
+            levelButtonPool_[i].setRGBA(1.0f, 1.0f, 1.f, 1.f); // Pale blue for playable levels
+            levelButtonPool_[i].draw();
         } else {
-            editorButtonPool_[i].setRGBA(0.5f, 0.5f, 0.5f, 1.f); // Grey for non-playable levels
-            editorButtonPool_[i].draw();
+            levelButtonPool_[i].setRGBA(0.5f, 0.5f, 0.5f, 1.f); // Grey for non-playable levels
+            levelButtonPool_[i].draw();
         }
     }
 
-    titleText.draw();
+    titleText.draw(true);
 
     if (creatingLevel) {
         inputPrompt.draw();
@@ -447,6 +461,7 @@ void FreeLevelSelector() {
     // Todo
     // std::cout << "Free main menu\n";
     bgVfxSystem.Free();
+    animManager.FreeAll();
 
     delete bgDirt;
     bgDirt = nullptr;
@@ -456,10 +471,10 @@ void UnloadLevelSelector() {
     // Todo
     // std::cout << "Unload main menu\n";
     for (int i = 0; i < static_cast<int>(Level::None); ++i) {
-        editorButtonPool_[i].unload();
+        levelButtonPool_[i].unload();
     }
 
-    editorButtonPool_.clear();
+    levelButtonPool_.clear();
     AEGfxDestroyFont(font);
 
     if (previewMesh) {

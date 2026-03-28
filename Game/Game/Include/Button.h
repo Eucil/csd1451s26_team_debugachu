@@ -14,7 +14,7 @@ struct TextData {
     float r_{1.f}, g_{1.f}, b_{1.f}, a_{1.f};
     s8 font_{0};
 
-    void draw() const;
+    void draw(bool center = false);
     void initFromJson(const std::string& file, const std::string& section);
     void setTransform(const f32& x, const f32& y, const f32& scale, const f32& r, const f32& g,
                       const f32& b, const f32& a);

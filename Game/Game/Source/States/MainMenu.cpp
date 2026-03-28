@@ -167,7 +167,11 @@ void DrawMainMenu() {
     animManager.DrawAll();
 }
 
-void FreeMainMenu() { MenuBackground::Free(); }
+void FreeMainMenu() {
+
+    animManager.FreeAll();
+    MenuBackground::Free();
+}
 
 void UnloadMainMenu() {
     // Unload shared GPU assets

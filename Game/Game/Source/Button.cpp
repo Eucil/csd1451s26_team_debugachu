@@ -155,14 +155,24 @@ bool Button::checkMouseClick() const {
     return false;
 }
 
-void TextData::draw() const {
+void TextData::draw(bool center) {
     if (font_ == 0) {
         printf("ERROR: Attempting to draw text with null font!\n");
         return;
     }
 
+    f32 drawX = x_;
+    f32 drawY = y_;
+    // Center text if enabled (text coords are normalized -1 to +1, bottom-left anchored).
+    if (center) {
+        f32 textWidth, textHeight;
+        AEGfxGetPrintSize(font_, content_.c_str(), scale_, &textWidth, &textHeight);
+        drawX -= (textWidth / 2.0f);
+        drawY -= (textHeight / 2.0f);
+    }
+
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-    AEGfxPrint(font_, content_.c_str(), x_, y_, scale_, r_, g_, b_, a_);
+    AEGfxPrint(font_, content_.c_str(), drawX, drawY, scale_, r_, g_, b_, a_);
 }
 
 void TextData::initFromJson(const std::string& file, const std::string& section) {
