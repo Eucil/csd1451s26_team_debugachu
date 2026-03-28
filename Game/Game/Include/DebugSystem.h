@@ -45,6 +45,7 @@ private:
 
     Transform transform_;
     Graphics graphics_;
+    TextData headerText_;
 
     Button buttonClose_;
 };

@@ -18,7 +18,8 @@ static Button buttonIncreaseBgmVolume;
 static Button buttonDecreaseBgmVolume;
 static Button buttonBack;
 
-static s8 font;
+static s8 titleFont;
+static s8 buttonFont;
 
 static TextData headerText;
 static TextData sfxVolumeText;
@@ -39,7 +40,8 @@ static AEGfxTexture* pBgMagicTex{nullptr};
 static VFXSystem bgVfxSystem;
 
 void loadSettings() {
-    font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
+    titleFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
+    buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
 
     buttonIncreaseSfxVolume.loadMesh();
     buttonIncreaseSfxVolume.loadTexture("Assets/Textures/brown_square_24_24.png");
@@ -51,7 +53,7 @@ void loadSettings() {
     buttonDecreaseBgmVolume.loadTexture("Assets/Textures/brown_square_24_24.png");
 
     buttonBack.loadMesh();
-    buttonBack.loadTexture("Assets/Textures/brown_square_24_24.png");
+    buttonBack.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
 
     // Destructible Terrain
     Terrain::createMeshLibrary();
@@ -64,27 +66,28 @@ void loadSettings() {
 
 void initializeSettings() {
     buttonIncreaseSfxVolume.initFromJson("settings_buttons", "IncreaseSfxVolume");
-    buttonIncreaseSfxVolume.setTextFont(font);
+    buttonIncreaseSfxVolume.setTextFont(buttonFont);
     buttonDecreaseSfxVolume.initFromJson("settings_buttons", "DecreaseSfxVolume");
-    buttonDecreaseSfxVolume.setTextFont(font);
+    buttonDecreaseSfxVolume.setTextFont(buttonFont);
     buttonIncreaseBgmVolume.initFromJson("settings_buttons", "IncreaseBgmVolume");
-    buttonIncreaseBgmVolume.setTextFont(font);
+    buttonIncreaseBgmVolume.setTextFont(buttonFont);
     buttonDecreaseBgmVolume.initFromJson("settings_buttons", "DecreaseBgmVolume");
-    buttonDecreaseBgmVolume.setTextFont(font);
+    buttonDecreaseBgmVolume.setTextFont(buttonFont);
 
     buttonBack.initFromJson("settings_buttons", "Back");
-    buttonBack.setTextFont(font);
+    buttonBack.setTextFont(buttonFont);
 
     headerText.initFromJson("settings_text", "Header");
-    headerText.font_ = font;
+    headerText.font_ = titleFont;
+
     sfxVolumeText.initFromJson("settings_text", "SfxVolume");
-    sfxVolumeText.font_ = font;
+    sfxVolumeText.font_ = buttonFont;
     bgmVolumeText.initFromJson("settings_text", "BgmVolume");
-    bgmVolumeText.font_ = font;
+    bgmVolumeText.font_ = buttonFont;
     sfxVolumeAmountText.initFromJson("settings_text", "SfxVolumeAmount");
-    sfxVolumeAmountText.font_ = font;
+    sfxVolumeAmountText.font_ = buttonFont;
     bgmVolumeAmountText.initFromJson("settings_text", "BgmVolumeAmount");
-    bgmVolumeAmountText.font_ = font;
+    bgmVolumeAmountText.font_ = buttonFont;
 
     // Initialize destructible Background
     levelManager.init();
@@ -169,7 +172,7 @@ void drawSettings() {
 
     buttonBack.draw();
 
-    headerText.draw();
+    headerText.draw(true);
     sfxVolumeText.draw();
     bgmVolumeText.draw();
     sfxVolumeAmountText.draw();
@@ -184,7 +187,15 @@ void freeSettings() {
 }
 
 void unloadSettings() {
-    AEGfxDestroyFont(font);
+    // Unload fonts
+    if (titleFont) {
+        AEGfxDestroyFont(titleFont);
+        titleFont = 0;
+    }
+    if (buttonFont) {
+        AEGfxDestroyFont(buttonFont);
+        buttonFont = 0;
+    }
 
     buttonIncreaseSfxVolume.unload();
     buttonDecreaseSfxVolume.unload();

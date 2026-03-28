@@ -1,16 +1,34 @@
 {
-  "Pause": {
+  "Next": {
     "position": {
-      "x": -600.0,
-      "y": 422.0
+      "x": 148.0,
+      "y": -300.0
     },
     "scale": {
-      "x": 48.0,
-      "y": 48.0
+      "x": 96.0,
+      "y": 96.0
     },
     "text": {
-      "content": "||",
-      "scale": 0.5,
+      "content": ">",
+      "scale": 1.0,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+  "Previous": {
+    "position": {
+      "x": -148.0,
+      "y": -300.0
+    },
+    "scale": {
+      "x": 96.0,
+      "y": 96.0
+    },
+    "text": {
+      "content": "<",
+      "scale": 1.0,
       "red": 1.0,
       "green": 1.0,
       "blue": 1.0,
@@ -28,42 +46,6 @@
     },
     "text": {
       "content": "BACK",
-      "scale": 1.0,
-      "red": 1.0,
-      "green": 1.0,
-      "blue": 1.0,
-      "alpha": 1.0
-    }
-  },
-  "Restart": {
-    "position": {
-      "x": 0.0,
-      "y": 100.0
-    },
-    "scale": {
-      "x": 320.0,
-      "y": 96.0
-    },
-    "text": {
-      "content": "RESTART",
-      "scale": 1.0,
-      "red": 1.0,
-      "green": 1.0,
-      "blue": 1.0,
-      "alpha": 1.0
-    }
-  },
-  "Quit": {
-    "position": {
-      "x": 0.0,
-      "y": -100.0
-    },
-    "scale": {
-      "x": 320.0,
-      "y": 96.0
-    },
-    "text": {
-      "content": "QUIT",
       "scale": 1.0,
       "red": 1.0,
       "green": 1.0,

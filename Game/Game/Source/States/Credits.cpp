@@ -58,8 +58,9 @@ static const char* credits[] = {
 // Static state
 // ----------------------------------------------------------------------------
 static f32 yPos = 0.0f;
-static s8 font = 0;
-static Button backButton;
+static s8 creditsFont = 0;
+static s8 buttonFont = 0;
+static Button buttonBack;
 static float lineSpacing = 80.0f;
 static float scrollSpeed = -200.0f; // negative = scroll up
 std::vector<std::string> creditsData;
@@ -69,7 +70,10 @@ void LoadCredits() {
     MenuBackground::Load();
 
     // Load credits font
-    font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 36);
+    creditsFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 36);
+
+    // Load button font
+    buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
 
     Json::Value Lines = g_configManager.getSection("credits", "CreditsInfo");
 
@@ -86,14 +90,9 @@ void LoadCredits() {
         }
     }
 
-    // Load back button assets
-    backButton.loadMesh();
-    backButton.loadTexture("Assets/Textures/brown_button.png");
-    backButton.initFromJson("main_menu_buttons", "Back");
-    backButton.setTransform({-650.0f, -350.0f}, {150.0f, 50.0f});
-    backButton.setTextFont(font); // set font first so updateTransform can measure
-    backButton.setText("Back", 0.f, 0.f, 0.75f, 1.0f, 1.0f, 1.0f,
-                       1.0f); // x/y auto-centered by updateTransform
+    // Load back button
+    buttonBack.loadMesh();
+    buttonBack.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
 }
 
 void InitializeCredits() {
@@ -103,6 +102,9 @@ void InitializeCredits() {
     // Reset credits scroll position
     yPos = -450.0f;
     printf("Credits: Initialized with yPos = %f\n", yPos);
+
+    buttonBack.initFromJson("credits_buttons", "Back");
+    buttonBack.setTextFont(buttonFont);
 }
 
 void UpdateCredits(GameStateManager& GSM, f32 deltaTime) {
@@ -114,10 +116,10 @@ void UpdateCredits(GameStateManager& GSM, f32 deltaTime) {
         GSM.nextState_ = StateId::MainMenu;
     }
 
-    if (backButton.checkMouseClick()) {
+    if (buttonBack.checkMouseClick()) {
         GSM.nextState_ = StateId::MainMenu;
     }
-    backButton.updateTransform();
+    buttonBack.updateTransform();
 
     // Auto-return when all lines have scrolled past
     float lastLineY = yPos - (creditsData.size() - 1) * lineSpacing;
@@ -253,41 +255,46 @@ void DrawCredits() {
 
         // Auto-center: measure text width and compute xPos
         float textWidth = 0.0f, textHeight = 0.0f;
-        AEGfxGetPrintSize(font, currentLine.c_str(), textSize, &textWidth, &textHeight);
+        AEGfxGetPrintSize(creditsFont, currentLine.c_str(), textSize, &textWidth, &textHeight);
         float xPos = -textWidth / 2.0f;
 
         float screenY = yLine / 450.0f;
 
         // Black outline for readability
-        AEGfxPrint(font, currentLine.c_str(), xPos - 0.002f, screenY - 0.002f, textSize, 0.f, 0.f,
-                   0.f, 1.f);
-        AEGfxPrint(font, currentLine.c_str(), xPos + 0.002f, screenY - 0.002f, textSize, 0.f, 0.f,
-                   0.f, 1.f);
-        AEGfxPrint(font, currentLine.c_str(), xPos - 0.002f, screenY + 0.002f, textSize, 0.f, 0.f,
-                   0.f, 1.f);
-        AEGfxPrint(font, currentLine.c_str(), xPos + 0.002f, screenY + 0.002f, textSize, 0.f, 0.f,
-                   0.f, 1.f);
+        AEGfxPrint(creditsFont, currentLine.c_str(), xPos - 0.002f, screenY - 0.002f, textSize, 0.f,
+                   0.f, 0.f, 1.f);
+        AEGfxPrint(creditsFont, currentLine.c_str(), xPos + 0.002f, screenY - 0.002f, textSize, 0.f,
+                   0.f, 0.f, 1.f);
+        AEGfxPrint(creditsFont, currentLine.c_str(), xPos - 0.002f, screenY + 0.002f, textSize, 0.f,
+                   0.f, 0.f, 1.f);
+        AEGfxPrint(creditsFont, currentLine.c_str(), xPos + 0.002f, screenY + 0.002f, textSize, 0.f,
+                   0.f, 0.f, 1.f);
 
         // Main colored text
-        AEGfxPrint(font, currentLine.c_str(), xPos, screenY, textSize, r, g, b, 1.0f);
+        AEGfxPrint(creditsFont, currentLine.c_str(), xPos, screenY, textSize, r, g, b, 1.0f);
     }
 
     // Draw back button on top
-    backButton.draw();
+    buttonBack.draw();
 }
 void FreeCredits() {
     // Free the shared background simulation objects
     MenuBackground::Free();
-
-    backButton.unload();
 }
 
 void UnloadCredits() {
     // Unload shared GPU assets
     MenuBackground::Unload();
 
-    if (font) {
-        AEGfxDestroyFont(font);
-        font = 0;
+    if (creditsFont) {
+        AEGfxDestroyFont(creditsFont);
+        creditsFont = 0;
     }
+
+    if (buttonFont) {
+        AEGfxDestroyFont(buttonFont);
+        buttonFont = 0;
+    }
+
+    buttonBack.unload();
 }

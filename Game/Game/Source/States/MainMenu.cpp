@@ -42,19 +42,19 @@ void LoadMainMenu() {
 
     // Load fonts for UI
     titleFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 72);
-    buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 33);
+    buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
 
     // Load button assets
     startButton.loadMesh();
-    startButton.loadTexture("Assets/Textures/brown_button.png");
+    startButton.loadTexture("Assets/Textures/brown_rectangle_80_24.png");
     howToPlayButton.loadMesh();
-    howToPlayButton.loadTexture("Assets/Textures/brown_button.png");
+    howToPlayButton.loadTexture("Assets/Textures/brown_rectangle_80_24.png");
     settingsButton.loadMesh();
-    settingsButton.loadTexture("Assets/Textures/brown_button.png");
+    settingsButton.loadTexture("Assets/Textures/brown_rectangle_80_24.png");
     creditsButton.loadMesh();
-    creditsButton.loadTexture("Assets/Textures/brown_button.png");
+    creditsButton.loadTexture("Assets/Textures/brown_rectangle_80_24.png");
     quitButton.loadMesh();
-    quitButton.loadTexture("Assets/Textures/brown_button.png");
+    quitButton.loadTexture("Assets/Textures/brown_rectangle_80_24.png");
 }
 
 void InitializeMainMenu() {

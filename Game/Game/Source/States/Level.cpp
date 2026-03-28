@@ -45,13 +45,21 @@ static WinScreen winScreen;
 // tc added end
 
 static TextData rotationText;
-static s8 font;
+static TextData pauseHeaderText;
+
+// Fonts
+static s8 titleFont = 0;
+static s8 font = 0;
+static s8 buttonFont = 0;
 
 static int height, width, tileSize, portalLimit;
 static bool fileExist;
 
 static VFXSystem vfxSystem;
 
+// Buttons
+static Button buttonPause;
+static Button buttonBack;
 static Button buttonRestart;
 static Button buttonQuit;
 
@@ -84,7 +92,9 @@ void LoadLevel() {
 
     // Setup texts
     rotationText = TextData{"", 0.7f, 0.92f, 0.5f};
+    titleFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
     font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
+    buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
 
     // tc added start
     collectibleSystem.Load(font);
@@ -125,10 +135,14 @@ void LoadLevel() {
     }
 
     // UI buttons
+    buttonPause.loadMesh();
+    buttonPause.loadTexture("Assets/Textures/brown_square_24_24.png");
+    buttonBack.loadMesh();
+    buttonBack.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
     buttonRestart.loadMesh();
-    buttonRestart.loadTexture("Assets/Textures/brown_button.png");
+    buttonRestart.loadTexture("Assets/Textures/brown_rectangle_80_24.png");
     buttonQuit.loadMesh();
-    buttonQuit.loadTexture("Assets/Textures/brown_button.png");
+    buttonQuit.loadTexture("Assets/Textures/brown_rectangle_80_24.png");
 
     pauseSystem.loadMesh();
     // Once level is loaded, make sure it is not paused
@@ -207,13 +221,19 @@ void InitializeLevel() {
     winTriggered = false; // reset win latch for this level
 
     // UI buttons
+    buttonPause.initFromJson("level_buttons", "Pause");
+    buttonPause.setTextFont(buttonFont);
+    buttonBack.initFromJson("level_buttons", "Back");
+    buttonBack.setTextFont(buttonFont);
     buttonRestart.initFromJson("level_buttons", "Restart");
-    buttonRestart.setTextFont(font);
+    buttonRestart.setTextFont(buttonFont);
     buttonQuit.initFromJson("level_buttons", "Quit");
-    buttonQuit.setTextFont(font);
+    buttonQuit.setTextFont(buttonFont);
 
     // Pause system
     pauseSystem.initFromJson("pause_system", "Background");
+    pauseHeaderText.initFromJson("pause_system", "Header");
+    pauseHeaderText.font_ = titleFont;
 
     // Debug system
     g_debugSystem.initFromJson("debug_system", "DebugOverlay");
@@ -296,8 +316,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
             // Game is paused
             // ====================
 
-            if (AEInputCheckTriggered(AEVK_P) || 0 == AESysDoesWindowExist()) {
-                std::cout << "P triggered\n";
+            if (buttonBack.checkMouseClick()) {
                 pauseSystem.resume();
             }
             if (buttonRestart.checkMouseClick()) {
@@ -311,6 +330,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
             }
 
             // UI buttons
+            buttonBack.updateTransform();
             buttonRestart.updateTransform();
             buttonQuit.updateTransform();
 
@@ -319,11 +339,11 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
             // Game is not paused
             // ====================
 
-            // Press P to pause
-            if (AEInputCheckTriggered(AEVK_P) || 0 == AESysDoesWindowExist()) {
-                std::cout << "P triggered\n";
+            // Click pause button
+            if (buttonPause.checkMouseClick()) {
                 pauseSystem.pause();
             }
+            buttonPause.updateTransform();
 
             // Press Q to go to main menu
             if (AEInputCheckTriggered(AEVK_ESCAPE) || 0 == AESysDoesWindowExist()) {
@@ -788,12 +808,19 @@ void DrawLevel() {
     rotationText.content_ =
         "Portal Rotation:" + std::to_string(static_cast<s32>(portalSystem.GetRotationValue()));
     rotationText.draw();
+    // Buttons
+    buttonPause.draw();
+
     winScreen.Draw();
+
     if (pauseSystem.isPaused()) { // Game is paused
-        // Backgroun
+        // Background
         pauseSystem.renderBackground();
 
+        pauseHeaderText.draw(true);
+
         // UI buttons
+        buttonBack.draw();
         buttonRestart.draw();
         buttonQuit.draw();
     } else { // Game is not paused
@@ -836,7 +863,21 @@ void FreeLevel() {
 void UnloadLevel() {
     // std::cout << "Unload level 2\n";
     Terrain::freeMeshLibrary();
+
+    // Unload fonts
     AEGfxDestroyFont(font);
+    if (titleFont) {
+        AEGfxDestroyFont(titleFont);
+        titleFont = 0;
+    }
+    if (font) {
+        AEGfxDestroyFont(font);
+        font = 0;
+    }
+    if (buttonFont) {
+        AEGfxDestroyFont(buttonFont);
+        buttonFont = 0;
+    }
 
     // unload terrain textures
     if (pTerrainDirtTex) {
@@ -858,6 +899,8 @@ void UnloadLevel() {
     // Resetting it here would wipe that value and always reload Level 0.
 
     // UI buttons
+    buttonPause.unload();
+    buttonBack.unload();
     buttonRestart.unload();
     buttonQuit.unload();
 

@@ -31,21 +31,25 @@ void WinScreen::Load(s8 font) {
 
     // Load button GPU resources
     nextLevelButton_.loadMesh();
-    nextLevelButton_.loadTexture("Assets/Textures/brown_button.png");
+    nextLevelButton_.loadTexture("Assets/Textures/brown_rectangle_80_24.png");
 
     restartButton_.loadMesh();
-    restartButton_.loadTexture("Assets/Textures/brown_button.png");
+    restartButton_.loadTexture("Assets/Textures/brown_rectangle_80_24.png");
 
     mainMenuButton_.loadMesh();
-    mainMenuButton_.loadTexture("Assets/Textures/brown_button.png");
+    mainMenuButton_.loadTexture("Assets/Textures/brown_rectangle_80_24.png");
 
-    // Static text -- x/y are 0 because updateTransform() will auto-center them
-    titleText_ = TextData{"VICTORY!", 0.f, 0.3f, 1.5f, 1.0f, 1.0f, 0.0f, 1.0f};
+    titleText_.initFromJson("win_screen_text", "Title");
     titleText_.font_ = font_;
-    collectiblesText_ = TextData{"", 0.f, 0.1f, 0.8f, 1.0f, 1.0f, 1.0f, 1.0f};
+    collectiblesText_.initFromJson("win_screen_text", "Collectibles");
     collectiblesText_.font_ = font_;
-    statsText_ = TextData{"", 0.f, -0.1f, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f};
-    statsText_.font_ = font_;
+    collectiblesFormat_ = collectiblesText_.content_;
+    statsPerfectText_.initFromJson("win_screen_text", "StatsPerfect");
+    statsPerfectText_.font_ = font_;
+    statsPartialText_.initFromJson("win_screen_text", "StatsPartial");
+    statsPartialText_.font_ = font_;
+    noNextLevelText_.initFromJson("win_screen_text", "NoNextLevel");
+    noNextLevelText_.font_ = font_;
 
     isVisible_ = false;
 }
@@ -83,7 +87,7 @@ void WinScreen::Show(int collected, int total, int currentLevel) {
 
     // Update dynamic text
     char buffer[64];
-    snprintf(buffer, sizeof(buffer), "Collectibles: %d/%d", collected, total);
+    snprintf(buffer, sizeof(buffer), collectiblesFormat_.c_str(), collected, total);
     collectiblesText_.content_ = buffer;
 
     // ------------------------------------------------------------------
@@ -93,25 +97,21 @@ void WinScreen::Show(int collected, int total, int currentLevel) {
     // If setText is called first, font_ is still 0 and centering is skipped.
     // ------------------------------------------------------------------
 
-    restartButton_.setTransform({-200.0f, -140.0f}, {160.0f, 70.0f});
+    restartButton_.initFromJson("win_screen_buttons", "Restart");
     restartButton_.setTextFont(font_);
-    restartButton_.setText("Restart", 0.f, 0.f, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f);
 
-    mainMenuButton_.setTransform({200.0f, -140.0f}, {160.0f, 70.0f});
+    mainMenuButton_.initFromJson("win_screen_buttons", "MainMenu");
     mainMenuButton_.setTextFont(font_);
-    mainMenuButton_.setText("Main Menu", 0.f, 0.f, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f);
 
-    nextLevelButton_.setTransform({0.0f, -140.0f}, {160.0f, 70.0f});
+    nextLevelButton_.initFromJson("win_screen_buttons", "Next");
     nextLevelButton_.setTextFont(font_);
 
     if (hasNextLevel_) {
-        // Active state: normal button color, white text
+        // Active state: normal button color
         nextLevelButton_.setRGBA(1.0f, 1.0f, 1.0f, 1.0f);
-        nextLevelButton_.setText("Next Level", 0.f, 0.f, 0.6f, 1.0f, 1.0f, 1.0f, 1.0f);
     } else {
         // Greyed-out state: dark tint on button, grey text
         nextLevelButton_.setRGBA(0.4f, 0.4f, 0.4f, 1.0f);
-        nextLevelButton_.setText("Next Level", 0.f, 0.f, 0.6f, 0.4f, 0.4f, 0.4f, 1.0f);
     }
 
     // Recalculate world matrices -- this is where text gets auto-centered
@@ -221,21 +221,15 @@ void WinScreen::Draw() {
 
     // Build and center stats text
     if (collectiblesCollected_ == totalCollectibles_) {
-        statsText_.content_ = "Perfect! All collectibles found!";
-        statsText_.scale_ = 0.7f;
+        statsPerfectText_.draw(true);
     } else {
+        TextData temp = statsPartialText_;
         char buffer[64];
-        snprintf(buffer, sizeof(buffer), "You found %d of %d collectibles", collectiblesCollected_,
+        snprintf(buffer, sizeof(buffer), statsPartialText_.content_.c_str(), collectiblesCollected_,
                  totalCollectibles_);
-        statsText_.content_ = buffer;
-        statsText_.scale_ = 0.8f;
+        temp.content_ = buffer;
+        temp.draw(true);
     }
-    {
-        f32 tw = 0.f, th = 0.f;
-        AEGfxGetPrintSize(font_, statsText_.content_.c_str(), statsText_.scale_, &tw, &th);
-        statsText_.x_ = -tw / 2.0f;
-    }
-    statsText_.draw();
 
     // Buttons
     nextLevelButton_.draw();
@@ -244,10 +238,7 @@ void WinScreen::Draw() {
 
     // Small hint below the Next Level button when it is greyed out
     if (!hasNextLevel_) {
-        const char* hint = "No more levels!";
-        f32 tw = 0.0f, th = 0.0f;
-        AEGfxGetPrintSize(font_, hint, 0.45f, &tw, &th);
-        AEGfxPrint(font_, hint, -tw / 2.0f, -0.47f, 0.45f, 0.5f, 0.5f, 0.5f, 1.0f);
+        noNextLevelText_.draw(true);
     }
 }
 

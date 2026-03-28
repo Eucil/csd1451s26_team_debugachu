@@ -1,5 +1,8 @@
 #pragma once
-#include "AEEngine.h"
+#include <string>
+
+#include <AEEngine.h>
+
 #include "Button.h"
 #include "GameStateManager.h"
 
@@ -14,7 +17,11 @@ private:
 
     TextData titleText_;
     TextData collectiblesText_;
-    TextData statsText_;
+    TextData statsPerfectText_;
+    TextData statsPartialText_;
+    TextData noNextLevelText_;
+
+    std::string collectiblesFormat_;
 
     // For background panel
     Transform transform_;

@@ -1,7 +1,23 @@
 {
+  "Header": {
+    "content": "Paused",
+    "x": 0.0,
+    "y": 0.8,
+    "scale": 1.0,
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  },
   "Background": {
-    "position": { "x": 0.0, "y": 100.0 },
-    "scale": { "x": 320.0, "y": 96.0 },
+    "position": {
+      "x": 0.0,
+      "y": 100.0
+    },
+    "scale": {
+      "x": 320.0,
+      "y": 96.0
+    },
     "graphics": {
       "red": 0.0,
       "green": 0.0,
