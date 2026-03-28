@@ -292,8 +292,10 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
                     break;
                 case EditorMode::Edit:
                     // If edit, go to level editor with selected level
-                    levelManager.SetCurrentLevel(i + 1);
-                    GSM.nextState_ = StateId::Level;
+                    if (levelManager.playableLevels_[i]) {
+                        levelManager.SetCurrentLevel(i + 1);
+                        GSM.nextState_ = StateId::Level;
+                    }
                     break;
                 case EditorMode::Create:
                     // If create, allow user to input width, height and tilesize before creating

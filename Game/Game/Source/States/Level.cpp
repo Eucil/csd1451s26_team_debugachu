@@ -343,6 +343,9 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 // Level editor mode
                 // ====================
                 levelManager.updateLevelEditor();
+                collectibleSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
+                mossSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
+                                  startEndPointSystem);
 
                 // Inputs to build level
                 if (!levelManager.getDisplayBuilderContainer()) {
