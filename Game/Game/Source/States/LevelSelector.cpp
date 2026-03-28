@@ -39,25 +39,24 @@ static AnimationManager animManager;
 static ScreenFaderManager screenFader;
 static UIFader someOtherCoolAnimation;
 
+// Buttons and Text
 static std::vector<Button> levelButtonPool_;
-static TextData titleText{
-    "SELECT LEVEL",
-    0.0f,
-    0.8f,
-};
+static TextData titleText{"SELECT LEVEL", 0.0f, 0.8f};
 
+// Level Creation UI
 static bool creatingLevel = false;
-static int inputWidth{}, inputHeight{}, inputTileSize{}, inputPortalLimit{};
+static int inputWidth{}, inputHeight{}, inputPortalLimit{};
 static int confirmInput{}, levelInput{};
 static std::string inputStr;
-static TextData inputPrompt{
-    "Width",
-    -0.4f,
-    -0.8f,
-};
+static TextData inputPrompt{"Width", -0.4f, 0.0f};
+static TextData quitCreatingPrompt{"Press Q to quit creating", 0.f, -0.3f};
 
-static Button buttonRestart;
-static Button buttonQuit;
+static Button creationBackground;
+static Button buttonSelect;
+static Button buttonEdit;
+static Button buttonCreate;
+static Button buttonDelete;
+static Button buttonBack;
 
 void LoadLevelSelector() {
     font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
@@ -136,15 +135,30 @@ void LoadLevelSelector() {
 
     titleText.font_ = font;
     inputPrompt.font_ = font;
+    quitCreatingPrompt.font_ = font;
     animManager.Clear();
     animManager.Add(&screenFader);
     animManager.Add(&someOtherCoolAnimation);
     animManager.InitializeAll();
+
+    creationBackground.loadMesh();
+    creationBackground.setRGBA(0.f, 0.f, 0.f, 0.8f);
+    creationBackground.setTransform({0.f, 0.f}, {static_cast<float>(AEGfxGetWindowWidth()),
+                                                 static_cast<float>(AEGfxGetWindowHeight())});
+    buttonBack.loadMesh();
+    buttonBack.loadTexture("Assets/Textures/brown_button.png");
+    buttonSelect.loadMesh();
+    buttonSelect.loadTexture("Assets/Textures/brown_button.png");
+    buttonEdit.loadMesh();
+    buttonEdit.loadTexture("Assets/Textures/brown_button.png");
+    buttonCreate.loadMesh();
+    buttonCreate.loadTexture("Assets/Textures/brown_button.png");
+    buttonDelete.loadMesh();
+    buttonDelete.loadTexture("Assets/Textures/brown_button.png");
 }
 
 void InitializeLevelSelector() {
-    // Todo
-    // std::cout << "Initialize Level Selector\n";
+
     levelManager.init();
     levelManager.checkLevelData();
 
@@ -171,6 +185,24 @@ void InitializeLevelSelector() {
     bgDirt->initCellsGraphics();
     bgDirt->initCellsCollider();
     bgDirt->updateTerrain();
+
+    buttonBack.initFromJson("level_selector_buttons", "Back");
+    buttonBack.setTextFont(font);
+    buttonSelect.initFromJson("level_selector_buttons", "Select");
+    buttonSelect.setTextFont(font);
+    buttonEdit.initFromJson("level_selector_buttons", "Edit");
+    buttonEdit.setTextFont(font);
+    buttonCreate.initFromJson("level_selector_buttons", "Create");
+    buttonCreate.setTextFont(font);
+    buttonDelete.initFromJson("level_selector_buttons", "Delete");
+    buttonDelete.setTextFont(font);
+
+    buttonBack.updateTransform();
+    buttonSelect.updateTransform();
+    buttonEdit.updateTransform();
+    buttonCreate.updateTransform();
+    buttonDelete.updateTransform();
+    creationBackground.updateTransform();
 }
 
 void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
@@ -202,43 +234,43 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
         GSM.nextState_ = StateId::Restart;
     }
 
-    if ((AEInputCheckTriggered(AEVK_E) || 0 == AESysDoesWindowExist()) && !creatingLevel) {
-        if (levelManager.getLevelEditorMode() == EditorMode::Edit) {
+    if ((buttonSelect.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
+        if (levelManager.getLevelEditorMode() != EditorMode::None) {
             levelManager.setLevelEditorMode(EditorMode::None);
-            std::cout << "Level editor mode disabled\n";
             titleText.content_ = "SELECT LEVEL";
-        } else {
-            levelManager.setLevelEditorMode(EditorMode::Edit);
-            std::cout << "Level editor mode enabled\n";
-            titleText.content_ = "LEVEL EDITOR MODE";
         }
     }
 
-    if ((AEInputCheckTriggered(AEVK_C) || 0 == AESysDoesWindowExist()) && !creatingLevel) {
-        if (levelManager.getLevelEditorMode() == EditorMode::Create) {
-            levelManager.setLevelEditorMode(EditorMode::None);
-            std::cout << "Create level mode disabled\n";
-            titleText.content_ = "SELECT LEVEL";
+    if ((buttonEdit.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
+        if (levelManager.getLevelEditorMode() != EditorMode::Edit) {
+            levelManager.setLevelEditorMode(EditorMode::Edit);
+            titleText.content_ = "LEVEL EDITOR MODE";
         } else {
+            levelManager.setLevelEditorMode(EditorMode::None);
+            titleText.content_ = "SELECT LEVEL";
+        }
+    }
+
+    if ((buttonCreate.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
+        if (levelManager.getLevelEditorMode() != EditorMode::Create) {
             levelManager.setLevelEditorMode(EditorMode::Create);
-            std::cout << "Create level mode enabled\n";
             titleText.content_ = "CREATE LEVEL";
-        }
-    }
-    if ((AEInputCheckTriggered(AEVK_D) || 0 == AESysDoesWindowExist()) && !creatingLevel) {
-        // Add level deletion logic here
-        if (levelManager.getLevelEditorMode() == EditorMode::Delete) {
-            levelManager.setLevelEditorMode(EditorMode::None);
-            std::cout << "Delete level mode disabled\n";
-            titleText.content_ = "SELECT LEVEL";
         } else {
-            levelManager.setLevelEditorMode(EditorMode::Delete);
-            std::cout << "Delete level mode enabled\n";
-            titleText.content_ = "DELETE LEVEL";
+            levelManager.setLevelEditorMode(EditorMode::None);
+            titleText.content_ = "SELECT LEVEL";
         }
     }
-    if ((AEInputCheckTriggered(AEVK_Q) || 0 == AESysDoesWindowExist()) && !creatingLevel) {
-        std::cout << "Q triggered\n";
+    if ((buttonDelete.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
+        // Add level deletion logic here
+        if (levelManager.getLevelEditorMode() != EditorMode::Delete) {
+            levelManager.setLevelEditorMode(EditorMode::Delete);
+            titleText.content_ = "DELETE LEVEL";
+        } else {
+            levelManager.setLevelEditorMode(EditorMode::None);
+            titleText.content_ = "SELECT LEVEL";
+        }
+    }
+    if ((buttonBack.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
         GSM.nextState_ = StateId::MainMenu;
     }
 
@@ -265,15 +297,19 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
                     break;
                 case EditorMode::Create:
                     // If create, allow user to input width, height and tilesize before creating
-                    std::cout << "Level editor mode: Create\n";
-                    creatingLevel = true;
-                    inputWidth = 0;
-                    inputHeight = 0;
-                    inputTileSize = 0;
-                    inputPortalLimit = 0;
-                    confirmInput = 0;
-                    inputStr = "";
-                    levelInput = i + 1;
+                    // Only can create levels in empty slots, which means if playableLevels_[i] is
+                    // false. This is to prevent accidental overwriting of existing levels, since
+                    // creating a level will overwrite
+                    if (!levelManager.playableLevels_[i]) {
+                        std::cout << "Level editor mode: Create\n";
+                        creatingLevel = true;
+                        inputWidth = 0;
+                        inputHeight = 0;
+                        inputPortalLimit = 0;
+                        confirmInput = 0;
+                        inputStr = "";
+                        levelInput = i + 1;
+                    }
                     break;
                 case EditorMode::Delete:
                     // If delete, delete the level data and update playable levels
@@ -331,21 +367,12 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
             break;
         case 2:
             inputNumbers(inputStr);
-            inputPrompt.content_ = "Tile Size: " + inputStr;
-            if (AEInputCheckReleased(AEVK_RETURN)) {
-                confirmInput++;
-                inputTileSize = std::stoi(inputStr);
-                inputStr = "";
-            }
-            break;
-        case 3:
-            inputNumbers(inputStr);
             inputPrompt.content_ = "Portal Limit: " + inputStr;
             if (AEInputCheckReleased(AEVK_RETURN)) {
                 inputPortalLimit = std::stof(inputStr);
-                levelManager.createLevelData(
-                    levelInput, static_cast<int>(inputWidth), static_cast<int>(inputHeight),
-                    static_cast<int>(inputTileSize), static_cast<int>(inputPortalLimit));
+                levelManager.createLevelData(levelInput, static_cast<int>(inputWidth),
+                                             static_cast<int>(inputHeight), 20,
+                                             static_cast<int>(inputPortalLimit));
                 creatingLevel = false;
                 levelManager.setLevelEditorMode(EditorMode::None);
                 titleText.content_ = "SELECT LEVEL";
@@ -362,8 +389,7 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
 }
 
 void DrawLevelSelector() {
-    // Todo
-    // std::cout << "Draw Level Selector\n";
+
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -385,10 +411,19 @@ void DrawLevelSelector() {
         }
     }
 
+    buttonBack.draw();
+    buttonSelect.draw();
+    buttonEdit.draw();
+    buttonCreate.draw();
+    buttonDelete.draw();
+
     titleText.draw(true);
 
     if (creatingLevel) {
+        creationBackground.setRGBA(0.f, 0.f, 0.f, 0.8f);
+        creationBackground.draw();
         inputPrompt.draw();
+        quitCreatingPrompt.draw(true);
     }
 
     // If mouse is within a button, hoveredLevelIndex = button level.
@@ -458,8 +493,7 @@ void DrawLevelSelector() {
 }
 
 void FreeLevelSelector() {
-    // Todo
-    // std::cout << "Free main menu\n";
+
     bgVfxSystem.Free();
     animManager.FreeAll();
 
@@ -468,11 +502,17 @@ void FreeLevelSelector() {
 }
 
 void UnloadLevelSelector() {
-    // Todo
-    // std::cout << "Unload main menu\n";
+
     for (int i = 0; i < static_cast<int>(Level::None); ++i) {
         levelButtonPool_[i].unload();
     }
+
+    buttonBack.unload();
+    buttonSelect.unload();
+    buttonEdit.unload();
+    buttonCreate.unload();
+    buttonDelete.unload();
+    creationBackground.unload();
 
     levelButtonPool_.clear();
     AEGfxDestroyFont(font);

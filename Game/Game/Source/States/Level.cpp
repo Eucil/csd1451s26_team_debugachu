@@ -544,9 +544,6 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                     // You can trigger level complete here
                 }
 
-                // fluidSystem.UpdateMain(deltaTime);
-                // fluidSystem.Update(deltaTime, *dirt);
-                // fluidSystem.Update(deltaTime, *stone);
                 fluidSystem.Update(deltaTime, {dirt, stone});
                 startEndPointSystem.Update(deltaTime,
                                            fluidSystem.GetParticlePool(FluidType::Water));

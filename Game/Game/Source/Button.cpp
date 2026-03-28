@@ -96,7 +96,8 @@ void Button::draw() {
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
-        AEGfxSetColorToMultiply(0.6f, 0.4f, 0.2f, 1.0f); // Brown color fallback
+        AEGfxSetColorToMultiply(graphics_.red_, graphics_.green_, graphics_.blue_,
+                                graphics_.alpha_);
         AEGfxSetTransform(transform_.worldMtx_.m);
         AEGfxMeshDraw(graphics_.mesh_, AE_GFX_MDM_TRIANGLES);
     } else {

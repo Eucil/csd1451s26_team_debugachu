@@ -1,0 +1,62 @@
+{
+"Back": {
+    "position": {"x": -650.0, "y": -370.0},
+    "scale": { "x": 120.0, "y": 80.0 },
+    "text": {
+      "content": "BACK",
+      "scale": 0.30,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+  "Select": {
+    "position": { "x": 330.0, "y": -375.0 },
+    "scale": { "x": 120.0, "y": 80.0 },
+    "text": {
+      "content": "SELECT",
+      "scale": 0.30,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+  "Edit": {
+    "position": { "x": 460.0, "y": -375.0 },
+    "scale": { "x": 120.0, "y": 80.0 },
+    "text": {
+      "content": "EDIT",
+      "scale": 0.30,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+  "Create": {
+    "position": { "x": 590.0, "y": -375.0 },
+    "scale": { "x": 120.0, "y": 80.0 },
+    "text": {
+      "content": "CREATE",
+      "scale": 0.30,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+    "Delete": {
+    "position": { "x": 720.0, "y": -375.0 },
+    "scale": { "x": 120.0, "y": 80.0 },
+    "text": {
+      "content": "DELETE",
+      "scale": 0.30,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  }
+}
