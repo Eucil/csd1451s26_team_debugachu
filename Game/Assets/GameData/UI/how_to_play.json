@@ -1,0 +1,37 @@
+{
+  "HowToPlayInfo": {
+    "Lines": [
+      "CONTROLS",
+      "LEFT CLICK - Dig / Destroy dirt",
+      "RIGHT CLICK - Place portals",
+      "MWHEEL-UP - Turn portal anti-clockwise",
+      "MWHEEL-DOWN - Turn portal clockwise", 
+      "",  
+      "",
+
+      "OBJECTIVE",
+      "Turn on the PIPE",
+      "Dig Dirt",
+	  "Place Portals",
+      "Water the Flower!",
+      "",
+      "",
+      "",
+
+      "PORTALS",
+      "Place PORTALS to teleport water",
+      "RIGHT CLICK to place a portal.",
+      "Portals require magic terrain",
+      "",
+      "",
+
+      "TIPS",
+      "Water flows with gravity.",
+      "Linked portals share a color.",
+      "Stone terrain cannot be dug.",
+      "Avoid Moss to conserve water",
+      "Press R to restart a level.",
+      ""
+    ]
+  }
+}

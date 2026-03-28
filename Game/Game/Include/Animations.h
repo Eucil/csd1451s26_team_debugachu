@@ -9,15 +9,13 @@
 // ==========================================
 class IAnimation {
 public:
-    // Virtual destructor is required for C++ interfaces
     virtual ~IAnimation() = default;
 
-    // Empty virtual functions.
-    // If a specific animation doesn't need one of these, it safely does nothing
-    virtual void Initialize() {}
-    virtual void Update(f32 /*dt*/) {}
-    virtual void Draw() {}
-    virtual void Free() {}
+    // Empty virtual functions declared
+    virtual void Initialize();
+    virtual void Update(f32 dt);
+    virtual void Draw();
+    virtual void Free();
 };
 
 // ==========================================
@@ -25,36 +23,15 @@ public:
 // ==========================================
 class AnimationManager {
 private:
-    // A list of pointers to ANY class that inherits from IAnimation
     std::vector<IAnimation*> animations_;
 
 public:
-    void Add(IAnimation* anim) {
-        if (anim)
-            animations_.push_back(anim);
-    }
-
-    void InitializeAll() {
-        for (auto* anim : animations_)
-            anim->Initialize();
-    }
-
-    void UpdateAll(f32 dt) {
-        for (auto* anim : animations_)
-            anim->Update(dt);
-    }
-
-    void DrawAll() {
-        for (auto* anim : animations_)
-            anim->Draw();
-    }
-
-    void FreeAll() {
-        for (auto* anim : animations_)
-            anim->Free();
-    }
-
-    void Clear() { animations_.clear(); }
+    void Add(IAnimation* anim);
+    void InitializeAll();
+    void UpdateAll(f32 dt);
+    void DrawAll();
+    void FreeAll();
+    void Clear();
 };
 
 // ==========================================
@@ -67,26 +44,15 @@ private:
     f32 fadeSpeed_ = 5.0f;
 
 public:
-    UIFader(f32 speed = 5.0f) : fadeSpeed_(speed) {}
+    UIFader(f32 speed = 5.0f);
 
-    void Update(f32 dt) override {
-        if (currentAlpha_ < targetAlpha_) {
-            currentAlpha_ += fadeSpeed_ * dt;
-            if (currentAlpha_ > targetAlpha_)
-                currentAlpha_ = targetAlpha_;
-        } else if (currentAlpha_ > targetAlpha_) {
-            currentAlpha_ -= fadeSpeed_ * dt;
-            if (currentAlpha_ < targetAlpha_)
-                currentAlpha_ = targetAlpha_;
-        }
-    }
+    void Update(f32 dt) override;
+    void FadeIn();
+    void FadeOut();
+    void SetAlpha(f32 alpha);
 
-    void FadeIn() { targetAlpha_ = 1.0f; }
-    void FadeOut() { targetAlpha_ = 0.0f; }
-    void SetAlpha(f32 alpha) { currentAlpha_ = targetAlpha_ = alpha; }
-
-    f32 GetAlpha() const { return currentAlpha_; }
-    bool IsVisible() const { return currentAlpha_ > 0.0f; }
+    f32 GetAlpha() const;
+    bool IsVisible() const;
 };
 
 // ==========================================
@@ -101,59 +67,12 @@ private:
     AEGfxVertexList* blackMesh_ = nullptr;
 
 public:
-    ScreenFaderManager(f32 speed = 2.0f) : fader_(speed) {}
+    ScreenFaderManager(f32 speed = 2.0f);
 
-    void Initialize() override {
-        if (!blackMesh_)
-            blackMesh_ = CreateRectMesh();
-        fader_.SetAlpha(1.0f);
-        fader_.FadeOut();
-        isFadingOut_ = false;
-    }
-
-    void StartFadeOut(GameStateManager* gsm, StateId target) {
-        if (!isFadingOut_) {
-            gsm_ = gsm;
-            targetState_ = target;
-            isFadingOut_ = true;
-            fader_.FadeIn();
-        }
-    }
-
-    void Update(f32 dt) override {
-        fader_.Update(dt);
-        if (isFadingOut_ && fader_.GetAlpha() >= 1.0f) {
-            if (gsm_)
-                gsm_->nextState_ = targetState_;
-        }
-    }
-
-    void Draw() override {
-        if (fader_.IsVisible() && blackMesh_) {
-            AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-            AEGfxSetTransparency(fader_.GetAlpha());
-            AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
-
-            f32 w = static_cast<f32>(AEGfxGetWindowWidth());
-            f32 h = static_cast<f32>(AEGfxGetWindowHeight());
-
-            AEMtx33 scale, world;
-            AEMtx33Scale(&scale, w, h);
-            AEMtx33Identity(&world);
-            AEMtx33Concat(&world, &world, &scale);
-
-            AEGfxSetTransform(world.m);
-            AEGfxMeshDraw(blackMesh_, AE_GFX_MDM_TRIANGLES);
-        }
-    }
-
-    void Free() override {
-        if (blackMesh_) {
-            AEGfxMeshFree(blackMesh_);
-            blackMesh_ = nullptr;
-        }
-    }
-
-    bool IsFadingOut() const { return isFadingOut_; }
+    void Initialize() override;
+    void StartFadeOut(GameStateManager* gsm, StateId target);
+    void Update(f32 dt) override;
+    void Draw() override;
+    void Free() override;
+    bool IsFadingOut() const;
 };
