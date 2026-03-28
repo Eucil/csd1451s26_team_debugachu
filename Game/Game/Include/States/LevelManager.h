@@ -120,6 +120,7 @@ private:
     Button editorButton_;
     Button editorContainer_;
     std::vector<Button> editorButtonPool_;
+    TextData editorControlsText_;
 
     // Brush mesh
     AEGfxVertexList* circleMesh_ = nullptr;

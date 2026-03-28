@@ -19,9 +19,6 @@ void LevelManager::init() {
     currentGameBlock_ = static_cast<GameBlock>(g_configManager.getInt(
         "LevelManager", "default", "currentGameBlock_", static_cast<int>(GameBlock::None)));
 
-    // For level editor UI
-    editorButtonStartPosX_ =
-        g_configManager.getFloat("LevelManager", "default", "editorButtonStartPosX_", 775.0f);
     displayEditorContainer_ =
         g_configManager.getBool("LevelManager", "default", "displayEditorContainer_", true);
 }
@@ -29,23 +26,40 @@ void LevelManager::init() {
 void LevelManager::initEditorUI(s8 font) {
     // Setup Editor UI
     editorButton_.loadMesh();
-    editorButton_.loadTexture("Assets/Textures/pale_blue_button.png");
+    editorButton_.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
     editorContainer_.loadMesh();
-    editorContainer_.loadTexture("Assets/Textures/pink_button.png");
+    editorContainer_.loadTexture("Assets/Textures/brown_square_80_80.png");
 
     editorButton_.initFromJson("level_manager_buttons", "editorButton_");
     editorButton_.setTextFont(font);
+    editorButtonStartPosX_ = editorButton_.getTransform().pos_.x;
     editorContainer_.initFromJson("level_manager_buttons", "editorContainer_");
     editorContainer_.setTextFont(font);
+    editorControlsText_.initFromJson("level_manager_buttons", "editorControlsText_");
+    editorControlsText_.font_ = font;
     // Set container position relative to button
     updateEditorButtonPosition();
     updateContainerPosition();
 
+    static const char* blockNames[] = {"Dirt", "Stone", "Magic",  "Start",
+                                       "End",  "Item",  "Portal", "Moss"};
+    static const char* blockTextures[] = {
+        "Assets/Textures/terrain_dirt.png",
+        "Assets/Textures/terrain_stone.png",
+        "Assets/Textures/terrain_magic.png",
+        "Assets/Textures/overgrown_pipe_end.png",
+        "Assets/Textures/pink_flower_sprite_sheet.png",
+        "Assets/Textures/white_square.png",
+        "Assets/Textures/wormhole.png",
+        "Assets/Textures/white_square.png",
+    };
+
     editorButtonPool_.resize(static_cast<int>(GameBlock::None));
     for (int i = 0; i < static_cast<int>(GameBlock::None); ++i) {
         editorButtonPool_[i].loadMesh();
-        editorButtonPool_[i].loadTexture("Assets/Textures/pale_blue_button.png");
+        editorButtonPool_[i].loadTexture(blockTextures[i]);
         editorButtonPool_[i].setTextFont(font);
+        editorButtonPool_[i].setText(blockNames[i], 0.f, 0.f, 0.5f, 1.f, 1.f, 1.f, 1.f);
     }
     updateInnerButtonPosition();
 
@@ -104,6 +118,12 @@ void LevelManager::updateContainerPosition() {
                                   editorContainer_.getTransform().rotationRad_);
 
     editorContainer_.updateTransform();
+
+    // Position controls text centered below the container
+    f32 halfWinW = AEGfxGetWindowWidth() / 2.0f;
+    f32 halfWinH = AEGfxGetWindowHeight() / 2.0f;
+    editorControlsText_.x_ = (containerPos.x - editorContainer_.getTransform().scale_.x / 2.0f) / halfWinW;
+    editorControlsText_.y_ = (containerPos.y - editorContainer_.getTransform().scale_.y / 2.0f - 30.0f) / halfWinH;
 }
 
 void LevelManager::updateInnerButtonPosition() {
@@ -200,10 +220,23 @@ void LevelManager::renderLevelEditorUI() {
     // Render builder container and buttons within if displayEditorContainer_ is true
     if (displayEditorContainer_) {
         editorContainer_.draw();
+
         // Render buttons in button pool
+        // These arrays let you tint the blocks:
+        static const f32 blockBaseR[] = {1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 0.f};
+        static const f32 blockBaseG[] = {1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 0.6f};
+        static const f32 blockBaseB[] = {1.f, 1.f, 1.f, 1.f, 1.f, 0.1f, 1.f, 0.f};
+
+        // Collectible(5) = yellow (1,1,0)
+        // Moss(7) = green (0,0.6,0)
         for (int i = 0; i < static_cast<int>(GameBlock::None); ++i) {
+            f32 mul = (i == static_cast<int>(currentGameBlock_)) ? 1.f : 0.4f;
+            editorButtonPool_[i].setRGBA(blockBaseR[i] * mul, blockBaseG[i] * mul,
+                                         blockBaseB[i] * mul, 1.f);
             editorButtonPool_[i].draw();
         }
+
+        editorControlsText_.draw(false);
     }
 }
 
