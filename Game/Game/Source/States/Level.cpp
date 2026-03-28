@@ -484,7 +484,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
 
                 // Calculate goal percentage based on particles collected vs max particles
                 goalPercentage = (static_cast<f32>(startEndPointSystem.particlesCollected_) /
-                                  static_cast<f32>(fluidSystem.particleMaxCount_ / 3)) *
+                                  static_cast<f32>(fluidSystem.particleMaxCount_ / 4)) *
                                  100.0f;
                 if (goalPercentage > 100.0f)
                     goalPercentage = 100.0f;

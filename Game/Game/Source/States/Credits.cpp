@@ -2,11 +2,13 @@
 
 #include <cstdio>
 #include <cstring>
+#include <string>
 
 #include <AEEngine.h>
 
 #include "AudioSystem.h"
 #include "Button.h"
+#include "ConfigManager.h"
 #include "GameStateManager.h"
 #include "MenuBackground.h" // <-- shared background
 #include "Utils.h"
@@ -14,6 +16,7 @@
 // ----------------------------------------------------------------------------
 // Credits text list (NULL-terminated)
 // ----------------------------------------------------------------------------
+/*
 static const char* credits[] = {
     "",
     "",
@@ -49,6 +52,7 @@ static const char* credits[] = {
     "All playtesters",
     "",
     NULL};
+*/
 
 // ----------------------------------------------------------------------------
 // Static state
@@ -58,21 +62,29 @@ static s8 font = 0;
 static Button backButton;
 static float lineSpacing = 80.0f;
 static float scrollSpeed = -200.0f; // negative = scroll up
-static int numLines = 0;
+std::vector<std::string> creditsData;
 
 void LoadCredits() {
-    // Load the same shared animated background
+    // Load the destructible terrain background
     MenuBackground::Load();
 
     // Load credits font
     font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 36);
 
-    // Count credit lines
-    numLines = 0;
-    while (credits[numLines] != NULL) {
-        numLines++;
+    Json::Value Lines = g_configManager.getSection("credits", "CreditsInfo");
+
+    if (!Lines.isNull() && Lines.isMember("Lines") && Lines["Lines"].isArray()) {
+        const Json::Value& linesArray = Lines["Lines"];
+
+        // Clear old data just in case
+        creditsData.clear();
+
+        // Loop through the linearray and read into creditsData instead
+        for (Json::Value const& line : linesArray) {
+            std::string str = line.asString();
+            creditsData.push_back(str);
+        }
     }
-    printf("Credits: Loaded %d lines\n", numLines);
 
     // Load back button assets
     backButton.loadMesh();
@@ -108,7 +120,7 @@ void UpdateCredits(GameStateManager& GSM, f32 deltaTime) {
     backButton.updateTransform();
 
     // Auto-return when all lines have scrolled past
-    float lastLineY = yPos - (numLines - 1) * lineSpacing;
+    float lastLineY = yPos - (creditsData.size() - 1) * lineSpacing;
     if (lastLineY > 450.0f) {
         printf("Credits: Finished scrolling, returning to MainMenu\n");
         GSM.nextState_ = StateId::MainMenu;
@@ -189,14 +201,14 @@ void DrawCredits() {
     //   31   = All playtesters
     //   32   = empty
     // ----------------------------------------------------------------
-    for (int i = 0; i < numLines; i++) {
+    for (size_t i = 0; i < creditsData.size(); i++) {
         float yLine = yPos - i * lineSpacing;
 
         if (yLine <= -450.0f || yLine >= 450.0f)
             continue;
 
-        const char* currentLine = credits[i];
-        if (strlen(currentLine) == 0)
+        std::string currentLine = creditsData[i];
+        if (currentLine.size() == 0)
             continue;
 
         // Default style
@@ -241,23 +253,23 @@ void DrawCredits() {
 
         // Auto-center: measure text width and compute xPos
         float textWidth = 0.0f, textHeight = 0.0f;
-        AEGfxGetPrintSize(font, currentLine, textSize, &textWidth, &textHeight);
+        AEGfxGetPrintSize(font, currentLine.c_str(), textSize, &textWidth, &textHeight);
         float xPos = -textWidth / 2.0f;
 
         float screenY = yLine / 450.0f;
 
         // Black outline for readability
-        AEGfxPrint(font, currentLine, xPos - 0.002f, screenY - 0.002f, textSize, 0.f, 0.f, 0.f,
-                   1.f);
-        AEGfxPrint(font, currentLine, xPos + 0.002f, screenY - 0.002f, textSize, 0.f, 0.f, 0.f,
-                   1.f);
-        AEGfxPrint(font, currentLine, xPos - 0.002f, screenY + 0.002f, textSize, 0.f, 0.f, 0.f,
-                   1.f);
-        AEGfxPrint(font, currentLine, xPos + 0.002f, screenY + 0.002f, textSize, 0.f, 0.f, 0.f,
-                   1.f);
+        AEGfxPrint(font, currentLine.c_str(), xPos - 0.002f, screenY - 0.002f, textSize, 0.f, 0.f,
+                   0.f, 1.f);
+        AEGfxPrint(font, currentLine.c_str(), xPos + 0.002f, screenY - 0.002f, textSize, 0.f, 0.f,
+                   0.f, 1.f);
+        AEGfxPrint(font, currentLine.c_str(), xPos - 0.002f, screenY + 0.002f, textSize, 0.f, 0.f,
+                   0.f, 1.f);
+        AEGfxPrint(font, currentLine.c_str(), xPos + 0.002f, screenY + 0.002f, textSize, 0.f, 0.f,
+                   0.f, 1.f);
 
         // Main colored text
-        AEGfxPrint(font, currentLine, xPos, screenY, textSize, r, g, b, 1.0f);
+        AEGfxPrint(font, currentLine.c_str(), xPos, screenY, textSize, r, g, b, 1.0f);
     }
 
     // Draw back button on top
