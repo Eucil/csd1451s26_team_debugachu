@@ -16,7 +16,8 @@
 #include "Terrain.h"
 #include "VFXSystem.h"
 
-static s8 font;
+static s8 titleFont = 0;
+static s8 buttonFont = 0;
 
 // Destructible Background Variables
 static int bgHeight, bgWidth, bgTileSize, bgPortalLimit;
@@ -59,7 +60,8 @@ static Button buttonDelete;
 static Button buttonBack;
 
 void LoadLevelSelector() {
-    font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
+    titleFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
+    buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
 
     Terrain::createMeshLibrary();
     Terrain::createColliderLibrary();
@@ -129,13 +131,13 @@ void LoadLevelSelector() {
         tempButton.setText(
             std::to_string(i + 1), buttonPos.x / textPosDivisorX - textXOffset - extraOffsetX,
             buttonPos.y / textPosDivisorY - textYOffset, textScale, textR, textG, textB, textA);
-        tempButton.setTextFont(font);
+        tempButton.setTextFont(titleFont);
         levelButtonPool_.push_back(tempButton);
     }
 
-    titleText.font_ = font;
-    inputPrompt.font_ = font;
-    quitCreatingPrompt.font_ = font;
+    titleText.font_ = titleFont;
+    inputPrompt.font_ = titleFont;
+    quitCreatingPrompt.font_ = titleFont;
     animManager.Clear();
     animManager.Add(&screenFader);
     animManager.Add(&someOtherCoolAnimation);
@@ -146,15 +148,15 @@ void LoadLevelSelector() {
     creationBackground.setTransform({0.f, 0.f}, {static_cast<float>(AEGfxGetWindowWidth()),
                                                  static_cast<float>(AEGfxGetWindowHeight())});
     buttonBack.loadMesh();
-    buttonBack.loadTexture("Assets/Textures/brown_button.png");
+    buttonBack.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
     buttonSelect.loadMesh();
-    buttonSelect.loadTexture("Assets/Textures/brown_button.png");
+    buttonSelect.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
     buttonEdit.loadMesh();
-    buttonEdit.loadTexture("Assets/Textures/brown_button.png");
+    buttonEdit.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
     buttonCreate.loadMesh();
-    buttonCreate.loadTexture("Assets/Textures/brown_button.png");
+    buttonCreate.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
     buttonDelete.loadMesh();
-    buttonDelete.loadTexture("Assets/Textures/brown_button.png");
+    buttonDelete.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
 }
 
 void InitializeLevelSelector() {
@@ -187,15 +189,15 @@ void InitializeLevelSelector() {
     bgDirt->updateTerrain();
 
     buttonBack.initFromJson("level_selector_buttons", "Back");
-    buttonBack.setTextFont(font);
+    buttonBack.setTextFont(buttonFont);
     buttonSelect.initFromJson("level_selector_buttons", "Select");
-    buttonSelect.setTextFont(font);
+    buttonSelect.setTextFont(buttonFont);
     buttonEdit.initFromJson("level_selector_buttons", "Edit");
-    buttonEdit.setTextFont(font);
+    buttonEdit.setTextFont(buttonFont);
     buttonCreate.initFromJson("level_selector_buttons", "Create");
-    buttonCreate.setTextFont(font);
+    buttonCreate.setTextFont(buttonFont);
     buttonDelete.initFromJson("level_selector_buttons", "Delete");
-    buttonDelete.setTextFont(font);
+    buttonDelete.setTextFont(buttonFont);
 
     buttonBack.updateTransform();
     buttonSelect.updateTransform();
@@ -517,7 +519,16 @@ void UnloadLevelSelector() {
     creationBackground.unload();
 
     levelButtonPool_.clear();
-    AEGfxDestroyFont(font);
+
+    // Unload fonts
+    if (titleFont) {
+        AEGfxDestroyFont(titleFont);
+        titleFont = 0;
+    }
+    if (buttonFont) {
+        AEGfxDestroyFont(buttonFont);
+        buttonFont = 0;
+    }
 
     if (previewMesh) {
         AEGfxMeshFree(previewMesh);

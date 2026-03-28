@@ -1,0 +1,52 @@
+{
+  "Title": {
+    "content": "VICTORY!",
+    "x": 0.0,
+    "y": 0.3,
+    "scale": 1.5,
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 0.0,
+    "alpha": 1.0
+  },
+  "Collectibles": {
+    "content": "Collectibles: %d/%d",
+    "x": 0.0,
+    "y": 0.1,
+    "scale": 0.8,
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  },
+  "StatsPerfect": {
+    "content": "Perfect! All collectibles found!",
+    "x": 0.0,
+    "y": -0.1,
+    "scale": 0.7,
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  },
+  "StatsPartial": {
+    "content": "You found %d of %d collectibles",
+    "x": 0.0,
+    "y": -0.1,
+    "scale": 0.8,
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  },
+  "NoNextLevel": {
+    "content": "No more levels!",
+    "x": 0.0,
+    "y": -0.47,
+    "scale": 0.45,
+    "red": 0.5,
+    "green": 0.5,
+    "blue": 0.5,
+    "alpha": 1.0
+  }
+}

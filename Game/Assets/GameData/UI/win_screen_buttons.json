@@ -1,0 +1,56 @@
+{
+  "Restart": {
+    "position": {
+      "x": -280.0,
+      "y": -180.0
+    },
+    "scale": {
+      "x": 240.0,
+      "y": 72.0
+    },
+    "text": {
+      "content": "RESTART",
+      "scale": 0.66,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+  "MainMenu": {
+    "position": {
+      "x": 280.0,
+      "y": -180.0
+    },
+    "scale": {
+      "x": 240.0,
+      "y": 72.0
+    },
+    "text": {
+      "content": "MAIN MENU",
+      "scale": 0.66,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+  "Next": {
+    "position": {
+      "x": 0.0,
+      "y": -180.0
+    },
+    "scale": {
+      "x": 240.0,
+      "y": 72.0
+    },
+    "text": {
+      "content": "NEXT LEVEL",
+      "scale": 0.66,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  }
+}

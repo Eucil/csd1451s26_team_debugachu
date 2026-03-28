@@ -1,7 +1,8 @@
-﻿#include "States/HowToPlay.h"
+#include "States/HowToPlay.h"
 
 #include <cstdio>
 #include <cstring>
+#include <sstream>
 
 #include <AEEngine.h>
 
@@ -18,18 +19,29 @@
 static int currentPage = 1; // 1-indexed current page
 static s8 titleFont = 0;    // large font for page titles
 static s8 bodyFont = 0;     // smaller font for body text
+static s8 buttonFont = 0;   // font for buttons
 
 // Navigation buttons
-static Button nextButton;
-static Button backButton;
-static Button exitButton;
+static Button buttonNext;
+static Button buttonPrevious;
+static Button buttonBack;
 
 // Full-screen semi-transparent overlay mesh (created once, reused)
 static AEGfxVertexList* overlayMesh = nullptr;
 
-std::vector<std::string> howToPlayData;
+// Each page has a title (header) and a body (newline-separated lines)
+struct HTPPage {
+    TextData title;
+    TextData body;
+};
+static std::vector<HTPPage> pages;
 
-const int LINES_PER_PAGE = 7;
+// Display settings loaded from JSON
+static f32 s_overlayAlpha = 0.55f;
+static f32 s_bodyLineSpacing = 0.15f;
+static f32 s_pageIndY = -0.88f;
+static f32 s_pageIndScale = 0.8f;
+static f32 s_pageIndR = 0.6f, s_pageIndG = 0.6f, s_pageIndB = 0.6f;
 
 // ----------------------------------------------------------------------------
 // Helpers
@@ -82,23 +94,21 @@ static void DrawCenteredText(s8 font, const char* text, f32 screenY, f32 size, f
     AEGfxPrint(font, text, xPos + 0.002f, screenY + 0.002f, size, 0.f, 0.f, 0.f, 1.f);
     AEGfxPrint(font, text, xPos, screenY, size, r, g, b, 1.0f);
 }
-/*
 
-*/
-
-// Draw the page indicator dots (e.g. "● ● ○ ○")
+// Draw the page indicator (e.g. "2 / 4")
 static void DrawPageIndicator() {
-    int totalPages = (howToPlayData.size() + LINES_PER_PAGE - 1) / LINES_PER_PAGE;
+    int totalPages = static_cast<int>(pages.size());
     if (totalPages == 0)
         totalPages = 1;
-    // Build a string like "1 / 4"
+
     char buf[16];
     sprintf_s(buf, sizeof(buf), "%d / %d", currentPage, totalPages);
 
     f32 tw = 0.0f, th = 0.0f;
-    AEGfxGetPrintSize(bodyFont, buf, 0.8f, &tw, &th);
+    AEGfxGetPrintSize(bodyFont, buf, s_pageIndScale, &tw, &th);
     f32 xPos = -tw / 2.0f;
-    AEGfxPrint(bodyFont, buf, xPos, -0.88f, 0.8f, 0.6f, 0.6f, 0.6f, 1.0f);
+    AEGfxPrint(bodyFont, buf, xPos, s_pageIndY, s_pageIndScale, s_pageIndR, s_pageIndG, s_pageIndB,
+               1.0f);
 }
 
 // ----------------------------------------------------------------------------
@@ -111,25 +121,61 @@ void LoadHowToPlay() {
 
     // Load fonts
     titleFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
-    bodyFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 28);
+    bodyFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
+    buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
 
-    // Load json data
-    Json::Value htpSection = g_configManager.getSection("how_to_play", "HowToPlayInfo");
-    if (!htpSection.isNull() && htpSection.isMember("Lines") && htpSection["Lines"].isArray()) {
-        const Json::Value& linesArray = htpSection["Lines"];
-        howToPlayData.clear();
-        for (const Json::Value& line : linesArray) {
-            howToPlayData.push_back(line.asString());
+    // Load pages
+    pages.clear();
+    Json::Value pagesArray = g_configManager.getSection("how_to_play", "Pages");
+    if (!pagesArray.isNull() && pagesArray.isArray()) {
+        for (const Json::Value& p : pagesArray) {
+            HTPPage page;
+
+            const Json::Value& t = p["title"];
+            page.title.content_ = t["content"].asString();
+            page.title.x_ = t["x"].asFloat();
+            page.title.y_ = t["y"].asFloat();
+            page.title.scale_ = t["scale"].asFloat();
+            page.title.r_ = t["red"].asFloat();
+            page.title.g_ = t["green"].asFloat();
+            page.title.b_ = t["blue"].asFloat();
+            page.title.a_ = t["alpha"].asFloat();
+            page.title.font_ = titleFont;
+
+            const Json::Value& b = p["body"];
+            page.body.content_ = b["content"].asString();
+            page.body.x_ = b["x"].asFloat();
+            page.body.y_ = b["y"].asFloat();
+            page.body.scale_ = b["scale"].asFloat();
+            page.body.r_ = b["red"].asFloat();
+            page.body.g_ = b["green"].asFloat();
+            page.body.b_ = b["blue"].asFloat();
+            page.body.a_ = b["alpha"].asFloat();
+            page.body.font_ = bodyFont;
+
+            pages.push_back(page);
         }
     }
 
+    // Load display settings
+    Json::Value ds = g_configManager.getSection("how_to_play", "DisplaySettings");
+    if (!ds.isNull()) {
+        s_overlayAlpha = ds["overlayAlpha"].asFloat();
+        s_bodyLineSpacing = ds["bodyLineSpacing"].asFloat();
+        s_pageIndY = ds["pageIndicatorY"].asFloat();
+        s_pageIndScale = ds["pageIndicatorScale"].asFloat();
+        s_pageIndR = ds["pageIndicatorRed"].asFloat();
+        s_pageIndG = ds["pageIndicatorGreen"].asFloat();
+        s_pageIndB = ds["pageIndicatorBlue"].asFloat();
+    }
+
     // Load navigation button assets
-    nextButton.loadMesh();
-    nextButton.loadTexture("Assets/Textures/brown_button.png");
-    backButton.loadMesh();
-    backButton.loadTexture("Assets/Textures/brown_button.png");
-    exitButton.loadMesh();
-    exitButton.loadTexture("Assets/Textures/brown_button.png");
+    buttonNext.loadMesh();
+    buttonNext.loadTexture("Assets/Textures/brown_square_24_24.png");
+    buttonPrevious.loadMesh();
+    buttonPrevious.loadTexture("Assets/Textures/brown_square_24_24.png");
+    buttonBack.loadMesh();
+    buttonBack.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
 }
 
 void InitializeHowToPlay() {
@@ -138,26 +184,21 @@ void InitializeHowToPlay() {
     // Reset to first page every time we enter
     currentPage = 1;
 
-    // Next button - bottom right
-    nextButton.setTextFont(bodyFont);
-    nextButton.setTransform({300.0f, -300.0f}, {220.0f, 60.0f});
-    nextButton.setText("NEXT >", 0.f, 0.f, 0.65f, 1.0f, 1.0f, 1.0f, 1.0f);
+    buttonNext.initFromJson("how_to_play_buttons", "Next");
+    buttonNext.setTextFont(buttonFont);
 
-    // Back button - bottom left
-    backButton.setTextFont(bodyFont);
-    backButton.setTransform({-300.0f, -300.0f}, {220.0f, 60.0f});
-    backButton.setText("< BACK", 0.f, 0.f, 0.65f, 1.0f, 1.0f, 1.0f, 1.0f);
+    buttonPrevious.initFromJson("how_to_play_buttons", "Previous");
+    buttonPrevious.setTextFont(buttonFont);
 
-    // Exit button - bottom center
-    exitButton.setTextFont(bodyFont);
-    exitButton.setTransform({0.0f, -300.0f}, {220.0f, 60.0f});
-    exitButton.setText("MENU", 0.f, 0.f, 0.65f, 1.0f, 1.0f, 1.0f, 1.0f);
+    buttonBack.initFromJson("how_to_play_buttons", "Back");
+    buttonBack.setTextFont(buttonFont);
 }
 
 void UpdateHowToPlay(GameStateManager& GSM, f32 deltaTime) {
-    int totalPages = (howToPlayData.size() + LINES_PER_PAGE - 1) / LINES_PER_PAGE;
+    int totalPages = static_cast<int>(pages.size());
     if (totalPages == 0)
         totalPages = 1;
+
     // Keyboard navigation
     if (AEInputCheckTriggered(AEVK_RIGHT) || AEInputCheckTriggered(AEVK_SPACE)) {
         if (currentPage < totalPages)
@@ -173,19 +214,19 @@ void UpdateHowToPlay(GameStateManager& GSM, f32 deltaTime) {
         GSM.nextState_ = StateId::MainMenu;
     }
 
-    if (nextButton.checkMouseClick()) {
+    if (buttonNext.checkMouseClick()) {
         if (currentPage < totalPages)
             ++currentPage;
         else
             GSM.nextState_ = StateId::MainMenu;
     }
 
-    if (backButton.checkMouseClick()) {
+    if (buttonPrevious.checkMouseClick()) {
         if (currentPage > 1)
             --currentPage;
     }
 
-    if (exitButton.checkMouseClick()) {
+    if (buttonBack.checkMouseClick()) {
         GSM.nextState_ = StateId::MainMenu;
     }
 
@@ -197,9 +238,9 @@ void UpdateHowToPlay(GameStateManager& GSM, f32 deltaTime) {
     }
 
     // Update button transforms (recalculates centered text positions)
-    nextButton.updateTransform();
-    backButton.updateTransform();
-    exitButton.updateTransform();
+    buttonNext.updateTransform();
+    buttonPrevious.updateTransform();
+    buttonBack.updateTransform();
 
     // Keep background alive
     MenuBackground::Update(deltaTime);
@@ -210,67 +251,38 @@ void DrawHowToPlay() {
     MenuBackground::Draw();
 
     // 2. Dark overlay to make text readable
-    DrawOverlay(0.55f);
+    DrawOverlay(s_overlayAlpha);
 
-    size_t startIndex = (currentPage - 1) * LINES_PER_PAGE;
-    size_t endIndex = startIndex + LINES_PER_PAGE;
-    if (endIndex > howToPlayData.size()) {
-        endIndex = howToPlayData.size();
+    // 3. Draw title and body for the current page
+    if (currentPage >= 1 && currentPage <= static_cast<int>(pages.size())) {
+        const HTPPage& page = pages[currentPage - 1];
+
+        DrawCenteredText(titleFont, page.title.content_.c_str(), page.title.y_, page.title.scale_,
+                         page.title.r_, page.title.g_, page.title.b_);
+
+        std::istringstream stream(page.body.content_);
+        std::string line;
+        f32 lineY = page.body.y_;
+        while (std::getline(stream, line)) {
+            DrawCenteredText(bodyFont, line.c_str(), lineY, page.body.scale_, page.body.r_,
+                             page.body.g_, page.body.b_);
+            lineY -= s_bodyLineSpacing;
+        }
     }
 
-    f32 startY = 0.50f;
-    f32 stepY = 0.15f;
-    int displayLine = 0;
-
-    for (size_t i = startIndex; i < endIndex; i++) {
-        std::string currentLine = howToPlayData[i];
-
-        if (currentLine.empty()) {
-            displayLine++;
-            continue;
-        }
-
-        f32 screenY = startY - (displayLine * stepY);
-        displayLine++;
-
-        f32 textSize = 0.6f;
-        f32 r = 1.0f, g = 1.0f, b = 1.0f;
-        s8 currentFont = bodyFont;
-
-        // Auto-detect headers and style them
-        if (currentLine == "CONTROLS" || currentLine == "OBJECTIVE" || currentLine == "PORTALS" ||
-            currentLine == "TIPS") {
-            r = 1.0f;
-            g = 0.84f;
-            b = 0.0f;
-            textSize = 0.8f;
-            currentFont = titleFont;
-        }
-
-        DrawCenteredText(currentFont, currentLine.c_str(), screenY, textSize, r, g, b);
-    }
-
-    // 6. Page indicator (e.g. "2 / 4")
+    // 4. Page indicator (e.g. "2 / 4")
     DrawPageIndicator();
 
-    //// 7. Navigation hint at very bottom
-    // DrawCenteredText(bodyFont, "[ < ] [ > ] or ARROW KEYS to navigate", -0.55f, 0.5f, 0.5f, 0.5f,
-    //                  0.5f);
-
-    // 8. Navigation buttons
-    nextButton.draw();
+    // 5. Navigation buttons
+    buttonNext.draw();
     if (currentPage > 1) {
-        backButton.draw();
+        buttonPrevious.draw();
     }
-    exitButton.draw();
+    buttonBack.draw();
 }
 
 void FreeHowToPlay() {
     MenuBackground::Free();
-
-    nextButton.unload();
-    backButton.unload();
-    exitButton.unload();
 
     if (overlayMesh) {
         AEGfxMeshFree(overlayMesh);
@@ -281,6 +293,7 @@ void FreeHowToPlay() {
 void UnloadHowToPlay() {
     MenuBackground::Unload();
 
+    // Unload fonts
     if (titleFont) {
         AEGfxDestroyFont(titleFont);
         titleFont = 0;
@@ -289,4 +302,13 @@ void UnloadHowToPlay() {
         AEGfxDestroyFont(bodyFont);
         bodyFont = 0;
     }
+    if (buttonFont) {
+        AEGfxDestroyFont(buttonFont);
+        buttonFont = 0;
+    }
+
+    // Unload buttons
+    buttonNext.unload();
+    buttonPrevious.unload();
+    buttonBack.unload();
 }

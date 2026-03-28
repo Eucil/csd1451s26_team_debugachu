@@ -1,4 +1,14 @@
 {
+  "Header": {
+    "content": "Debug Menu",
+    "x": 0.0,
+    "y": 0.8,
+    "scale": 1.0,
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  },
   "DebugOverlay": {
     "graphics": {
       "red": 0.0,
@@ -9,15 +19,15 @@
   },
   "DebugOverlay_CloseButton": {
     "position": {
-      "x": -750.0,
-      "y": 400.0
+      "x": -716.0,
+      "y": 398.0
     },
     "scale": {
-      "x": 96.0,
+      "x": 160.0,
       "y": 96.0
     },
     "text": {
-      "content": "<",
+      "content": "BACK",
       "scale": 1.0,
       "red": 1.0,
       "green": 1.0,

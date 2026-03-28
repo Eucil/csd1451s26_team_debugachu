@@ -1,37 +1,101 @@
 {
-  "HowToPlayInfo": {
-    "Lines": [
-      "CONTROLS",
-      "LEFT CLICK - Dig / Destroy dirt",
-      "RIGHT CLICK - Place portals",
-      "MWHEEL-UP - Turn portal anti-clockwise",
-      "MWHEEL-DOWN - Turn portal clockwise", 
-      "",  
-      "",
-
-      "OBJECTIVE",
-      "Turn on the PIPE",
-      "Dig Dirt",
-	  "Place Portals",
-      "Water the Flower!",
-      "",
-      "",
-      "",
-
-      "PORTALS",
-      "Place PORTALS to teleport water",
-      "RIGHT CLICK to place a portal.",
-      "Portals require magic terrain",
-      "",
-      "",
-
-      "TIPS",
-      "Water flows with gravity.",
-      "Linked portals share a color.",
-      "Stone terrain cannot be dug.",
-      "Avoid Moss to conserve water",
-      "Press R to restart a level.",
-      ""
-    ]
+  "Pages": [
+    {
+      "title": {
+        "content": "CONTROLS",
+        "x": 0.0,
+        "y": 0.50,
+        "scale": 1.0,
+        "red": 1.0,
+        "green": 0.84,
+        "blue": 0.0,
+        "alpha": 1.0
+      },
+      "body": {
+        "content": "LEFT CLICK - Dig / Destroy dirt\nRIGHT CLICK - Place portals\nMWHEEL-UP - Turn portal anti-clockwise\nMWHEEL-DOWN - Turn portal clockwise",
+        "x": 0.0,
+        "y": 0.35,
+        "scale": 0.8,
+        "red": 1.0,
+        "green": 1.0,
+        "blue": 1.0,
+        "alpha": 1.0
+      }
+    },
+    {
+      "title": {
+        "content": "OBJECTIVE",
+        "x": 0.0,
+        "y": 0.50,
+        "scale": 1.0,
+        "red": 1.0,
+        "green": 0.84,
+        "blue": 0.0,
+        "alpha": 1.0
+      },
+      "body": {
+        "content": "Turn on the PIPE\nDig Dirt\nPlace Portals\nWater the Flower!",
+        "x": 0.0,
+        "y": 0.35,
+        "scale": 0.8,
+        "red": 1.0,
+        "green": 1.0,
+        "blue": 1.0,
+        "alpha": 1.0
+      }
+    },
+    {
+      "title": {
+        "content": "PORTALS",
+        "x": 0.0,
+        "y": 0.50,
+        "scale": 1.0,
+        "red": 1.0,
+        "green": 0.84,
+        "blue": 0.0,
+        "alpha": 1.0
+      },
+      "body": {
+        "content": "Place PORTALS to teleport water\nRIGHT CLICK to place a portal.\nPortals require magic terrain",
+        "x": 0.0,
+        "y": 0.35,
+        "scale": 0.8,
+        "red": 1.0,
+        "green": 1.0,
+        "blue": 1.0,
+        "alpha": 1.0
+      }
+    },
+    {
+      "title": {
+        "content": "TIPS",
+        "x": 0.0,
+        "y": 0.50,
+        "scale": 1.0,
+        "red": 1.0,
+        "green": 0.84,
+        "blue": 0.0,
+        "alpha": 1.0
+      },
+      "body": {
+        "content": "Water flows with gravity.\nLinked portals share a color.\nStone terrain cannot be dug.\nAvoid Moss to conserve water\nPress R to restart a level.",
+        "x": 0.0,
+        "y": 0.35,
+        "scale": 0.8,
+        "red": 1.0,
+        "green": 1.0,
+        "blue": 1.0,
+        "alpha": 1.0
+      }
+    }
+  ],
+  "DisplaySettings": {
+    "overlayAlpha": 0.55,
+    "bodyLineSpacing": 0.15,
+    "pageIndicatorY": -0.88,
+    "pageIndicatorScale": 0.8,
+    "pageIndicatorRed": 0.6,
+    "pageIndicatorGreen": 0.6,
+    "pageIndicatorBlue": 0.6
   }
 }

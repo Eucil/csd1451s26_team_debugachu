@@ -1,0 +1,20 @@
+{
+  "Back": {
+    "position": {
+      "x": -704.0,
+      "y": 386.0
+    },
+    "scale": {
+      "x": 160.0,
+      "y": 96.0
+    },
+    "text": {
+      "content": "BACK",
+      "scale": 1.0,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  }
+}

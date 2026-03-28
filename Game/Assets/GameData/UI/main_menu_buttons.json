@@ -1,9 +1,15 @@
 {
   "Start": {
-    "position": { "x": 0.0, "y": 240.0 },
-    "scale": { "x": 400.0, "y": 80.0 },
+    "position": {
+      "x": 0.0,
+      "y": 240.0
+    },
+    "scale": {
+      "x": 320.0,
+      "y": 96.0
+    },
     "text": {
-      "content": "Start",
+      "content": "START",
       "scale": 1.0,
       "red": 1.0,
       "green": 1.0,
@@ -12,10 +18,16 @@
     }
   },
   "HowToPlay": {
-    "position": { "x": 0.0, "y": 100.0 },
-    "scale": { "x": 400.0, "y": 80.0 },
+    "position": {
+      "x": 0.0,
+      "y": 100.0
+    },
+    "scale": {
+      "x": 320.0,
+      "y": 96.0
+    },
     "text": {
-      "content": "How to Play",
+      "content": "HOW TO PLAY",
       "scale": 0.92,
       "red": 1.0,
       "green": 1.0,
@@ -24,10 +36,16 @@
     }
   },
   "Settings": {
-    "position": { "x": 0.0, "y": -40.0 },
-    "scale": { "x": 400.0, "y": 80.0 },
+    "position": {
+      "x": 0.0,
+      "y": -40.0
+    },
+    "scale": {
+      "x": 320.0,
+      "y": 96.0
+    },
     "text": {
-      "content": "Settings",
+      "content": "SETTINGS",
       "scale": 1.00,
       "red": 1.0,
       "green": 1.0,
@@ -36,10 +54,16 @@
     }
   },
   "Credits": {
-    "position": { "x": 0.0, "y": -180.0 },
-    "scale": { "x": 400.0, "y": 80.0 },
+    "position": {
+      "x": 0.0,
+      "y": -180.0
+    },
+    "scale": {
+      "x": 320.0,
+      "y": 96.0
+    },
     "text": {
-      "content": "Credits",
+      "content": "CREDITS",
       "scale": 1.0,
       "red": 1.0,
       "green": 1.0,
@@ -48,23 +72,17 @@
     }
   },
   "Quit": {
-    "position": { "x": 0.0, "y": -320.0 },
-    "scale": { "x": 400.0, "y": 80.0 },
+    "position": {
+      "x": 0.0,
+      "y": -320.0
+    },
+    "scale": {
+      "x": 320.0,
+      "y": 96.0
+    },
     "text": {
-      "content": "Quit",
+      "content": "QUIT",
       "scale": 1.0,
-      "red": 1.0,
-      "green": 1.0,
-      "blue": 1.0,
-      "alpha": 1.0
-    }
-  },
-  "Back": {
-    "position": {"x": 0.625, "y": 0.667},
-    "scale": {"x": 50.0, "y": 50.0},
-    "text": {
-      "content": "BACK",
-      "scale": 0.2,
       "red": 1.0,
       "green": 1.0,
       "blue": 1.0,

@@ -14,7 +14,7 @@ void DebugSystem::load(s8 font) {
     graphics_.mesh_ = CreateRectMesh();
 
     buttonClose_.loadMesh();
-    buttonClose_.loadTexture("Assets/Textures/brown_button.png");
+    buttonClose_.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
 }
 
 void DebugSystem::initFromJson(const std::string& file, const std::string& section) {
@@ -23,6 +23,9 @@ void DebugSystem::initFromJson(const std::string& file, const std::string& secti
     graphics_.green_ = debugSection["graphics"]["green"].asFloat();
     graphics_.blue_ = debugSection["graphics"]["blue"].asFloat();
     graphics_.alpha_ = debugSection["graphics"]["alpha"].asFloat();
+
+    headerText_.initFromJson(file, "Header");
+    headerText_.font_ = font_;
 
     buttonClose_.initFromJson(file, section + "_CloseButton");
     buttonClose_.setTextFont(font_);
@@ -91,9 +94,7 @@ void DebugSystem::draw() {
 
     renderBackground();
 
-    // Draw header text
-    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-    AEGfxPrint(font_, "DEBUG MENU", -0.18f, 0.3f, 0.8f, 1.0f, 1.0f, 0.0f, 1.0f);
+    headerText_.draw(true);
 
     buttonClose_.draw();
 }
