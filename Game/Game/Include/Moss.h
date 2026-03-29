@@ -8,7 +8,6 @@
 class StartEndPoint;
 enum class StartEndType;
 
-// Keep enum for backward compatibility but all will be Spiky
 enum class MossType {
     Basic,   // Not used anymore
     Spiky,   // The only type used
@@ -22,36 +21,47 @@ struct Moss {
 
     MossType type_; // Will always be Spiky
     bool active_{true};
-    float absorptionRate_{1.0f}; // How much water it absorbs per particle
-    float growthTimer_{0.0f};    // For animation
-    float maxHealth_{10.0f};     // How many particles it can absorb before dying
+    float absorptionRate_{1.0f};
+    float growthTimer_{0.0f};
+    float maxHealth_{10.0f};
     float currentHealth_{10.0f};
 
     Moss();
-    Moss(AEVec2 pos, MossType type); // Type parameter ignored, always Spiky
+    Moss(AEVec2 pos, MossType type);
 };
 
 class MossSystem {
 private:
-    // Only need one mesh now
+    // Procedural colour meshes (fallback when texture is missing)
     AEGfxVertexList* spikyMossMesh_{nullptr};
-
-    // Keep these for backward compatibility but don't use them
     AEGfxVertexList* basicMossMesh_{nullptr};
     AEGfxVertexList* glowingMossMesh_{nullptr};
+
+    // Per-frame UV-baked quads (3 frames, sheet is 48x16).
+    // Each mesh has UVs pre-set to the correct 1/3 strip so the
+    // sprite is not stretched when drawn on a square quad.
+    AEGfxVertexList* mossFrameMeshes_[3]{nullptr, nullptr, nullptr};
+
+    // thornQuadMesh_ kept for internal use; points at mossFrameMeshes_[0]
+    AEGfxVertexList* thornQuadMesh_{nullptr};
+    AEGfxTexture* thornTexture_{nullptr};
+
+    // Sprite animation state
+    float thornFrameTimer_{0.0f};
+    int thornFrame_{0};
+    static constexpr float kThornFrameTime = 0.35f; // seconds per frame
 
     std::vector<Moss> mosses_;
 
     s8 font_;
-    bool showDebug_{true}; // set to true to show hp of moss. false to off it
+    bool showDebug_{false};
 
-    // Visual effects
     float globalTimer_{0.0f};
 
 public:
     void Load(s8 font);
     void Initialize();
-    void LoadLevelMoss(AEVec2 pos, MossType type); // Type ignored, always Spiky
+    void LoadLevelMoss(AEVec2 pos, MossType type);
     void Update(f32 dt, std::vector<FluidParticle>& particlePool,
                 StartEndPoint& startEndPointSystem);
     void Draw();
