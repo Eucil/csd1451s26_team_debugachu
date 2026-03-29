@@ -356,10 +356,10 @@ void StartEndPoint::DrawTexture(s32 particleMaxCount) {
     }
 
     // Select flower frame based on percentage of the goal (goal = particleMaxCount / 3)
-    constexpr f32 kFrameWidth = 1.0f / 3.0f;
+    constexpr f32 kFrameWidth = 0.25f;
     int frame = 0;
     if (particleMaxCount > 0) {
-        f32 goalCount = static_cast<f32>(particleMaxCount) / 3.0f;
+        f32 goalCount = static_cast<f32>(particleMaxCount) / 4.0f;
         f32 pct = static_cast<f32>(particlesCollected_) / goalCount;
         if (pct >= 0.66f)
             frame = 2;
@@ -473,8 +473,10 @@ void StartEndPoint::ResetIframe() {
     }
 }
 
+// How much water needs to be collected to win
+// Currently: 25% of max water particle count
 bool StartEndPoint::CheckWinCondition(s32 particleMaxCount) {
-    if (particlesCollected_ >= (particleMaxCount / 3.f)) {
+    if (particlesCollected_ >= (particleMaxCount * 0.25f)) {
         return true;
     }
     return false;

@@ -108,6 +108,9 @@ void FluidSystem::UpdateTransforms(std::vector<FluidParticle>& particlePool) {
 
 void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt) {
 
+    if (dt > 0.0166667f) {
+        dt = 0.0166667f;
+    }
     //  load new constants with the previously set config values
     f32 gravity = particlePool[0].physics_.gravity_;
 

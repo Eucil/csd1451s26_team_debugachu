@@ -505,7 +505,8 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                          totalWaterCapacity);
                 totalWaterText.content_ = buffer;
 
-                // Calculate goal percentage based on particles collected vs max particles
+                // Calculate
+                // percentage based on particles collected vs max particles
                 goalPercentage = (static_cast<f32>(startEndPointSystem.particlesCollected_) /
                                   static_cast<f32>(fluidSystem.particleMaxCount_ / 4)) *
                                  100.0f;

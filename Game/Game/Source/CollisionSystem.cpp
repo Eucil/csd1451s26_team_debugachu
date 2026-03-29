@@ -1,6 +1,5 @@
 #include "CollisionSystem.h"
 
-// @todo comment entire function
 void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& fluidSystem, f32 dt) {
     using BucketEntry = std::pair<FluidType, u32>; // (type, index)
 
@@ -13,7 +12,7 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
     const size_t totalCells = static_cast<size_t>(gridRows) * static_cast<size_t>(gridCols);
 
     // OPTIMISATION: Static vectors persist between calls so they are only allocated ONCE.
-    // Without static, C++ would allocate and destroy these vectors every single call �
+    // Without static, C++ would allocate and destroy these vectors every single call
     // this function runs 8 times per frame (4 substeps x 2 terrains), so that's
     // 8 heap allocations avoided per frame.
     static std::vector<std::vector<BucketEntry>> fluidGrid;
@@ -25,7 +24,7 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
         cachedTotalCells = totalCells;
     }
 
-    // cellHasColliders lives inside each Terrain instance � dirt and stone
+    // cellHasColliders lives inside each Terrain instance dirt and stone
     // each have their own copy so they never contaminate each other.
     // The dirty flag on the terrain tells us when to recompute.
     std::vector<bool>& cellHasColliders = terrain.getCachedHasColliders();
@@ -54,6 +53,8 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
     // Currently, fluidGrid is empty so we populate it first
     buildGrid(fluidGrid, fluidSystem, gridBottomLeftPos, gridCols, gridRows, gridSize);
     for (size_t cell = 0; cell < totalCells; ++cell) {
+
+        // If cell is empty, skip
         if (fluidGrid[cell].empty())
             continue;
 
@@ -71,6 +72,7 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
                     ny >= static_cast<int>(gridRows))
                     continue;
 
+                // Get the index of the current cell to be looped through
                 const size_t neighbourIndex =
                     static_cast<size_t>(ny) * static_cast<size_t>(gridCols) +
                     static_cast<size_t>(nx);
@@ -88,7 +90,8 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
 
                         // Memory address comparison ensures each pair (A,B) is only
                         // resolved once. Without this, we would resolve (A,B) when A
-                        // visits B, and again when B visits A � double the work.
+                        // visits B, and again when B visits A which equals to
+                        // double the work.
                         if (&fluidParticleA < &fluidParticleB) {
                             resolveFluidParticlePair(fluidParticleA, fluidParticleB);
                         }
@@ -133,7 +136,7 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
                         static_cast<size_t>(nx);
 
                     // OPTIMISATION: Skip cells with no terrain colliders entirely.
-                    // The vast majority of grid cells are empty air � skipping them
+                    // The vast majority of grid cells are empty air skipping them
                     // avoids running the expensive triangle/AABB detection math
                     // on cells that can never produce a collision.
                     if (!cellHasColliders[neighbourIndex])
@@ -152,7 +155,8 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
                             cellToFluidParticleCollision(neighbourTerrainCell, fluidParticleA);
                         if (contact.hasCollision_)
                             pushOutAndSlide(fluidParticleA, contact.normal_, contact.penetration_,
-                                            fluidParticleA.collider_.shapeData_.circle_.radius_, dt);
+                                            fluidParticleA.collider_.shapeData_.circle_.radius_,
+                                            dt);
                     }
                 }
             }
@@ -483,7 +487,10 @@ bool CollisionSystem::detectCircleVsAABB(const AEVec2& circleCenter, f32 radius,
 // Collision Response
 void CollisionSystem::pushOutAndSlide(FluidParticle& p, const AEVec2& n, f32 penetration,
                                       f32 radius, f32 dt) {
-
+    // DT Clamp
+    if (dt > 0.016667f) {
+        dt = 0.016667f;
+    }
     (void)radius;
     (void)dt;
     // We add a tiny slop to prevent floating point errors from causing continuous micro-collisions
