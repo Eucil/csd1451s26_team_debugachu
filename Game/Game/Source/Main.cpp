@@ -85,5 +85,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     g_audioSystem.unloadAllMusic();
     g_audioSystem.unloadAllGroups();
 
+    g_configManager.cleanUp();
+
     AESysExit();
 }

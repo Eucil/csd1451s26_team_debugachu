@@ -374,7 +374,7 @@ void StartEndPoint::DrawTexture(s32 particleMaxCount) {
     AEGfxMeshDraw(flowerMesh_, AE_GFX_MDM_TRIANGLES);
 }
 
-void StartEndPoint::DrawColorPreview(StartEndType type) {
+void StartEndPoint::DrawPreview(StartEndType type) {
     // Set transform matrix based on mouse position
     AEVec2 mousePos = GetMouseWorldPos();
 

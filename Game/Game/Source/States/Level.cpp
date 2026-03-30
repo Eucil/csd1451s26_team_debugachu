@@ -779,10 +779,10 @@ void DrawLevel() {
             levelManager.drawBrushPreview(TerrainMaterial::Magic);
             break;
         case GameBlock::StartPoint:
-            startEndPointSystem.DrawColorPreview(StartEndType::Pipe);
+            startEndPointSystem.DrawPreview(StartEndType::Pipe);
             break;
         case GameBlock::EndPoint:
-            startEndPointSystem.DrawColorPreview(StartEndType::Flower);
+            startEndPointSystem.DrawPreview(StartEndType::Flower);
             break;
         default:
             break;
@@ -865,7 +865,6 @@ void UnloadLevel() {
     Terrain::freeMeshLibrary();
 
     // Unload fonts
-    AEGfxDestroyFont(font);
     if (titleFont) {
         AEGfxDestroyFont(titleFont);
         titleFont = 0;

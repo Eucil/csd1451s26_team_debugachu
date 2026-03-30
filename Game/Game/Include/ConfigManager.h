@@ -29,6 +29,8 @@ public:
     bool hasSection(const std::string& file, const std::string& section) const;
     bool hasKey(const std::string& file, const std::string& section, const std::string& key) const;
 
+    void cleanUp() { configs_.clear(); }
+
 private:
     bool loadFile(const std::string& filePath, const std::string& fileName);
     const Json::Value* getValueRoot(const std::string& file, const std::string& section,

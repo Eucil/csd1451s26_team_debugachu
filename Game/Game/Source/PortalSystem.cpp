@@ -72,13 +72,11 @@ void PortalSystem::Initialize(int const& portalMax) {
     arrow_graphicsConfigs_.mesh_ = rectMesh_;
     arrow_graphicsConfigs_.texture_ = AEGfxTextureLoad("Assets/Textures/portal_arrow.png");
 
-    portalScale_ = {30.0f, 60.0f};
+    portalScale_ =
+        g_configManager.getAEVec2("PortalSystem", "default", "portalScale_", AEVec2{30.f, 60.f});
     rotationValue_ = 0.0f;
     current_portal_ = nullptr;
     clickIframe_ = false;
-
-    portalScale_ =
-        g_configManager.getAEVec2("PortalSystem", "default", "portalScale_", AEVec2{30.f, 60.f});
     portalLimit_ = portalMax;
 
     nextRed_ = AERandFloat();
@@ -307,6 +305,10 @@ void PortalSystem::Free() {
     if (portal_graphicsConfigs_.texture_ != nullptr) {
         AEGfxTextureUnload(portal_graphicsConfigs_.texture_);
         portal_graphicsConfigs_.texture_ = nullptr;
+    }
+    if (arrow_graphicsConfigs_.texture_ != nullptr) {
+        AEGfxTextureUnload(arrow_graphicsConfigs_.texture_);
+        arrow_graphicsConfigs_.texture_ = nullptr;
     }
     for (auto& portal : portalVec_) {
         portal->linkedPortal_ = nullptr;

@@ -88,7 +88,7 @@ public:
 
     void DrawTexture(s32 particleMaxCount);
 
-    void DrawColorPreview(StartEndType type);
+    void DrawPreview(StartEndType type);
 
     void Free();
 
