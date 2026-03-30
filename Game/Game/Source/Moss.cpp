@@ -194,6 +194,24 @@ void MossSystem::DrawMoss(const Moss& m) {
     }
 }
 
+void MossSystem::DrawPreview() {
+    AEVec2 mousePos = GetMouseWorldPos();
+
+    AEMtx33 scaleMtx, rotMtx, transMtx, worldMtx;
+    AEMtx33Scale(&scaleMtx, 40.0f, 40.0f);
+    AEMtx33Rot(&rotMtx, 0.0f);
+    AEMtx33Trans(&transMtx, mousePos.x, mousePos.y);
+    AEMtx33Concat(&worldMtx, &rotMtx, &scaleMtx);
+    AEMtx33Concat(&worldMtx, &transMtx, &worldMtx);
+
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(0.5f);
+    AEGfxSetColorToMultiply(0.0f, 0.5f, 0.0f, 1.0f);
+    AEGfxSetTransform(worldMtx.m);
+    AEGfxMeshDraw(spikyMossMesh_, AE_GFX_MDM_TRIANGLES);
+}
+
 void MossSystem::Draw() {
     for (const auto& m : mosses_) {
         DrawMoss(m);

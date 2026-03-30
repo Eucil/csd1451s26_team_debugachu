@@ -249,6 +249,40 @@ void CollectibleSystem::Draw() {
     }
 }
 
+void CollectibleSystem::DrawPreview() {
+
+    AEVec2 mousePos = GetMouseWorldPos();
+
+    AEMtx33 scaleMtx, rotMtx, transMtx, worldMtx;
+    AEMtx33Scale(&scaleMtx, 30.0f, 30.0f);
+    AEMtx33Rot(&rotMtx, 0.0f);
+    AEMtx33Trans(&transMtx, mousePos.x, mousePos.y);
+    AEMtx33Concat(&worldMtx, &rotMtx, &scaleMtx);
+    AEMtx33Concat(&worldMtx, &transMtx, &worldMtx);
+
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(0.5f);
+    AEGfxSetTransform(worldMtx.m);
+
+    CollectibleType type = static_cast<CollectibleType>(totalCollectibles_ % 3);
+
+    switch (type) {
+    case CollectibleType::Star:
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 0.0f, 1.0f);
+        AEGfxMeshDraw(starMesh_, AE_GFX_MDM_TRIANGLES);
+        break;
+    case CollectibleType::Gem:
+        AEGfxSetColorToMultiply(1.0f, 0.0f, 1.0f, 1.0f);
+        AEGfxMeshDraw(gemMesh_, AE_GFX_MDM_TRIANGLES);
+        break;
+    case CollectibleType::Leaf:
+        AEGfxSetColorToMultiply(0.0f, 1.0f, 0.0f, 1.0f);
+        AEGfxMeshDraw(leafMesh_, AE_GFX_MDM_TRIANGLES);
+        break;
+    }
+}
+
 void CollectibleSystem::DrawUI() {
     // Draw collection counter
     collectionText_.draw();

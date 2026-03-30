@@ -366,6 +366,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 collectibleSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
                 mossSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
                                   startEndPointSystem);
+                portalSystem.RotatePortal();
 
                 // Inputs to build level
                 if (!levelManager.getDisplayBuilderContainer()) {
@@ -783,6 +784,15 @@ void DrawLevel() {
             break;
         case GameBlock::EndPoint:
             startEndPointSystem.DrawPreview(StartEndType::Flower);
+            break;
+        case GameBlock::Collectible:
+            collectibleSystem.DrawPreview();
+            break;
+        case GameBlock::Moss:
+            mossSystem.DrawPreview();
+            break;
+        case GameBlock::Portal:
+            portalSystem.DrawPreview();
             break;
         default:
             break;

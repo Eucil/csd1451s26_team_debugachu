@@ -50,6 +50,7 @@ public:
     void LoadLevelCollectibles(AEVec2 pos, CollectibleType type);
     void Update(f32 dt, std::vector<FluidParticle>& particlePool);
     void Draw();
+    void DrawPreview();
     void DrawUI();
     void Free();
 

@@ -387,20 +387,21 @@ void StartEndPoint::DrawPreview(StartEndType type) {
 
     AEMtx33Concat(&worldMtx, &rotMtx, &scaleMtx);
     AEMtx33Concat(&worldMtx, &transMtx, &worldMtx);
+    AEGfxSetTransform(worldMtx.m);
 
-    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(0.5f);
     switch (type) {
     case StartEndType::Pipe:
-        AEGfxSetColorToMultiply(0.5f, 0.5f, 0.5f, 0.5f); // Grey color for start point preview
+        AEGfxTextureSet(graphicsConfigs_[static_cast<int>(type)].texture_, 0.0f, 0.0f);
+        AEGfxMeshDraw(graphicsConfigs_[static_cast<int>(type)].mesh_, AE_GFX_MDM_TRIANGLES);
         break;
     case StartEndType::Flower:
-        AEGfxSetColorToMultiply(1.0f, 0.0f, 0.0f, 1.0f); // Red color for end point preview
+        AEGfxTextureSet(graphicsConfigs_[static_cast<int>(type)].texture_, 0.0f, 0.0f);
+        AEGfxMeshDraw(flowerMesh_, AE_GFX_MDM_TRIANGLES);
         break;
     }
-    AEGfxSetTransform(worldMtx.m);
-    AEGfxMeshDraw(graphicsConfigs_[static_cast<int>(type)].mesh_, AE_GFX_MDM_TRIANGLES);
 }
 
 void StartEndPoint::Free() {

@@ -55,6 +55,7 @@ public:
     void Update(f32 dt, std::vector<FluidParticle>& particlePool,
                 StartEndPoint& startEndPointSystem);
     void Draw();
+    void DrawPreview();
     void Free();
 
     void spawnAtMousePos();
