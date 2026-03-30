@@ -122,8 +122,10 @@ void LevelManager::updateContainerPosition() {
     // Position controls text centered below the container
     f32 halfWinW = AEGfxGetWindowWidth() / 2.0f;
     f32 halfWinH = AEGfxGetWindowHeight() / 2.0f;
-    editorControlsText_.x_ = (containerPos.x - editorContainer_.getTransform().scale_.x / 2.0f) / halfWinW;
-    editorControlsText_.y_ = (containerPos.y - editorContainer_.getTransform().scale_.y / 2.0f - 30.0f) / halfWinH;
+    editorControlsText_.x_ =
+        (containerPos.x - editorContainer_.getTransform().scale_.x / 2.0f) / halfWinW;
+    editorControlsText_.y_ =
+        (containerPos.y - editorContainer_.getTransform().scale_.y / 2.0f - 30.0f) / halfWinH;
 }
 
 void LevelManager::updateInnerButtonPosition() {

@@ -22,6 +22,7 @@ Moss::Moss() {
 }
 
 Moss::Moss(AEVec2 pos, MossType type) {
+    (void)type; // Ignore the type parameter since we only use Spiky moss
     transform_.pos_ = pos;
     transform_.scale_ = {40.0f, 40.0f};
     transform_.rotationRad_ = 0.0f;
@@ -90,6 +91,7 @@ void MossSystem::CreateMeshes() {
 
 void MossSystem::LoadLevelMoss(AEVec2 pos, MossType type) {
     // Ignore the type parameter and always use Spiky
+    (void)type;
     mosses_.emplace_back(pos, MossType::Spiky);
 }
 

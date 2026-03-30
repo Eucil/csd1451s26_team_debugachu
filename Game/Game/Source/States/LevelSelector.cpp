@@ -69,14 +69,6 @@ void LoadLevelSelector() {
     // pBgStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
     // pBgMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
 
-    // Calculate window bounds
-    f32 halfW = AEGfxGetWindowWidth() / 2.0f;
-    f32 halfH = AEGfxGetWindowHeight() / 2.0f;
-
-    // TILING LOGIC: Repeat the texture every 64 pixels
-    f32 uRepeat = AEGfxGetWindowWidth() / 64.0f;
-    f32 vRepeat = AEGfxGetWindowHeight() / 64.0f;
-
     previewMesh = CreateRectMesh();
     defaultPreviewTex = AEGfxTextureLoad("Assets/Textures/pink_button.png");
     // Preload all preview images
@@ -372,7 +364,7 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
             inputNumbers(inputStr);
             inputPrompt.content_ = "Portal Limit: " + inputStr;
             if (AEInputCheckReleased(AEVK_RETURN)) {
-                inputPortalLimit = std::stof(inputStr);
+                inputPortalLimit = std::stoi(inputStr);
                 levelManager.createLevelData(levelInput, static_cast<int>(inputWidth),
                                              static_cast<int>(inputHeight), 20,
                                              static_cast<int>(inputPortalLimit));

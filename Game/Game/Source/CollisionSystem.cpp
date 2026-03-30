@@ -152,7 +152,8 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
                             cellToFluidParticleCollision(neighbourTerrainCell, fluidParticleA);
                         if (contact.hasCollision_)
                             pushOutAndSlide(fluidParticleA, contact.normal_, contact.penetration_,
-                                            fluidParticleA.collider_.shapeData_.circle_.radius_, dt);
+                                            fluidParticleA.collider_.shapeData_.circle_.radius_,
+                                            dt);
                     }
                 }
             }
@@ -409,7 +410,7 @@ bool CollisionSystem::detectCircleVsAABB(const AEVec2& circleCenter, f32 radius,
     //
     // For e.g. if boxLeft = 0, boxRight = 10, circleCenter.x = 15, circleCenter.x gets clamped to
     // 10
-    AEVec2 closest;
+    AEVec2 closest{};
     closest.x = AEClamp(circleCenter.x, boxLeft, boxRight);
     closest.y = AEClamp(circleCenter.y, boxBottom, boxTop);
 

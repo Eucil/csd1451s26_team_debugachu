@@ -96,7 +96,7 @@ public:
 
     void ResetIframe();
 
-    bool CheckWinCondition(s32 particleMaxCount);
+    bool CheckWinCondition(s32 particleMaxCount) const;
 
     // tc added start
     //  getter/setter for water

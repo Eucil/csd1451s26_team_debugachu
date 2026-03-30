@@ -160,7 +160,7 @@ AEVec2 ConfigManager::getAEVec2(const std::string& file, const std::string& sect
                   << ", " << defaultVal.y << ")\n";
         return defaultVal;
     }
-    AEVec2 out;
+    AEVec2 out{};
     out.x = (*arrayRoot)[0].asFloat();
     out.y = (*arrayRoot)[1].asFloat();
     return out;

@@ -128,6 +128,8 @@ void StartEndPoint::SetupPoint(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndT
 
 // tc added start
 void StartEndPoint::DrawWaterIndicator(const StartEnd& startPoint, const AEVec2& screenPos) {
+    (void)screenPos; // Unused parameter for now, can be used for screen coordinate conversion
+
     if (!barMesh_ || font_ == 0)
         return;
 
@@ -291,6 +293,7 @@ bool StartEndPoint::CollisionCheckWithWater(StartEnd startend, FluidParticle par
 }
 
 void StartEndPoint::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
+    (void)dt; // unused for now
 
     // Check collision for each start/end point with each water particle
     for (auto& startPoint : startPoints_) {
@@ -442,8 +445,6 @@ void StartEndPoint::Free() {
 void StartEndPoint::CheckMouseClick() {
     // Get mouse position
     AEVec2 mousePos = GetMouseWorldPos();
-    f32 mouseX = static_cast<f32>(mousePos.x);
-    f32 mouseY = static_cast<f32>(mousePos.y);
 
     // Use mouse pos to check collision with start point
     // Check by checking if mouse pos falls within the start point's collider box
@@ -474,7 +475,7 @@ void StartEndPoint::ResetIframe() {
     }
 }
 
-bool StartEndPoint::CheckWinCondition(s32 particleMaxCount) {
+bool StartEndPoint::CheckWinCondition(s32 particleMaxCount) const {
     if (particlesCollected_ >= (particleMaxCount / 3.f)) {
         return true;
     }
