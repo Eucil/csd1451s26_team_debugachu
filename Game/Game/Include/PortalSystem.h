@@ -31,8 +31,9 @@ private:
     std::vector<Portal*> portalVec_;
     Portal* current_portal_{nullptr};
 
-    // graphic configs for each StartEnd type
-    Graphics graphicsConfigs_;
+    // graphic configs for each portal
+    Graphics portal_graphicsConfigs_;
+    Graphics arrow_graphicsConfigs_;
 
     f32 nextRed_{};
     f32 nextGreen_{};

@@ -1,8 +1,7 @@
 #include "States/LevelSelector.h"
 
-#include <iostream>
-
 #include <AEEngine.h>
+#include <iostream>
 
 #include "Animations.h"
 #include "Button.h"
