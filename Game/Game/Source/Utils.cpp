@@ -58,6 +58,33 @@ AEGfxVertexList* CreateRectMesh() {
     return mesh;
 }
 
+AEGfxVertexList* CreateWireRectMesh() {
+    AEGfxMeshStart();
+    AEGfxVertexAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
+    AEGfxVertexAdd( 0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
+    AEGfxVertexAdd( 0.5f,  0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
+    AEGfxVertexAdd(-0.5f,  0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
+    AEGfxVertexAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 0.0f); // close loop
+    return AEGfxMeshEnd();
+}
+
+AEGfxVertexList* CreateWireCircleMesh(u32 slices) {
+    AEGfxMeshStart();
+    f32 angleStep = (3.14159265f * 2.0f) / static_cast<f32>(slices);
+    for (u32 i = 0; i <= slices; ++i) {
+        f32 theta = i * angleStep;
+        AEGfxVertexAdd(std::cos(theta) * 0.5f, std::sin(theta) * 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
+    }
+    return AEGfxMeshEnd();
+}
+
+AEGfxVertexList* CreateWireLineMesh() {
+    AEGfxMeshStart();
+    AEGfxVertexAdd(0.0f, 0.0f, 0xFFFFFFFF, 0.0f, 0.0f);
+    AEGfxVertexAdd(1.0f, 0.0f, 0xFFFFFFFF, 0.0f, 0.0f);
+    return AEGfxMeshEnd();
+}
+
 AEVec2 GetMouseWorldPos() {
     s32 mouseX = 0, mouseY = 0;
     AEInputGetCursorPosition(&mouseX, &mouseY);
