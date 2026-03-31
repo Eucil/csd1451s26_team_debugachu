@@ -2,9 +2,9 @@
   "Map" : 
   {
     "height" : 45,
+    "portalLimit" : 0,
     "tileSize" : 20,
-    "width" : 80,
-    "portalLimit" : 0
+    "width" : 80
   },
   "Objects" : 
   {
@@ -12,17 +12,17 @@
     [
       {
         "posX" : -315.0,
-        "posY" : 226.0,
+        "posY" : 262.0,
         "type" : 0
       },
       {
-        "posX" : -173.0,
-        "posY" : 115.0,
+        "posX" : -28.0,
+        "posY" : 133.0,
         "type" : 1
       },
       {
-        "posX" : 84.0,
-        "posY" : 50.0,
+        "posX" : 242.0,
+        "posY" : 131.0,
         "type" : 2
       }
     ],

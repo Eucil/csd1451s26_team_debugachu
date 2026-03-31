@@ -66,10 +66,6 @@ static FluidSystem bgFluidSystem;
 static StartEndPoint bgStartEndPoint;
 static PortalSystem bgPortalSystem;
 static VFXSystem bgVfxSystem;
-static CollectibleSystem bgCollectibleSystem;
-
-static s8 font = 0;
-
 // ----------------------------------------------------------------------------
 // BgSpawnWater
 // Automatically trickles water from pipe start-points on a timer.
@@ -148,9 +144,6 @@ void MenuBackground::Load() {
     pBgStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
     pBgMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
 
-    font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
-    bgCollectibleSystem.Load(font);
-
     std::cout << "[MenuBackground] Load() complete.\n";
 }
 
@@ -158,8 +151,6 @@ void MenuBackground::Initialize() {
     bgFluidSystem.Initialize();
     bgPortalSystem.Initialize(portalLimit);
     bgVfxSystem.Initialize(800, 20);
-    bgCollectibleSystem.Initialize();
-
     bgDirt =
         new Terrain(TerrainMaterial::Dirt, pBgDirtTex, {0.0f, 0.0f}, height, width, tileSize, true);
     bgStone = new Terrain(TerrainMaterial::Stone, pBgStoneTex, {0.0f, 0.0f}, height, width,
@@ -195,7 +186,6 @@ void MenuBackground::Initialize() {
     if (fileExist) {
         levelManager.parseStartEndInfo(bgStartEndPoint);
         levelManager.parsePortalInfo(bgPortalSystem);
-        levelManager.parseCollectibleInfo(bgCollectibleSystem);
     }
 
     for (auto& startPoint : bgStartEndPoint.startPoints_) {
@@ -205,7 +195,6 @@ void MenuBackground::Initialize() {
 }
 
 void MenuBackground::Update(f32 deltaTime) {
-    bgCollectibleSystem.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
     bgStartEndPoint.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
     BgSpawnWater(deltaTime);
     bgFluidSystem.Update(deltaTime, {bgDirt, bgStone});
@@ -224,8 +213,6 @@ void MenuBackground::Draw() {
     bgPortalSystem.Draw();
 
     bgVfxSystem.Draw();
-    bgCollectibleSystem.Draw();
-
     bgFluidSystem.DrawColor();
 }
 
@@ -254,8 +241,6 @@ void MenuBackground::Free() {
     bgStartEndPoint.Free();
     bgPortalSystem.Free();
     bgVfxSystem.Free();
-    bgCollectibleSystem.Free();
-
     delete bgDirt;
     bgDirt = nullptr;
     delete bgStone;
@@ -291,11 +276,6 @@ void MenuBackground::Unload() {
     if (pBgMagicTex) {
         AEGfxTextureUnload(pBgMagicTex);
         pBgMagicTex = nullptr;
-    }
-
-    if (font) {
-        AEGfxDestroyFont(font);
-        font = 0;
     }
 
     std::cout << "[MenuBackground] Unload() complete.\n";
