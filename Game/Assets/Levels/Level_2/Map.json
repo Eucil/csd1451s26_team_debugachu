@@ -2,7 +2,6 @@
   "Map" : 
   {
     "height" : 45,
-    "highScore" : 3,
     "portalLimit" : 0,
     "tileSize" : 20,
     "width" : 80
