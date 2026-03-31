@@ -52,6 +52,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     g_audioSystem.loadSound("ding", "Assets/Audio/ding.mp3");
     g_audioSystem.loadSound("click", "Assets/Audio/click.mp3");
     g_audioSystem.loadSound("pop", "Assets/Audio/pop.mp3");
+    g_audioSystem.loadSound("hover", "Assets/Audio/button_hover2.ogg");
 
     // Game Loop
     while (GSM.currentState_ != StateId::Quit) {

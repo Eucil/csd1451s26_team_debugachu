@@ -176,11 +176,16 @@ void WinScreen::Update(GameStateManager& GSM) {
     if (nextLevelButton_.checkMouseClick()) {
         if (hasNextLevel_) {
             printf("WinScreen: Loading level %d\n", nextLevel_);
-            levelManager.SetCurrentLevel(nextLevel_); // tell the manager which level to load
-            GSM.nextState_ = StateId::NextLevel;      // NextLevel != Level so the loop exits
+            levelManager.SetCurrentLevel(nextLevel_);
+            // The GSM loop only triggers a full reload when nextState_ != currentState_.
+            // If we always use NextLevel, the second next-level click finds
+            // currentState_ == NextLevel == nextState_ and does nothing.
+            // If we always use Level, same problem coming from StateId::Level.
+            // Solution: alternate — pick whichever ID differs from currentState_.
+            GSM.nextState_ =
+                (GSM.currentState_ == StateId::NextLevel) ? StateId::Level : StateId::NextLevel;
             Hide();
         }
-        // else: click silently ignored -- button is visually greyed out
     }
 
     if (restartButton_.checkMouseClick()) {
@@ -280,6 +285,9 @@ void WinScreen::Unload() {
     }
 
     isVisible_ = false;
-    AEGfxDestroyFont(font_);
+    // NOTE: Do NOT destroy font_ here. The font is owned by Level.cpp and
+    // destroyed in UnloadLevel(). Destroying it here causes a double-free
+    // on the second level load, breaking the win screen on subsequent use.
+    font_ = 0;
     printf("WinScreen: Unloaded\n");
 }

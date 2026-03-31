@@ -27,6 +27,9 @@
 static constexpr f32 FADE_SPEED = 1.5f;    // seconds to complete a fade in or out
 static constexpr f32 HOLD_DURATION = 1.5f; // seconds to hold logo at full opacity
 
+// Actual pixel dimensions of DigiPen_BLACK.png (1525 x 445)
+static constexpr f32 LOGO_ASPECT = 1525.0f / 445.0f;
+
 // ----------------------------------------------------------------------------
 // State
 // ----------------------------------------------------------------------------
@@ -106,7 +109,6 @@ void InitializeLogoScreen() {
            fadingIn_ ? "true" : "false", done_ ? "true" : "false");
 
     // --- CHECK 4: Confirm GSM was started with LogoScreen ---
-    // (If LoadLogoScreen was never called, texture and mesh will be null here)
     printf("[LogoScreen] Texture ptr: %p  Mesh ptr: %p\n", (void*)logoTexture, (void*)logoMesh);
     if (logoTexture == nullptr) {
         printf("[LogoScreen] WARNING: Texture is null at Initialize time.\n");
@@ -129,7 +131,6 @@ void UpdateLogoScreen(GameStateManager& GSM, f32 deltaTime) {
         deltaTime = 0.0333f;
 
     // --- CHECK 5: Confirm Update() is being called ---
-    // Only print the first few frames to avoid spam
     if (frameCount_ <= 3) {
         printf("[LogoScreen] UpdateLogoScreen() frame=%d  dt=%.4f  alpha=%.3f  phase=%s\n",
                frameCount_, deltaTime, alpha_,
@@ -137,8 +138,8 @@ void UpdateLogoScreen(GameStateManager& GSM, f32 deltaTime) {
     }
 
     // Skip on any key / click
-    if (AEInputCheckReleased(AEVK_ESCAPE) || AEInputCheckReleased(AEVK_RETURN) ||
-        AEInputCheckReleased(AEVK_SPACE) || AEInputCheckReleased(AEVK_LBUTTON)) {
+    if (AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_RETURN) ||
+        AEInputCheckTriggered(AEVK_SPACE) || AEInputCheckTriggered(AEVK_LBUTTON)) {
         printf("[LogoScreen] Skip input detected -- jumping to MainMenu\n");
         SkipToMainMenu(GSM);
         return;
@@ -172,7 +173,7 @@ void UpdateLogoScreen(GameStateManager& GSM, f32 deltaTime) {
 void DrawLogoScreen() {
     ++frameCount_;
 
-    // Black background regardless
+    // Black background
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
     // --- CHECK 6: Confirm Draw() is being called ---
@@ -203,9 +204,34 @@ void DrawLogoScreen() {
         return;
     }
 
-    // Draw logo centered at 75% of screen size with current alpha
+    // -------------------------------------------------------------------------
+    // Compute a scale that fits the logo at 75% of the screen while
+    // preserving its original aspect ratio (1525 x 445 px).
+    //
+    // Strategy: fit within a box that is 75% of the window on both axes,
+    // then let the logo's own aspect ratio determine the final size.
+    // -------------------------------------------------------------------------
+    f32 maxW = winW * 0.75f;
+    f32 maxH = winH * 0.75f;
+
+    f32 scaleW, scaleH;
+    if (maxW / LOGO_ASPECT <= maxH) {
+        // Constrained by width
+        scaleW = maxW;
+        scaleH = maxW / LOGO_ASPECT;
+    } else {
+        // Constrained by height
+        scaleH = maxH;
+        scaleW = maxH * LOGO_ASPECT;
+    }
+
+    if (frameCount_ <= 3) {
+        printf("[LogoScreen] Logo draw size: %.1f x %.1f\n", scaleW, scaleH);
+    }
+
+    // Draw logo centered on screen with correct aspect ratio and current alpha
     AEMtx33 scale, trans, world;
-    AEMtx33Scale(&scale, winW * 0.75f, winH * 0.75f);
+    AEMtx33Scale(&scale, scaleW, scaleH);
     AEMtx33Trans(&trans, 0.0f, 0.0f);
     AEMtx33Concat(&world, &trans, &scale);
 

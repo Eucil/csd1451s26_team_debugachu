@@ -87,10 +87,32 @@
         "blue": 1.0,
         "alpha": 1.0
       }
+    },
+    {
+      "title": {
+        "content": "CHALLENGE",
+        "x": 0,
+        "y": 0.5,
+        "scale": 1,
+        "red": 1,
+        "green": 0.84,
+        "blue": 0,
+        "alpha": 1
+      },
+      "body": {
+        "content": "3 collectibles each stage.\nTry collecting all of them.\nHave Fun!!!",
+        "x": 0,
+        "y": 0.35,
+        "scale": 0.8,
+        "red": 1,
+        "green": 1,
+        "blue": 1,
+        "alpha": 1
+      }
     }
   ],
   "DisplaySettings": {
-    "overlayAlpha": 0.55,
+    "overlayAlpha": 0.90,
     "bodyLineSpacing": 0.15,
     "pageIndicatorY": -0.88,
     "pageIndicatorScale": 0.8,
