@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 #include <AEEngine.h>
 #include <json/json.h>
@@ -9,13 +11,14 @@
 #include "Components.h"
 #include "GameStateManager.h"
 
-struct DebugOptions {
-    bool renderColliders{false};
-    bool showFps{false};
-    bool unlimitedWater{false};
-    bool showCollisionCount{false};
-    bool showVfxParticleCount{false};
-    bool showWaterParticleCount{false};
+class Terrain;
+class FluidSystem;
+
+struct DebugToggle {
+    std::string key_;
+    std::string hudFormat_;
+    Button checkbox_;
+    TextData label_;
 };
 
 class DebugSystem {
@@ -30,10 +33,14 @@ public:
 
     bool isOpen() const;
 
-    DebugOptions options_;
+    std::unordered_map<std::string, bool> options_;
+    std::unordered_map<std::string, float> hudValues_;
 
     void update();
     void draw();
+    void drawHUD();
+    void drawColliders(Terrain& terrain);
+    void drawFluidColliders(FluidSystem& fluidSystem);
 
 private:
     void updateTransform();
@@ -45,9 +52,14 @@ private:
 
     Transform transform_;
     Graphics graphics_;
+    AEGfxVertexList* hudMesh_{nullptr};
+    AEGfxVertexList* wireRectMesh_{nullptr};
+    AEGfxVertexList* wireCircleMesh_{nullptr};
+    AEGfxVertexList* wireLineMesh_{nullptr};
     TextData headerText_;
 
     Button buttonClose_;
+    std::vector<DebugToggle> toggles_;
 };
 
 extern DebugSystem g_debugSystem;

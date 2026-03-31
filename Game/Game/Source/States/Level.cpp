@@ -830,6 +830,28 @@ void DrawLevel() {
         g_debugSystem.draw();
     } else { // Debug system is not open
     }
+
+    // Get debug information
+    g_debugSystem.hudValues_["ShowFps"] = static_cast<float>(AEFrameRateControllerGetFrameRate());
+
+    u32 totalFluidParticles = 0;
+    for (int fi = 0; fi < static_cast<int>(FluidType::Count); ++fi) {
+        totalFluidParticles += fluidSystem.GetParticleCount(static_cast<FluidType>(fi));
+    }
+
+    g_debugSystem.hudValues_["ShowFluidParticleCount"] = static_cast<float>(totalFluidParticles);
+
+    g_debugSystem.hudValues_["ShowVfxParticleCount"] = 0.0f;
+
+    // Draw debug collider overlays
+    g_debugSystem.drawColliders(*dirt);
+    g_debugSystem.drawColliders(*stone);
+    g_debugSystem.drawColliders(*magic);
+    g_debugSystem.drawFluidColliders(fluidSystem);
+
+    // Draw debug HUD
+    g_debugSystem.drawHUD();
+
     // Animations
     animManager.DrawAll();
 }

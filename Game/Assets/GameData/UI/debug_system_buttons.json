@@ -1,0 +1,64 @@
+{
+  "Toggles": [
+    "RenderColliders",
+    "ShowFps",
+    "UnlimitedWater",
+    "ShowCollisionCount",
+    "ShowVfxParticleCount",
+    "ShowFluidParticleCount"
+  ],
+  "Layout": {
+    "startX": -500.0,
+    "startY": 250.0,
+    "spacingY": 70.0,
+    "checkboxSize": 36.0,
+    "labelOffsetX": 20.0,
+    "labelScale": 0.6
+  },
+  "RenderColliders": {
+    "content": "Render Colliders",
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  },
+  "ShowFps": {
+    "content": "Show FPS",
+    "hudFormat": "FPS: %.0f",
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  },
+  "UnlimitedWater": {
+    "content": "Unlimited Water",
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  },
+  "ShowCollisionCount": {
+    "content": "Show Collision Count",
+    "hudFormat": "Collisions: %.0f",
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  },
+  "ShowVfxParticleCount": {
+    "content": "Show VFX Particle Count",
+    "hudFormat": "VFX Particles: %.0f",
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  },
+  "ShowFluidParticleCount": {
+    "content": "Show Fluid Particle Count",
+    "hudFormat": "Fluid Particles: %.0f",
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  }
+}
