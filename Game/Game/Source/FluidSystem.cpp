@@ -1,3 +1,18 @@
+/*!
+@file       FluidSystem.cpp
+@author     Chia Hanxin/c.hanxin@digipen.edu
+@co_author  Sean Lee Hong Wei/seanhongwei.lee@digipen.edu,
+            Woo Guang Theng/guangtheng.woo@digipen.edu
+
+@date		March, 31, 2026
+
+@brief      This source file contains the declaration of functions that
+
+@copyright  Copyright (C) 2026 DigiPen Institute of Technology.
+            Reproduction or disclosure of this file or its contents
+            without the prior written consent of DigiPen Institute of
+            Technology is prohibited.
+*//*______________________________________________________________________*/
 #include "FluidSystem.h"
 
 #include <cmath>
