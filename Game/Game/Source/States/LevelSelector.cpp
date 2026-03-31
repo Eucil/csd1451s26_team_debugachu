@@ -78,6 +78,9 @@ static Button buttonDelete;
 static Button buttonBack;
 
 // Static functions
+static void MapPreviewLoad();
+static void MapPreviewUpdate(f32 deltaTime);
+static void MapPreviewDraw();
 static void DrawPlaceholderSlots(AEVec2 buttonPos, int collectedCount, AEGfxVertexList* mesh);
 
 void LoadLevelSelector() {
@@ -88,18 +91,9 @@ void LoadLevelSelector() {
     Terrain::createColliderLibrary();
 
     pBgDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
-    // pBgStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
-    // pBgMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
 
-    previewMesh = CreateRectMesh();
-    defaultPreviewTex = AEGfxTextureLoad("Assets/Textures/pink_button.png");
-    // Preload all preview images
-    for (int i = 0; i < static_cast<int>(Level::None); ++i) {
-        // Form the string needed for the file path
-        std::string filePath = "Assets/Previews/Level_" + std::to_string(i + 1) + ".png";
-        previewTextures.push_back(AEGfxTextureLoad(filePath.c_str()));
-    }
 
+    MapPreviewLoad();
     // Setup texts
     f32 buttonStartposX =
         g_configManager.getFloat("LevelSelector", "default", "buttonStartposX", -600.f);
@@ -246,28 +240,8 @@ void InitializeLevelSelector() {
 }
 
 void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
-    // Todo
-    // std::cout << "Update main menu\n";
-    (void)deltaTime; // Unused parameter, but required by function signature
 
-    hoveredLevelIndex = -1;
-    for (int i = 0; i < static_cast<int>(Level::None); ++i) {
-        levelButtonPool_[i].updateTransform();
-        bool isPlayable = (levelManager.playableLevels_[i]);
-        // If the mouse is colliding with this specific button, save its index
-        if (levelButtonPool_[i].isHovered() && isPlayable) {
-            hoveredLevelIndex = i;
-        }
-    }
-    if (hoveredLevelIndex != -1) {
-        displayLevelIndex = hoveredLevelIndex; // Remember what we are looking at
-        previewFader.FadeIn();                 // Tell it to animate in
-    } else {
-        previewFader.FadeOut(); // Tell it to animate out
-    }
-
-    // Process the math for this frame
-    previewFader.Update(deltaTime);
+    MapPreviewUpdate(deltaTime);
     // Press R to restart
     if (AEInputCheckTriggered(AEVK_R) || 0 == AESysDoesWindowExist()) {
         std::cout << "R triggered\n";
@@ -490,70 +464,8 @@ void DrawLevelSelector() {
         inputPrompt.draw();
         quitCreatingPrompt.draw(true);
     }
+    MapPreviewDraw();
 
-    // If mouse is within a button, hoveredLevelIndex = button level.
-    // Ensure that hLI is < number of elements within the vector container
-    if (previewFader.IsVisible() && displayLevelIndex != -1 &&
-        displayLevelIndex < previewTextures.size()) {
-
-        // Set current texture pointer to point to the current hovered level's image preview
-        AEGfxTexture* texToDraw = previewTextures[displayLevelIndex];
-        if (texToDraw == nullptr) {
-            texToDraw = defaultPreviewTex;
-        }
-        // Safety check to ensure the texture actually loaded
-        if (texToDraw != nullptr) {
-
-            // Get current mouse position and convert to world space
-            s32 screenX, screenY;
-            AEInputGetCursorPosition(&screenX, &screenY);
-
-            f32 windowWidth = static_cast<f32>(AEGfxGetWindowWidth());
-            f32 windowHeight = static_cast<f32>(AEGfxGetWindowHeight());
-
-            f32 mouseX = static_cast<f32>(screenX) - (windowWidth / 2.0f);
-            f32 mouseY = (windowHeight / 2.0f) - static_cast<f32>(screenY);
-
-            // Set preview size and padding
-            f32 previewW = 300.0f;
-            f32 previewH = 200.0f;
-            f32 padding = 10.0f; // Distance from the cursor so it doesn't cover the mouse
-
-            // Default Position: Top-Right of the cursor
-            f32 drawX = mouseX + (previewW / 2.0f) + padding;
-            f32 drawY = mouseY + (previewH / 2.0f) + padding;
-
-            // Screen boundaries
-            f32 rightScreenEdge = windowWidth / 2.0f;
-            f32 topScreenEdge = windowHeight / 2.0f;
-
-            // If drawing it Top-Right pushes it off the right edge, flip to Top-Left
-            if (drawX + (previewW / 2.0f) > rightScreenEdge) {
-                drawX = mouseX - (previewW / 2.0f) - padding;
-            }
-
-            // If drawing it Top-Right pushes it off the top edge, flip to Bottom-Right
-            if (drawY + (previewH / 2.0f) > topScreenEdge) {
-                drawY = mouseY - (previewH / 2.0f) - padding;
-            }
-
-            AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-            AEGfxTextureSet(texToDraw, 0, 0);
-            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-            // Set alpha based on UIFader value
-            AEGfxSetTransparency(previewFader.GetAlpha());
-
-            // Transform matrix for the image
-            AEMtx33 scale, trans, world;
-            AEMtx33Scale(&scale, previewW, previewH);
-            AEMtx33Trans(&trans, drawX, drawY);
-            AEMtx33Concat(&world, &trans, &scale);
-
-            AEGfxSetTransform(world.m);
-            AEGfxMeshDraw(previewMesh, AE_GFX_MDM_TRIANGLES);
-        }
-    }
     animManager.DrawAll();
 }
 
@@ -621,6 +533,115 @@ void UnloadLevelSelector() {
     animManager.FreeAll();
 }
 
+
+// =========================================================
+//
+//              Map Preview Functions
+//
+// =========================================================
+static void MapPreviewLoad() {
+    previewMesh = CreateRectMesh();
+    defaultPreviewTex = AEGfxTextureLoad("Assets/Previews/Empty.png");
+    // Preload all preview images
+    for (int i = 0; i < static_cast<int>(Level::None); ++i) {
+        // Form the string needed for the file path
+        std::string filePath = "Assets/Previews/Level_" + std::to_string(i + 1) + ".png";
+        previewTextures.push_back(AEGfxTextureLoad(filePath.c_str()));
+    }
+}
+static void MapPreviewUpdate(f32 deltaTime) {
+    hoveredLevelIndex = -1;
+    for (int i = 0; i < static_cast<int>(Level::None); ++i) {
+        levelButtonPool_[i].updateTransform();
+        bool isPlayable = (levelManager.playableLevels_[i]);
+        // If the mouse is colliding with this specific button, save its index
+        if (levelButtonPool_[i].isHovered() && isPlayable) {
+            hoveredLevelIndex = i;
+        }
+    }
+    if (hoveredLevelIndex != -1) {
+        displayLevelIndex = hoveredLevelIndex; // Remember what we are looking at
+        previewFader.FadeIn();                 // Tell it to animate in
+    } else {
+        previewFader.FadeOut(); // Tell it to animate out
+    }
+
+    // Process the math for this frame
+    previewFader.Update(deltaTime);
+}
+    
+static void MapPreviewDraw() {
+    // If mouse is within a button, hoveredLevelIndex = button level.
+    // Ensure that hLI is < number of elements within the vector container
+    if (previewFader.IsVisible() && displayLevelIndex != -1 &&
+        displayLevelIndex < previewTextures.size()) {
+
+        // Set current texture pointer to point to the current hovered level's image preview
+        AEGfxTexture* texToDraw = previewTextures[displayLevelIndex];
+        if (texToDraw == nullptr) {
+            texToDraw = defaultPreviewTex;
+        }
+        // Safety check to ensure the texture actually loaded
+        if (texToDraw != nullptr) {
+
+            // Get current mouse position and convert to world space
+            s32 screenX, screenY;
+            AEInputGetCursorPosition(&screenX, &screenY);
+
+            f32 windowWidth = static_cast<f32>(AEGfxGetWindowWidth());
+            f32 windowHeight = static_cast<f32>(AEGfxGetWindowHeight());
+
+            f32 mouseX = static_cast<f32>(screenX) - (windowWidth / 2.0f);
+            f32 mouseY = (windowHeight / 2.0f) - static_cast<f32>(screenY);
+
+            // Set preview size and padding
+            f32 previewW = 300.0f;
+            f32 previewH = 200.0f;
+            f32 padding = 10.0f; // Distance from the cursor so it doesn't cover the mouse
+
+            // Default Position: Top-Right of the cursor
+            f32 drawX = mouseX + (previewW / 2.0f) + padding;
+            f32 drawY = mouseY + (previewH / 2.0f) + padding;
+
+            // Screen boundaries
+            f32 rightScreenEdge = windowWidth / 2.0f;
+            f32 topScreenEdge = windowHeight / 2.0f;
+
+            // If drawing it Top-Right pushes it off the right edge, flip to Top-Left
+            if (drawX + (previewW / 2.0f) > rightScreenEdge) {
+                drawX = mouseX - (previewW / 2.0f) - padding;
+            }
+
+            // If drawing it Top-Right pushes it off the top edge, flip to Bottom-Right
+            if (drawY + (previewH / 2.0f) > topScreenEdge) {
+                drawY = mouseY - (previewH / 2.0f) - padding;
+            }
+
+            AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+            AEGfxTextureSet(texToDraw, 0, 0);
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+            AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+            // Set alpha based on UIFader value
+            AEGfxSetTransparency(previewFader.GetAlpha());
+
+            // Transform matrix for the image
+            AEMtx33 scale, trans, world;
+            AEMtx33Scale(&scale, previewW, previewH);
+            AEMtx33Trans(&trans, drawX, drawY);
+            AEMtx33Concat(&world, &trans, &scale);
+
+            AEGfxSetTransform(world.m);
+            AEGfxMeshDraw(previewMesh, AE_GFX_MDM_TRIANGLES);
+        }
+    }
+}
+
+
+// =========================================================
+//
+//              Collectibles Preview Functions
+// 
+// =========================================================
 // Static helper to draw placeholder collectible slots below a level button
 static void DrawPlaceholderSlots(AEVec2 buttonPos, int collectedCount, AEGfxVertexList* mesh) {
     // Only need to draw if they haven't collected everything
