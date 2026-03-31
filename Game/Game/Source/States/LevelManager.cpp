@@ -482,7 +482,16 @@ bool LevelManager::getLevelData(int level) {
     builder["collectComments"] = false;
     JSONCPP_STRING errs;
 
+
+
     bool parsingSuccessful = Json::parseFromStream(builder, file, &readingRoot_, &errs);
+    
+    if (readingRoot_.isMember("Map") && readingRoot_["Map"].isMember("highScore")) {
+        levelHighScores_[level - 1] = readingRoot_["Map"]["highScore"].asInt();
+    } else {
+        levelHighScores_[level - 1] = 0; // Default to 0 if no score exists yet
+    }
+
     if (!parsingSuccessful) {
         std::cout << "Failed to parse JSON: " << errs << "\n";
         return false;
@@ -493,6 +502,7 @@ bool LevelManager::getLevelData(int level) {
         return false;
     }
 
+
     return true;
 }
 
@@ -502,6 +512,50 @@ void LevelManager::checkLevelData() {
         playableLevels_[i - 1] = getLevelData(i);
         std::cout << "Level " << i << " playable: " << playableLevels_[i - 1] << "\n";
     }
+}
+
+int LevelManager::getHighScore(int level) const {
+    if (level > 0 && level <= static_cast<int>(Level::None)) {
+        return levelHighScores_[level - 1];
+    }
+    return 0;
+}
+
+bool LevelManager::saveLevelProgress(int level, int collectedCount) {
+    std::string levelPath = "Assets/Levels/Level_" + std::to_string(level) + "/Map.json";
+    std::ifstream inFile(levelPath);
+    if (!inFile.is_open())
+        return false;
+
+    Json::Value root;
+    Json::CharReaderBuilder readerBuilder;
+    std::string errs;
+    if (!Json::parseFromStream(readerBuilder, inFile, &root, &errs)) {
+        inFile.close();
+        return false;
+    }
+    inFile.close();
+
+    int existingCount = root["Map"]["highScore"].asInt();
+
+    // Only overwrite if it's a new record
+    if (collectedCount > existingCount) {
+        root["Map"]["highScore"] = collectedCount;
+        levelHighScores_[level - 1] = collectedCount; // Update the cached array
+
+        std::ofstream outFile(levelPath, std::ios::trunc);
+        if (!outFile.is_open())
+            return false;
+
+        Json::StreamWriterBuilder writerBuilder;
+        writerBuilder["indentation"] = "  ";
+        std::unique_ptr<Json::StreamWriter> writer(writerBuilder.newStreamWriter());
+        writer->write(root, &outFile);
+        outFile.close();
+
+        return true;
+    }
+    return false;
 }
 
 void LevelManager::parseMapInfo(int& width, int& height, int& tilesize, int& portalLimit) {

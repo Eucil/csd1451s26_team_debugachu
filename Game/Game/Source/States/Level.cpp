@@ -12,6 +12,7 @@
 #include "Button.h"
 #include "Collectible.h"
 #include "CollisionSystem.h"
+#include "ConfigManager.h"
 #include "Components.h"
 #include "DebugSystem.h"
 #include "FluidSystem.h"
@@ -80,6 +81,11 @@ static AEGfxVertexList* g_barMesh = nullptr; // Global bar mesh for cleanup
 static AnimationManager animManager;
 static ScreenFaderManager screenFader;
 static UIFader someOtherCoolAnimation;
+
+// Static Functions
+static void SpawnWaterWithLimit(f32 deltaTime);
+static void DrawTotalWaterBar(f32 x, f32 y, f32 remaining, f32 capacity);
+static void DrawGoalBar(f32 x, f32 y, f32 percentage);
 
 void LoadLevel() {
     // std::cout << "Load level 3\n";
@@ -245,59 +251,7 @@ void InitializeLevel() {
     animManager.InitializeAll();
 }
 
-// tc added start - Function to handle water spawning with limit
-static void SpawnWaterWithLimit(f32 deltaTime) {
-    // Use a static timer that persists between function calls
-    static f32 globalSpawnTimer = 0.0f;
 
-    // Decrement the global timer
-    globalSpawnTimer -= deltaTime;
-
-    // Only spawn if enough time has passed
-    if (globalSpawnTimer <= 0.0f) {
-        // Reset timer to control spawn rate across all start points
-        globalSpawnTimer = 0.025f; // Same spawn rate as before
-
-        // Loop through all start points
-        for (auto& startPoint : startEndPointSystem.startPoints_) {
-            // Only process active pipe-type start points that are releasing water
-            if (startPoint.releaseWater_ && startPoint.type_ == StartEndType::Pipe) {
-
-                // Check if there's water remaining (or infinite mode)
-                if (startPoint.waterRemaining_ > 0.0f || startPoint.infiniteWater_) {
-
-                    // Consume water (unless infinite)
-                    if (!startPoint.infiniteWater_) {
-                        startPoint.waterRemaining_ -= 0.5f; // Adjust consumption rate as needed
-                        if (startPoint.waterRemaining_ < 0.0f) {
-                            startPoint.waterRemaining_ = 0.0f;
-                            startPoint.releaseWater_ = false; // Auto-stop when empty
-                        }
-                    }
-
-                    // Only spawn particle if there's still water
-                    if (startPoint.waterRemaining_ > 0.0f || startPoint.infiniteWater_) {
-                        // Spawn particle at the start point position
-                        f32 randRadius = 10.0f;
-
-                        // Calculate random x offset within the start point's width
-                        f32 xOffset = startPoint.transform_.pos_.x +
-                                      AERandFloat() * startPoint.transform_.scale_.x -
-                                      (startPoint.transform_.scale_.x / 2.f);
-                        AEVec2 position = {xOffset, startPoint.transform_.pos_.y -
-                                                        (startPoint.transform_.scale_.y / 2.f) -
-                                                        (randRadius)};
-
-                        // Spawn the water particle
-                        fluidSystem.SpawnParticle(position.x, position.y, randRadius,
-                                                  FluidType::Water);
-                    }
-                }
-            }
-        }
-    }
-}
-// tc added end
 
 void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
     // std::cout << "Update level 3\n";
@@ -578,10 +532,15 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                     !winTriggered) {
                     winTriggered = true;
                     std::cout << "WIN - Showing win screen\n";
+
+                    // Save highscore
+                    levelManager.saveLevelProgress(levelManager.getCurrentLevel(),
+                                                   collectibleSystem.GetCollectedCount());
                     winScreen.Show(collectibleSystem.GetCollectedCount(),
                                    collectibleSystem.GetTotalCount(),
                                    levelManager.getCurrentLevel());
                 }
+
                 winScreen.Update(GSM);
                 // Pause system
                 pauseSystem.setTransformFillScreen();
@@ -602,133 +561,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
     animManager.UpdateAll(deltaTime);
 }
 
-// tc added start - Enhanced total water counter with a progress bar and dark blue border
-static void DrawTotalWaterBar(f32 x, f32 y, f32 remaining, f32 capacity) {
-    if (capacity <= 0.0f)
-        return;
 
-    f32 percentage = remaining / capacity;
-    if (percentage < 0.0f)
-        percentage = 0.0f;
-
-    // Bar dimensions (in screen coordinates)
-    f32 barWidth = 200.0f;
-    f32 barHeight = 20.0f;
-    f32 borderThickness = 2.0f;
-
-    // Convert from screen coordinates (-0.9 to 0.9 range) to world coordinates
-    f32 worldX = x * 710.0f; // Convert from -0.9 to world X
-    f32 worldY = y * 510.0f; // Convert from 0.9 to world Y
-
-    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-
-    // Create a global mesh for the bar that can be cleaned up
-    if (!g_barMesh) {
-        g_barMesh = CreateRectMesh();
-    }
-
-    // Draw dark blue border (slightly larger rectangle)
-    AEMtx33 trans_mtx, scale_mtx, world_mtx;
-
-    // Border - slightly larger than the bar
-    AEMtx33Trans(&trans_mtx, worldX, worldY);
-    AEMtx33Scale(&scale_mtx, barWidth + borderThickness * 2, barHeight + borderThickness * 2);
-    AEMtx33Concat(&world_mtx, &trans_mtx, &scale_mtx);
-
-    AEGfxSetTransparency(1.0f);
-    AEGfxSetColorToMultiply(0.0f, 0.0f, 0.5f, 1.0f); // Dark blue border
-    AEGfxSetTransform(world_mtx.m);
-    AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
-
-    // Draw background bar (gray)
-    AEMtx33Trans(&trans_mtx, worldX, worldY);
-    AEMtx33Scale(&scale_mtx, barWidth, barHeight);
-    AEMtx33Concat(&world_mtx, &trans_mtx, &scale_mtx);
-
-    AEGfxSetTransparency(0.3f);
-    AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f);
-    AEGfxSetTransform(world_mtx.m);
-    AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
-
-    // Draw fill bar (blue)
-    if (percentage > 0.0f) {
-        f32 fillWidth = barWidth * percentage;
-        f32 fillX = worldX - (barWidth - fillWidth) / 2.0f;
-
-        AEMtx33Trans(&trans_mtx, fillX, worldY);
-        AEMtx33Scale(&scale_mtx, fillWidth, barHeight);
-        AEMtx33Concat(&world_mtx, &trans_mtx, &scale_mtx);
-
-        AEGfxSetTransparency(0.8f);
-        AEGfxSetColorToMultiply(0.0f, 0.5f, 1.0f, 1.0f); // Blue fill
-        AEGfxSetTransform(world_mtx.m);
-        AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
-    }
-}
-
-// Enhanced goal progress bar with dark green border
-static void DrawGoalBar(f32 x, f32 y, f32 percentage) {
-    if (percentage < 0.0f)
-        percentage = 0.0f;
-    if (percentage > 100.0f)
-        percentage = 100.0f;
-
-    // Bar dimensions (in screen coordinates)
-    f32 barWidth = 200.0f;
-    f32 barHeight = 20.0f;
-    f32 borderThickness = 2.0f;
-
-    // Convert from screen coordinates (-0.9 to 0.9 range) to world coordinates
-    f32 worldX = x * 710.0f; // Convert from -0.9 to world X
-    f32 worldY = y * 510.0f; // Convert from 0.9 to world Y
-
-    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-
-    if (!g_barMesh) {
-        g_barMesh = CreateRectMesh();
-    }
-
-    // Draw dark green border (slightly larger rectangle)
-    AEMtx33 trans_mtx, scale_mtx, world_mtx;
-
-    // Border - slightly larger than the bar
-    AEMtx33Trans(&trans_mtx, worldX, worldY);
-    AEMtx33Scale(&scale_mtx, barWidth + borderThickness * 2, barHeight + borderThickness * 2);
-    AEMtx33Concat(&world_mtx, &trans_mtx, &scale_mtx);
-
-    AEGfxSetTransparency(1.0f);
-    AEGfxSetColorToMultiply(0.0f, 0.4f, 0.0f, 1.0f); // Dark green border
-    AEGfxSetTransform(world_mtx.m);
-    AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
-
-    // Draw background bar (gray)
-    AEMtx33Trans(&trans_mtx, worldX, worldY);
-    AEMtx33Scale(&scale_mtx, barWidth, barHeight);
-    AEMtx33Concat(&world_mtx, &trans_mtx, &scale_mtx);
-
-    AEGfxSetTransparency(0.3f);
-    AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f);
-    AEGfxSetTransform(world_mtx.m);
-    AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
-
-    // Draw fill bar (green)
-    if (percentage > 0.0f) {
-        f32 fillWidth = barWidth * (percentage / 100.0f);
-        f32 fillX = worldX - (barWidth - fillWidth) / 2.0f;
-
-        AEMtx33Trans(&trans_mtx, fillX, worldY);
-        AEMtx33Scale(&scale_mtx, fillWidth, barHeight);
-        AEMtx33Concat(&world_mtx, &trans_mtx, &scale_mtx);
-
-        AEGfxSetTransparency(0.8f);
-        AEGfxSetColorToMultiply(0.0f, 1.0f, 0.0f, 1.0f); // Green fill
-        AEGfxSetTransform(world_mtx.m);
-        AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
-    }
-}
-// tc added end
 
 void DrawLevel() {
     // std::cout << "Draw level 2\n";
@@ -913,3 +746,185 @@ void UnloadLevel() {
 
     winScreen.Unload();
 }
+
+// tc added start - Function to handle water spawning with limit
+static void SpawnWaterWithLimit(f32 deltaTime) {
+    // Use a static timer that persists between function calls
+    static f32 globalSpawnTimer = 0.0f;
+
+    // Decrement the global timer
+    globalSpawnTimer -= deltaTime;
+
+    // Only spawn if enough time has passed
+    if (globalSpawnTimer <= 0.0f) {
+        // Reset timer to control spawn rate across all start points
+        globalSpawnTimer = 0.025f; // Same spawn rate as before
+
+        // Loop through all start points
+        for (auto& startPoint : startEndPointSystem.startPoints_) {
+            // Only process active pipe-type start points that are releasing water
+            if (startPoint.releaseWater_ && startPoint.type_ == StartEndType::Pipe) {
+
+                // Check if there's water remaining (or infinite mode)
+                if (startPoint.waterRemaining_ > 0.0f || startPoint.infiniteWater_) {
+
+                    // Consume water (unless infinite)
+                    if (!startPoint.infiniteWater_) {
+                        startPoint.waterRemaining_ -= 0.5f; // Adjust consumption rate as needed
+                        if (startPoint.waterRemaining_ < 0.0f) {
+                            startPoint.waterRemaining_ = 0.0f;
+                            startPoint.releaseWater_ = false; // Auto-stop when empty
+                        }
+                    }
+
+                    // Only spawn particle if there's still water
+                    if (startPoint.waterRemaining_ > 0.0f || startPoint.infiniteWater_) {
+                        // Spawn particle at the start point position
+                        f32 randRadius = 10.0f;
+
+                        // Calculate random x offset within the start point's width
+                        f32 xOffset = startPoint.transform_.pos_.x +
+                                      AERandFloat() * startPoint.transform_.scale_.x -
+                                      (startPoint.transform_.scale_.x / 2.f);
+                        AEVec2 position = {xOffset, startPoint.transform_.pos_.y -
+                                                        (startPoint.transform_.scale_.y / 2.f) -
+                                                        (randRadius)};
+
+                        // Spawn the water particle
+                        fluidSystem.SpawnParticle(position.x, position.y, randRadius,
+                                                  FluidType::Water);
+                    }
+                }
+            }
+        }
+    }
+}
+// tc added end
+
+// tc added start - Enhanced total water counter with a progress bar and dark blue border
+static void DrawTotalWaterBar(f32 x, f32 y, f32 remaining, f32 capacity) {
+    if (capacity <= 0.0f)
+        return;
+
+    f32 percentage = remaining / capacity;
+    if (percentage < 0.0f)
+        percentage = 0.0f;
+
+    // Bar dimensions (in screen coordinates)
+    f32 barWidth = 200.0f;
+    f32 barHeight = 20.0f;
+    f32 borderThickness = 2.0f;
+
+    // Convert from screen coordinates (-0.9 to 0.9 range) to world coordinates
+    f32 worldX = x * 710.0f; // Convert from -0.9 to world X
+    f32 worldY = y * 510.0f; // Convert from 0.9 to world Y
+
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+
+    // Create a global mesh for the bar that can be cleaned up
+    if (!g_barMesh) {
+        g_barMesh = CreateRectMesh();
+    }
+
+    // Draw dark blue border (slightly larger rectangle)
+    AEMtx33 trans_mtx, scale_mtx, world_mtx;
+
+    // Border - slightly larger than the bar
+    AEMtx33Trans(&trans_mtx, worldX, worldY);
+    AEMtx33Scale(&scale_mtx, barWidth + borderThickness * 2, barHeight + borderThickness * 2);
+    AEMtx33Concat(&world_mtx, &trans_mtx, &scale_mtx);
+
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(0.0f, 0.0f, 0.5f, 1.0f); // Dark blue border
+    AEGfxSetTransform(world_mtx.m);
+    AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
+
+    // Draw background bar (gray)
+    AEMtx33Trans(&trans_mtx, worldX, worldY);
+    AEMtx33Scale(&scale_mtx, barWidth, barHeight);
+    AEMtx33Concat(&world_mtx, &trans_mtx, &scale_mtx);
+
+    AEGfxSetTransparency(0.3f);
+    AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f);
+    AEGfxSetTransform(world_mtx.m);
+    AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
+
+    // Draw fill bar (blue)
+    if (percentage > 0.0f) {
+        f32 fillWidth = barWidth * percentage;
+        f32 fillX = worldX - (barWidth - fillWidth) / 2.0f;
+
+        AEMtx33Trans(&trans_mtx, fillX, worldY);
+        AEMtx33Scale(&scale_mtx, fillWidth, barHeight);
+        AEMtx33Concat(&world_mtx, &trans_mtx, &scale_mtx);
+
+        AEGfxSetTransparency(0.8f);
+        AEGfxSetColorToMultiply(0.0f, 0.5f, 1.0f, 1.0f); // Blue fill
+        AEGfxSetTransform(world_mtx.m);
+        AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
+    }
+}
+
+// Enhanced goal progress bar with dark green border
+static void DrawGoalBar(f32 x, f32 y, f32 percentage) {
+    if (percentage < 0.0f)
+        percentage = 0.0f;
+    if (percentage > 100.0f)
+        percentage = 100.0f;
+
+    // Bar dimensions (in screen coordinates)
+    f32 barWidth = 200.0f;
+    f32 barHeight = 20.0f;
+    f32 borderThickness = 2.0f;
+
+    // Convert from screen coordinates (-0.9 to 0.9 range) to world coordinates
+    f32 worldX = x * 710.0f; // Convert from -0.9 to world X
+    f32 worldY = y * 510.0f; // Convert from 0.9 to world Y
+
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+
+    if (!g_barMesh) {
+        g_barMesh = CreateRectMesh();
+    }
+
+    // Draw dark green border (slightly larger rectangle)
+    AEMtx33 trans_mtx, scale_mtx, world_mtx;
+
+    // Border - slightly larger than the bar
+    AEMtx33Trans(&trans_mtx, worldX, worldY);
+    AEMtx33Scale(&scale_mtx, barWidth + borderThickness * 2, barHeight + borderThickness * 2);
+    AEMtx33Concat(&world_mtx, &trans_mtx, &scale_mtx);
+
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(0.0f, 0.4f, 0.0f, 1.0f); // Dark green border
+    AEGfxSetTransform(world_mtx.m);
+    AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
+
+    // Draw background bar (gray)
+    AEMtx33Trans(&trans_mtx, worldX, worldY);
+    AEMtx33Scale(&scale_mtx, barWidth, barHeight);
+    AEMtx33Concat(&world_mtx, &trans_mtx, &scale_mtx);
+
+    AEGfxSetTransparency(0.3f);
+    AEGfxSetColorToMultiply(0.3f, 0.3f, 0.3f, 1.0f);
+    AEGfxSetTransform(world_mtx.m);
+    AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
+
+    // Draw fill bar (green)
+    if (percentage > 0.0f) {
+        f32 fillWidth = barWidth * (percentage / 100.0f);
+        f32 fillX = worldX - (barWidth - fillWidth) / 2.0f;
+
+        AEMtx33Trans(&trans_mtx, fillX, worldY);
+        AEMtx33Scale(&scale_mtx, fillWidth, barHeight);
+        AEMtx33Concat(&world_mtx, &trans_mtx, &scale_mtx);
+
+        AEGfxSetTransparency(0.8f);
+        AEGfxSetColorToMultiply(0.0f, 1.0f, 0.0f, 1.0f); // Green fill
+        AEGfxSetTransform(world_mtx.m);
+        AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
+    }
+}
+// tc added end

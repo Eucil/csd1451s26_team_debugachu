@@ -249,6 +249,7 @@ void CollectibleSystem::Draw() {
     }
 }
 
+
 void CollectibleSystem::DrawUI() {
     // Draw collection counter
     collectionText_.draw();

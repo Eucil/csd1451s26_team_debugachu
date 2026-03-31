@@ -10,6 +10,8 @@
 #include "GameStateManager.h"
 #include "States/LevelManager.h"
 #include "Utils.h"
+#include "Collectible.h"
+#include "FluidSystem.h"
 
 // Destructible Background
 #include "AudioSystem.h"
@@ -43,6 +45,7 @@ static UIFader someOtherCoolAnimation;
 // Buttons and Text
 static std::vector<Button> levelButtonPool_;
 static TextData titleText{"SELECT LEVEL", 0.0f, 0.8f};
+static CollectibleSystem lsCollectibleSystem;
 
 // Level Creation UI
 static bool creatingLevel = false;
@@ -58,6 +61,9 @@ static Button buttonEdit;
 static Button buttonCreate;
 static Button buttonDelete;
 static Button buttonBack;
+
+// Static functions
+static void DrawPlaceholderSlots(AEVec2 buttonPos, int collectedCount, AEGfxVertexList* mesh);
 
 void LoadLevelSelector() {
     titleFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
@@ -164,8 +170,33 @@ void InitializeLevelSelector() {
     levelManager.init();
     levelManager.checkLevelData();
 
-    titleText.content_ = "SELECT LEVEL";
 
+    lsCollectibleSystem.Initialize(); // Creates the meshes and clears the list
+    for (int i = 0; i < static_cast<int>(Level::None); ++i) {
+        int count = levelManager.getHighScore(i + 1);
+        std::cout << count << '\n';
+        // Safety cap assuming a max of 3 items per level
+        if (count > 3)
+            count = 3;
+
+        // Fetch the world position of the specific button
+        AEVec2 buttonPos = levelButtonPool_[i].getTransform().pos_;
+
+        f32 spacing = 40.0f; // Gap between each collectible
+
+        // Center the spawn points based on how many items we are drawing
+        f32 startX = buttonPos.x - (spacing * (3 - 1)) / 2.0f;
+        f32 posY = buttonPos.y - 95.0f; // Shift down to be below the button edge
+
+        for (int j = 0; j < count; ++j) {
+            AEVec2 pos = {startX + j * spacing, posY};
+            // Type 0 = Star, Type 1 = Gem, Type 2 = Leaf
+            CollectibleType type = static_cast<CollectibleType>(j);
+            lsCollectibleSystem.LoadLevelCollectibles(pos, type);
+        }
+    }
+
+    titleText.content_ = "SELECT LEVEL";
     // Initialize destructible Background
     bgVfxSystem.Initialize(800, 20);
     if (levelManager.getLevelData(100)) {
@@ -389,6 +420,9 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
     for (int i = 0; i < static_cast<int>(Level::None); ++i) {
         levelButtonPool_[i].updateTransform();
     }
+    std::vector<FluidParticle> dummyPool;
+    lsCollectibleSystem.Update(deltaTime, dummyPool);
+
     animManager.UpdateAll(deltaTime);
 }
 
@@ -414,6 +448,26 @@ void DrawLevelSelector() {
             levelButtonPool_[i].draw();
         }
     }
+
+    lsCollectibleSystem.Draw();
+
+    // --- DRAW BLACK PLACEHOLDERS FOR UNCOLLECTED ITEMS (Local to LevelSelector) ---
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(0.1f, 0.1f, 0.1f, 1.0f); // Dark Grey / Almost Black
+
+    for (int i = 0; i < static_cast<int>(Level::None); ++i) {
+        int count = levelManager.getHighScore(i + 1);
+        if (count > 3)
+            count = 3;
+        DrawPlaceholderSlots(levelButtonPool_[i].getTransform().pos_, count, previewMesh);
+
+    }
+
+    // --- RESET ENGINE GRAPHICS STATE FOR THE REST OF THE UI ---
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
 
     buttonBack.draw();
     buttonSelect.draw();
@@ -500,6 +554,8 @@ void FreeLevelSelector() {
 
     bgVfxSystem.Free();
     animManager.FreeAll();
+    
+    lsCollectibleSystem.Free();
 
     delete bgDirt;
     bgDirt = nullptr;
@@ -556,4 +612,28 @@ void UnloadLevelSelector() {
     }
 
     animManager.FreeAll();
+}
+
+// Static helper to draw placeholder collectible slots below a level button
+static void DrawPlaceholderSlots(AEVec2 buttonPos, int collectedCount, AEGfxVertexList* mesh) {
+    // Only need to draw if they haven't collected everything
+    if (collectedCount >= 3)
+        return;
+
+    constexpr f32 spacing = 40.0f;
+    constexpr f32 slotScale = 18.0f;
+    f32 startX = buttonPos.x - (spacing * (3 - 1)) / 2.0f;
+    f32 posY = buttonPos.y - 95.0f;
+
+    for (int j = collectedCount; j < 3; ++j) {
+        AEVec2 pos = {startX + j * spacing, posY};
+
+        AEMtx33 scale, trans, world;
+        AEMtx33Scale(&scale, slotScale, slotScale);
+        AEMtx33Trans(&trans, pos.x, pos.y);
+        AEMtx33Concat(&world, &trans, &scale);
+
+        AEGfxSetTransform(world.m);
+        AEGfxMeshDraw(mesh, AE_GFX_MDM_TRIANGLES);
+    }
 }

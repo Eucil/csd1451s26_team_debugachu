@@ -91,6 +91,8 @@ public:
     //=================================================================
     bool getLevelData(int level);
     void checkLevelData();
+    int getHighScore(int level) const;
+    bool saveLevelProgress(int level, int collectedCount);
     void parseMapInfo(int& width, int& height, int& tilesize, int& portalLimit);
     void parseTerrainInfo(std::vector<float>& nodes, std::string terrainType);
     void parseStartEndInfo(StartEndPoint& startEndPointSystem);
@@ -110,6 +112,7 @@ public:
 private:
     EditorMode levelEditorMode_{EditorMode::None};
     int currentLevel_{0};
+    int levelHighScores_[static_cast<int>(Level::None)] = {0};
     GameBlock currentGameBlock_{GameBlock::None};
 
     // For level editor UI
