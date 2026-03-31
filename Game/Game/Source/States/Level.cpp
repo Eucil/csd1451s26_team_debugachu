@@ -251,7 +251,7 @@ void InitializeLevel() {
     }
 
     pHudWaterIconTex = AEGfxTextureLoad("Assets/Textures/hud_water_icon.png");
-    pHudGoalIconTex = AEGfxTextureLoad("Assets/Textures/hud_goal_icon.png");
+    pHudGoalIconTex = AEGfxTextureLoad("Assets/Textures/pink_flower_sprite_sheet.png");
 
     AEGfxMeshStart();
     AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f, 0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 1.0f, -0.5f,
@@ -620,12 +620,12 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                     goalFlowerFrame_ = (goalFlowerFrame_ + 1) % kGoalFlowerFrames;
                 }
 
-                // Guard: only check win condition once water has actually been spawned.
-                // particleMaxCount_ starts at 0 -- if we check before any particles
-                // exist, 0 >= (0/3) is true and the win screen fires immediately.
-                if (fluidSystem.particleMaxCount_ > 0 &&
-                    startEndPointSystem.CheckWinCondition(fluidSystem.particleMaxCount_) &&
-                    !winTriggered) {
+                // Win condition: fire exactly when the goal bar display hits 100%.
+                // goalPercentage uses particleMaxCount_/4 as its threshold.
+                // CheckWinCondition uses particleMaxCount_/3 which is a higher
+                // bar than the display, causing the win to fire after the bar
+                // already shows 100%. Using goalPercentage >= 100 keeps both in sync.
+                if (goalPercentage >= 100.0f && !winTriggered) {
                     winTriggered = true;
                     std::cout << "WIN - Showing win screen\n";
                     winScreen.Show(collectibleSystem.GetCollectedCount(),
@@ -764,6 +764,8 @@ static void DrawTotalWaterBar(f32 x, f32 y, f32 remaining, f32 capacity) {
                  remaining / capacity);
 }
 
+static AEGfxVertexList* s_flowerIconMesh = nullptr;
+
 static void DrawGoalBar(f32 x, f32 y, f32 percentage) {
     if (percentage < 0.0f)
         percentage = 0.0f;
@@ -773,8 +775,33 @@ static void DrawGoalBar(f32 x, f32 y, f32 percentage) {
     f32 worldY = y * 510.0f;
     f32 barW = 200.0f, barH = 20.0f, iconSize = 32.0f;
 
-    DrawHudIcon(pHudGoalIconTex, g_hudIconMesh, worldX - barW * 0.5f - iconSize * 0.5f - 4.0f,
-                worldY, iconSize);
+    // pink_flower_sprite_sheet.png is 48x16 with 3 frames.
+    // We show only frame 0 (U 0.0 -> 0.333) as the icon.
+    // A dedicated mesh with baked UVs avoids the stretch that would
+    // occur if we used g_hudIconMesh (which spans U 0.0 -> 1.0).
+    if (pHudGoalIconTex) {
+        if (!s_flowerIconMesh) {
+            constexpr float u0 = 2.0f / 3.0f, u1 = 1.0f;
+            AEGfxMeshStart();
+            AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, u0, 1.0f, 0.5f, -0.5f, 0xFFFFFFFF, u1, 1.0f,
+                        -0.5f, 0.5f, 0xFFFFFFFF, u0, 0.0f);
+            AEGfxTriAdd(0.5f, -0.5f, 0xFFFFFFFF, u1, 1.0f, 0.5f, 0.5f, 0xFFFFFFFF, u1, 0.0f, -0.5f,
+                        0.5f, 0xFFFFFFFF, u0, 0.0f);
+            s_flowerIconMesh = AEGfxMeshEnd();
+        }
+        f32 iconX = worldX - barW * 0.5f - iconSize * 0.5f - 4.0f;
+        AEMtx33 S, T, W;
+        AEMtx33Scale(&S, iconSize, iconSize);
+        AEMtx33Trans(&T, iconX, worldY);
+        AEMtx33Concat(&W, &T, &S);
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxSetTransform(W.m);
+        AEGfxTextureSet(pHudGoalIconTex, 0.0f, 0.0f);
+        AEGfxMeshDraw(s_flowerIconMesh, AE_GFX_MDM_TRIANGLES);
+    }
 
     DrawPixelBar(worldX, worldY, barW, barH, 0.16f, 0.72f, 0.22f, 0.0f, 0.35f, 0.0f,
                  percentage / 100.0f);
@@ -902,6 +929,10 @@ void FreeLevel() {
     if (g_hudIconMesh) {
         AEGfxMeshFree(g_hudIconMesh);
         g_hudIconMesh = nullptr;
+    }
+    if (s_flowerIconMesh) {
+        AEGfxMeshFree(s_flowerIconMesh);
+        s_flowerIconMesh = nullptr;
     }
     // tc added end
 

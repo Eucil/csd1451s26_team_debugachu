@@ -44,6 +44,128 @@ static f32 s_pageIndScale = 0.8f;
 static f32 s_pageIndR = 0.6f, s_pageIndG = 0.6f, s_pageIndB = 0.6f;
 
 // ----------------------------------------------------------------------------
+// Sprite illustration system
+// ----------------------------------------------------------------------------
+struct PageSprite {
+    AEGfxTexture* tex{nullptr};
+    AEGfxVertexList* mesh{nullptr};
+    int page{0};
+    f32 screenX{0.6f};
+    f32 screenY{0.0f};
+    f32 sizeX{80.0f}; // width  in world units
+    f32 sizeY{80.0f}; // height in world units
+};
+
+static std::vector<PageSprite> s_sprites;
+static AEGfxVertexList* s_fullUvMesh = nullptr;
+static AEGfxVertexList* s_flowerMesh = nullptr;
+static AEGfxVertexList* s_portalMesh = nullptr;
+static AEGfxTexture* s_pipeTex = nullptr;
+static AEGfxTexture* s_portalTex = nullptr;
+static AEGfxTexture* s_flowerTex = nullptr;
+static AEGfxTexture* s_magicTex = nullptr;
+static AEGfxVertexList* s_magicMesh = nullptr;
+static AEGfxTexture* s_mossTex = nullptr;
+static AEGfxVertexList* s_mossMesh = nullptr;
+
+// Collectible meshes (colour-drawn, no texture) for page 5
+static AEGfxVertexList* s_starMesh = nullptr;
+static AEGfxVertexList* s_gemMesh = nullptr;
+static AEGfxVertexList* s_leafMesh = nullptr;
+static float s_collectRot = 0.0f;   // shared rotation angle (radians)
+static float s_collectPulse = 0.0f; // shared pulse timer
+
+static AEGfxVertexList* MakeUvMesh(float u0, float u1) {
+    AEGfxMeshStart();
+    AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, u0, 1.0f, 0.5f, -0.5f, 0xFFFFFFFF, u1, 1.0f, -0.5f, 0.5f,
+                0xFFFFFFFF, u0, 0.0f);
+    AEGfxTriAdd(0.5f, -0.5f, 0xFFFFFFFF, u1, 1.0f, 0.5f, 0.5f, 0xFFFFFFFF, u1, 0.0f, -0.5f, 0.5f,
+                0xFFFFFFFF, u0, 0.0f);
+    return AEGfxMeshEnd();
+}
+
+static void CreateCollectibleMeshes() {
+    // Star (5-pointed) -- matches Collectible.cpp
+    AEGfxMeshStart();
+    constexpr int kStarPoints = 5;
+    constexpr float kOuterRadius = 0.5f;
+    constexpr float kInnerRadius = 0.25f;
+    for (int i = 0; i < kStarPoints; i++) {
+        float a1 = (i * 2.0f * 3.14159f / kStarPoints) - 3.14159f / 2.0f;
+        float a2 = ((i + 1) * 2.0f * 3.14159f / kStarPoints) - 3.14159f / 2.0f;
+        float mid = (a1 + a2) / 2.0f;
+        float x1 = cosf(a1) * kOuterRadius, y1 = sinf(a1) * kOuterRadius;
+        float x2 = cosf(a2) * kOuterRadius, y2 = sinf(a2) * kOuterRadius;
+        float xi = cosf(mid) * kInnerRadius, yi = sinf(mid) * kInnerRadius;
+        AEGfxTriAdd(0, 0, 0xFFFFFF00, 0.5f, 0.5f, x1, y1, 0xFFFFFF00, x1 + 0.5f, y1 + 0.5f, xi, yi,
+                    0xFFFFFF00, xi + 0.5f, yi + 0.5f);
+        AEGfxTriAdd(0, 0, 0xFFFFFF00, 0.5f, 0.5f, xi, yi, 0xFFFFFF00, xi + 0.5f, yi + 0.5f, x2, y2,
+                    0xFFFFFF00, x2 + 0.5f, y2 + 0.5f);
+    }
+    s_starMesh = AEGfxMeshEnd();
+    // Gem (diamond)
+    AEGfxMeshStart();
+    AEGfxTriAdd(0.0f, 0.5f, 0xFFFF00FF, 0.5f, 1.0f, -0.5f, 0.0f, 0xFFFF00FF, 0.0f, 0.5f, 0.5f, 0.0f,
+                0xFFFF00FF, 1.0f, 0.5f);
+    AEGfxTriAdd(0.0f, -0.5f, 0xFFFF00FF, 0.5f, 0.0f, -0.5f, 0.0f, 0xFFFF00FF, 0.0f, 0.5f, 0.5f,
+                0.0f, 0xFFFF00FF, 1.0f, 0.5f);
+    s_gemMesh = AEGfxMeshEnd();
+    // Leaf (teardrop)
+    AEGfxMeshStart();
+    constexpr int kLeafSeg = 12;
+    for (int i = 0; i < kLeafSeg; i++) {
+        float a1 = (i * 2.0f * 3.14159f / kLeafSeg);
+        float a2 = ((i + 1) * 2.0f * 3.14159f / kLeafSeg);
+        float r1 = 0.3f + 0.2f * sinf(a1 * 2.0f);
+        float r2 = 0.3f + 0.2f * sinf(a2 * 2.0f);
+        float x1 = cosf(a1) * r1, y1 = sinf(a1) * r1;
+        float x2 = cosf(a2) * r2, y2 = sinf(a2) * r2;
+        AEGfxTriAdd(0, 0, 0xFF00FF00, 0.5f, 0.5f, x1, y1, 0xFF00FF00, x1 + 0.5f, y1 + 0.5f, x2, y2,
+                    0xFF00FF00, x2 + 0.5f, y2 + 0.5f);
+    }
+    s_leafMesh = AEGfxMeshEnd();
+}
+
+static void DrawCollectibleIcons() {
+    if (!s_starMesh || !s_gemMesh || !s_leafMesh)
+        return;
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(1.0f);
+    float winW = static_cast<float>(AEGfxGetWindowWidth());
+    float winH = static_cast<float>(AEGfxGetWindowHeight());
+    // Pulse scale matching Collectible.cpp: sinf(pulseTimer)*0.1+1.0, base scale 30
+    float pulse = sinf(s_collectPulse) * 0.1f + 1.0f;
+    float iconSize = 60.0f * pulse;
+    // Each collectible spins at a slightly different speed (matching rotationSpeed_ variance)
+    float rotSpeeds[] = {1.0f, 1.5f, 2.0f};
+    struct IconDef {
+        AEGfxVertexList* mesh;
+        float r, g, b, offsetX;
+    };
+    IconDef icons[] = {
+        {s_starMesh, 1.0f, 1.0f, 0.0f, -0.35f},
+        {s_gemMesh, 1.0f, 0.0f, 1.0f, 0.0f},
+        {s_leafMesh, 0.0f, 1.0f, 0.0f, 0.35f},
+    };
+    for (int i = 0; i < 3; ++i) {
+        const auto& ic = icons[i];
+        float worldX = ic.offsetX * winW * 0.5f;
+        float worldY = -0.20f * winH * 0.5f;
+        float rot = s_collectRot * rotSpeeds[i];
+        AEMtx33 S, R, T, W;
+        AEMtx33Scale(&S, iconSize, iconSize);
+        AEMtx33Rot(&R, rot);
+        AEMtx33Trans(&T, worldX, worldY);
+        AEMtx33Concat(&W, &R, &S); // rotate then scale
+        AEMtx33Concat(&W, &T, &W); // then translate
+        AEGfxSetColorToMultiply(ic.r, ic.g, ic.b, 1.0f);
+        AEGfxSetTransform(W.m);
+        AEGfxMeshDraw(ic.mesh, AE_GFX_MDM_TRIANGLES);
+    }
+}
+
+// ----------------------------------------------------------------------------
 // Helpers
 // ----------------------------------------------------------------------------
 
@@ -169,6 +291,33 @@ void LoadHowToPlay() {
         s_pageIndB = ds["pageIndicatorBlue"].asFloat();
     }
 
+    // Load sprite illustrations
+    s_pipeTex = AEGfxTextureLoad("Assets/Textures/overgrown_pipe_end.png");
+    s_portalTex = AEGfxTextureLoad("Assets/Textures/wormhole.png");
+    s_flowerTex = AEGfxTextureLoad("Assets/Textures/pink_flower_sprite_sheet.png");
+
+    s_fullUvMesh = MakeUvMesh(0.0f, 1.0f);
+    s_flowerMesh = MakeUvMesh(2.0f / 3.0f, 1.0f);
+    s_portalMesh = MakeUvMesh(0.0f, 1.0f);
+
+    s_magicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
+    s_magicMesh = MakeUvMesh(0.0f, 1.0f);
+    s_mossTex = AEGfxTextureLoad("Assets/Textures/moss_sprite_sheet.png");
+    s_mossMesh = MakeUvMesh(0.0f, 1.0f / 3.0f); // frame 0 (idle) of moss sheet
+    CreateCollectibleMeshes();
+
+    // {tex, mesh, page, screenX, screenY, sizeX, sizeY}
+    // Portal in-game is 30w x 60h -- mirror that 1:2 ratio here scaled up
+    s_sprites.clear();
+    s_sprites.push_back({s_pipeTex, s_fullUvMesh, 2, -0.42f, 0.35f, 80.0f, 80.0f});    // pipe
+    s_sprites.push_back({s_portalTex, s_portalMesh, 2, 0.42f, 0.10f, 60.0f, 120.0f});  // portal 1:2
+    s_sprites.push_back({s_flowerTex, s_flowerMesh, 2, -0.42f, -0.10f, 80.0f, 80.0f}); // flower
+    // Page 3: magic terrain tile (left) + portal (right)
+    s_sprites.push_back({s_magicTex, s_magicMesh, 3, 0.52f, 0.05f, 80.0f, 80.0f}); // magic terrain
+    s_sprites.push_back({s_portalTex, s_portalMesh, 3, -0.52f, 0.20f, 60.0f, 120.0f}); // portal 1:2
+    // Page 4: moss (idle frame 0)
+    s_sprites.push_back({s_mossTex, s_mossMesh, 4, 0.42f, -0.05f, 80.0f, 80.0f}); // moss
+
     // Load navigation button assets
     buttonNext.loadMesh();
     buttonNext.loadTexture("Assets/Textures/brown_square_24_24.png");
@@ -242,6 +391,10 @@ void UpdateHowToPlay(GameStateManager& GSM, f32 deltaTime) {
     buttonPrevious.updateTransform();
     buttonBack.updateTransform();
 
+    // Advance collectible icon animation
+    s_collectRot += deltaTime * 0.5f;   // rotation speed (rad/s) -- matches Collectible.cpp
+    s_collectPulse += deltaTime * 3.0f; // pulse speed
+
     // Keep background alive
     MenuBackground::Update(deltaTime);
 }
@@ -273,7 +426,31 @@ void DrawHowToPlay() {
     // 4. Page indicator (e.g. "2 / 4")
     DrawPageIndicator();
 
-    // 5. Navigation buttons
+    // 5a. Collectible icons on page 5
+    if (currentPage == 5) {
+        DrawCollectibleIcons();
+    }
+
+    // 5b. Sprite illustrations for current page
+    for (const auto& sp : s_sprites) {
+        if (sp.page != currentPage || !sp.tex || !sp.mesh)
+            continue;
+        f32 worldX = sp.screenX * static_cast<f32>(AEGfxGetWindowWidth()) * 0.5f;
+        f32 worldY = sp.screenY * static_cast<f32>(AEGfxGetWindowHeight()) * 0.5f;
+        AEMtx33 S, T, W;
+        AEMtx33Scale(&S, sp.sizeX, sp.sizeY);
+        AEMtx33Trans(&T, worldX, worldY);
+        AEMtx33Concat(&W, &T, &S);
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxSetTransform(W.m);
+        AEGfxTextureSet(sp.tex, 0.0f, 0.0f);
+        AEGfxMeshDraw(sp.mesh, AE_GFX_MDM_TRIANGLES);
+    }
+
+    // 6. Navigation buttons
     buttonNext.draw();
     if (currentPage > 1) {
         buttonPrevious.draw();
@@ -288,6 +465,59 @@ void FreeHowToPlay() {
         AEGfxMeshFree(overlayMesh);
         overlayMesh = nullptr;
     }
+    if (s_fullUvMesh) {
+        AEGfxMeshFree(s_fullUvMesh);
+        s_fullUvMesh = nullptr;
+    }
+    if (s_flowerMesh) {
+        AEGfxMeshFree(s_flowerMesh);
+        s_flowerMesh = nullptr;
+    }
+    if (s_portalMesh) {
+        AEGfxMeshFree(s_portalMesh);
+        s_portalMesh = nullptr;
+    }
+    if (s_pipeTex) {
+        AEGfxTextureUnload(s_pipeTex);
+        s_pipeTex = nullptr;
+    }
+    if (s_portalTex) {
+        AEGfxTextureUnload(s_portalTex);
+        s_portalTex = nullptr;
+    }
+    if (s_flowerTex) {
+        AEGfxTextureUnload(s_flowerTex);
+        s_flowerTex = nullptr;
+    }
+    if (s_magicMesh) {
+        AEGfxMeshFree(s_magicMesh);
+        s_magicMesh = nullptr;
+    }
+    if (s_magicTex) {
+        AEGfxTextureUnload(s_magicTex);
+        s_magicTex = nullptr;
+    }
+    if (s_mossMesh) {
+        AEGfxMeshFree(s_mossMesh);
+        s_mossMesh = nullptr;
+    }
+    if (s_mossTex) {
+        AEGfxTextureUnload(s_mossTex);
+        s_mossTex = nullptr;
+    }
+    if (s_starMesh) {
+        AEGfxMeshFree(s_starMesh);
+        s_starMesh = nullptr;
+    }
+    if (s_gemMesh) {
+        AEGfxMeshFree(s_gemMesh);
+        s_gemMesh = nullptr;
+    }
+    if (s_leafMesh) {
+        AEGfxMeshFree(s_leafMesh);
+        s_leafMesh = nullptr;
+    }
+    s_sprites.clear();
 }
 
 void UnloadHowToPlay() {

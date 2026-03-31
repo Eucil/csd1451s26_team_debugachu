@@ -48,7 +48,7 @@ void LoadLogoScreen() {
     printf("[LogoScreen] LoadLogoScreen() called\n");
 
     // --- CHECK 1: Texture load ---
-    const char* texturePath = "Assets/Logo/DigiPen_BLACK.png";
+    const char* texturePath = "Assets/Logo/DigiPen_Singapore_WEB_WHITE.png";
     printf("[LogoScreen] Attempting to load texture: %s\n", texturePath);
     logoTexture = AEGfxTextureLoad(texturePath);
 

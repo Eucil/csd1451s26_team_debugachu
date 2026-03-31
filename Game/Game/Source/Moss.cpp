@@ -41,13 +41,13 @@ Moss::Moss(AEVec2 pos, MossType type) {
 void MossSystem::Load(s8 font) {
     font_ = font;
 
-    // Load thorn sprite sheet (48x16, 3 frames: idle / pulsing / collected)
-    thornTexture_ = AEGfxTextureLoad("Assets/Textures/moss_sprite_sheet.png");
-    if (!thornTexture_) {
+    // Load moss sprite sheet (48x16, 3 frames: idle / pulsing / collected)
+    mossTexture_ = AEGfxTextureLoad("Assets/Textures/moss_sprite_sheet.png");
+    if (!mossTexture_) {
         printf("[MossSystem] WARNING: moss_sprite_sheet.png failed to load.\n");
         printf("[MossSystem]          Falling back to colour-only draw.\n");
     } else {
-        printf("[MossSystem] OK: moss_sprite_sheet.png loaded (ptr=%p)\n", (void*)thornTexture_);
+        printf("[MossSystem] OK: moss_sprite_sheet.png loaded (ptr=%p)\n", (void*)mossTexture_);
     }
     // Note: meshes are created in Initialize(), not here.
 }
@@ -56,15 +56,15 @@ void MossSystem::Initialize() {
     CreateMeshes();
     mosses_.clear();
     globalTimer_ = 0.0f;
-    thornFrameTimer_ = 0.0f;
-    thornFrame_ = 0;
+    mossFrameTimer_ = 0.0f;
+    mossFrame_ = 0;
 }
 
 void MossSystem::CreateMeshes() {
     // -----------------------------------------------------------------
-    // Thorn cluster mesh  (replaces old "spiky moss")
+    // Moss cluster mesh  (replaces old "spiky moss")
     //
-    // Visual design: dark-green stem base with asymmetric thorn spikes
+    // Visual design: dark-green stem base with asymmetric moss spikes
     // whose tips shade into purple, matching the pixel-art concept.
     //
     // All geometry is in [-0.5, 0.5] unit space so it scales with
@@ -73,8 +73,8 @@ void MossSystem::CreateMeshes() {
     // Colours (AABBGGRR format used by AEGfxTriAdd):
     //   stem base  : 0xFF1A5C1A  (dark green)
     //   spine body : 0xFF2E7D2E  (mid green)
-    //   thorn tip  : 0xFF8B1A8B  (dark purple)
-    //   thorn mid  : 0xFF6A1F6A  (purple)
+    //   moss tip  : 0xFF8B1A8B  (dark purple)
+    //   moss mid  : 0xFF6A1F6A  (purple)
     // -----------------------------------------------------------------
 
     // ---- Layer 0: stem / body  (spikyMossMesh_) ----
@@ -97,7 +97,7 @@ void MossSystem::CreateMeshes() {
 
     spikyMossMesh_ = AEGfxMeshEnd();
 
-    // ---- Layer 1: thorn spikes  (basicMossMesh_) ----
+    // ---- Layer 1: moss spikes  (basicMossMesh_) ----
     AEGfxMeshStart();
 
     struct SpikeParams {
@@ -164,8 +164,8 @@ void MossSystem::CreateMeshes() {
                     0.5f, 0xFFFFFFFF, u0, 0.0f);
         mossFrameMeshes_[fi] = AEGfxMeshEnd();
     }
-    // Keep thornQuadMesh_ pointing at frame 0 for compatibility
-    thornQuadMesh_ = mossFrameMeshes_[0];
+    // Keep mossQuadMesh_ pointing at frame 0 for compatibility
+    mossQuadMesh_ = mossFrameMeshes_[0];
 
     if (!spikyMossMesh_ || !basicMossMesh_ || !glowingMossMesh_ || !mossFrameMeshes_[0]) {
         printf("ERROR: Failed to create one or more moss meshes!\n");
@@ -197,10 +197,10 @@ void MossSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool,
 
     // Animate moss: bounce between frame 0 (idle) and frame 1 (bouncy).
     // Frame 2 (dying) is selected in DrawMoss based on health, not here.
-    thornFrameTimer_ += dt;
-    if (thornFrameTimer_ >= kThornFrameTime) {
-        thornFrameTimer_ -= kThornFrameTime;
-        thornFrame_ = (thornFrame_ == 0) ? 1 : 0;
+    mossFrameTimer_ += dt;
+    if (mossFrameTimer_ >= kMossFrameTime) {
+        mossFrameTimer_ -= kMossFrameTime;
+        mossFrame_ = (mossFrame_ == 0) ? 1 : 0;
     }
 
     for (auto& m : mosses_) {
@@ -240,21 +240,21 @@ void MossSystem::DrawMoss(const Moss& m) {
     float healthPct = m.currentHealth_ / m.maxHealth_;
 
     // ------------------------------------------------------------------
-    // PATH A: texture draw using thorn_sprite_sheet.png
+    // PATH A: texture draw using moss_sprite_sheet.png
     //   Sheet is 48x16 with 3 frames of 16x16.
     //   Frame 0 (U 0.000..0.333) = idle
     //   Frame 1 (U 0.333..0.667) = pulsing / glowing
     //   Frame 2 (U 0.667..1.000) = collected / dead
     //
-    //   We pick the frame based on thornFrame_ (animated in Update).
+    //   We pick the frame based on mossFrame_ (animated in Update).
     //   When health < 25% we force frame 2 (dead look).
     //
     //   AEGfxTextureSet(tex, offsetU, offsetV) shifts the sampled UV
     //   region; each frame occupies 1/3 of the sheet width.
     // ------------------------------------------------------------------
-    if (thornTexture_ && thornQuadMesh_) {
+    if (mossTexture_ && mossQuadMesh_) {
         // Frame 0 = idle, frame 1 = bouncy, frame 2 = dying (health < 40%)
-        int frame = (healthPct < 0.40f) ? 2 : thornFrame_;
+        int frame = (healthPct < 0.40f) ? 2 : mossFrame_;
 
         // U offset: frame 0 = 0.0, frame 1 = 0.333, frame 2 = 0.667
         float uOffset = static_cast<float>(frame) / 3.0f;
@@ -266,7 +266,7 @@ void MossSystem::DrawMoss(const Moss& m) {
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxSetTransform(worldCopy.m);
         // Use the per-frame mesh (UVs baked in) — no UV offset needed
-        AEGfxTextureSet(thornTexture_, 0.0f, 0.0f);
+        AEGfxTextureSet(mossTexture_, 0.0f, 0.0f);
         AEGfxMeshDraw(mossFrameMeshes_[frame], AE_GFX_MDM_TRIANGLES);
     }
     // ------------------------------------------------------------------
@@ -274,7 +274,7 @@ void MossSystem::DrawMoss(const Moss& m) {
     // ------------------------------------------------------------------
     else {
         if (!spikyMossMesh_ || !basicMossMesh_ || !glowingMossMesh_) {
-            printf("ERROR: Thorn mesh not initialized!\n");
+            printf("ERROR: Moss mesh not initialized!\n");
             return;
         }
 
@@ -341,17 +341,17 @@ void MossSystem::Free() {
         AEGfxMeshFree(glowingMossMesh_);
         glowingMossMesh_ = nullptr;
     }
-    // Free per-frame meshes (thornQuadMesh_ points to mossFrameMeshes_[0], skip it)
+    // Free per-frame meshes (mossQuadMesh_ points to mossFrameMeshes_[0], skip it)
     for (int fi = 0; fi < 3; ++fi) {
         if (mossFrameMeshes_[fi]) {
             AEGfxMeshFree(mossFrameMeshes_[fi]);
             mossFrameMeshes_[fi] = nullptr;
         }
     }
-    thornQuadMesh_ = nullptr;
-    if (thornTexture_) {
-        AEGfxTextureUnload(thornTexture_);
-        thornTexture_ = nullptr;
+    mossQuadMesh_ = nullptr;
+    if (mossTexture_) {
+        AEGfxTextureUnload(mossTexture_);
+        mossTexture_ = nullptr;
     }
     mosses_.clear();
 }

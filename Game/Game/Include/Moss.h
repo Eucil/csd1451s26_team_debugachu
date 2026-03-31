@@ -42,14 +42,14 @@ private:
     // sprite is not stretched when drawn on a square quad.
     AEGfxVertexList* mossFrameMeshes_[3]{nullptr, nullptr, nullptr};
 
-    // thornQuadMesh_ kept for internal use; points at mossFrameMeshes_[0]
-    AEGfxVertexList* thornQuadMesh_{nullptr};
-    AEGfxTexture* thornTexture_{nullptr};
+    // mossQuadMesh_ kept for internal use; points at mossFrameMeshes_[0]
+    AEGfxVertexList* mossQuadMesh_{nullptr};
+    AEGfxTexture* mossTexture_{nullptr};
 
     // Sprite animation state
-    float thornFrameTimer_{0.0f};
-    int thornFrame_{0};
-    static constexpr float kThornFrameTime = 0.35f; // seconds per frame
+    float mossFrameTimer_{0.0f};
+    int mossFrame_{0};
+    static constexpr float kMossFrameTime = 0.35f; // seconds per frame
 
     std::vector<Moss> mosses_;
 
