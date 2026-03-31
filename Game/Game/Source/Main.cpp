@@ -1,3 +1,17 @@
+/*!
+@file       Main.cpp
+@author     Sean Lee Hong Wei/seanhongwei.lee@digipen.edu
+@co_author  Woo Guang Theng/guangtheng.woo@digipen.edu,
+
+@date		March, 31, 2026
+
+@brief      This source file contains the declaration of functions that
+
+@copyright  Copyright (C) 2026 DigiPen Institute of Technology.
+            Reproduction or disclosure of this file or its contents
+            without the prior written consent of DigiPen Institute of
+            Technology is prohibited.
+*//*______________________________________________________________________*/
 #include <iostream>
 
 #include <AEEngine.h>
@@ -25,7 +39,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     g_configManager.init("Assets/GameData/FileConfigs");
     g_configManager.init("Assets/GameData/UI");
 
-    GameStateManager GSM;
+    GameStateManager GSM{};
     GSM.init(StateId::LogoScreen);
 
     // Audio system
@@ -84,6 +98,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     g_audioSystem.unloadAllSounds();
     g_audioSystem.unloadAllMusic();
     g_audioSystem.unloadAllGroups();
+
+    g_configManager.cleanUp();
 
     AESysExit();
 }

@@ -1,8 +1,23 @@
+/*!
+@file       LevelSelector.cpp
+@author     Woo Guang Theng/guangtheng.woo@digipen.edu
+@co_author  Sean Lee Hong Wei/seanhongwei.lee@digipen.edu,
+            Chia Hanxin/c.hanxin@digipen.edu,
+            Han Tianchou/H.tianchou@digipen.edu
+
+@date		March, 31, 2026
+
+@brief      This source file contains the declaration of functions that
+
+@copyright  Copyright (C) 2026 DigiPen Institute of Technology.
+            Reproduction or disclosure of this file or its contents
+            without the prior written consent of DigiPen Institute of
+            Technology is prohibited.
+*//*______________________________________________________________________*/
 #include "States/LevelSelector.h"
 
-#include <iostream>
-
 #include <AEEngine.h>
+#include <iostream>
 
 #include "Animations.h"
 #include "Button.h"
@@ -75,14 +90,6 @@ void LoadLevelSelector() {
     pBgDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
     // pBgStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
     // pBgMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
-
-    // Calculate window bounds
-    f32 halfW = AEGfxGetWindowWidth() / 2.0f;
-    f32 halfH = AEGfxGetWindowHeight() / 2.0f;
-
-    // TILING LOGIC: Repeat the texture every 64 pixels
-    f32 uRepeat = AEGfxGetWindowWidth() / 64.0f;
-    f32 vRepeat = AEGfxGetWindowHeight() / 64.0f;
 
     previewMesh = CreateRectMesh();
     defaultPreviewTex = AEGfxTextureLoad("Assets/Textures/pink_button.png");
@@ -404,7 +411,7 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
             inputNumbers(inputStr);
             inputPrompt.content_ = "Portal Limit: " + inputStr;
             if (AEInputCheckReleased(AEVK_RETURN)) {
-                inputPortalLimit = std::stof(inputStr);
+                inputPortalLimit = std::stoi(inputStr);
                 levelManager.createLevelData(levelInput, static_cast<int>(inputWidth),
                                              static_cast<int>(inputHeight), 20,
                                              static_cast<int>(inputPortalLimit));

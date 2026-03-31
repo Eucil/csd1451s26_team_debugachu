@@ -1,3 +1,17 @@
+/*!
+@file       Moss.cpp
+@author     Han Tianchou/H.tianchou@digipen.edu
+@co_author  NIL
+
+@date		March, 31, 2026
+
+@brief      This source file contains the declaration of functions that
+
+@copyright  Copyright (C) 2026 DigiPen Institute of Technology.
+            Reproduction or disclosure of this file or its contents
+            without the prior written consent of DigiPen Institute of
+            Technology is prohibited.
+*//*______________________________________________________________________*/
 #include "Moss.h"
 
 #include <cmath>
@@ -22,6 +36,7 @@ Moss::Moss() {
 }
 
 Moss::Moss(AEVec2 pos, MossType type) {
+    (void)type; // Ignore the type parameter since we only use Spiky moss
     transform_.pos_ = pos;
     transform_.scale_ = {40.0f, 40.0f};
     transform_.rotationRad_ = 0.0f;
@@ -90,6 +105,7 @@ void MossSystem::CreateMeshes() {
 
 void MossSystem::LoadLevelMoss(AEVec2 pos, MossType type) {
     // Ignore the type parameter and always use Spiky
+    (void)type;
     mosses_.emplace_back(pos, MossType::Spiky);
 }
 
@@ -192,6 +208,24 @@ void MossSystem::DrawMoss(const Moss& m) {
 
         AEGfxPrint(font_, buffer, screenX, screenY, 0.4f, 1.0f, 1.0f, 1.0f, 1.0f);
     }
+}
+
+void MossSystem::DrawPreview() {
+    AEVec2 mousePos = GetMouseWorldPos();
+
+    AEMtx33 scaleMtx, rotMtx, transMtx, worldMtx;
+    AEMtx33Scale(&scaleMtx, 40.0f, 40.0f);
+    AEMtx33Rot(&rotMtx, 0.0f);
+    AEMtx33Trans(&transMtx, mousePos.x, mousePos.y);
+    AEMtx33Concat(&worldMtx, &rotMtx, &scaleMtx);
+    AEMtx33Concat(&worldMtx, &transMtx, &worldMtx);
+
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(0.5f);
+    AEGfxSetColorToMultiply(0.0f, 0.5f, 0.0f, 1.0f);
+    AEGfxSetTransform(worldMtx.m);
+    AEGfxMeshDraw(spikyMossMesh_, AE_GFX_MDM_TRIANGLES);
 }
 
 void MossSystem::Draw() {

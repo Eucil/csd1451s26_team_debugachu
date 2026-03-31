@@ -1,3 +1,18 @@
+/*!
+@file       FluidSystem.h
+@author     Chia Hanxin/c.hanxin@digipen.edu
+@co_author  Sean Lee Hong Wei/seanhongwei.lee@digipen.edu,
+            Woo Guang Theng/guangtheng.woo@digipen.edu
+
+@date		March, 31, 2026
+
+@brief      This header file contains the declaration of functions that
+
+@copyright  Copyright (C) 2026 DigiPen Institute of Technology.
+            Reproduction or disclosure of this file or its contents
+            without the prior written consent of DigiPen Institute of
+            Technology is prohibited.
+*//*______________________________________________________________________*/
 #pragma once
 
 #include <initializer_list>
@@ -19,7 +34,7 @@ struct FluidParticle {
         type_; //  <--- water, lava, etc
                // currently only being used for identifying the particle type for setters/getters
 
-    bool portalIframe_{false};            // <--- to prevent immediate re-teleportation
+    bool portalIframe_{false};           // <--- to prevent immediate re-teleportation
     f32 portalIframeTimer_{0.15f};       // <--- timer for portal iframe
     f32 portalIframeMaxduration_{0.15f}; // <--- duration of portal iframe in seconds
 

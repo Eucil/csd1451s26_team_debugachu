@@ -1,3 +1,17 @@
+/*!
+@file       PortalSystem.cpp
+@author     Woo Guang Theng/guangtheng.woo@digipen.edu
+@co_author  Sean Lee Hong Wei/seanhongwei.lee@digipen.edu
+
+@date		March, 31, 2026
+
+@brief      This source file contains the declaration of functions that
+
+@copyright  Copyright (C) 2026 DigiPen Institute of Technology.
+            Reproduction or disclosure of this file or its contents
+            without the prior written consent of DigiPen Institute of
+            Technology is prohibited.
+*//*______________________________________________________________________*/
 #include "PortalSystem.h"
 
 #include <cmath>
@@ -66,16 +80,17 @@ Portal::Portal(AEVec2 pos, AEVec2 scale, f32 rotationDeg) {
 void PortalSystem::Initialize(int const& portalMax) {
 
     rectMesh_ = CreateRectMesh();
-    graphicsConfigs_.mesh_ = rectMesh_;
-    graphicsConfigs_.texture_ = AEGfxTextureLoad("Assets/Textures/wormhole.png");
+    portal_graphicsConfigs_.mesh_ = rectMesh_;
+    portal_graphicsConfigs_.texture_ = AEGfxTextureLoad("Assets/Textures/wormhole.png");
 
-    portalScale_ = {30.0f, 60.0f};
-    rotationValue_ = 0.0f;
-    current_portal_ = nullptr;
-    clickIframe_ = false;
+    arrow_graphicsConfigs_.mesh_ = rectMesh_;
+    arrow_graphicsConfigs_.texture_ = AEGfxTextureLoad("Assets/Textures/portal_arrow.png");
 
     portalScale_ =
         g_configManager.getAEVec2("PortalSystem", "default", "portalScale_", AEVec2{30.f, 60.f});
+    rotationValue_ = 0.0f;
+    current_portal_ = nullptr;
+    clickIframe_ = false;
     portalLimit_ = portalMax;
 
     nextRed_ = AERandFloat();
@@ -216,7 +231,7 @@ void PortalSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
 void PortalSystem::Draw() {
 
     // If texture doesn't exist, draw as color
-    if (graphicsConfigs_.texture_ == nullptr) {
+    if (portal_graphicsConfigs_.texture_ == nullptr) {
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
@@ -224,7 +239,7 @@ void PortalSystem::Draw() {
         for (auto& portal : portalVec_) {
             AEGfxSetColorToMultiply(portal->red_, portal->green_, portal->blue_, 1.0f);
             AEGfxSetTransform(portal->transform_.worldMtx_.m);
-            AEGfxMeshDraw(graphicsConfigs_.mesh_, AE_GFX_MDM_TRIANGLES);
+            AEGfxMeshDraw(portal_graphicsConfigs_.mesh_, AE_GFX_MDM_TRIANGLES);
         }
     } else {
         // Normal texture rendering
@@ -234,8 +249,8 @@ void PortalSystem::Draw() {
         for (auto& portal : portalVec_) {
             AEGfxSetColorToMultiply(portal->red_, portal->green_, portal->blue_, 1.0f);
             AEGfxSetTransform(portal->transform_.worldMtx_.m);
-            AEGfxTextureSet(graphicsConfigs_.texture_, 0.0f, 0.0f);
-            AEGfxMeshDraw(graphicsConfigs_.mesh_, AE_GFX_MDM_TRIANGLES);
+            AEGfxTextureSet(portal_graphicsConfigs_.texture_, 0.0f, 0.0f);
+            AEGfxMeshDraw(portal_graphicsConfigs_.mesh_, AE_GFX_MDM_TRIANGLES);
         }
     }
 }
@@ -266,19 +281,48 @@ void PortalSystem::DrawPreview() {
     AEGfxSetTransparency(0.5f);
     AEGfxSetColorToMultiply(r, g, b, 1.0f);
     AEGfxSetTransform(worldMtx.m);
-    AEGfxTextureSet(graphicsConfigs_.texture_, 0.0f, 0.0f);
-    AEGfxMeshDraw(graphicsConfigs_.mesh_, AE_GFX_MDM_TRIANGLES);
+    AEGfxTextureSet(portal_graphicsConfigs_.texture_, 0.0f, 0.0f);
+    AEGfxMeshDraw(portal_graphicsConfigs_.mesh_, AE_GFX_MDM_TRIANGLES);
+
+    // Draw arrow indicating rotation
+    f32 rotRad = AEDegToRad(rotationValue_);
+    f32 exitCos = AECos(rotRad);
+    f32 exitSin = AESin(rotRad);
+
+    f32 offset = portalScale_.y * 0.6f;
+    AEVec2 arrowPos = {mousePos_.x + exitCos * offset, mousePos_.y + exitSin * offset};
+
+    AEMtx33 arrow_scaleMtx, arrow_rotMtx, arrow_transMtx, arrow_worldMtx;
+    AEVec2 arrowScale = {portalScale_.x, portalScale_.x};
+    AEMtx33Scale(&arrow_scaleMtx, arrowScale.x, arrowScale.y);
+    AEMtx33Rot(&arrow_rotMtx, rotRad);
+    AEMtx33Trans(&arrow_transMtx, arrowPos.x, arrowPos.y);
+    AEMtx33Concat(&arrow_worldMtx, &arrow_rotMtx, &arrow_scaleMtx);
+    AEMtx33Concat(&arrow_worldMtx, &arrow_transMtx, &arrow_worldMtx);
+
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(1.f);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxSetTransform(arrow_worldMtx.m);
+    AEGfxTextureSet(arrow_graphicsConfigs_.texture_, 0.0f, 0.0f);
+    AEGfxMeshDraw(arrow_graphicsConfigs_.mesh_, AE_GFX_MDM_TRIANGLES);
 }
 
 void PortalSystem::Free() {
 
     AEGfxMeshFree(rectMesh_);
     rectMesh_ = nullptr;
-    graphicsConfigs_.mesh_ = nullptr;
+    portal_graphicsConfigs_.mesh_ = nullptr;
+    arrow_graphicsConfigs_.mesh_ = nullptr;
 
-    if (graphicsConfigs_.texture_ != nullptr) {
-        AEGfxTextureUnload(graphicsConfigs_.texture_);
-        graphicsConfigs_.texture_ = nullptr;
+    if (portal_graphicsConfigs_.texture_ != nullptr) {
+        AEGfxTextureUnload(portal_graphicsConfigs_.texture_);
+        portal_graphicsConfigs_.texture_ = nullptr;
+    }
+    if (arrow_graphicsConfigs_.texture_ != nullptr) {
+        AEGfxTextureUnload(arrow_graphicsConfigs_.texture_);
+        arrow_graphicsConfigs_.texture_ = nullptr;
     }
     for (auto& portal : portalVec_) {
         portal->linkedPortal_ = nullptr;
@@ -345,8 +389,10 @@ void PortalSystem::RotatePortal() {
         rotationValue_ -= 15.0f; // Decrease rotation
     }
 
-    if (rotationValue_ > 360.0f || rotationValue_ < 0.0f) {
+    if (rotationValue_ > 360.0f) {
         rotationValue_ = 0.0f;
+    } else if (rotationValue_ < 0.0f) {
+        rotationValue_ = 360.0f;
     }
 }
 

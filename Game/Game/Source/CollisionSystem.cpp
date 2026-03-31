@@ -1,3 +1,18 @@
+/*!
+@file       CollisionSystem.cpp
+@author     Sean Lee Hong Wei/seanhongwei.lee@digipen.edu
+@co_author  Woo Guang Theng/guangtheng.woo@digipen.edu,
+            Chia Hanxin/c.hanxin@digipen.edu
+
+@date		March, 31, 2026
+
+@brief      This source file contains the declaration of functions that
+
+@copyright  Copyright (C) 2026 DigiPen Institute of Technology.
+            Reproduction or disclosure of this file or its contents
+            without the prior written consent of DigiPen Institute of
+            Technology is prohibited.
+*//*______________________________________________________________________*/
 #include "CollisionSystem.h"
 
 void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& fluidSystem, f32 dt) {
@@ -413,7 +428,7 @@ bool CollisionSystem::detectCircleVsAABB(const AEVec2& circleCenter, f32 radius,
     //
     // For e.g. if boxLeft = 0, boxRight = 10, circleCenter.x = 15, circleCenter.x gets clamped to
     // 10
-    AEVec2 closest;
+    AEVec2 closest{};
     closest.x = AEClamp(circleCenter.x, boxLeft, boxRight);
     closest.y = AEClamp(circleCenter.y, boxBottom, boxTop);
 

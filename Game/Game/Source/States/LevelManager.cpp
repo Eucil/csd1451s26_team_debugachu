@@ -1,3 +1,18 @@
+/*!
+@file       LevelManager.cpp
+@author     Woo Guang Theng/guangtheng.woo@digipen.edu
+@co_author  Sean Lee Hong Wei/seanhongwei.lee@digipen.edu,
+            Han Tianchou/H.tianchou@digipen.edu
+
+@date		March, 31, 2026
+
+@brief      This source file contains the declaration of functions that
+
+@copyright  Copyright (C) 2026 DigiPen Institute of Technology.
+            Reproduction or disclosure of this file or its contents
+            without the prior written consent of DigiPen Institute of
+            Technology is prohibited.
+*//*______________________________________________________________________*/
 #include "States/LevelManager.h"
 
 #include <filesystem>
@@ -122,8 +137,10 @@ void LevelManager::updateContainerPosition() {
     // Position controls text centered below the container
     f32 halfWinW = AEGfxGetWindowWidth() / 2.0f;
     f32 halfWinH = AEGfxGetWindowHeight() / 2.0f;
-    editorControlsText_.x_ = (containerPos.x - editorContainer_.getTransform().scale_.x / 2.0f) / halfWinW;
-    editorControlsText_.y_ = (containerPos.y - editorContainer_.getTransform().scale_.y / 2.0f - 30.0f) / halfWinH;
+    editorControlsText_.x_ =
+        (containerPos.x - editorContainer_.getTransform().scale_.x / 2.0f) / halfWinW;
+    editorControlsText_.y_ =
+        (containerPos.y - editorContainer_.getTransform().scale_.y / 2.0f - 30.0f) / halfWinH;
 }
 
 void LevelManager::updateInnerButtonPosition() {

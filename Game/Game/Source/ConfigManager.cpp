@@ -1,3 +1,17 @@
+/*!
+@file       ConfigManager.cpp
+@author     Woo Guang Theng/guangtheng.woo@digipen.edu
+@co_author  NIL
+
+@date		March, 31, 2026
+
+@brief      This source file contains the declaration of functions that
+
+@copyright  Copyright (C) 2026 DigiPen Institute of Technology.
+            Reproduction or disclosure of this file or its contents
+            without the prior written consent of DigiPen Institute of
+            Technology is prohibited.
+*//*______________________________________________________________________*/
 #include "ConfigManager.h"
 
 #include <filesystem>
@@ -160,7 +174,7 @@ AEVec2 ConfigManager::getAEVec2(const std::string& file, const std::string& sect
                   << ", " << defaultVal.y << ")\n";
         return defaultVal;
     }
-    AEVec2 out;
+    AEVec2 out{};
     out.x = (*arrayRoot)[0].asFloat();
     out.y = (*arrayRoot)[1].asFloat();
     return out;

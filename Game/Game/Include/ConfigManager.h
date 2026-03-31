@@ -1,3 +1,17 @@
+/*!
+@file       ConfigManager.h
+@author     Woo Guang Theng/guangtheng.woo@digipen.edu
+@co_author  NIL
+
+@date		March, 31, 2026
+
+@brief      This header file contains the declaration of functions that
+
+@copyright  Copyright (C) 2026 DigiPen Institute of Technology.
+            Reproduction or disclosure of this file or its contents
+            without the prior written consent of DigiPen Institute of
+            Technology is prohibited.
+*//*______________________________________________________________________*/
 #pragma once
 
 #include <string>
@@ -28,6 +42,8 @@ public:
     bool hasFile(const std::string& file) const;
     bool hasSection(const std::string& file, const std::string& section) const;
     bool hasKey(const std::string& file, const std::string& section, const std::string& key) const;
+
+    void cleanUp() { configs_.clear(); }
 
 private:
     bool loadFile(const std::string& filePath, const std::string& fileName);

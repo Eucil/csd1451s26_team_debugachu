@@ -1,4 +1,20 @@
-﻿#include "States/Level.h"
+﻿/*!
+@file       Level.cpp
+@author     Woo Guang Theng/guangtheng.woo@digipen.edu
+@co_author  Sean Lee Hong Wei/seanhongwei.lee@digipen.edu,
+            Chia Hanxin/c.hanxin@digipen.edu,
+            Han Tianchou/H.tianchou@digipen.edu
+
+@date		March, 31, 2026
+
+@brief      This source file contains the declaration of functions that
+
+@copyright  Copyright (C) 2026 DigiPen Institute of Technology.
+            Reproduction or disclosure of this file or its contents
+            without the prior written consent of DigiPen Institute of
+            Technology is prohibited.
+*//*______________________________________________________________________*/
+#include "States/Level.h"
 
 #include <fstream>
 #include <iomanip>
@@ -320,6 +336,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 collectibleSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
                 mossSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
                                   startEndPointSystem);
+                portalSystem.RotatePortal();
 
                 // Inputs to build level
                 if (!levelManager.getDisplayBuilderContainer()) {
@@ -613,10 +630,19 @@ void DrawLevel() {
             levelManager.drawBrushPreview(TerrainMaterial::Magic);
             break;
         case GameBlock::StartPoint:
-            startEndPointSystem.DrawColorPreview(StartEndType::Pipe);
+            startEndPointSystem.DrawPreview(StartEndType::Pipe);
             break;
         case GameBlock::EndPoint:
-            startEndPointSystem.DrawColorPreview(StartEndType::Flower);
+            startEndPointSystem.DrawPreview(StartEndType::Flower);
+            break;
+        case GameBlock::Collectible:
+            collectibleSystem.DrawPreview();
+            break;
+        case GameBlock::Moss:
+            mossSystem.DrawPreview();
+            break;
+        case GameBlock::Portal:
+            portalSystem.DrawPreview();
             break;
         default:
             break;
@@ -699,7 +725,6 @@ void UnloadLevel() {
     Terrain::freeMeshLibrary();
 
     // Unload fonts
-    AEGfxDestroyFont(font);
     if (titleFont) {
         AEGfxDestroyFont(titleFont);
         titleFont = 0;
