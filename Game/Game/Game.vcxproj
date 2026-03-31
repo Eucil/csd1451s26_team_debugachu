@@ -34,6 +34,7 @@
     <ClCompile Include="Source\States\LevelSelector.cpp" />
     <ClCompile Include="Source\States\LogoScreen.cpp" />
     <ClCompile Include="Source\States\MainMenu.cpp" />
+    <ClCompile Include="Source\States\PlayerLevel.cpp" />
     <ClCompile Include="Source\States\Settings.cpp" />
     <ClCompile Include="Source\Terrain.cpp" />
     <ClCompile Include="Source\Utils.cpp" />
@@ -67,6 +68,7 @@
     <ClInclude Include="Include\States\LevelSelector.h" />
     <ClInclude Include="Include\States\LogoScreen.h" />
     <ClInclude Include="Include\States\MainMenu.h" />
+    <ClInclude Include="Include\States\PlayerLevel.h" />
     <ClInclude Include="Include\States\Settings.h" />
     <ClInclude Include="Include\Terrain.h" />
     <ClInclude Include="Include\States\Transition.h" />

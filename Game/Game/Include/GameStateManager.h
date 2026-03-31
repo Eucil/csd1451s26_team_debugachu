@@ -24,6 +24,7 @@
 #include "States/LevelSelector.h"
 #include "States/LogoScreen.h"
 #include "States/MainMenu.h"
+#include "States/PlayerLevel.h"
 #include "States/Settings.h"
 
 enum class StateId {
@@ -34,6 +35,7 @@ enum class StateId {
     LogoScreen,
     MainMenu,
     LevelSelector,
+    PlayerLevel,
     Level,
     Credits,
     Settings,
@@ -85,6 +87,14 @@ public:
             fpDraw_ = DrawLevelSelector;
             fpFree_ = FreeLevelSelector;
             fpUnload_ = UnloadLevelSelector;
+            break;
+        case StateId::PlayerLevel:
+            fpLoad_ = LoadPlayerLevel;
+            fpInitialize_ = InitializePlayerLevel;
+            fpUpdate_ = UpdatePlayerLevel;
+            fpDraw_ = DrawPlayerLevel;
+            fpFree_ = FreePlayerLevel;
+            fpUnload_ = UnloadPlayerLevel;
             break;
         case StateId::Level:
             fpLoad_ = LoadLevel;

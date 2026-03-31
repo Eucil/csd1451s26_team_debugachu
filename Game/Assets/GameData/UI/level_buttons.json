@@ -1,7 +1,7 @@
 {
   "Pause": {
     "position": {
-      "x": -600.0,
+      "x": 775.0,
       "y": 422.0
     },
     "scale": {
@@ -17,17 +17,17 @@
       "alpha": 1.0
     }
   },
-  "Back": {
+  "Resume": {
     "position": {
-      "x": -704.0,
-      "y": 386.0
+      "x": 0.0,
+      "y": 150.0
     },
     "scale": {
-      "x": 160.0,
+      "x": 320.0,
       "y": 96.0
     },
     "text": {
-      "content": "BACK",
+      "content": "RESUME",
       "scale": 1.0,
       "red": 1.0,
       "green": 1.0,
@@ -38,7 +38,7 @@
   "Restart": {
     "position": {
       "x": 0.0,
-      "y": 100.0
+      "y": 0.0
     },
     "scale": {
       "x": 320.0,
@@ -56,7 +56,7 @@
   "Quit": {
     "position": {
       "x": 0.0,
-      "y": -100.0
+      "y": -150.0
     },
     "scale": {
       "x": 320.0,

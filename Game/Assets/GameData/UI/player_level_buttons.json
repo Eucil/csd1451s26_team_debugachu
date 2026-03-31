@@ -89,7 +89,7 @@
       "alpha": 1.0
     }
   },
-    "ToPlayerLevel": {
+    "ToLevelSelector": {
     "position": {
       "x": 704.0,
       "y": 0.0
@@ -99,7 +99,7 @@
       "y": 96.0
     },
     "text": {
-      "content": ">>",
+      "content": "<<",
       "scale": 1.0,
       "red": 1.0,
       "green": 1.0,

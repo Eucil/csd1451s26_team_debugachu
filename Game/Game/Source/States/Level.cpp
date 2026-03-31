@@ -28,8 +28,8 @@
 #include "Button.h"
 #include "Collectible.h"
 #include "CollisionSystem.h"
-#include "ConfigManager.h"
 #include "Components.h"
+#include "ConfigManager.h"
 #include "DebugSystem.h"
 #include "FluidSystem.h"
 #include "GameStateManager.h"
@@ -61,7 +61,6 @@ static WinScreen winScreen;
 
 // tc added end
 
-static TextData rotationText;
 static TextData pauseHeaderText;
 
 // Fonts
@@ -76,7 +75,7 @@ static VFXSystem vfxSystem;
 
 // Buttons
 static Button buttonPause;
-static Button buttonBack;
+static Button buttonResume;
 static Button buttonRestart;
 static Button buttonQuit;
 
@@ -124,7 +123,6 @@ void LoadLevel() {
     pTerrainMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
 
     // Setup texts
-    rotationText = TextData{"", 0.7f, 0.92f, 0.5f};
     titleFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
     font = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
     buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
@@ -148,8 +146,6 @@ void LoadLevel() {
     goalText.content_ = "Goal: 0%";
     goalText.font_ = font;
 
-    rotationText.font_ = font;
-
     // tc added end
 
     levelManager.initEditorUI(font);
@@ -170,8 +166,8 @@ void LoadLevel() {
     // UI buttons
     buttonPause.loadMesh();
     buttonPause.loadTexture("Assets/Textures/brown_square_24_24.png");
-    buttonBack.loadMesh();
-    buttonBack.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
+    buttonResume.loadMesh();
+    buttonResume.loadTexture("Assets/Textures/brown_rectangle_80_24.png");
     buttonRestart.loadMesh();
     buttonRestart.loadTexture("Assets/Textures/brown_rectangle_80_24.png");
     buttonQuit.loadMesh();
@@ -285,8 +281,8 @@ void InitializeLevel() {
     // UI buttons
     buttonPause.initFromJson("level_buttons", "Pause");
     buttonPause.setTextFont(buttonFont);
-    buttonBack.initFromJson("level_buttons", "Back");
-    buttonBack.setTextFont(buttonFont);
+    buttonResume.initFromJson("level_buttons", "Resume");
+    buttonResume.setTextFont(buttonFont);
     buttonRestart.initFromJson("level_buttons", "Restart");
     buttonRestart.setTextFont(buttonFont);
     buttonQuit.initFromJson("level_buttons", "Quit");
@@ -378,7 +374,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
             // Game is paused
             // ====================
 
-            if (buttonBack.checkMouseClick()) {
+            if (buttonResume.checkMouseClick()) {
                 pauseSystem.resume();
             }
             if (buttonRestart.checkMouseClick()) {
@@ -392,7 +388,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
             }
 
             // UI buttons
-            buttonBack.updateTransform();
+            buttonResume.updateTransform();
             buttonRestart.updateTransform();
             buttonQuit.updateTransform();
 
@@ -919,9 +915,6 @@ void DrawLevel() {
     DrawGoalBar(goalText.x_ + 0.39f, goalText.y_ - 0.09f, goalPercentage);
     // tc added end
 
-    rotationText.content_ =
-        "Portal Rotation:" + std::to_string(static_cast<s32>(portalSystem.GetRotationValue()));
-    rotationText.draw();
     // Buttons
     buttonPause.draw();
 
@@ -934,7 +927,7 @@ void DrawLevel() {
         pauseHeaderText.draw(true);
 
         // UI buttons
-        buttonBack.draw();
+        buttonResume.draw();
         buttonRestart.draw();
         buttonQuit.draw();
     } else { // Game is not paused
@@ -1051,7 +1044,7 @@ void UnloadLevel() {
 
     // UI buttons
     buttonPause.unload();
-    buttonBack.unload();
+    buttonResume.unload();
     buttonRestart.unload();
     buttonQuit.unload();
 
