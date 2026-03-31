@@ -44,4 +44,5 @@ private:
     Transform transform_;
     Graphics graphics_;
     TextData text_;
+    bool wasHovered_{false}; // tracks previous frame hover to fire sound once on enter
 };

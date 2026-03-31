@@ -92,29 +92,35 @@ void Button::draw() {
         return;
     }
 
-    // SAFETY CHECK: If texture is missing, draw in color mode as fallback
+    const f32 kDimmed = 1.30f;
+    bool hovered = isHovered();
+    if (hovered && !wasHovered_) {
+        g_audioSystem.playSound("hover", "sfx", 0.3f, 1.0f);
+    }
+    wasHovered_ = hovered;
+    f32 tint = hovered ? 1.0f : kDimmed;
+    f32 drawR = graphics_.red_ * tint;
+    f32 drawG = graphics_.green_ * tint;
+    f32 drawB = graphics_.blue_ * tint;
+
     if (graphics_.texture_ == nullptr) {
-        // Draw in color mode as fallback
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
-        AEGfxSetColorToMultiply(graphics_.red_, graphics_.green_, graphics_.blue_,
-                                graphics_.alpha_);
+        AEGfxSetColorToMultiply(drawR, drawG, drawB, graphics_.alpha_);
         AEGfxSetTransform(transform_.worldMtx_.m);
         AEGfxMeshDraw(graphics_.mesh_, AE_GFX_MDM_TRIANGLES);
     } else {
-        // Normal texture rendering
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
-        AEGfxSetColorToMultiply(graphics_.red_, graphics_.green_, graphics_.blue_,
-                                graphics_.alpha_);
+        AEGfxSetColorToMultiply(drawR, drawG, drawB, graphics_.alpha_);
         AEGfxSetTransform(transform_.worldMtx_.m);
         AEGfxTextureSet(graphics_.texture_, 0.0f, 0.0f);
         AEGfxMeshDraw(graphics_.mesh_, AE_GFX_MDM_TRIANGLES);
     }
 
-    // Render text
+    // Render text at full brightness regardless of hover state
     if (text_.font_ != 0) {
         text_.draw();
     }
