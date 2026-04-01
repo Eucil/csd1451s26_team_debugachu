@@ -67,8 +67,10 @@ static bool creatingLevel = false;
 static int inputWidth{}, inputHeight{}, inputPortalLimit{};
 static int confirmInput{}, levelInput{};
 static std::string inputStr;
-static TextData inputPrompt{"Width", -0.4f, 0.0f};
+static TextData inputPrompt{"Width", -0.4f, 0.6f};
+static TextData recommendedPrompt{"Input between: 20-50", 0.0f, 0.0f};
 static TextData quitCreatingPrompt{"Press Q to quit creating", 0.f, -0.3f};
+static TextData enterCreatingPrompt{"Press Enter to confirm", 0.f, -0.6f};
 
 static Button creationBackground;
 static Button buttonSelect;
@@ -151,7 +153,10 @@ void LoadLevelSelector() {
 
     titleText.font_ = titleFont;
     inputPrompt.font_ = titleFont;
+    recommendedPrompt.font_ = titleFont;
     quitCreatingPrompt.font_ = titleFont;
+    enterCreatingPrompt.font_ = titleFont;
+
     animManager.Clear();
     animManager.Add(&screenFader);
     animManager.Add(&someOtherCoolAnimation);
@@ -402,33 +407,51 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
         case 0:
             inputNumbers(inputStr);
             inputPrompt.content_ = "Width: " + inputStr;
+            recommendedPrompt.content_ = "Input between: 1 - 80";
             if (AEInputCheckReleased(AEVK_RETURN)) {
-                confirmInput++;
                 inputWidth = std::stoi(inputStr);
-                inputStr = "";
+                if (inputWidth <= 0 || inputWidth > 80) {
+                    // Set back to 0 and prompt user again if input is invalid
+                    inputWidth = 0;
+                } else {
+                    confirmInput++;
+                    inputStr = "";
+                }
             }
             break;
         case 1:
             inputNumbers(inputStr);
             inputPrompt.content_ = "Height: " + inputStr;
+            recommendedPrompt.content_ = "Input between: 1 - 45";
             if (AEInputCheckReleased(AEVK_RETURN)) {
-                confirmInput++;
                 inputHeight = std::stoi(inputStr);
-                inputStr = "";
+                if (inputHeight <= 0 || inputHeight > 45) {
+                    // Set back to 0 and prompt user again if input is invalid
+                    inputHeight = 0;
+                } else {
+                    confirmInput++;
+                    inputStr = "";
+                }
             }
             break;
         case 2:
             inputNumbers(inputStr);
             inputPrompt.content_ = "Portal Limit: " + inputStr;
+            recommendedPrompt.content_ = "Input between: 0 - 10";
             if (AEInputCheckReleased(AEVK_RETURN)) {
                 inputPortalLimit = std::stoi(inputStr);
-                levelManager.createLevelData(levelInput, static_cast<int>(inputWidth),
-                                             static_cast<int>(inputHeight), 20,
-                                             static_cast<int>(inputPortalLimit));
-                creatingLevel = false;
-                levelManager.setLevelEditorMode(EditorMode::None);
-                titleText.content_ = "SELECT LEVEL";
-                levelManager.checkLevelData();
+                if (inputPortalLimit < 0 || inputPortalLimit > 10) {
+                    // Set back to 0 and prompt user again if input is invalid
+                    inputPortalLimit = 0;
+                } else {
+                    levelManager.createLevelData(levelInput, static_cast<int>(inputWidth),
+                                                 static_cast<int>(inputHeight), 20,
+                                                 static_cast<int>(inputPortalLimit));
+                    creatingLevel = false;
+                    levelManager.setLevelEditorMode(EditorMode::None);
+                    titleText.content_ = "SELECT LEVEL";
+                    levelManager.checkLevelData();
+                }
             }
             break;
         }
@@ -498,7 +521,9 @@ void DrawLevelSelector() {
         creationBackground.setRGBA(0.f, 0.f, 0.f, 0.8f);
         creationBackground.draw();
         inputPrompt.draw();
+        recommendedPrompt.draw(true);
         quitCreatingPrompt.draw(true);
+        enterCreatingPrompt.draw(true);
     }
 
     // If mouse is within a button, hoveredLevelIndex = button level.
