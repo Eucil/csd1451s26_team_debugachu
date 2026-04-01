@@ -8,9 +8,9 @@
 @brief      This source file contains the declaration of functions that
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
-            Reproduction or disclosure of this file or its contents
-            without the prior written consent of DigiPen Institute of
-            Technology is prohibited.
+           Reproduction or disclosure of this file or its contents
+           without the prior written consent of DigiPen Institute of
+           Technology is prohibited.
 *//*______________________________________________________________________*/
 #include "VFXSystem.h"
 
@@ -21,15 +21,16 @@
 // private
 // only used when a game event requires a particle to be spawned
 // =========================================================
-// 
+//
 //  ParticleEmitter's Main Initialize function
-// 
+//
 // Initializes a single ParticleEmitter with the inputted VFXType and position,
 // assigns its configuration from the preloaded emitter config array, spawns
 // its initial batch of particles, then immediately deactivates the emitter.
 //
 // =========================================================
 void VFXSystem::InitializeEmitter(ParticleEmitter& emitter, VFXType type, AEVec2 pos) {
+
     emitter.active_ = true;
     emitter.type_ = type;
     emitter.pos_ = pos;
@@ -46,13 +47,17 @@ void VFXSystem::InitializeEmitter(ParticleEmitter& emitter, VFXType type, AEVec2
 // =========================================================
 //
 //  VFXSystem's Main Initialize function
-// 
+//
 // Initializes VFXSystem by doing the following:
 // - Preallocates all emitter and particle pool containers to their maximum capacities
 // - Loads all graphics and emitter configurations for each VFXType from the ConfigManager.
 //
 // =========================================================
 void VFXSystem::Initialize(u32 maxParticles, u32 maxEmitters) {
+    for (int i = 0; i < static_cast<int>(VFXType::Count); ++i) {
+        graphicsConfigs_[i].mesh_ = nullptr;
+        graphicsConfigs_[i].texture_ = nullptr;
+    }
 
     // preallocate emitter container to avoid dynamic memory allocation during gameplay
     vfxEmitters_.resize(maxEmitters);
@@ -63,6 +68,8 @@ void VFXSystem::Initialize(u32 maxParticles, u32 maxEmitters) {
     }
 
     // All data below are readed from json file
+
+    // DirtBurst
     AEGfxVertexList* particleMesh = CreateRectMesh();
     Graphics dirtGfx;
     dirtGfx.mesh_ = particleMesh;
@@ -70,7 +77,16 @@ void VFXSystem::Initialize(u32 maxParticles, u32 maxEmitters) {
     dirtGfx.layer_ = g_configManager.getInt("VFXSystem", "dirtGFX", "layer", 5);
     SetGraphicsConfig(VFXType::DirtBurst, dirtGfx);
 
+    // PortalBurst
+    Graphics portalGfx;
+    portalGfx.mesh_ = particleMesh; // Reuse the exact same rect mesh
+    portalGfx.texture_ = nullptr;
+    portalGfx.layer_ = g_configManager.getInt("VFXSystem", "portalGFX", "layer", 5);
+    SetGraphicsConfig(VFXType::PortalBurst, portalGfx);
+
     // Emitter setup
+
+    // DirtBurst
     EmitterConfig dirtConfig;
     dirtConfig.spawnCount_ = g_configManager.getInt("VFXSystem", "dirtConfig", "spawnCount_", 10);
     dirtConfig.minLife_ = g_configManager.getFloat("VFXSystem", "dirtConfig", "minLife_", 0.3f);
@@ -84,15 +100,35 @@ void VFXSystem::Initialize(u32 maxParticles, u32 maxEmitters) {
     dirtConfig.b_ = g_configManager.getFloat("VFXSystem", "dirtConfig", "b_", 0.1f);
     dirtConfig.a_ = g_configManager.getFloat("VFXSystem", "dirtConfig", "a_", 1.0f);
     SetEmitterConfig(VFXType::DirtBurst, dirtConfig);
+
+    // PortalBurst
+    EmitterConfig portalConfig;
+    portalConfig.spawnCount_ =
+        g_configManager.getInt("VFXSystem", "portalConfig", "spawnCount_", 15);
+    portalConfig.minLife_ = g_configManager.getFloat("VFXSystem", "portalConfig", "minLife_", 0.2f);
+    portalConfig.maxLife_ = g_configManager.getFloat("VFXSystem", "portalConfig", "maxLife_", 0.5f);
+    portalConfig.minSpeed_ =
+        g_configManager.getFloat("VFXSystem", "portalConfig", "minSpeed_", 40.0f);
+    portalConfig.maxSpeed_ =
+        g_configManager.getFloat("VFXSystem", "portalConfig", "maxSpeed_", 120.0f);
+    portalConfig.minScale_ =
+        g_configManager.getFloat("VFXSystem", "portalConfig", "minScale_", 3.0f);
+    portalConfig.maxScale_ =
+        g_configManager.getFloat("VFXSystem", "portalConfig", "maxScale_", 7.0f);
+    portalConfig.r_ = g_configManager.getFloat("VFXSystem", "portalConfig", "r_", 0.8f);
+    portalConfig.g_ = g_configManager.getFloat("VFXSystem", "portalConfig", "g_", 0.1f);
+    portalConfig.b_ = g_configManager.getFloat("VFXSystem", "portalConfig", "b_", 1.0f);
+    portalConfig.a_ = g_configManager.getFloat("VFXSystem", "portalConfig", "a_", 1.0f);
+    SetEmitterConfig(VFXType::PortalBurst, portalConfig);
 }
 
 // =========================================================
 //
 // VFXSystem's main Update function
-// 
-// - Iterates over every particle pool and advances all active particles by one timestep. 
+//
+// - Iterates over every particle pool and advances all active particles by one timestep.
 // - Handles particle aging and death
-// - Applies downward gravity 
+// - Applies downward gravity
 // - Spins particles by their rotation speed
 // - Fades alpha out smoothly in the latter half of each particle's lifetime.
 //
@@ -146,8 +182,8 @@ void VFXSystem::Update(f32 dt) {
 // =========================================================
 //
 //  VFXSystem's main Draw function
-// 
-// - Renders all active particles across every VFXType pool. 
+//
+// - Renders all active particles across every VFXType pool.
 // - For each pool, selects either texture or color render mode based on the configured graphics.
 // - Constructs a world transform matrix from each particle's scale, rotation and position
 // - Issues a mesh draw call with the particle's current color and transparency values.
@@ -200,11 +236,11 @@ void VFXSystem::Draw() {
 // =========================================================
 //
 //  VFXSystem's main Free function
-// 
+//
 // - Releases all allocated GPU resources by safely freeing each unique
 // mesh and texture pointer while guarding against double-frees caused
-// by shared pointers across VFXType configs. 
-// 
+// by shared pointers across VFXType configs.
+//
 // -Clears all emitter and particle pool containers afterwards.
 //
 // =========================================================
@@ -224,7 +260,7 @@ void VFXSystem::Free() {
             }
 
             // prevent double freeing
-            if (!isDuplicate) {
+            if (isDuplicate) {
                 AEGfxMeshFree(currentMesh);
             }
 
@@ -263,11 +299,11 @@ void VFXSystem::Free() {
 // =========================================================
 //
 //  VFXSystem's spawn vfx utility function
-// 
+//
 // - Public entry point for triggering a one-shot VFX event at the given
-// world position. 
+// world position.
 // - Retrieves a free emitter from the pool and initializes it with the requested type
-// 
+//
 // - Logs a warning if no emitter is available.
 //
 // =========================================================
@@ -282,10 +318,10 @@ void VFXSystem::SpawnVFX(VFXType type, AEVec2 position) {
 // =========================================================
 //
 // VFXSystem's free emitter getter function
-// 
+//
 // - Scans the emitter pool and returns a pointer to the first inactive
 // ParticleEmitter available for reuse.
-// 
+//
 // - Returns nullptr if all emitters are currently active.
 //
 // =========================================================
@@ -299,13 +335,18 @@ ParticleEmitter* VFXSystem::GetFreeEmitter() {
     return nullptr;
 }
 
+// todo
+std::vector<VFXParticle>& VFXSystem::GetParticlePool(VFXType type) {
+    return vfxParticlePool_[static_cast<int>(type)];
+}
+
 // =========================================================
 //
 // VFXSystem's free particle getter function
-// 
+//
 // - Scans the particle pool for the specified VFXType and returns a pointer
-// to the first inactive VFXParticle available for reuse. 
-// 
+// to the first inactive VFXParticle available for reuse.
+//
 // - Returns nullptr if the entire pool for that type is currently active.
 //
 // =========================================================
@@ -326,10 +367,10 @@ VFXParticle* VFXSystem::GetFreeParticle(VFXType type) {
 // =========================================================
 //
 // VFXSystem's particle spawning utility function
-// 
+//
 // - Spawns a batch of particles for the given emitter up to its configured
-// spawnCount. 
-// 
+// spawnCount.
+//
 // - Each particle is pulled from the inactive pool and assigned
 // randomized lifetime, scale, radial burst velocity, rotation, and spin
 // values interpolated between the emitter config's min and max bounds.
@@ -384,9 +425,9 @@ void VFXSystem::SpawnParticles(ParticleEmitter& emitter) {
 
 // public
 // =========================================================
-// 
+//
 // VFXSystem's emitterConfigs_ setter function
-// 
+//
 // - Stores the provided EmitterConfig into the config array at the index
 // corresponding to the given VFXType, making it the active configuration
 // used when that type is next spawned.
@@ -400,7 +441,7 @@ void VFXSystem::SetEmitterConfig(VFXType type, const EmitterConfig& config) {
 // =========================================================
 //
 // VFXSystem's graphicConfigs_ setter function
-// 
+//
 // Stores the provided Graphics config into the graphics array at the index
 // corresponding to the given VFXType, defining the mesh, texture and layer
 // used when drawing particles of that type.
@@ -414,10 +455,10 @@ void VFXSystem::SetGraphicsConfig(VFXType type, const Graphics& gfxConfig) {
 // =========================================================
 //
 // VFXSystem's particle spawning utility function (continuous)
-// 
+//
 // - Drives a continuously repeating VFX effect by decrementing an internal
-// spawn timer each frame. 
-// 
+// spawn timer each frame.
+//
 // - When the timer expires, a new one-shot VFX is
 // spawned at the given position and the timer is reset to the provided
 // spawn rate interval.
@@ -434,8 +475,8 @@ void VFXSystem::SpawnContinuous(VFXType type, AEVec2 position, f32 deltaTime, f3
 
 // =========================================================
 //
-// VFXSystem's particle timer reset function 
-// 
+// VFXSystem's particle timer reset function
+//
 // Immediately resets the internal spawn timer to zero, forcing
 // SpawnContinuous to trigger a new spawn on its very next call.
 //

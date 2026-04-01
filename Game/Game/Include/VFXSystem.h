@@ -22,6 +22,7 @@
 #include "Utils.h"
 enum class VFXType {
     DirtBurst,
+    PortalBurst,
     // Add magic particles, portal particles wtv
     Count
 };
@@ -45,7 +46,7 @@ struct VFXParticle {
     f32 maxLifeTime_{1.0f};
 
     bool active_{false}; // Used for object pooling
-    char padding_[4];
+    char padding_[4]{0};
 };
 
 struct EmitterConfig {
@@ -76,6 +77,8 @@ public:
     void Draw();
 
     void Free();
+
+    std::vector<VFXParticle>& GetParticlePool(VFXType type);
 
     void SetEmitterConfig(VFXType type, const EmitterConfig& config);
 

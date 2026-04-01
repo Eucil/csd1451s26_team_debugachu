@@ -20,6 +20,7 @@
 
 #include "Components.h"
 #include "FluidSystem.h"
+#include "VFXSystem.h"
 
 struct Portal {
 
@@ -57,6 +58,7 @@ private:
     bool clickIframe_{false};
     f32 rotationValue_{};
     int portalLimit_{};
+    f32 portalVfxCooldown_{0.0f};
 
 public:
     void Initialize(int const& portalMax = 0);
@@ -65,7 +67,7 @@ public:
 
     bool CollisionCheckWithWater(Portal portal, FluidParticle particle);
 
-    void Update(f32 dt, std::vector<FluidParticle>& particlePool);
+    void Update(f32 dt, std::vector<FluidParticle>& particlePool, VFXSystem& vfx);
 
     void Draw();
 

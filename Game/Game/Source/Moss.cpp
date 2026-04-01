@@ -273,9 +273,6 @@ void MossSystem::DrawMoss(const Moss& m) {
         // Frame 0 = idle, frame 1 = bouncy, frame 2 = dying (health < 40%)
         int frame = (healthPct < 0.40f) ? 2 : mossFrame_;
 
-        // U offset: frame 0 = 0.0, frame 1 = 0.333, frame 2 = 0.667
-        float uOffset = static_cast<float>(frame) / 3.0f;
-
         AEMtx33 worldCopy = m.transform_.worldMtx_;
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);

@@ -68,7 +68,7 @@ private:
 
     std::vector<Moss> mosses_;
 
-    s8 font_;
+    s8 font_{0};
     bool showDebug_{false};
 
     float globalTimer_{0.0f};

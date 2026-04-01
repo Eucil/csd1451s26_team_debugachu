@@ -209,7 +209,10 @@ void MenuBackground::Update(f32 deltaTime) {
     bgStartEndPoint.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
     BgSpawnWater(deltaTime);
     bgFluidSystem.Update(deltaTime, {bgDirt, bgStone});
-    bgPortalSystem.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
+    bgPortalSystem.Update(
+        deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water), // Fills the waterPool param
+        bgVfxSystem                                                 // Allows VFX spawning
+    );
     bgVfxSystem.Update(deltaTime);
 }
 

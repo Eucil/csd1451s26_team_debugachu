@@ -50,7 +50,7 @@ private:
 
     std::vector<Collectible> collectibles_;
 
-    s8 font_;
+    s8 font_{0};
     TextData collectionText_;
     int collectedCount_{0};
     int totalCollectibles_{0};

@@ -61,7 +61,7 @@ private:
     // tc added start
     //  Water indicator UI
     AEGfxVertexList* barMesh_{nullptr};
-    s8 font_;
+    s8 font_{0};
     // tc added end
 
 public:

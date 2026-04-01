@@ -14,5 +14,21 @@
     "g_": 0.2,
     "b_": 0.1,
     "a_": 1.0
+  },
+  "portalGFX": {
+    "layer": 5
+  },
+  "portalConfig": {
+    "spawnCount_": 20,
+    "minLife_": 0.2,
+    "maxLife_": 0.6,
+    "minSpeed_": 40.0,
+    "maxSpeed_": 120.0,
+    "minScale_": 3.0,
+    "maxScale_": 7.0,
+    "r_": 0.8,
+    "g_": 0.6,
+    "b_": 1.0,
+    "a_": 1.0
   }
 }

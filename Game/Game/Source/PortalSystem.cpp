@@ -163,9 +163,8 @@ bool PortalSystem::CollisionCheckWithWater(Portal portal, FluidParticle particle
     return distance_squared < (radius * radius);
 }
 
-void PortalSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
-
-    (void)dt;
+void PortalSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool, VFXSystem& vfx) {
+    portalVfxCooldown_ -= dt;
     // Look for unlinked portals to set to current_portal_
     if (current_portal_ == nullptr) {
         for (auto& portal : portalVec_) {
@@ -223,6 +222,18 @@ void PortalSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
 
                 //  Activate iframe to prevent immediate re-teleportation
                 particle.portalIframe_ = true;
+
+                if (portalVfxCooldown_ <= 0.0f) {
+
+                    // Spawn particles at the INPUT portal pos
+                    vfx.SpawnVFX(VFXType::PortalBurst, portal->transform_.pos_);
+
+                    // Spawn the particles at the OUTPUT portal pos
+                    vfx.SpawnVFX(VFXType::PortalBurst, portal->linkedPortal_->transform_.pos_);
+
+                    // Lock the timer for 0.25 seconds (Only 4 bursts allowed per second)
+                    portalVfxCooldown_ = 0.25f;
+                }
             }
         }
     }

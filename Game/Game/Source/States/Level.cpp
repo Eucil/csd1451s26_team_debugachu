@@ -28,8 +28,8 @@
 #include "Button.h"
 #include "Collectible.h"
 #include "CollisionSystem.h"
-#include "ConfigManager.h"
 #include "Components.h"
+#include "ConfigManager.h"
 #include "DebugSystem.h"
 #include "FluidSystem.h"
 #include "GameStateManager.h"
@@ -634,7 +634,10 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 fluidSystem.Update(deltaTime, {dirt, stone});
                 startEndPointSystem.Update(deltaTime,
                                            fluidSystem.GetParticlePool(FluidType::Water));
-                portalSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
+                portalSystem.Update(
+                    deltaTime,
+                    fluidSystem.GetParticlePool(FluidType::Water), // Passing the specific VFX pool
+                    vfxSystem); // Passing the system for SpawnVFX calls
                 vfxSystem.Update(deltaTime);
 
                 // Animate goal bar icon
