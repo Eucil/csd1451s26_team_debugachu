@@ -522,7 +522,7 @@ bool LevelManager::getLevelData(int level) {
 
 void LevelManager::checkLevelData() {
     // Loop through and check if level is playable by calling getLevelData for each
-    for (int i = 1; i <= static_cast<int>(Level::None); ++i) {
+    for (int i = 1; i < static_cast<int>(Level::None); ++i) {
         playableLevels_[i - 1] = getLevelData(i);
         std::cout << "Level " << i << " playable: " << playableLevels_[i - 1] << "\n";
     }

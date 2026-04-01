@@ -105,6 +105,9 @@
     <ClCompile Include="Source\States\LogoScreen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\States\PlayerLevel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Docs\Standards.md">
@@ -197,6 +200,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\States\LogoScreen.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\States\PlayerLevel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
