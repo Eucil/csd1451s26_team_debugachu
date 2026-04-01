@@ -37,7 +37,7 @@ static const char* credits[] = {
     "",
     "",
     "WWW.DIGIPEN.EDU",
-    "All content copyright 2026 DigiPen Institute of Technology Singapore. All Rights Reserved",
+    "All content copyright (C) DigiPen Institute of Technology Singapore. All Rights Reserved",
     "",
     "TEAM",
     "Debugachu",

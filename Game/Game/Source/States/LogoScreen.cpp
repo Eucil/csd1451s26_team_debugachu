@@ -27,8 +27,8 @@
 static constexpr f32 FADE_SPEED = 1.5f;    // seconds to complete a fade in or out
 static constexpr f32 HOLD_DURATION = 1.5f; // seconds to hold logo at full opacity
 
-// Actual pixel dimensions of DigiPen_BLACK.png (1525 x 445)
-static constexpr f32 LOGO_ASPECT = 1525.0f / 445.0f;
+// Actual pixel dimensions of DigiPen_Singapore_WEB_WHITE_2026.png (1525 x 900)
+static constexpr f32 LOGO_ASPECT = 1525.0f / 900.0f;
 
 // ----------------------------------------------------------------------------
 // State
@@ -62,7 +62,7 @@ void LoadLogoScreen() {
     printf("[LogoScreen] LoadLogoScreen() called\n");
 
     // --- CHECK 1: Texture load ---
-    const char* texturePath = "Assets/Logo/DigiPen_Singapore_WEB_WHITE.png";
+    const char* texturePath = "Assets/Logo/DigiPen_Singapore_WEB_WHITE_2026.png";
     printf("[LogoScreen] Attempting to load texture: %s\n", texturePath);
     logoTexture = AEGfxTextureLoad(texturePath);
 
