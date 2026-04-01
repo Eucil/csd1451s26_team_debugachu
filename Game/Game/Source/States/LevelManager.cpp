@@ -231,12 +231,12 @@ void LevelManager::renderLevelEditorUI() {
         return;
     }
 
-    // Render builder button
-    editorButton_.draw();
+    // Render builder button (no hover effect -- it's a label, not an interactive button)
+    editorButton_.drawNoHover();
 
     // Render builder container and buttons within if displayEditorContainer_ is true
     if (displayEditorContainer_) {
-        editorContainer_.draw();
+        editorContainer_.drawNoHover();
 
         // Render buttons in button pool
         // These arrays let you tint the blocks:
@@ -499,10 +499,8 @@ bool LevelManager::getLevelData(int level) {
     builder["collectComments"] = false;
     JSONCPP_STRING errs;
 
-
-
     bool parsingSuccessful = Json::parseFromStream(builder, file, &readingRoot_, &errs);
-    
+
     if (readingRoot_.isMember("Map") && readingRoot_["Map"].isMember("highScore")) {
         levelHighScores_[level - 1] = readingRoot_["Map"]["highScore"].asInt();
     } else {
@@ -518,7 +516,6 @@ bool LevelManager::getLevelData(int level) {
         std::cout << "File is empty\n";
         return false;
     }
-
 
     return true;
 }

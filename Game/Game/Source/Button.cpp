@@ -141,6 +141,34 @@ void Button::draw() {
     }
 }
 
+void Button::drawNoHover() {
+    if (graphics_.mesh_ == nullptr)
+        return;
+
+    if (graphics_.texture_ == nullptr) {
+        AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetColorToMultiply(graphics_.red_, graphics_.green_, graphics_.blue_,
+                                graphics_.alpha_);
+        AEGfxSetTransform(transform_.worldMtx_.m);
+        AEGfxMeshDraw(graphics_.mesh_, AE_GFX_MDM_TRIANGLES);
+    } else {
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetColorToMultiply(graphics_.red_, graphics_.green_, graphics_.blue_,
+                                graphics_.alpha_);
+        AEGfxSetTransform(transform_.worldMtx_.m);
+        AEGfxTextureSet(graphics_.texture_, 0.0f, 0.0f);
+        AEGfxMeshDraw(graphics_.mesh_, AE_GFX_MDM_TRIANGLES);
+    }
+
+    if (text_.font_ != 0) {
+        text_.draw();
+    }
+}
+
 void Button::unload() {
     if (graphics_.texture_ != nullptr) {
         AEGfxTextureUnload(graphics_.texture_);
