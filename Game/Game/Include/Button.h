@@ -47,8 +47,7 @@ public:
     void setTextFont(s8 font);
     void setRGBA(const f32& r, const f32& g, const f32& b, const f32& a);
     void updateTransform();
-    void draw();
-    void drawNoHover(); // draws at full brightness with no hover effect
+    void draw(bool hoverEffect = true);
     void unload();
     bool checkMouseClick() const;
     bool isHovered() const;

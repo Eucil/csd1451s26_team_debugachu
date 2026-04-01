@@ -232,11 +232,11 @@ void LevelManager::renderLevelEditorUI() {
     }
 
     // Render builder button (no hover effect -- it's a label, not an interactive button)
-    editorButton_.drawNoHover();
+    editorButton_.draw(false);
 
     // Render builder container and buttons within if displayEditorContainer_ is true
     if (displayEditorContainer_) {
-        editorContainer_.drawNoHover();
+        editorContainer_.draw(false);
 
         // Render buttons in button pool
         // These arrays let you tint the blocks:
