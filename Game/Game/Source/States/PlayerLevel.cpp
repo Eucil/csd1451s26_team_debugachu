@@ -76,6 +76,9 @@ static Button buttonDelete;
 static Button buttonBack;
 static Button buttonToLevelSelector;
 
+static int startLevelIndex = static_cast<int>(Level::PlayerLevels);
+static int numPlayerLevels = static_cast<int>(Level::None) - startLevelIndex;
+
 // Static functions
 static void DrawPlaceholderSlots(AEVec2 buttonPos, int collectedCount, AEGfxVertexList* mesh);
 
@@ -93,9 +96,10 @@ void LoadPlayerLevel() {
     previewMesh = CreateRectMesh();
     defaultPreviewTex = AEGfxTextureLoad("Assets/Textures/pink_button.png");
     // Preload all preview images
-    for (int i = 0; i < static_cast<int>(Level::None); ++i) {
+    for (int i{}; i < numPlayerLevels; ++i) {
         // Form the string needed for the file path
-        std::string filePath = "Assets/Previews/Level_" + std::to_string(i + 1) + ".png";
+        std::string filePath =
+            "Assets/Previews/Level_" + std::to_string(i + startLevelIndex + 1) + ".png";
         previewTextures.push_back(AEGfxTextureLoad(filePath.c_str()));
     }
 
@@ -122,7 +126,7 @@ void LoadPlayerLevel() {
     f32 textA = g_configManager.getFloat("PlayerLevel", "default", "textA", 1.f);
     f32 extraOffsetX = 0.f;
 
-    for (int i{}, x{}, y{}; i < static_cast<int>(Level::None); ++i, ++x) {
+    for (int i{}, x{}, y{}; i < numPlayerLevels; ++i, ++x) {
         // Push back button and text
         if (i % 4 == 0 && i != 0) {
             y++;
@@ -177,8 +181,8 @@ void InitializePlayerLevel() {
     levelManager.checkLevelData();
 
     lsCollectibleSystem.Initialize(); // Creates the meshes and clears the list
-    for (int i = 0; i < static_cast<int>(Level::None); ++i) {
-        int count = levelManager.getHighScore(i + 1);
+    for (int i{}; i < numPlayerLevels; ++i) {
+        int count = levelManager.getHighScore(i + 1 + startLevelIndex);
         std::cout << count << '\n';
         // Safety cap assuming a max of 3 items per level
         if (count > 3)
@@ -201,7 +205,7 @@ void InitializePlayerLevel() {
         }
     }
 
-    titleText.content_ = "SELECT LEVEL";
+    titleText.content_ = "PLAYER LEVEL";
     // Initialize destructible Background
     bgVfxSystem.Initialize(800, 20);
     if (levelManager.getLevelData(100)) {
@@ -252,9 +256,9 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
     (void)deltaTime; // Unused parameter, but required by function signature
 
     hoveredLevelIndex = -1;
-    for (int i = 0; i < static_cast<int>(Level::None); ++i) {
+    for (int i = 0; i < numPlayerLevels; ++i) {
         levelButtonPool_[i].updateTransform();
-        bool isPlayable = (levelManager.playableLevels_[i]);
+        bool isPlayable = (levelManager.playableLevels_[i + startLevelIndex]);
         // If the mouse is colliding with this specific button, save its index
         if (levelButtonPool_[i].isHovered() && isPlayable) {
             hoveredLevelIndex = i;
@@ -285,7 +289,7 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
     if ((buttonEdit.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
         if (levelManager.getLevelEditorMode() != EditorMode::Edit) {
             levelManager.setLevelEditorMode(EditorMode::Edit);
-            titleText.content_ = "LEVEL EDITOR MODE";
+            titleText.content_ = "EDIT LEVEL";
         } else {
             levelManager.setLevelEditorMode(EditorMode::None);
             titleText.content_ = "PLAYER LEVEL";
@@ -322,7 +326,7 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
     }
 
     if ((AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) && !creatingLevel) {
-        for (int i = 0; i < static_cast<int>(Level::None); ++i) {
+        for (int i = 0, j = startLevelIndex; i < numPlayerLevels; ++i, ++j) {
             // Clicks for level selection and editor
             if (levelButtonPool_[i].checkMouseClick()) {
                 std::cout << "Level " << (i + 1) << " button clicked\n";
@@ -331,16 +335,16 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
                 switch (levelManager.getLevelEditorMode()) {
                 case EditorMode::None:
                     // If none, just play the level if it's playable
-                    if (levelManager.playableLevels_[i]) {
-                        levelManager.SetCurrentLevel(i + 1);
+                    if (levelManager.playableLevels_[j]) {
+                        levelManager.SetCurrentLevel(j + 1);
                         screenFader.StartFadeOut(&GSM, StateId::Level);
                         // GSM.nextState_ = StateId::Level;
                     }
                     break;
                 case EditorMode::Edit:
                     // If edit, go to level editor with selected level
-                    if (levelManager.playableLevels_[i]) {
-                        levelManager.SetCurrentLevel(i + 1);
+                    if (levelManager.playableLevels_[j]) {
+                        levelManager.SetCurrentLevel(j + 1);
                         GSM.nextState_ = StateId::Level;
                     }
                     break;
@@ -349,7 +353,7 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
                     // Only can create levels in empty slots, which means if playableLevels_[i] is
                     // false. This is to prevent accidental overwriting of existing levels, since
                     // creating a level will overwrite
-                    if (!levelManager.playableLevels_[i]) {
+                    if (!levelManager.playableLevels_[j]) {
                         std::cout << "Level editor mode: Create\n";
                         creatingLevel = true;
                         inputWidth = 0;
@@ -357,13 +361,13 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
                         inputPortalLimit = 0;
                         confirmInput = 0;
                         inputStr = "";
-                        levelInput = i + 1;
+                        levelInput = j + 1;
                     }
                     break;
                 case EditorMode::Delete:
                     // If delete, delete the level data and update playable levels
                     std::cout << "Level editor mode: Delete\n";
-                    levelManager.deleteLevelData(i + 1);
+                    levelManager.deleteLevelData(j + 1);
                     levelManager.checkLevelData();
                     break;
                 default:
@@ -424,14 +428,14 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
                                              static_cast<int>(inputPortalLimit));
                 creatingLevel = false;
                 levelManager.setLevelEditorMode(EditorMode::None);
-                titleText.content_ = "SELECT LEVEL";
+                titleText.content_ = "PLAYER LEVEL";
                 levelManager.checkLevelData();
             }
             break;
         }
     }
 
-    for (int i = 0; i < static_cast<int>(Level::None); ++i) {
+    for (int i = 0; i < numPlayerLevels; ++i) {
         levelButtonPool_[i].updateTransform();
     }
     std::vector<FluidParticle> dummyPool;
@@ -453,8 +457,8 @@ void DrawPlayerLevel() {
     bgVfxSystem.Draw();
 
     // Draw button with different color base on level editor mode
-    for (int i = 0; i < static_cast<int>(Level::None); ++i) {
-        if (levelManager.playableLevels_[i]) {
+    for (int i = 0; i < numPlayerLevels; ++i) {
+        if (levelManager.playableLevels_[i + startLevelIndex]) {
             levelButtonPool_[i].setRGBA(1.0f, 1.0f, 1.f, 1.f); // Pale blue for playable levels
             levelButtonPool_[i].draw();
         } else {
@@ -471,8 +475,8 @@ void DrawPlayerLevel() {
     AEGfxSetTransparency(1.0f);
     AEGfxSetColorToMultiply(0.1f, 0.1f, 0.1f, 1.0f); // Dark Grey / Almost Black
 
-    for (int i = 0; i < static_cast<int>(Level::None); ++i) {
-        int count = levelManager.getHighScore(i + 1);
+    for (int i = 0; i < numPlayerLevels; ++i) {
+        int count = levelManager.getHighScore(i + startLevelIndex + 1);
         if (count > 3)
             count = 3;
         DrawPlaceholderSlots(levelButtonPool_[i].getTransform().pos_, count, previewMesh);
@@ -577,7 +581,7 @@ void FreePlayerLevel() {
 
 void UnloadPlayerLevel() {
 
-    for (int i = 0; i < static_cast<int>(Level::None); ++i) {
+    for (int i = 0; i < numPlayerLevels; ++i) {
         levelButtonPool_[i].unload();
     }
 

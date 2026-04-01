@@ -1,20 +1,20 @@
 {
   "default" : 
   {
-    "button_startpos_x" : -600,
-    "button_startpos_y" : 200,
-    "button_x_offset" : 400,
-    "button_y_offset" : 225,
-    "button_scale_x" : 200,
-    "button_scale_y" : 200,
-    "text_pos_divisor_x" : 800,
-    "text_pos_divisor_y" : 450,
-    "text_x_offset" : 0.025,
-    "text_y_offset" : 0.05,
-    "text_scale" : 1.0,
-    "text_r" : 1.0,
-    "text_g" : 1.0,
-    "text_b" : 1.0,
-    "text_a" : 1.0
+    "buttonStartposX" : -600,
+    "buttonStartposY" : 200,
+    "buttonXOffset" : 400,
+    "buttonYOffset" : 200,
+    "buttonScale_x" : 200,
+    "buttonScale_y" : 150,
+    "textPosDivisorX" : 800,
+    "textPosDivisorY" : 450,
+    "textXOffset" : 0.025,
+    "textYOffset" : 0.05,
+    "textScale" : 1.0,
+    "textR" : 1.0,
+    "textG" : 1.0,
+    "textB" : 1.0,
+    "textA" : 1.0
   }
 }

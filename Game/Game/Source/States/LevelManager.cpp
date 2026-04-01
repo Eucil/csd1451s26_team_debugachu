@@ -499,10 +499,8 @@ bool LevelManager::getLevelData(int level) {
     builder["collectComments"] = false;
     JSONCPP_STRING errs;
 
-
-
     bool parsingSuccessful = Json::parseFromStream(builder, file, &readingRoot_, &errs);
-    
+
     if (readingRoot_.isMember("Map") && readingRoot_["Map"].isMember("highScore")) {
         levelHighScores_[level - 1] = readingRoot_["Map"]["highScore"].asInt();
     } else {
@@ -519,13 +517,12 @@ bool LevelManager::getLevelData(int level) {
         return false;
     }
 
-
     return true;
 }
 
 void LevelManager::checkLevelData() {
     // Loop through and check if level is playable by calling getLevelData for each
-    for (int i = 1; i <= static_cast<int>(Level::None); ++i) {
+    for (int i = 1; i < static_cast<int>(Level::None); ++i) {
         playableLevels_[i - 1] = getLevelData(i);
         std::cout << "Level " << i << " playable: " << playableLevels_[i - 1] << "\n";
     }

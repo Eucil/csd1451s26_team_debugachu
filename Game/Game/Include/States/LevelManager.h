@@ -28,6 +28,8 @@
 #include "StartEndPoint.h"
 #include "Terrain.h"
 
+// Level 1 to 8 are dev levels
+// Level 9 to 12 are player levels
 enum class Level {
     Level1,
     Level2,
@@ -42,6 +44,7 @@ enum class Level {
     Level11,
     Level12,
     None,
+    PlayerLevels = 8,
     Level99 = 99
 };
 enum class EditorMode { Edit, Delete, Create, None };
