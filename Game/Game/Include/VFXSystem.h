@@ -23,7 +23,11 @@
 enum class VFXType {
     DirtBurst,
     PortalBurst,
-    // Add magic particles, portal particles wtv
+    PipeFlow,
+    FlowerCollect,
+    StarCollect, // yellow burst when a Star is collected
+    GemCollect,  // magenta burst when a Gem is collected
+    LeafCollect, // green burst when a Leaf is collected
     Count
 };
 
@@ -31,8 +35,8 @@ struct VFXParticle {
 
     VFXType type_{VFXType::DirtBurst};
 
-    // since vfxparticles dont collide with one another, have no change in physics, short lifetime,
-    // they should be lightweight and thus we shouldnt use Components.h components.
+    // since vfxparticles dont collide with one another, have no change in physics, short
+    // lifetime, they should be lightweight and thus we shouldnt use Components.h components.
     AEVec2 pos_{0.0f, 0.0f};
     AEVec2 vel_{0.0f, 0.0f};
 

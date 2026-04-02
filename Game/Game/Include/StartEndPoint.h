@@ -21,11 +21,15 @@
 #include "Components.h"
 #include "FluidSystem.h"
 
+#include "VFXSystem.h"
+
 enum class StartEndType { Pipe, Flower, Count };
 
 enum class GoalDirection { Up, Down, Left, Right };
 
 struct StartEnd {
+
+    f32 vfxTimer_ = 0.0f;
 
     Transform transform_;
 
@@ -92,7 +96,7 @@ public:
 
     bool CollisionCheckWithWater(StartEnd startend, FluidParticle particle);
 
-    void Update(f32 dt, std::vector<FluidParticle>& particlePool);
+    void Update(f32 dt, std::vector<FluidParticle>& particlePool, VFXSystem& vfxSystem);
 
     void DrawColor();
 

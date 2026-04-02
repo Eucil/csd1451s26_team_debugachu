@@ -306,7 +306,7 @@ bool StartEndPoint::CollisionCheckWithWater(StartEnd startend, FluidParticle par
     return distance_squared < (radius * radius);
 }
 
-void StartEndPoint::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
+void StartEndPoint::Update(f32 dt, std::vector<FluidParticle>& particlePool, VFXSystem& vfxSystem) {
     (void)dt; // unused for now
 
     // Check collision for each start/end point with each water particle
@@ -321,6 +321,21 @@ void StartEndPoint::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
                 // std::cout << "Particle collided with start point!\n";
             }
         }
+
+        // VFX: emit a water-mist burst while the pipe is flowing
+        if (startPoint.releaseWater_) {
+            startPoint.vfxTimer_ -= dt;
+            if (startPoint.vfxTimer_ <= 0.0f) {
+                // Spawn at the pipe mouth (bottom-centre of the pipe rect)
+                AEVec2 spawnPos = {startPoint.transform_.pos_.x,
+                                   startPoint.transform_.pos_.y -
+                                       startPoint.transform_.scale_.y * 0.5f};
+                vfxSystem.SpawnVFX(VFXType::PipeFlow, spawnPos);
+                startPoint.vfxTimer_ = 0.12f; // ~8-9 bursts per second
+            }
+        } else {
+            startPoint.vfxTimer_ = 0.0f; // reset when pipe is off so it fires immediately on toggle
+        }
     }
 
     // Check collision for end point with each water particle
@@ -329,6 +344,9 @@ void StartEndPoint::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
             // Handle collision with end point
             // std::cout << "Particle collided with end point! Removing particle.\n";
             particlesCollected_++;
+
+            vfxSystem.SpawnVFX(VFXType::FlowerCollect, endPoint_.transform_.pos_);
+
             // Remove this particle from the pool
             particleIt = particlePool.erase(particleIt); // Erase returns the next valid iterator
 

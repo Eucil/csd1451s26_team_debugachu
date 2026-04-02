@@ -21,12 +21,12 @@
 
 #include "Animations.h"
 #include "Button.h"
+#include "Collectible.h"
 #include "ConfigManager.h"
+#include "FluidSystem.h"
 #include "GameStateManager.h"
 #include "States/LevelManager.h"
 #include "Utils.h"
-#include "Collectible.h"
-#include "FluidSystem.h"
 
 // Destructible Background
 #include "AudioSystem.h"
@@ -91,7 +91,6 @@ void LoadLevelSelector() {
     Terrain::createColliderLibrary();
 
     pBgDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
-
 
     MapPreviewLoad();
     // Setup texts
@@ -170,7 +169,6 @@ void InitializeLevelSelector() {
 
     levelManager.init();
     levelManager.checkLevelData();
-
 
     lsCollectibleSystem.Initialize(); // Creates the meshes and clears the list
     for (int i = 0; i < static_cast<int>(Level::None); ++i) {
@@ -402,7 +400,7 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
         levelButtonPool_[i].updateTransform();
     }
     std::vector<FluidParticle> dummyPool;
-    lsCollectibleSystem.Update(deltaTime, dummyPool);
+    lsCollectibleSystem.Update(deltaTime, dummyPool, bgVfxSystem);
 
     animManager.UpdateAll(deltaTime);
 }
@@ -443,7 +441,6 @@ void DrawLevelSelector() {
         if (count > 3)
             count = 3;
         DrawPlaceholderSlots(levelButtonPool_[i].getTransform().pos_, count, previewMesh);
-
     }
 
     // --- RESET ENGINE GRAPHICS STATE FOR THE REST OF THE UI ---
@@ -473,7 +470,7 @@ void FreeLevelSelector() {
 
     bgVfxSystem.Free();
     animManager.FreeAll();
-    
+
     lsCollectibleSystem.Free();
 
     delete bgDirt;
@@ -533,7 +530,6 @@ void UnloadLevelSelector() {
     animManager.FreeAll();
 }
 
-
 // =========================================================
 //
 //              Map Preview Functions
@@ -569,7 +565,7 @@ static void MapPreviewUpdate(f32 deltaTime) {
     // Process the math for this frame
     previewFader.Update(deltaTime);
 }
-    
+
 static void MapPreviewDraw() {
     // If mouse is within a button, hoveredLevelIndex = button level.
     // Ensure that hLI is < number of elements within the vector container
@@ -636,11 +632,10 @@ static void MapPreviewDraw() {
     }
 }
 
-
 // =========================================================
 //
 //              Collectibles Preview Functions
-// 
+//
 // =========================================================
 // Static helper to draw placeholder collectible slots below a level button
 static void DrawPlaceholderSlots(AEVec2 buttonPos, int collectedCount, AEGfxVertexList* mesh) {

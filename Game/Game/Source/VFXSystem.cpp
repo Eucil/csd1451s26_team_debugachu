@@ -84,8 +84,42 @@ void VFXSystem::Initialize(u32 maxParticles, u32 maxEmitters) {
     portalGfx.layer_ = g_configManager.getInt("VFXSystem", "portalGFX", "layer", 5);
     SetGraphicsConfig(VFXType::PortalBurst, portalGfx);
 
-    // Emitter setup
+    // PipeFlow
+    Graphics pipeFlowGfx;
+    pipeFlowGfx.mesh_ = particleMesh; // reuse the same rect mesh
+    pipeFlowGfx.texture_ = nullptr;
+    pipeFlowGfx.layer_ = g_configManager.getInt("VFXSystem", "pipeFlowGFX", "layer", 5);
+    SetGraphicsConfig(VFXType::PipeFlow, pipeFlowGfx);
 
+    // FlowerCollect
+    Graphics flowerCollectGfx;
+    flowerCollectGfx.mesh_ = particleMesh;
+    flowerCollectGfx.texture_ = nullptr;
+    flowerCollectGfx.layer_ = g_configManager.getInt("VFXSystem", "flowerCollectGFX", "layer", 5);
+    SetGraphicsConfig(VFXType::FlowerCollect, flowerCollectGfx);
+
+    // Starcollect
+    Graphics starCollectGfx;
+    starCollectGfx.mesh_ = particleMesh;
+    starCollectGfx.texture_ = nullptr;
+    starCollectGfx.layer_ = g_configManager.getInt("VFXSystem", "starCollectGFX", "layer", 5);
+    SetGraphicsConfig(VFXType::StarCollect, starCollectGfx);
+
+    // GemCollect — magenta burst
+    Graphics gemCollectGfx;
+    gemCollectGfx.mesh_ = particleMesh;
+    gemCollectGfx.texture_ = nullptr;
+    gemCollectGfx.layer_ = g_configManager.getInt("VFXSystem", "gemCollectGFX", "layer", 5);
+    SetGraphicsConfig(VFXType::GemCollect, gemCollectGfx);
+
+    // LeafCollect — green burst
+    Graphics leafCollectGfx;
+    leafCollectGfx.mesh_ = particleMesh;
+    leafCollectGfx.texture_ = nullptr;
+    leafCollectGfx.layer_ = g_configManager.getInt("VFXSystem", "leafCollectGFX", "layer", 5);
+    SetGraphicsConfig(VFXType::LeafCollect, leafCollectGfx);
+
+    // Emitter setup
     // DirtBurst
     EmitterConfig dirtConfig;
     dirtConfig.spawnCount_ = g_configManager.getInt("VFXSystem", "dirtConfig", "spawnCount_", 10);
@@ -120,6 +154,120 @@ void VFXSystem::Initialize(u32 maxParticles, u32 maxEmitters) {
     portalConfig.b_ = g_configManager.getFloat("VFXSystem", "portalConfig", "b_", 1.0f);
     portalConfig.a_ = g_configManager.getFloat("VFXSystem", "portalConfig", "a_", 1.0f);
     SetEmitterConfig(VFXType::PortalBurst, portalConfig);
+
+    // Pipe flow
+    EmitterConfig pipeFlowConfig;
+    pipeFlowConfig.spawnCount_ =
+        g_configManager.getInt("VFXSystem", "pipeFlowConfig", "spawnCount_", 6);
+    pipeFlowConfig.minLife_ =
+        g_configManager.getFloat("VFXSystem", "pipeFlowConfig", "minLife_", 0.2f);
+    pipeFlowConfig.maxLife_ =
+        g_configManager.getFloat("VFXSystem", "pipeFlowConfig", "maxLife_", 0.45f);
+    pipeFlowConfig.minSpeed_ =
+        g_configManager.getFloat("VFXSystem", "pipeFlowConfig", "minSpeed_", 20.0f);
+    pipeFlowConfig.maxSpeed_ =
+        g_configManager.getFloat("VFXSystem", "pipeFlowConfig", "maxSpeed_", 60.0f);
+    pipeFlowConfig.minScale_ =
+        g_configManager.getFloat("VFXSystem", "pipeFlowConfig", "minScale_", 3.0f);
+    pipeFlowConfig.maxScale_ =
+        g_configManager.getFloat("VFXSystem", "pipeFlowConfig", "maxScale_", 6.0f);
+    pipeFlowConfig.r_ = g_configManager.getFloat("VFXSystem", "pipeFlowConfig", "r_", 0.4f);
+    pipeFlowConfig.g_ = g_configManager.getFloat("VFXSystem", "pipeFlowConfig", "g_", 0.7f);
+    pipeFlowConfig.b_ = g_configManager.getFloat("VFXSystem", "pipeFlowConfig", "b_", 1.0f);
+    pipeFlowConfig.a_ = g_configManager.getFloat("VFXSystem", "pipeFlowConfig", "a_", 0.85f);
+    SetEmitterConfig(VFXType::PipeFlow, pipeFlowConfig);
+
+    // Flowercollect
+    EmitterConfig flowerCollectConfig;
+    flowerCollectConfig.spawnCount_ =
+        g_configManager.getInt("VFXSystem", "flowerCollectConfig", "spawnCount_", 12);
+    flowerCollectConfig.minLife_ =
+        g_configManager.getFloat("VFXSystem", "flowerCollectConfig", "minLife_", 0.25f);
+    flowerCollectConfig.maxLife_ =
+        g_configManager.getFloat("VFXSystem", "flowerCollectConfig", "maxLife_", 0.5f);
+    flowerCollectConfig.minSpeed_ =
+        g_configManager.getFloat("VFXSystem", "flowerCollectConfig", "minSpeed_", 60.0f);
+    flowerCollectConfig.maxSpeed_ =
+        g_configManager.getFloat("VFXSystem", "flowerCollectConfig", "maxSpeed_", 160.0f);
+    flowerCollectConfig.minScale_ =
+        g_configManager.getFloat("VFXSystem", "flowerCollectConfig", "minScale_", 4.0f);
+    flowerCollectConfig.maxScale_ =
+        g_configManager.getFloat("VFXSystem", "flowerCollectConfig", "maxScale_", 8.0f);
+    flowerCollectConfig.r_ =
+        g_configManager.getFloat("VFXSystem", "flowerCollectConfig", "r_", 0.6f);
+    flowerCollectConfig.g_ =
+        g_configManager.getFloat("VFXSystem", "flowerCollectConfig", "g_", 1.0f);
+    flowerCollectConfig.b_ =
+        g_configManager.getFloat("VFXSystem", "flowerCollectConfig", "b_", 0.4f);
+    flowerCollectConfig.a_ =
+        g_configManager.getFloat("VFXSystem", "flowerCollectConfig", "a_", 1.0f);
+    SetEmitterConfig(VFXType::FlowerCollect, flowerCollectConfig);
+
+    // Starcollect
+    EmitterConfig starCollectConfig;
+    starCollectConfig.spawnCount_ =
+        g_configManager.getInt("VFXSystem", "starCollectConfig", "spawnCount_", 15);
+    starCollectConfig.minLife_ =
+        g_configManager.getFloat("VFXSystem", "starCollectConfig", "minLife_", 0.3f);
+    starCollectConfig.maxLife_ =
+        g_configManager.getFloat("VFXSystem", "starCollectConfig", "maxLife_", 0.6f);
+    starCollectConfig.minSpeed_ =
+        g_configManager.getFloat("VFXSystem", "starCollectConfig", "minSpeed_", 80.0f);
+    starCollectConfig.maxSpeed_ =
+        g_configManager.getFloat("VFXSystem", "starCollectConfig", "maxSpeed_", 200.0f);
+    starCollectConfig.minScale_ =
+        g_configManager.getFloat("VFXSystem", "starCollectConfig", "minScale_", 4.0f);
+    starCollectConfig.maxScale_ =
+        g_configManager.getFloat("VFXSystem", "starCollectConfig", "maxScale_", 9.0f);
+    starCollectConfig.r_ = g_configManager.getFloat("VFXSystem", "starCollectConfig", "r_", 1.0f);
+    starCollectConfig.g_ = g_configManager.getFloat("VFXSystem", "starCollectConfig", "g_", 1.0f);
+    starCollectConfig.b_ = g_configManager.getFloat("VFXSystem", "starCollectConfig", "b_", 0.0f);
+    starCollectConfig.a_ = g_configManager.getFloat("VFXSystem", "starCollectConfig", "a_", 1.0f);
+    SetEmitterConfig(VFXType::StarCollect, starCollectConfig);
+
+    // gemCollect
+    EmitterConfig gemCollectConfig;
+    gemCollectConfig.spawnCount_ =
+        g_configManager.getInt("VFXSystem", "gemCollectConfig", "spawnCount_", 15);
+    gemCollectConfig.minLife_ =
+        g_configManager.getFloat("VFXSystem", "gemCollectConfig", "minLife_", 0.3f);
+    gemCollectConfig.maxLife_ =
+        g_configManager.getFloat("VFXSystem", "gemCollectConfig", "maxLife_", 0.6f);
+    gemCollectConfig.minSpeed_ =
+        g_configManager.getFloat("VFXSystem", "gemCollectConfig", "minSpeed_", 80.0f);
+    gemCollectConfig.maxSpeed_ =
+        g_configManager.getFloat("VFXSystem", "gemCollectConfig", "maxSpeed_", 200.0f);
+    gemCollectConfig.minScale_ =
+        g_configManager.getFloat("VFXSystem", "gemCollectConfig", "minScale_", 4.0f);
+    gemCollectConfig.maxScale_ =
+        g_configManager.getFloat("VFXSystem", "gemCollectConfig", "maxScale_", 9.0f);
+    gemCollectConfig.r_ = g_configManager.getFloat("VFXSystem", "gemCollectConfig", "r_", 1.0f);
+    gemCollectConfig.g_ = g_configManager.getFloat("VFXSystem", "gemCollectConfig", "g_", 0.0f);
+    gemCollectConfig.b_ = g_configManager.getFloat("VFXSystem", "gemCollectConfig", "b_", 1.0f);
+    gemCollectConfig.a_ = g_configManager.getFloat("VFXSystem", "gemCollectConfig", "a_", 1.0f);
+    SetEmitterConfig(VFXType::GemCollect, gemCollectConfig);
+
+    // leafCollect
+    EmitterConfig leafCollectConfig;
+    leafCollectConfig.spawnCount_ =
+        g_configManager.getInt("VFXSystem", "leafCollectConfig", "spawnCount_", 15);
+    leafCollectConfig.minLife_ =
+        g_configManager.getFloat("VFXSystem", "leafCollectConfig", "minLife_", 0.3f);
+    leafCollectConfig.maxLife_ =
+        g_configManager.getFloat("VFXSystem", "leafCollectConfig", "maxLife_", 0.6f);
+    leafCollectConfig.minSpeed_ =
+        g_configManager.getFloat("VFXSystem", "leafCollectConfig", "minSpeed_", 80.0f);
+    leafCollectConfig.maxSpeed_ =
+        g_configManager.getFloat("VFXSystem", "leafCollectConfig", "maxSpeed_", 200.0f);
+    leafCollectConfig.minScale_ =
+        g_configManager.getFloat("VFXSystem", "leafCollectConfig", "minScale_", 4.0f);
+    leafCollectConfig.maxScale_ =
+        g_configManager.getFloat("VFXSystem", "leafCollectConfig", "maxScale_", 9.0f);
+    leafCollectConfig.r_ = g_configManager.getFloat("VFXSystem", "leafCollectConfig", "r_", 0.0f);
+    leafCollectConfig.g_ = g_configManager.getFloat("VFXSystem", "leafCollectConfig", "g_", 1.0f);
+    leafCollectConfig.b_ = g_configManager.getFloat("VFXSystem", "leafCollectConfig", "b_", 0.0f);
+    leafCollectConfig.a_ = g_configManager.getFloat("VFXSystem", "leafCollectConfig", "a_", 1.0f);
+    SetEmitterConfig(VFXType::LeafCollect, leafCollectConfig);
 }
 
 // =========================================================

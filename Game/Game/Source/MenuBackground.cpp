@@ -205,8 +205,9 @@ void MenuBackground::Initialize() {
 }
 
 void MenuBackground::Update(f32 deltaTime) {
-    bgCollectibleSystem.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
-    bgStartEndPoint.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
+    bgCollectibleSystem.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water),
+                               bgVfxSystem);
+    bgStartEndPoint.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water), bgVfxSystem);
     BgSpawnWater(deltaTime);
     bgFluidSystem.Update(deltaTime, {bgDirt, bgStone});
     bgPortalSystem.Update(

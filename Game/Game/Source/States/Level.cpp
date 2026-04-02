@@ -425,7 +425,8 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 // Level editor mode
                 // ====================
                 levelManager.updateLevelEditor();
-                collectibleSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
+                collectibleSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
+                                         vfxSystem);
                 mossSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
                                   startEndPointSystem);
                 portalSystem.RotatePortal();
@@ -621,7 +622,8 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 }
 
                 // tc added start - Update collectibles
-                collectibleSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
+                collectibleSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
+                                         vfxSystem);
                 mossSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
                                   startEndPointSystem);
 
@@ -632,8 +634,8 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 }
 
                 fluidSystem.Update(deltaTime, {dirt, stone});
-                startEndPointSystem.Update(deltaTime,
-                                           fluidSystem.GetParticlePool(FluidType::Water));
+                startEndPointSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
+                                           vfxSystem);
                 portalSystem.Update(
                     deltaTime,
                     fluidSystem.GetParticlePool(FluidType::Water), // Passing the specific VFX pool
