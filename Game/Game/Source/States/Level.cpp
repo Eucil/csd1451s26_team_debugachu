@@ -523,7 +523,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                     if (hitDirt) {
                         vfxSystem.SpawnContinuous(VFXType::DirtBurst, GetMouseWorldPos(), deltaTime,
                                                   0.1f);
-                        g_audioSystem.playSound("dirt_break", "sfx", 0.25f, 1.0f);
+                        g_audioSystem.playSound("dirt_break", "sfx", 0.5f, 1.0f);
                     } else {
                         vfxSystem.ResetSpawnTimer();
                     }

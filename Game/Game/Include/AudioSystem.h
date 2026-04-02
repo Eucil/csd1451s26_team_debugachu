@@ -66,7 +66,7 @@ public:
     // Groups
     void createGroup(const std::string& groupKey) {
         groups_[groupKey] = AEAudioCreateGroup();
-        groupVolumes_[groupKey] = 100; // By default group volume is full (100%)
+        groupVolumes_[groupKey] = 50; // By default group volume is half (50%)
     }
 
     void pauseGroup(const std::string& groupKey) { AEAudioPauseGroup(groups_.at(groupKey)); }

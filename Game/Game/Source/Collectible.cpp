@@ -215,7 +215,7 @@ void CollectibleSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool)
                 c.collected_ = true;
                 collectedCount_++;
 
-                g_audioSystem.playSound("ding", "sfx", 1.0f, 1.0f);
+                g_audioSystem.playSound("bell", "sfx", 0.4f, 0.7f);
 
                 break;
             }

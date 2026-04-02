@@ -398,7 +398,7 @@ void UpdateHowToPlay(GameStateManager& GSM, f32 deltaTime) {
     if (AEInputCheckCurr(AEVK_LBUTTON)) {
         bool hitDirt = MenuBackground::DestroyDirtAtMouse(20.0f);
         if (hitDirt) {
-            g_audioSystem.playSound("dirt_break", "sfx", 0.25f, 1.0f);
+            g_audioSystem.playSound("dirt_break", "sfx", 0.5f, 1.0f);
         }
     }
 

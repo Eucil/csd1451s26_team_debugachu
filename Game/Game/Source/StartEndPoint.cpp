@@ -333,7 +333,7 @@ void StartEndPoint::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
             particleIt = particlePool.erase(particleIt); // Erase returns the next valid iterator
 
             // Play pop sound
-            g_audioSystem.playSound("pop", "sfx", 0.8f, 1.0f);
+            g_audioSystem.playSound("drip_water", "sfx", 0.4f, 1.0f);
         } else {
             ++particleIt; // Increment iterator only if no deletion occurred
         }
@@ -475,7 +475,7 @@ void StartEndPoint::CheckMouseClick() {
             startPoint.releaseWaterIframe_ = true;
 
             // Play faucet squeak sound
-            g_audioSystem.playSound("faucet_squeak", "sfx", 0.25f, 1.0f);
+            g_audioSystem.playSound("crank", "sfx", 0.7f, 1.0f);
             break;
         }
     }

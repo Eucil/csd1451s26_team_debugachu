@@ -114,7 +114,7 @@ void Button::draw(bool hoverEffect) {
         const f32 kDimmed = 1.30f;
         bool hovered = isHovered();
         if (hovered && !wasHovered_) {
-            g_audioSystem.playSound("hover", "sfx", 0.3f, 1.0f);
+            g_audioSystem.playSound("hover", "sfx", 0.8f, 1.0f);
         }
         wasHovered_ = hovered;
         f32 tint = hovered ? 1.0f : kDimmed;
@@ -176,7 +176,7 @@ bool Button::checkMouseClick() const {
             mouseY >= (transform_.pos_.y - rectHalfHeight) &&
             mouseY <= (transform_.pos_.y + rectHalfHeight)) {
 
-            g_audioSystem.playSound("click", "sfx", 0.4f, 1.0f);
+            g_audioSystem.playSound("click", "sfx", 0.8f, 1.0f);
             return true;
         }
     }

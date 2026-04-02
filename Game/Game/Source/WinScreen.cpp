@@ -16,6 +16,7 @@
 
 #include <cstdio>
 
+#include "AudioSystem.h"
 #include "States/LevelManager.h"
 #include "Utils.h"
 
@@ -134,6 +135,7 @@ void WinScreen::Show(int collected, int total, int currentLevel) {
     mainMenuButton_.updateTransform();
 
     isVisible_ = true;
+    g_audioSystem.playSound("magic", "sfx", 0.35f, 1.0f);
 }
 
 // ----------------------------------------------------------------------------
@@ -181,7 +183,7 @@ void WinScreen::Update(GameStateManager& GSM) {
             // If we always use NextLevel, the second next-level click finds
             // currentState_ == NextLevel == nextState_ and does nothing.
             // If we always use Level, same problem coming from StateId::Level.
-            // Solution: alternate — pick whichever ID differs from currentState_.
+            // Solution: alternate ï¿½ pick whichever ID differs from currentState_.
             GSM.nextState_ =
                 (GSM.currentState_ == StateId::NextLevel) ? StateId::Level : StateId::NextLevel;
             Hide();

@@ -45,14 +45,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     // Audio system
     g_audioSystem.createGroup("sfx");
     g_audioSystem.createGroup("bgm");
+    g_audioSystem.setGroupVolume("sfx", 0.5f);
+    g_audioSystem.setGroupVolume("bgm", 0.5f);
 
-    g_audioSystem.loadSound("faucet_squeak", "Assets/Audio/faucet_squeak.mp3");
     g_audioSystem.loadSound("wormhole_place", "Assets/Audio/wormhole_place.mp3");
     g_audioSystem.loadSound("dirt_break", "Assets/Audio/dirt_break.mp3");
-    g_audioSystem.loadSound("ding", "Assets/Audio/ding.mp3");
     g_audioSystem.loadSound("click", "Assets/Audio/click.mp3");
-    g_audioSystem.loadSound("pop", "Assets/Audio/pop.mp3");
     g_audioSystem.loadSound("hover", "Assets/Audio/button_hover2.ogg");
+    g_audioSystem.loadMusic("main_music",
+                            "Assets/Audio/A SINGLE ROSE - EasyListeningDow MSCLES1_17.mp3");
+    g_audioSystem.loadSound("bell", "Assets/Audio/BELL-DESK_GEN-HDF-03247.mp3");
+    g_audioSystem.loadSound("drip_water", "Assets/Audio/DripWater CTE01_55.4.mp3");
+    g_audioSystem.loadSound("crank", "Assets/Audio/GENERATOR-SMALL_GEN-HDF-12831.mp3");
+    g_audioSystem.loadSound("magic", "Assets/Audio/MagicCartoon CTE01_93.4.mp3");
+
+    g_audioSystem.playMusic("main_music", "bgm", 1.0f, 1.0f);
 
     // Game Loop
     while (GSM.currentState_ != StateId::Quit) {
