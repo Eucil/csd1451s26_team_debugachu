@@ -111,9 +111,9 @@ void StartEndPoint::Initialize() {
     graphicsConfigs_[static_cast<int>(StartEndType::Flower)].texture_ =
         AEGfxTextureLoad("Assets/Textures/pink_flower_sprite_sheet.png");
 
-    // Build a mesh that covers one frame (U: 0 to 1/3)
+    // Build a mesh that covers one frame (U: 0 to 1/4) for a 4-frame sprite sheet
     // use AEGfxTextureSet offset to pick the frame
-    constexpr f32 kFrameWidth = 1.0f / 3.0f;
+    constexpr f32 kFrameWidth = 1.0f / 4.0f;
     AEGfxMeshStart();
     AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f, 0.5f, -0.5f, 0xFFFFFFFF, kFrameWidth, 1.0f,
                 -0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
@@ -372,13 +372,15 @@ void StartEndPoint::DrawTexture(s32 particleMaxCount) {
         AEGfxMeshDraw(pipeGfx.mesh_, AE_GFX_MDM_TRIANGLES);
     }
 
-    // Select flower frame based on percentage of the goal (goal = particleMaxCount / 3)
+    // Select flower frame based on percentage of the win goal (25% of total water)
     constexpr f32 kFrameWidth = 0.25f;
     int frame = 0;
     if (particleMaxCount > 0) {
-        f32 goalCount = static_cast<f32>(particleMaxCount) / 4.0f;
+        f32 goalCount = static_cast<f32>(particleMaxCount) * 0.25f;
         f32 pct = static_cast<f32>(particlesCollected_) / goalCount;
-        if (pct >= 0.66f)
+        if (pct >= 1.0f)
+            frame = 3;
+        else if (pct >= 0.66f)
             frame = 2;
         else if (pct >= 0.33f)
             frame = 1;

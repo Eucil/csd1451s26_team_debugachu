@@ -91,6 +91,9 @@ static f32 totalWaterCapacity = 0.0f;
 static f32 goalPercentage = 0.0f;
 static AEGfxVertexList* g_barMesh = nullptr; // Global bar mesh for cleanup
 
+// Background
+static TiledBackground bg;
+
 // HUD icon textures — loaded in LoadLevel, freed in FreeLevel+UnloadLevel
 static AEGfxTexture* pHudWaterIconTex = nullptr;
 static AEGfxTexture* pHudGoalIconTex = nullptr;
@@ -99,7 +102,7 @@ static AEGfxVertexList* g_hudIconMesh = nullptr;
 // Goal icon animation
 static f32 goalFlowerFrameTimer_ = 0.0f;
 static int goalFlowerFrame_ = 0;
-static constexpr int kGoalFlowerFrames = 3;
+static constexpr int kGoalFlowerFrames = 4;
 static constexpr f32 kGoalFlowerFrameTime = 0.25f;
 // tc added end
 
@@ -121,6 +124,7 @@ void LoadLevel() {
     pTerrainDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
     pTerrainStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
     pTerrainMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
+    bg.loadFromJson("background", "Background");
 
     // Setup texts
     titleFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
@@ -800,13 +804,13 @@ static void DrawGoalBar(f32 x, f32 y, f32 percentage) {
     f32 worldY = y * 510.0f;
     f32 barW = 200.0f, barH = 20.0f, iconSize = 32.0f;
 
-    // pink_flower_sprite_sheet.png is 48x16 with 3 frames.
-    // We show only frame 0 (U 0.0 -> 0.333) as the icon.
+    // pink_flower_sprite_sheet.png is 4 frames wide.
+    // We show frame 3 (the fully bloomed flower) as the goal icon.
     // A dedicated mesh with baked UVs avoids the stretch that would
     // occur if we used g_hudIconMesh (which spans U 0.0 -> 1.0).
     if (pHudGoalIconTex) {
         if (!s_flowerIconMesh) {
-            constexpr float u0 = 2.0f / 3.0f, u1 = 1.0f;
+            constexpr float u0 = 3.0f / 4.0f, u1 = 1.0f;
             AEGfxMeshStart();
             AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, u0, 1.0f, 0.5f, -0.5f, 0xFFFFFFFF, u1, 1.0f,
                         -0.5f, 0.5f, 0xFFFFFFFF, u0, 0.0f);
@@ -836,6 +840,8 @@ static void DrawGoalBar(f32 x, f32 y, f32 percentage) {
 void DrawLevel() {
     // std::cout << "Draw level 2\n";
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
+
+    bg.draw();
 
     // ====================
     // Gameplay mode
@@ -1036,6 +1042,7 @@ void UnloadLevel() {
         AEGfxTextureUnload(pHudGoalIconTex);
         pHudGoalIconTex = nullptr;
     }
+    bg.unload();
 
     levelManager.freeLevelEditor();
     // NOTE: Do NOT reset currentLevel_ to 0 here.

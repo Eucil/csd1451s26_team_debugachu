@@ -24,6 +24,7 @@
 // Destructible Background
 #include "AudioSystem.h"
 #include "Terrain.h"
+#include "Utils.h"
 #include "VFXSystem.h"
 
 static Button buttonIncreaseSfxVolume;
@@ -51,6 +52,7 @@ static Terrain* bgMagic = nullptr;
 static AEGfxTexture* pBgDirtTex{nullptr};
 static AEGfxTexture* pBgStoneTex{nullptr};
 static AEGfxTexture* pBgMagicTex{nullptr};
+static TiledBackground bg;
 static VFXSystem bgVfxSystem;
 
 void loadSettings() {
@@ -76,6 +78,7 @@ void loadSettings() {
     pBgDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
     pBgStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
     pBgMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
+    bg.loadFromJson("background", "Background");
 }
 
 void initializeSettings() {
@@ -176,6 +179,8 @@ void updateSettings(GameStateManager& GSM, f32 deltaTime) {
 
 void drawSettings() {
 
+    bg.draw();
+
     bgDirt->renderTerrain();
     bgVfxSystem.Draw();
 
@@ -232,4 +237,5 @@ void unloadSettings() {
         AEGfxTextureUnload(pBgMagicTex);
         pBgMagicTex = nullptr;
     }
+    bg.unload();
 }

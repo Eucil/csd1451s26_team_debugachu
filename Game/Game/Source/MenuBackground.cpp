@@ -24,7 +24,9 @@
 #include "StartEndPoint.h"
 #include "States/LevelManager.h"
 #include "Terrain.h"
+#include "Utils.h"
 #include "VFXSystem.h"
+
 
 // ----------------------------------------------------------------------------
 // Private state (only visible inside this translation unit)
@@ -60,6 +62,9 @@ static Terrain* bgMagic = nullptr;
 static AEGfxTexture* pBgDirtTex = nullptr;
 static AEGfxTexture* pBgStoneTex = nullptr;
 static AEGfxTexture* pBgMagicTex = nullptr;
+
+// Background tile
+static TiledBackground bg;
 
 // Simulation systems
 static FluidSystem bgFluidSystem;
@@ -140,9 +145,10 @@ void MenuBackground::Load() {
     Terrain::createMeshLibrary();
     Terrain::createColliderLibrary();
 
-    pBgDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
+    pBgDirtTex  = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
     pBgStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
     pBgMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
+    bg.loadFromJson("background", "Background");
 
     std::cout << "[MenuBackground] Load() complete.\n";
 }
@@ -204,6 +210,8 @@ void MenuBackground::Update(f32 deltaTime) {
 
 void MenuBackground::Draw() {
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
+
+    bg.draw();
 
     bgDirt->renderTerrain();
     bgStone->renderTerrain();
@@ -277,6 +285,7 @@ void MenuBackground::Unload() {
         AEGfxTextureUnload(pBgMagicTex);
         pBgMagicTex = nullptr;
     }
+    bg.unload();
 
     std::cout << "[MenuBackground] Unload() complete.\n";
 }

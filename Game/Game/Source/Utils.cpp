@@ -18,6 +18,8 @@
 
 #include <AEEngine.h>
 
+#include "ConfigManager.h"
+
 AEGfxVertexList* CreateCircleMesh(u32 slices, f32 radius) {
     AEGfxMeshStart();
 
@@ -97,6 +99,44 @@ AEGfxVertexList* CreateWireLineMesh() {
     AEGfxVertexAdd(0.0f, 0.0f, 0xFFFFFFFF, 0.0f, 0.0f);
     AEGfxVertexAdd(1.0f, 0.0f, 0xFFFFFFFF, 0.0f, 0.0f);
     return AEGfxMeshEnd();
+}
+
+void TiledBackground::loadFromJson(const std::string& file, const std::string& section) {
+    const Json::Value& s = g_configManager.getSection(file, section);
+    f32 halfW = s.get("halfW", 800.0f).asFloat();
+    f32 halfH = s.get("halfH", 450.0f).asFloat();
+    f32 tileX = s.get("tileX", 8.0f).asFloat();
+    f32 tileY = s.get("tileY", 4.5f).asFloat();
+
+    graphics_.texture_ = AEGfxTextureLoad(s["texture"].asCString());
+
+    AEGfxMeshStart();
+    AEGfxTriAdd(-halfW, -halfH, 0xFFFFFFFF, 0.0f,  tileY,
+                 halfW, -halfH, 0xFFFFFFFF, tileX, tileY,
+                -halfW,  halfH, 0xFFFFFFFF, 0.0f,  0.0f);
+    AEGfxTriAdd( halfW, -halfH, 0xFFFFFFFF, tileX, tileY,
+                 halfW,  halfH, 0xFFFFFFFF, tileX, 0.0f,
+                -halfW,  halfH, 0xFFFFFFFF, 0.0f,  0.0f);
+    graphics_.mesh_ = AEGfxMeshEnd();
+}
+
+void TiledBackground::draw() const {
+    if (!graphics_.texture_ || !graphics_.mesh_)
+        return;
+    AEMtx33 identity;
+    AEMtx33Identity(&identity);
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetBlendMode(AE_GFX_BM_NONE);
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxTextureSet(graphics_.texture_, 0.0f, 0.0f);
+    AEGfxSetTransform(identity.m);
+    AEGfxMeshDraw(graphics_.mesh_, AE_GFX_MDM_TRIANGLES);
+}
+
+void TiledBackground::unload() {
+    if (graphics_.texture_) { AEGfxTextureUnload(graphics_.texture_); graphics_.texture_ = nullptr; }
+    if (graphics_.mesh_)    { AEGfxMeshFree(graphics_.mesh_);         graphics_.mesh_    = nullptr; }
 }
 
 AEVec2 GetMouseWorldPos() {
