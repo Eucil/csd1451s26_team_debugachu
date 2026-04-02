@@ -1,0 +1,9 @@
+{
+  "Background": {
+    "texture": "Assets/Textures/blue_bricks.png",
+    "halfW": 800.0,
+    "halfH": 450.0,
+    "tileX": 8.0,
+    "tileY": 4.5
+  }
+}

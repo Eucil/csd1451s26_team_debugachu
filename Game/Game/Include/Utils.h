@@ -19,6 +19,8 @@
 
 #include <AEEngine.h>
 
+#include "Components.h"
+
 /*
 usage: call AEGfxMeshStart -> AddCircleMesh -> meshPtr = AEGfxMeshEnd; -> waterParticle.mesh_ =
 meshPtr;
@@ -30,7 +32,14 @@ AEGfxVertexList* CreateWireCircleMesh(u32 slices);
 AEGfxVertexList* CreateRectMesh();
 AEGfxVertexList* CreateWireRectMesh();
 AEGfxVertexList* CreateWireLineMesh();
-
 AEVec2 GetMouseWorldPos();
+
+struct TiledBackground {
+    void loadFromJson(const std::string& file, const std::string& section);
+    void draw() const;
+    void unload();
+
+    Graphics graphics_;
+};
 
 void inputNumbers(std::string& inputStr);

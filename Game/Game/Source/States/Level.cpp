@@ -91,6 +91,9 @@ static f32 totalWaterCapacity = 0.0f;
 static f32 goalPercentage = 0.0f;
 static AEGfxVertexList* g_barMesh = nullptr; // Global bar mesh for cleanup
 
+// Background
+static TiledBackground bg;
+
 // HUD icon textures — loaded in LoadLevel, freed in FreeLevel+UnloadLevel
 static AEGfxTexture* pHudWaterIconTex = nullptr;
 static AEGfxTexture* pHudGoalIconTex = nullptr;
@@ -121,6 +124,7 @@ void LoadLevel() {
     pTerrainDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
     pTerrainStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
     pTerrainMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
+    bg.loadFromJson("background", "Background");
 
     // Setup texts
     titleFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
@@ -837,6 +841,8 @@ void DrawLevel() {
     // std::cout << "Draw level 2\n";
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
+    bg.draw();
+
     // ====================
     // Gameplay mode
     // ====================
@@ -1036,6 +1042,7 @@ void UnloadLevel() {
         AEGfxTextureUnload(pHudGoalIconTex);
         pHudGoalIconTex = nullptr;
     }
+    bg.unload();
 
     levelManager.freeLevelEditor();
     // NOTE: Do NOT reset currentLevel_ to 0 here.
