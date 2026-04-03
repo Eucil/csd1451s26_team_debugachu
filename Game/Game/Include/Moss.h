@@ -75,6 +75,7 @@ private:
 
 public:
     void Load(s8 font);
+    void Unload();
     void Initialize();
     void LoadLevelMoss(AEVec2 pos, MossType type);
     void Update(f32 dt, std::vector<FluidParticle>& particlePool,

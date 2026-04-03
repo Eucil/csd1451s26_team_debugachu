@@ -979,6 +979,7 @@ void FreeLevel() {
 
 void UnloadLevel() {
     // std::cout << "Unload level 2\n";
+    mossSystem.Unload();
     Terrain::freeMeshLibrary();
 
     // Unload fonts

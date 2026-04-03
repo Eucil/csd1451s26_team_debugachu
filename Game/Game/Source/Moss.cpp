@@ -386,11 +386,14 @@ void MossSystem::Free() {
         }
     }
     mossQuadMesh_ = nullptr;
+    mosses_.clear();
+}
+
+void MossSystem::Unload() {
     if (mossTexture_) {
         AEGfxTextureUnload(mossTexture_);
         mossTexture_ = nullptr;
     }
-    mosses_.clear();
 }
 
 void MossSystem::spawnAtMousePos() {
