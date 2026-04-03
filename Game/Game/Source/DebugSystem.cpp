@@ -19,11 +19,16 @@
 
 #include <AEEngine.h>
 
+#include "Collectible.h"
+#include "CollisionSystem.h"
 #include "Components.h"
 #include "ConfigManager.h"
 #include "FluidSystem.h"
+#include "PortalSystem.h"
+#include "StartEndPoint.h"
 #include "Terrain.h"
 #include "Utils.h"
+#include "VFXSystem.h"
 
 DebugSystem g_debugSystem;
 
@@ -204,6 +209,7 @@ void DebugSystem::draw() {
 }
 
 void DebugSystem::drawHUD() {
+    hudValues_["ShowFps"] = static_cast<float>(AEFrameRateControllerGetFrameRate());
     const auto& values = hudValues_;
     if (font_ == 0 || hudMesh_ == nullptr)
         return;
@@ -262,7 +268,143 @@ void DebugSystem::drawHUD() {
     }
 }
 
-void DebugSystem::drawColliders(Terrain& terrain) {
+void DebugSystem::setScene(Terrain* dirt, Terrain* stone, Terrain* magic, FluidSystem* fluidSystem,
+                           CollectibleSystem* collectibles, PortalSystem* portals,
+                           StartEndPoint* startEnd, VFXSystem* vfx) {
+    dirt_ = dirt;
+    stone_ = stone;
+    magic_ = magic;
+    fluidSystem_ = fluidSystem;
+    collectibles_ = collectibles;
+    portals_ = portals;
+    startEnd_ = startEnd;
+    vfx_ = vfx;
+}
+
+void DebugSystem::clearScene() {
+    dirt_ = stone_ = magic_ = nullptr;
+    fluidSystem_ = nullptr;
+    collectibles_ = nullptr;
+    portals_ = nullptr;
+    startEnd_ = nullptr;
+    vfx_ = nullptr;
+}
+
+void DebugSystem::drawAll() {
+    u32 totalFluidParticles = 0;
+    if (fluidSystem_) {
+        for (int fi = 0; fi < static_cast<int>(FluidType::Count); ++fi) {
+            totalFluidParticles += fluidSystem_->GetParticleCount(static_cast<FluidType>(fi));
+        }
+    }
+    hudValues_["ShowFluidParticleCount"] = static_cast<float>(totalFluidParticles);
+    hudValues_["ShowVfxParticleCount"] =
+        vfx_ ? static_cast<float>(vfx_->GetActiveParticleCount()) : 0.0f;
+    hudValues_["ShowCollisionCount"] =
+        static_cast<float>(CollisionSystem::getLastFrameCollisionCount());
+    CollisionSystem::resetCollisionCount();
+
+    if (startEnd_) {
+        const bool unlimitedWater =
+            options_.count("UnlimitedWater") && options_.at("UnlimitedWater");
+        for (auto& sp : startEnd_->startPoints_) {
+            if (sp.active_ && sp.type_ == StartEndType::Pipe)
+                sp.infiniteWater_ = unlimitedWater;
+        }
+    }
+
+    if (dirt_)
+        drawTerrainColliders(*dirt_);
+    if (stone_)
+        drawTerrainColliders(*stone_);
+    if (magic_)
+        drawTerrainColliders(*magic_);
+    if (fluidSystem_)
+        drawFluidColliders(*fluidSystem_);
+    if (collectibles_)
+        drawCollectibleColliders(*collectibles_);
+    if (portals_)
+        drawPortalColliders(*portals_);
+    if (startEnd_)
+        drawStartEndColliders(*startEnd_);
+
+    if (isOpen())
+        draw();
+
+    drawHUD();
+}
+
+void DebugSystem::drawSingleCollider(const Transform& transform, const Collider2D& col) {
+    AEMtx33 scale, rot, trans, world;
+
+    if (col.colliderShape_ == ColliderShape::Box) {
+        const AEVec2 center{transform.pos_.x + col.shapeData_.box_.offset_.x,
+                            transform.pos_.y + col.shapeData_.box_.offset_.y};
+        AEMtx33Scale(&scale, col.shapeData_.box_.size_.x, col.shapeData_.box_.size_.y);
+        AEMtx33Rot(&rot, transform.rotationRad_);
+        AEMtx33Trans(&trans, center.x, center.y);
+        AEMtx33Concat(&world, &rot, &scale);
+        AEMtx33Concat(&world, &trans, &world);
+        AEGfxSetTransform(world.m);
+        AEGfxMeshDraw(wireRectMesh_, AE_GFX_MDM_LINES_STRIP);
+    } else if (col.colliderShape_ == ColliderShape::Circle) {
+        const AEVec2 center{transform.pos_.x + col.shapeData_.circle_.offset_.x,
+                            transform.pos_.y + col.shapeData_.circle_.offset_.y};
+        const f32 diameter = col.shapeData_.circle_.radius_ * 2.0f;
+        AEMtx33Scale(&scale, diameter, diameter);
+        AEMtx33Trans(&trans, center.x, center.y);
+        AEMtx33Concat(&world, &trans, &scale);
+        AEGfxSetTransform(world.m);
+        AEGfxMeshDraw(wireCircleMesh_, AE_GFX_MDM_LINES_STRIP);
+    }
+}
+
+void DebugSystem::drawCollectibleColliders(CollectibleSystem& system) {
+    if (!options_.count("RenderColliders") || !options_.at("RenderColliders"))
+        return;
+
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(0.0f, 1.0f, 0.0f, 1.0f);
+
+    for (const auto& c : system.GetCollectibles()) {
+        if (!c.active_ || c.collected_)
+            continue;
+        drawSingleCollider(c.transform_, c.collider_);
+    }
+}
+
+void DebugSystem::drawPortalColliders(PortalSystem& system) {
+    if (!options_.count("RenderColliders") || !options_.at("RenderColliders"))
+        return;
+
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(0.0f, 1.0f, 0.0f, 1.0f);
+
+    for (const Portal* p : system.GetPortals()) {
+        drawSingleCollider(p->transform_, p->collider_);
+    }
+}
+
+void DebugSystem::drawStartEndColliders(StartEndPoint& system) {
+    if (!options_.count("RenderColliders") || !options_.at("RenderColliders"))
+        return;
+
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(0.0f, 1.0f, 0.0f, 1.0f);
+
+    for (const auto& sp : system.startPoints_) {
+        drawSingleCollider(sp.transform_, sp.collider_);
+    }
+    drawSingleCollider(system.endPoint_.transform_, system.endPoint_.collider_);
+}
+
+void DebugSystem::drawTerrainColliders(Terrain& terrain) {
     if (!options_.count("RenderColliders") || !options_.at("RenderColliders"))
         return;
 
@@ -282,14 +424,12 @@ void DebugSystem::drawColliders(Terrain& terrain) {
                 continue;
 
             if (col.colliderShape_ == ColliderShape::Box) {
-                const AEVec2 worldCenter{
-                    cell.transform_.pos_.x + col.shapeData_.box_.offset_.x * cell.transform_.scale_.x,
-                    cell.transform_.pos_.y + col.shapeData_.box_.offset_.y * cell.transform_.scale_.y
-                };
-                const AEVec2 worldSize{
-                    col.shapeData_.box_.size_.x * cell.transform_.scale_.x,
-                    col.shapeData_.box_.size_.y * cell.transform_.scale_.y
-                };
+                const AEVec2 worldCenter{cell.transform_.pos_.x + col.shapeData_.box_.offset_.x *
+                                                                      cell.transform_.scale_.x,
+                                         cell.transform_.pos_.y + col.shapeData_.box_.offset_.y *
+                                                                      cell.transform_.scale_.y};
+                const AEVec2 worldSize{col.shapeData_.box_.size_.x * cell.transform_.scale_.x,
+                                       col.shapeData_.box_.size_.y * cell.transform_.scale_.y};
                 AEMtx33Scale(&scale, worldSize.x, worldSize.y);
                 AEMtx33Trans(&trans, worldCenter.x, worldCenter.y);
                 AEMtx33Concat(&world, &trans, &scale);
@@ -299,17 +439,18 @@ void DebugSystem::drawColliders(Terrain& terrain) {
             } else if (col.colliderShape_ == ColliderShape::Triangle) {
                 AEVec2 verts[3];
                 for (int v = 0; v < 3; ++v) {
-                    verts[v] = {
-                        col.shapeData_.triangle_.vertices_[v].x * cell.transform_.scale_.x + cell.transform_.pos_.x,
-                        col.shapeData_.triangle_.vertices_[v].y * cell.transform_.scale_.y + cell.transform_.pos_.y
-                    };
+                    verts[v] = {col.shapeData_.triangle_.vertices_[v].x * cell.transform_.scale_.x +
+                                    cell.transform_.pos_.x,
+                                col.shapeData_.triangle_.vertices_[v].y * cell.transform_.scale_.y +
+                                    cell.transform_.pos_.y};
                 }
                 for (int e = 0; e < 3; ++e) {
                     const AEVec2& a = verts[e];
                     const AEVec2& b = verts[(e + 1) % 3];
                     const f32 dx = b.x - a.x, dy = b.y - a.y;
                     const f32 len = std::sqrt(dx * dx + dy * dy);
-                    if (len < 0.001f) continue;
+                    if (len < 0.001f)
+                        continue;
                     AEMtx33Scale(&scale, len, 1.0f);
                     AEMtx33Rot(&rot, std::atan2(dy, dx));
                     AEMtx33Trans(&trans, a.x, a.y);
@@ -321,7 +462,6 @@ void DebugSystem::drawColliders(Terrain& terrain) {
             }
         }
     }
-
 }
 
 void DebugSystem::drawFluidColliders(FluidSystem& fluidSystem) {
@@ -333,21 +473,10 @@ void DebugSystem::drawFluidColliders(FluidSystem& fluidSystem) {
     AEGfxSetTransparency(1.0f);
     AEGfxSetColorToMultiply(0.0f, 1.0f, 0.0f, 1.0f);
 
-    AEMtx33 scale, trans, world;
-
     for (int fi = 0; fi < static_cast<int>(FluidType::Count); ++fi) {
         const auto& pool = fluidSystem.GetParticlePool(static_cast<FluidType>(fi));
         for (const auto& p : pool) {
-            const AEVec2 center{
-                p.transform_.pos_.x + p.collider_.shapeData_.circle_.offset_.x,
-                p.transform_.pos_.y + p.collider_.shapeData_.circle_.offset_.y
-            };
-            const f32 diameter = p.collider_.shapeData_.circle_.radius_ * 2.0f;
-            AEMtx33Scale(&scale, diameter, diameter);
-            AEMtx33Trans(&trans, center.x, center.y);
-            AEMtx33Concat(&world, &trans, &scale);
-            AEGfxSetTransform(world.m);
-            AEGfxMeshDraw(wireCircleMesh_, AE_GFX_MDM_LINES_STRIP);
+            drawSingleCollider(p.transform_, p.collider_);
         }
     }
 }

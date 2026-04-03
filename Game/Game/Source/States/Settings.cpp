@@ -18,6 +18,7 @@
 
 #include "AudioSystem.h"
 #include "Button.h"
+#include "DebugSystem.h"
 #include "GameStateManager.h"
 #include "States/LevelManager.h"
 
@@ -130,51 +131,66 @@ void initializeSettings() {
     bgDirt->initCellsGraphics();
     bgDirt->initCellsCollider();
     bgDirt->updateTerrain();
+
+    g_debugSystem.setScene(bgDirt, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+                           &bgVfxSystem);
 }
 
 void updateSettings(GameStateManager& GSM, f32 deltaTime) {
-    // Check for button presses to change audio group
-    if (buttonIncreaseSfxVolume.checkMouseClick()) {
-        g_audioSystem.adjustGroupVolume("sfx", +10);
-    }
-    if (buttonDecreaseSfxVolume.checkMouseClick()) {
-        g_audioSystem.adjustGroupVolume("sfx", -10);
-    }
-    if (buttonIncreaseBgmVolume.checkMouseClick()) {
-        g_audioSystem.adjustGroupVolume("bgm", +10);
-    }
-    if (buttonDecreaseBgmVolume.checkMouseClick()) {
-        g_audioSystem.adjustGroupVolume("bgm", -10);
-    }
+    if (!g_debugSystem.isOpen()) {
+        if (AEInputCheckTriggered(AEVK_Z)) {
+            g_debugSystem.open();
+        }
 
-    // Check for button press to go back to main menu
-    if (buttonBack.checkMouseClick()) {
-        GSM.nextState_ = StateId::MainMenu;
-    }
+        // Check for button presses to change audio group
+        if (buttonIncreaseSfxVolume.checkMouseClick()) {
+            g_audioSystem.adjustGroupVolume("sfx", +10);
+        }
+        if (buttonDecreaseSfxVolume.checkMouseClick()) {
+            g_audioSystem.adjustGroupVolume("sfx", -10);
+        }
+        if (buttonIncreaseBgmVolume.checkMouseClick()) {
+            g_audioSystem.adjustGroupVolume("bgm", +10);
+        }
+        if (buttonDecreaseBgmVolume.checkMouseClick()) {
+            g_audioSystem.adjustGroupVolume("bgm", -10);
+        }
 
-    // Get volume amounts
-    sfxVolumeAmountText.content_ = std::to_string(g_audioSystem.getGroupVolume("sfx")) + "%";
-    bgmVolumeAmountText.content_ = std::to_string(g_audioSystem.getGroupVolume("bgm")) + "%";
+        // Check for button press to go back to main menu
+        if (buttonBack.checkMouseClick()) {
+            GSM.nextState_ = StateId::MainMenu;
+        }
 
-    buttonIncreaseSfxVolume.updateTransform();
-    buttonDecreaseSfxVolume.updateTransform();
-    buttonIncreaseBgmVolume.updateTransform();
-    buttonDecreaseBgmVolume.updateTransform();
+        // Get volume amounts
+        sfxVolumeAmountText.content_ = std::to_string(g_audioSystem.getGroupVolume("sfx")) + "%";
+        bgmVolumeAmountText.content_ = std::to_string(g_audioSystem.getGroupVolume("bgm")) + "%";
 
-    buttonBack.updateTransform();
+        buttonIncreaseSfxVolume.updateTransform();
+        buttonDecreaseSfxVolume.updateTransform();
+        buttonIncreaseBgmVolume.updateTransform();
+        buttonDecreaseBgmVolume.updateTransform();
 
-    if (AEInputCheckCurr(AEVK_LBUTTON)) {
-        bool hitDirt = bgDirt->destroyAtMouse(20.0f);
-        if (hitDirt) {
-            bgVfxSystem.SpawnContinuous(VFXType::DirtBurst, GetMouseWorldPos(), deltaTime, 0.1f);
-            g_audioSystem.playSound("dirt_break", "sfx", 0.5f, 1.0f);
+        buttonBack.updateTransform();
+
+        if (AEInputCheckCurr(AEVK_LBUTTON)) {
+            bool hitDirt = bgDirt->destroyAtMouse(20.0f);
+            if (hitDirt) {
+                bgVfxSystem.SpawnContinuous(VFXType::DirtBurst, GetMouseWorldPos(), deltaTime,
+                                            0.1f);
+                g_audioSystem.playSound("dirt_break", "sfx", 0.5f, 1.0f);
+            } else {
+                bgVfxSystem.ResetSpawnTimer();
+            }
         } else {
             bgVfxSystem.ResetSpawnTimer();
         }
+        bgVfxSystem.Update(deltaTime);
     } else {
-        bgVfxSystem.ResetSpawnTimer();
+        if (AEInputCheckTriggered(AEVK_Z)) {
+            g_debugSystem.close();
+        }
+        g_debugSystem.update();
     }
-    bgVfxSystem.Update(deltaTime);
 }
 
 void drawSettings() {
@@ -196,9 +212,12 @@ void drawSettings() {
     bgmVolumeText.draw();
     sfxVolumeAmountText.draw();
     bgmVolumeAmountText.draw();
+
+    g_debugSystem.drawAll();
 }
 
 void freeSettings() {
+    g_debugSystem.clearScene();
     bgVfxSystem.Free();
 
     delete bgDirt;

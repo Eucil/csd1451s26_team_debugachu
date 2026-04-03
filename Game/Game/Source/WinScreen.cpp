@@ -183,7 +183,7 @@ void WinScreen::Update(GameStateManager& GSM) {
             // If we always use NextLevel, the second next-level click finds
             // currentState_ == NextLevel == nextState_ and does nothing.
             // If we always use Level, same problem coming from StateId::Level.
-            // Solution: alternate � pick whichever ID differs from currentState_.
+            // Solution: alternate - pick whichever ID differs from currentState_.
             GSM.nextState_ =
                 (GSM.currentState_ == StateId::NextLevel) ? StateId::Level : StateId::NextLevel;
             Hide();

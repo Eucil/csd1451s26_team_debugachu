@@ -18,6 +18,7 @@
 
 #include <AEEngine.h>
 
+#include "DebugSystem.h"
 #include "GameStateManager.h"
 #include "Utils.h"
 
@@ -137,33 +138,45 @@ void UpdateLogoScreen(GameStateManager& GSM, f32 deltaTime) {
                fadingIn_ ? "FADE_IN" : (holdTimer_ > 0.0f ? "HOLD" : "FADE_OUT"));
     }
 
-    // Skip on any key / click
-    if (AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_RETURN) ||
-        AEInputCheckTriggered(AEVK_SPACE) || AEInputCheckTriggered(AEVK_LBUTTON)) {
-        printf("[LogoScreen] Skip input detected -- jumping to MainMenu\n");
-        SkipToMainMenu(GSM);
-        return;
-    }
-
-    if (done_)
-        return;
-
-    if (fadingIn_) {
-        alpha_ += deltaTime / FADE_SPEED;
-        if (alpha_ >= 1.0f) {
-            alpha_ = 1.0f;
-            fadingIn_ = false;
-            printf("[LogoScreen] Fade-in complete, entering HOLD phase (%.1fs)\n", HOLD_DURATION);
+    if (!g_debugSystem.isOpen()) {
+        if (AEInputCheckTriggered(AEVK_Z)) {
+            g_debugSystem.open();
         }
-    } else if (holdTimer_ > 0.0f) {
-        holdTimer_ -= deltaTime;
-    } else {
-        alpha_ -= deltaTime / FADE_SPEED;
-        if (alpha_ <= 0.0f) {
-            alpha_ = 0.0f;
-            printf("[LogoScreen] Fade-out complete\n");
+
+        // Skip on any key / click
+        if (AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_RETURN) ||
+            AEInputCheckTriggered(AEVK_SPACE) || AEInputCheckTriggered(AEVK_LBUTTON)) {
+            printf("[LogoScreen] Skip input detected -- jumping to MainMenu\n");
             SkipToMainMenu(GSM);
+            return;
         }
+
+        if (done_)
+            return;
+
+        if (fadingIn_) {
+            alpha_ += deltaTime / FADE_SPEED;
+            if (alpha_ >= 1.0f) {
+                alpha_ = 1.0f;
+                fadingIn_ = false;
+                printf("[LogoScreen] Fade-in complete, entering HOLD phase (%.1fs)\n",
+                       HOLD_DURATION);
+            }
+        } else if (holdTimer_ > 0.0f) {
+            holdTimer_ -= deltaTime;
+        } else {
+            alpha_ -= deltaTime / FADE_SPEED;
+            if (alpha_ <= 0.0f) {
+                alpha_ = 0.0f;
+                printf("[LogoScreen] Fade-out complete\n");
+                SkipToMainMenu(GSM);
+            }
+        }
+    } else {
+        if (AEInputCheckTriggered(AEVK_Z)) {
+            g_debugSystem.close();
+        }
+        g_debugSystem.update();
     }
 }
 
@@ -242,6 +255,8 @@ void DrawLogoScreen() {
     AEGfxSetTransform(world.m);
     AEGfxTextureSet(logoTexture, 0.0f, 0.0f);
     AEGfxMeshDraw(logoMesh, AE_GFX_MDM_TRIANGLES);
+
+    g_debugSystem.drawAll();
 }
 
 // ----------------------------------------------------------------------------

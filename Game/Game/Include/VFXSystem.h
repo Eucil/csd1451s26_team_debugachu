@@ -88,6 +88,17 @@ public:
 
     void ResetSpawnTimer();
 
+    u32 GetActiveParticleCount() const {
+        u32 count = 0;
+        for (int i = 0; i < static_cast<int>(VFXType::Count); ++i) {
+            for (const auto& p : vfxParticlePool_[i]) {
+                if (p.active_)
+                    count++;
+            }
+        }
+        return count;
+    }
+
 private:
     std::vector<VFXParticle> vfxParticlePool_[static_cast<int>(VFXType::Count)];
 

@@ -1,4 +1,4 @@
-﻿/*!
+/*!
 @file       Level.cpp
 @author     Woo Guang Theng/guangtheng.woo@digipen.edu
 @co_author  Sean Lee Hong Wei/seanhongwei.lee@digipen.edu,
@@ -94,7 +94,7 @@ static AEGfxVertexList* g_barMesh = nullptr; // Global bar mesh for cleanup
 // Background
 static TiledBackground bg;
 
-// HUD icon textures — loaded in LoadLevel, freed in FreeLevel+UnloadLevel
+// HUD icon textures -- loaded in LoadLevel, freed in FreeLevel+UnloadLevel
 static AEGfxTexture* pHudWaterIconTex = nullptr;
 static AEGfxTexture* pHudGoalIconTex = nullptr;
 static AEGfxVertexList* g_hudIconMesh = nullptr;
@@ -180,9 +180,6 @@ void LoadLevel() {
     pauseSystem.loadMesh();
     // Once level is loaded, make sure it is not paused
     pauseSystem.resume();
-
-    // Debug system
-    g_debugSystem.load(font);
 }
 
 void InitializeLevel() {
@@ -257,7 +254,7 @@ void InitializeLevel() {
     goalFlowerFrameTimer_ = 0.0f;
     goalFlowerFrame_ = 0;
 
-    // HUD icon textures and mesh — created here so Restart (Free+Initialize)
+    // HUD icon textures and mesh -- created here so Restart (Free+Initialize)
     // always recreates them. LoadLevel/UnloadLevel are NOT called on Restart.
     if (pHudWaterIconTex) {
         AEGfxTextureUnload(pHudWaterIconTex);
@@ -297,14 +294,14 @@ void InitializeLevel() {
     pauseHeaderText.initFromJson("pause_system", "Header");
     pauseHeaderText.font_ = titleFont;
 
-    // Debug system
-    g_debugSystem.initFromJson("debug_system", "DebugOverlay");
-
     // Animations
     animManager.Clear();
     animManager.Add(&screenFader);
     animManager.Add(&someOtherCoolAnimation);
     animManager.InitializeAll();
+
+    g_debugSystem.setScene(dirt, stone, magic, &fluidSystem, &collectibleSystem, &portalSystem,
+                           &startEndPointSystem, &vfxSystem);
 }
 
 // tc added start - Function to handle water spawning with limit
@@ -939,31 +936,7 @@ void DrawLevel() {
     } else { // Game is not paused
     }
 
-    if (g_debugSystem.isOpen()) { // Debug system is open
-        g_debugSystem.draw();
-    } else { // Debug system is not open
-    }
-
-    // Get debug information
-    g_debugSystem.hudValues_["ShowFps"] = static_cast<float>(AEFrameRateControllerGetFrameRate());
-
-    u32 totalFluidParticles = 0;
-    for (int fi = 0; fi < static_cast<int>(FluidType::Count); ++fi) {
-        totalFluidParticles += fluidSystem.GetParticleCount(static_cast<FluidType>(fi));
-    }
-
-    g_debugSystem.hudValues_["ShowFluidParticleCount"] = static_cast<float>(totalFluidParticles);
-
-    g_debugSystem.hudValues_["ShowVfxParticleCount"] = 0.0f;
-
-    // Draw debug collider overlays
-    g_debugSystem.drawColliders(*dirt);
-    g_debugSystem.drawColliders(*stone);
-    g_debugSystem.drawColliders(*magic);
-    g_debugSystem.drawFluidColliders(fluidSystem);
-
-    // Draw debug HUD
-    g_debugSystem.drawHUD();
+    g_debugSystem.drawAll();
 
     // Animations
     animManager.DrawAll();
@@ -971,6 +944,7 @@ void DrawLevel() {
 
 void FreeLevel() {
     // std::cout << "Free level 2\n";
+    g_debugSystem.clearScene();
     winScreen.Free();
     fluidSystem.Free();
     startEndPointSystem.Free();
@@ -1057,9 +1031,6 @@ void UnloadLevel() {
 
     // Pause system
     pauseSystem.unload();
-
-    // Debug system
-    g_debugSystem.unload();
 
     winScreen.Unload();
 }

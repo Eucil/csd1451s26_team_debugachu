@@ -13,6 +13,7 @@
             Technology is prohibited.
 *//*______________________________________________________________________*/
 #include "PortalSystem.h"
+#include "CollisionSystem.h"
 
 #include <cmath>
 #include <iostream>
@@ -134,7 +135,7 @@ bool PortalSystem::SetupPortal(AEVec2 pos, AEVec2 scale, f32 rotationDeg) {
 bool PortalSystem::CollisionCheckWithWater(Portal portal, FluidParticle particle) {
     // Circle to Rectangle Collision Detection
 
-    // Transform the particle position into the portal�s local space
+    // Transform the particle position into the portal's local space
     // Undo the portal's rotation
     f32 cosAngle = AECos(-portal.transform_.rotationRad_);
     f32 sinAngle = AESin(-portal.transform_.rotationRad_);
@@ -190,6 +191,7 @@ void PortalSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
                 continue;
             }
             if (CollisionCheckWithWater(*portal, particle)) {
+                CollisionSystem::incrementCollisionCount();
                 // Teleport the particle to the linked portal's position
                 // Get relative position to entrance portal
                 f32 relativePosX = (particle.transform_.pos_.x - portal->transform_.pos_.x) /

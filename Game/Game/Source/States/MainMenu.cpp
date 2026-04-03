@@ -19,6 +19,7 @@
 
 #include <AEEngine.h>
 
+#include "DebugSystem.h"
 #include "MenuBackground.h" // shared background
 #include "Utils.h"
 // Destructible Terrain
@@ -100,67 +101,74 @@ void InitializeMainMenu() {
 }
 
 void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
-    //(void)deltaTime; // Unused parameter, but required by function signature
-    // Keep keyboard shortcuts for development/testing
-    if (AEInputCheckTriggered(AEVK_R) || 0 == AESysDoesWindowExist()) {
-        std::cout << "R triggered - Restart\n";
-        GSM.nextState_ = StateId::Restart;
+    if (!g_debugSystem.isOpen()) {
+        if (AEInputCheckTriggered(AEVK_Z)) {
+            g_debugSystem.open();
+        }
+
+        //(void)deltaTime; // Unused parameter, but required by function signature
+        // Keep keyboard shortcuts for development/testing
+        if (AEInputCheckTriggered(AEVK_R) || 0 == AESysDoesWindowExist()) {
+            std::cout << "R triggered - Restart\n";
+            GSM.nextState_ = StateId::Restart;
+        }
+
+        // Button click handling
+        if (AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
+            if (startButton.checkMouseClick()) {
+                std::cout << "Start button clicked - Going to Level Selector\n";
+
+                screenFader.StartFadeOut(&GSM, StateId::LevelSelector);
+            }
+            if (howToPlayButton.checkMouseClick()) {
+                std::cout << "How To Play button clicked\n";
+                screenFader.StartFadeOut(&GSM, StateId::HowToPlay);
+            }
+
+            // Settings button
+            if (settingsButton.checkMouseClick()) {
+                std::cout << "Settings button clicked\n";
+                GSM.nextState_ = StateId::Settings;
+            }
+
+            // Credits button
+            if (creditsButton.checkMouseClick()) {
+                std::cout << "Credits button clicked\n";
+                GSM.nextState_ = StateId::Credits;
+                screenFader.StartFadeOut(&GSM, StateId::Credits);
+            }
+            if (quitButton.checkMouseClick()) {
+                std::cout << "Quit button clicked - Exiting game\n";
+                GSM.nextState_ = StateId::Quit;
+                screenFader.StartFadeOut(&GSM, StateId::Quit);
+            }
+        }
+
+        // ------------------------------------------------------------
+        // Left-click held: destroy dirt + VFX + audio
+        // ------------------------------------------------------------
+        if (AEInputCheckCurr(AEVK_LBUTTON)) {
+            bool hitDirt = MenuBackground::DestroyDirtAtMouse(20.0f);
+            if (hitDirt) {
+                g_audioSystem.playSound("dirt_break", "sfx", 0.5f, 1.0f);
+            }
+        }
+
+        // Update button transforms
+        startButton.updateTransform();
+        howToPlayButton.updateTransform();
+        settingsButton.updateTransform();
+        creditsButton.updateTransform();
+        quitButton.updateTransform();
+
+        // Update shared background (fluid, portals, collectibles, VFX)
+        MenuBackground::Update(deltaTime);
+    } else {
+        if (AEInputCheckTriggered(AEVK_Z)) {
+            g_debugSystem.close();
+        }
+        g_debugSystem.update();
     }
-
-    // Button click handling
-    if (AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
-        if (startButton.checkMouseClick()) {
-            std::cout << "Start button clicked - Going to Level Selector\n";
-
-            screenFader.StartFadeOut(&GSM, StateId::LevelSelector);
-        }
-        if (howToPlayButton.checkMouseClick()) {
-            std::cout << "How To Play button clicked\n";
-            // TODO: Implement how to play screen or state
-            // For now, just print or you could set a new state
-            screenFader.StartFadeOut(&GSM, StateId::HowToPlay);
-        }
-
-        // Settings button
-        if (settingsButton.checkMouseClick()) {
-            std::cout << "Settings button clicked\n";
-            GSM.nextState_ = StateId::Settings;
-        }
-
-        // Credits button
-        if (creditsButton.checkMouseClick()) {
-            std::cout << "Credits button clicked\n";
-            GSM.nextState_ = StateId::Credits;
-            screenFader.StartFadeOut(&GSM, StateId::Credits);
-        }
-        if (quitButton.checkMouseClick()) {
-            std::cout << "Quit button clicked - Exiting game\n";
-            GSM.nextState_ = StateId::Quit;
-            screenFader.StartFadeOut(&GSM, StateId::Quit);
-        }
-    }
-
-    // ------------------------------------------------------------
-    // Left-click held: destroy dirt + VFX + audio
-    // DestroyDirtAtMouse handles both the terrain destruction and
-    // spawning the visual VFX burst. We only need to play the sound.
-    // ------------------------------------------------------------
-    if (AEInputCheckCurr(AEVK_LBUTTON)) {
-        bool hitDirt = MenuBackground::DestroyDirtAtMouse(20.0f);
-        if (hitDirt) {
-            g_audioSystem.playSound("dirt_break", "sfx", 0.5f, 1.0f);
-        }
-    }
-
-    // Update button transforms
-    startButton.updateTransform();
-    howToPlayButton.updateTransform();
-    settingsButton.updateTransform();
-    creditsButton.updateTransform();
-    quitButton.updateTransform();
-
-    // Update shared background (fluid, portals, collectibles, VFX)
-    MenuBackground::Update(deltaTime);
 
     animManager.UpdateAll(deltaTime);
 }
@@ -180,6 +188,7 @@ void DrawMainMenu() {
     titleText.draw();
 
     animManager.DrawAll();
+    g_debugSystem.drawAll();
 }
 
 void FreeMainMenu() {

@@ -15,6 +15,8 @@
 *//*______________________________________________________________________*/
 #include "CollisionSystem.h"
 
+u32 CollisionSystem::s_collisionCount_ = 0;
+
 void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& fluidSystem, f32 dt) {
     using BucketEntry = std::pair<FluidType, u32>; // (type, index)
 
@@ -168,10 +170,12 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
                         // (If not, nothing happens at all)
                         CollisionInfo contact =
                             cellToFluidParticleCollision(neighbourTerrainCell, fluidParticleA);
-                        if (contact.hasCollision_)
+                        if (contact.hasCollision_) {
+                            incrementCollisionCount();
                             pushOutAndSlide(fluidParticleA, contact.normal_, contact.penetration_,
                                             fluidParticleA.collider_.shapeData_.circle_.radius_,
                                             dt);
+                        }
                     }
                 }
             }
@@ -525,20 +529,20 @@ void CollisionSystem::pushOutAndSlide(FluidParticle& p, const AEVec2& n, f32 pen
 
         // FLOOR IMPACT SPREAD: When a particle hits a floor (normal pointing upward),
         // convert a portion of the downward impact speed into horizontal velocity.
-        // This drives the spreading/flowing behaviour � without this, water just piles
+        // This drives the spreading/flowing behaviour - without this, water just piles
         // up vertically instead of spreading sideways like real water.
         // If the particle is already moving horizontally, amplify that direction so
         // flow is consistent rather than randomly reversing.
         if (n.y > 0.5f) {
             f32 impactSpeed = std::abs(vn);
-            // Always picks a random direction � previously amplified existing horizontal drift
+            // Always picks a random direction - previously amplified existing horizontal drift
             // which caused all water to bias rightward. Random direction ensures symmetric
             // spreading so water flows equally left and right
             f32 spreadDir = ((rand() % 2) == 0 ? 1.0f : -1.0f);
             p.physics_.velocity_.x += spreadDir * impactSpeed * 0.2f;
         }
 
-        // Very light friction � nearly zero energy removal per collision so horizontal
+        // Very light friction - nearly zero energy removal per collision so horizontal
         // momentum from the floor spread persists and particles keep flowing.
         // Previously 0.98f which compounded across substeps to remove ~18% velocity/frame.
         f32 randomFriction = 0.999f + ((rand() % 100) * 0.000001f);
@@ -570,6 +574,7 @@ void CollisionSystem::resolveFluidParticlePair(FluidParticle& p1, FluidParticle&
 
     // Check collision
     if (distSq < minDist * minDist) {
+        incrementCollisionCount();
         // std::max prevents division by zero if dist is extremely small
         f32 dist = std::sqrt((std::max)(distSq, 0.0001f));
 
@@ -660,7 +665,7 @@ void CollisionSystem::resolveFluidParticlePair(FluidParticle& p1, FluidParticle&
             // -2.0f  : Perfectly Elastic
             // MIN_BOUNCE_THRESHOLD: Only apply the velocity impulse when particles are
             // approaching each other fast enough to matter. Settled particles in a pile
-            // constantly have tiny approach velocities from repulsion nudges � firing the
+            // constantly have tiny approach velocities from repulsion nudges - firing the
             // impulse on those causes the vigorous left-right oscillation in dense groups.
             // At 15.0f, only genuine impacts trigger the bounce response.
             const f32 MIN_BOUNCE_THRESHOLD = 15.0f;

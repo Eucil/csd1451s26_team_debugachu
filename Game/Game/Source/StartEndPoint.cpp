@@ -13,6 +13,7 @@
                         Technology is prohibited.
 *//*______________________________________________________________________*/
 #include "StartEndPoint.h"
+#include "CollisionSystem.h"
 
 #include <cmath>
 #include <cstdio>
@@ -316,6 +317,7 @@ void StartEndPoint::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
         }
         for (auto& particle : particlePool) {
             if (CollisionCheckWithWater(startPoint, particle)) {
+                CollisionSystem::incrementCollisionCount();
                 // Handle collision with start point
                 // For example, you can reset the particle's position or apply some effect
                 // std::cout << "Particle collided with start point!\n";
@@ -326,6 +328,7 @@ void StartEndPoint::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
     // Check collision for end point with each water particle
     for (auto particleIt = particlePool.begin(); particleIt != particlePool.end();) {
         if (CollisionCheckWithWater(endPoint_, *particleIt)) {
+            CollisionSystem::incrementCollisionCount();
             // Handle collision with end point
             // std::cout << "Particle collided with end point! Removing particle.\n";
             particlesCollected_++;

@@ -13,6 +13,7 @@
             Technology is prohibited.
 *//*______________________________________________________________________*/
 #include "Moss.h"
+#include "CollisionSystem.h"
 
 #include <cmath>
 #include <cstdio>
@@ -237,6 +238,7 @@ void MossSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool,
 
         for (auto it = particlePool.begin(); it != particlePool.end();) {
             if (CheckCollisionWithWater(m, *it)) {
+                CollisionSystem::incrementCollisionCount();
                 m.currentHealth_ -= m.absorptionRate_;
                 it = particlePool.erase(it);
                 if (m.currentHealth_ <= 0.0f) {
@@ -282,7 +284,7 @@ void MossSystem::DrawMoss(const Moss& m) {
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
         AEGfxSetTransform(worldCopy.m);
-        // Use the per-frame mesh (UVs baked in) — no UV offset needed
+        // Use the per-frame mesh (UVs baked in) - no UV offset needed
         AEGfxTextureSet(mossTexture_, 0.0f, 0.0f);
         AEGfxMeshDraw(mossFrameMeshes_[frame], AE_GFX_MDM_TRIANGLES);
     }
@@ -301,21 +303,21 @@ void MossSystem::DrawMoss(const Moss& m) {
         AEGfxSetTransparency(1.0f);
         AEGfxSetTransform(worldCopy.m);
 
-        // Fallback colour draw — fluffy green palette
-        // Layer 0: body — rich green fading to brown as health drops
+        // Fallback colour draw - fluffy green palette
+        // Layer 0: body - rich green fading to brown as health drops
         float bodyG = 0.63f * healthPct + 0.33f * (1.0f - healthPct);
         float bodyR = 0.12f * healthPct + 0.31f * (1.0f - healthPct);
         float bodyB = 0.08f * healthPct + 0.08f * (1.0f - healthPct);
         AEGfxSetColorToMultiply(bodyR, bodyG, bodyB, 1.0f);
         AEGfxMeshDraw(spikyMossMesh_, AE_GFX_MDM_TRIANGLES);
 
-        // Layer 1: fluffy bumps — lighter green
+        // Layer 1: fluffy bumps - lighter green
         float bumpG = 0.78f * healthPct + 0.40f * (1.0f - healthPct);
         float bumpR = 0.23f * healthPct + 0.35f * (1.0f - healthPct);
         AEGfxSetColorToMultiply(bumpR, bumpG, bumpR * 0.5f, 1.0f);
         AEGfxMeshDraw(basicMossMesh_, AE_GFX_MDM_TRIANGLES);
 
-        // Layer 2: highlight glow — bounces with growthTimer
+        // Layer 2: highlight glow - bounces with growthTimer
         if (healthPct > 0.30f) {
             float pulse = 0.70f + 0.30f * sinf(m.growthTimer_ * 4.0f);
             float glowAlpha = healthPct * pulse * 0.8f;

@@ -25,6 +25,7 @@
 #include "AudioSystem.h"
 #include "Button.h"
 #include "ConfigManager.h"
+#include "DebugSystem.h"
 #include "GameStateManager.h"
 #include "MenuBackground.h"
 #include "Utils.h"
@@ -360,59 +361,70 @@ void InitializeHowToPlay() {
 }
 
 void UpdateHowToPlay(GameStateManager& GSM, f32 deltaTime) {
-    int totalPages = static_cast<int>(pages.size());
-    if (totalPages == 0)
-        totalPages = 1;
-
-    // Keyboard navigation
-    if (AEInputCheckTriggered(AEVK_RIGHT) || AEInputCheckTriggered(AEVK_SPACE)) {
-        if (currentPage < totalPages)
-            ++currentPage;
-        else
-            GSM.nextState_ = StateId::MainMenu;
-    }
-    if (AEInputCheckTriggered(AEVK_LEFT)) {
-        if (currentPage > 1)
-            --currentPage;
-    }
-    if (AEInputCheckTriggered(AEVK_ESCAPE)) {
-        GSM.nextState_ = StateId::MainMenu;
-    }
-
-    if (buttonNext.checkMouseClick()) {
-        if (currentPage < totalPages)
-            ++currentPage;
-        else
-            GSM.nextState_ = StateId::MainMenu;
-    }
-
-    if (buttonPrevious.checkMouseClick()) {
-        if (currentPage > 1)
-            --currentPage;
-    }
-
-    if (buttonBack.checkMouseClick()) {
-        GSM.nextState_ = StateId::MainMenu;
-    }
-
-    if (AEInputCheckCurr(AEVK_LBUTTON)) {
-        bool hitDirt = MenuBackground::DestroyDirtAtMouse(20.0f);
-        if (hitDirt) {
-            g_audioSystem.playSound("dirt_break", "sfx", 0.5f, 1.0f);
+    if (!g_debugSystem.isOpen()) {
+        if (AEInputCheckTriggered(AEVK_Z)) {
+            g_debugSystem.open();
         }
+
+        int totalPages = static_cast<int>(pages.size());
+        if (totalPages == 0)
+            totalPages = 1;
+
+        // Keyboard navigation
+        if (AEInputCheckTriggered(AEVK_RIGHT) || AEInputCheckTriggered(AEVK_SPACE)) {
+            if (currentPage < totalPages)
+                ++currentPage;
+            else
+                GSM.nextState_ = StateId::MainMenu;
+        }
+        if (AEInputCheckTriggered(AEVK_LEFT)) {
+            if (currentPage > 1)
+                --currentPage;
+        }
+        if (AEInputCheckTriggered(AEVK_ESCAPE)) {
+            GSM.nextState_ = StateId::MainMenu;
+        }
+
+        if (buttonNext.checkMouseClick()) {
+            if (currentPage < totalPages)
+                ++currentPage;
+            else
+                GSM.nextState_ = StateId::MainMenu;
+        }
+
+        if (buttonPrevious.checkMouseClick()) {
+            if (currentPage > 1)
+                --currentPage;
+        }
+
+        if (buttonBack.checkMouseClick()) {
+            GSM.nextState_ = StateId::MainMenu;
+        }
+
+        if (AEInputCheckCurr(AEVK_LBUTTON)) {
+            bool hitDirt = MenuBackground::DestroyDirtAtMouse(20.0f);
+            if (hitDirt) {
+                g_audioSystem.playSound("dirt_break", "sfx", 0.5f, 1.0f);
+            }
+        }
+
+        // Update button transforms (recalculates centered text positions)
+        buttonNext.updateTransform();
+        buttonPrevious.updateTransform();
+        buttonBack.updateTransform();
+
+        // Advance collectible icon animation
+        s_collectRot += deltaTime * 0.5f;
+        s_collectPulse += deltaTime * 3.0f;
+
+        // Keep background alive
+        MenuBackground::Update(deltaTime);
+    } else {
+        if (AEInputCheckTriggered(AEVK_Z)) {
+            g_debugSystem.close();
+        }
+        g_debugSystem.update();
     }
-
-    // Update button transforms (recalculates centered text positions)
-    buttonNext.updateTransform();
-    buttonPrevious.updateTransform();
-    buttonBack.updateTransform();
-
-    // Advance collectible icon animation
-    s_collectRot += deltaTime * 0.5f;   // rotation speed (rad/s) -- matches Collectible.cpp
-    s_collectPulse += deltaTime * 3.0f; // pulse speed
-
-    // Keep background alive
-    MenuBackground::Update(deltaTime);
 }
 
 void DrawHowToPlay() {
@@ -472,6 +484,8 @@ void DrawHowToPlay() {
         buttonPrevious.draw();
     }
     buttonBack.draw();
+
+    g_debugSystem.drawAll();
 }
 
 void FreeHowToPlay() {

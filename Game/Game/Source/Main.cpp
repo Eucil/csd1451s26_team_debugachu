@@ -19,6 +19,7 @@
 
 #include "AudioSystem.h"
 #include "ConfigManager.h"
+#include "DebugSystem.h"
 #include "GameStateManager.h"
 #include "States/LevelManager.h"
 
@@ -61,6 +62,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     g_audioSystem.playMusic("main_music", "bgm", 1.0f, 1.0f);
 
+    // Debug system
+    s8 debugFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
+    g_debugSystem.load(debugFont);
+    g_debugSystem.initFromJson("debug_system", "DebugOverlay");
+
     // Game Loop
     while (GSM.currentState_ != StateId::Quit) {
         if (GSM.currentState_ == StateId::Restart) {
@@ -100,6 +106,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         GSM.previousState_ = GSM.currentState_;
         GSM.currentState_ = GSM.nextState_;
     }
+    // Debug system
+    g_debugSystem.unload();
+    if (debugFont) {
+        AEGfxDestroyFont(debugFont);
+    }
+
     // Audio system
     g_audioSystem.stopGroup("sfx");
     g_audioSystem.stopGroup("bgm");

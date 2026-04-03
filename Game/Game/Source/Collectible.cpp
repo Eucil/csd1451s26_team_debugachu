@@ -13,6 +13,7 @@
             Technology is prohibited.
 *//*______________________________________________________________________*/
 #include "Collectible.h"
+#include "CollisionSystem.h"
 
 #include <cmath>
 #include <cstdio>
@@ -211,6 +212,7 @@ void CollectibleSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool)
         // Check collision with water particles
         for (const auto& particle : particlePool) {
             if (CheckCollisionWithWater(c, particle)) {
+                CollisionSystem::incrementCollisionCount();
                 // if collision, mark collected, increment count, exit particle loop
                 c.collected_ = true;
                 collectedCount_++;

@@ -19,6 +19,7 @@
 #include <AEEngine.h>
 
 #include "AudioSystem.h"
+#include "DebugSystem.h"
 #include "FluidSystem.h"
 #include "PortalSystem.h"
 #include "StartEndPoint.h"
@@ -26,7 +27,6 @@
 #include "Terrain.h"
 #include "Utils.h"
 #include "VFXSystem.h"
-
 
 // ----------------------------------------------------------------------------
 // Private state (only visible inside this translation unit)
@@ -145,7 +145,7 @@ void MenuBackground::Load() {
     Terrain::createMeshLibrary();
     Terrain::createColliderLibrary();
 
-    pBgDirtTex  = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
+    pBgDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
     pBgStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
     pBgMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
     bg.loadFromJson("background", "Background");
@@ -198,6 +198,9 @@ void MenuBackground::Initialize() {
         startPoint.infiniteWater_ = true;
         startPoint.releaseWater_ = true;
     }
+
+    g_debugSystem.setScene(bgDirt, bgStone, bgMagic, &bgFluidSystem, nullptr, &bgPortalSystem,
+                           &bgStartEndPoint, &bgVfxSystem);
 }
 
 void MenuBackground::Update(f32 deltaTime) {
@@ -245,6 +248,7 @@ bool MenuBackground::DestroyDirtAtMouse(f32 radius) {
 }
 
 void MenuBackground::Free() {
+    g_debugSystem.clearScene();
     bgFluidSystem.Free();
     bgStartEndPoint.Free();
     bgPortalSystem.Free();

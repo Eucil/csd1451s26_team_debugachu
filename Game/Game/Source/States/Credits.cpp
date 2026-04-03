@@ -25,6 +25,7 @@
 #include "AudioSystem.h"
 #include "Button.h"
 #include "ConfigManager.h"
+#include "DebugSystem.h"
 #include "GameStateManager.h"
 #include "MenuBackground.h" // <-- shared background
 #include "Utils.h"
@@ -124,36 +125,47 @@ void InitializeCredits() {
 }
 
 void UpdateCredits(GameStateManager& GSM, f32 deltaTime) {
-    // Scroll credits upward
-    yPos -= scrollSpeed * deltaTime;
-
-    // Input to skip or return
-    if (AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_SPACE)) {
-        GSM.nextState_ = StateId::MainMenu;
-    }
-
-    if (buttonBack.checkMouseClick()) {
-        GSM.nextState_ = StateId::MainMenu;
-    }
-    buttonBack.updateTransform();
-
-    // Auto-return when all lines have scrolled past
-    float lastLineY = yPos - (creditsData.size() - 1) * lineSpacing;
-    if (lastLineY > 450.0f) {
-        printf("Credits: Finished scrolling, returning to MainMenu\n");
-        GSM.nextState_ = StateId::MainMenu;
-    }
-
-    // Left-click held: destroy dirt + VFX + audio (same as MainMenu)
-    if (AEInputCheckCurr(AEVK_LBUTTON)) {
-        bool hitDirt = MenuBackground::DestroyDirtAtMouse(20.0f);
-        if (hitDirt) {
-            g_audioSystem.playSound("dirt_break", "sfx", 0.5f, 1.0f);
+    if (!g_debugSystem.isOpen()) {
+        if (AEInputCheckTriggered(AEVK_Z)) {
+            g_debugSystem.open();
         }
-    }
 
-    // Update the shared background (fluid, portals, etc. keep running)
-    MenuBackground::Update(deltaTime);
+        // Scroll credits upward
+        yPos -= scrollSpeed * deltaTime;
+
+        // Input to skip or return
+        if (AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_SPACE)) {
+            GSM.nextState_ = StateId::MainMenu;
+        }
+
+        if (buttonBack.checkMouseClick()) {
+            GSM.nextState_ = StateId::MainMenu;
+        }
+        buttonBack.updateTransform();
+
+        // Auto-return when all lines have scrolled past
+        float lastLineY = yPos - (creditsData.size() - 1) * lineSpacing;
+        if (lastLineY > 450.0f) {
+            printf("Credits: Finished scrolling, returning to MainMenu\n");
+            GSM.nextState_ = StateId::MainMenu;
+        }
+
+        // Left-click held: destroy dirt + VFX + audio (same as MainMenu)
+        if (AEInputCheckCurr(AEVK_LBUTTON)) {
+            bool hitDirt = MenuBackground::DestroyDirtAtMouse(20.0f);
+            if (hitDirt) {
+                g_audioSystem.playSound("dirt_break", "sfx", 0.5f, 1.0f);
+            }
+        }
+
+        // Update the shared background (fluid, portals, etc. keep running)
+        MenuBackground::Update(deltaTime);
+    } else {
+        if (AEInputCheckTriggered(AEVK_Z)) {
+            g_debugSystem.close();
+        }
+        g_debugSystem.update();
+    }
 }
 
 void DrawCredits() {
@@ -292,6 +304,8 @@ void DrawCredits() {
 
     // Draw back button on top
     buttonBack.draw();
+
+    g_debugSystem.drawAll();
 }
 void FreeCredits() {
     // Free the shared background simulation objects
