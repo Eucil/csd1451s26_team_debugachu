@@ -71,6 +71,7 @@ static FluidSystem bgFluidSystem;
 static StartEndPoint bgStartEndPoint;
 static PortalSystem bgPortalSystem;
 static VFXSystem bgVfxSystem;
+static CollectibleSystem bgCollectibleSystem;
 // ----------------------------------------------------------------------------
 // BgSpawnWater
 // Automatically trickles water from pipe start-points on a timer.
@@ -204,10 +205,15 @@ void MenuBackground::Initialize() {
 }
 
 void MenuBackground::Update(f32 deltaTime) {
-    bgStartEndPoint.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
+    bgCollectibleSystem.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water),
+                               bgVfxSystem);
+    bgStartEndPoint.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water), bgVfxSystem);
     BgSpawnWater(deltaTime);
     bgFluidSystem.Update(deltaTime, {bgDirt, bgStone});
-    bgPortalSystem.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water));
+    bgPortalSystem.Update(
+        deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water), // Fills the waterPool param
+        bgVfxSystem                                                 // Allows VFX spawning
+    );
     bgVfxSystem.Update(deltaTime);
 }
 

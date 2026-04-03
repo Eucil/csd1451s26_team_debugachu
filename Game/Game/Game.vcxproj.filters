@@ -187,9 +187,6 @@
     <ClInclude Include="Include\States\Settings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\States\Transition.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Include\DebugSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>

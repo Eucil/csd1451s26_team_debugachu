@@ -422,9 +422,10 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 // Level editor mode
                 // ====================
                 levelManager.updateLevelEditor();
-                collectibleSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
+                collectibleSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
+                                         vfxSystem);
                 mossSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
-                                  startEndPointSystem);
+                                  startEndPointSystem, vfxSystem);
                 portalSystem.RotatePortal();
 
                 // Inputs to build level
@@ -618,9 +619,10 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 }
 
                 // tc added start - Update collectibles
-                collectibleSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
+                collectibleSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
+                                         vfxSystem);
                 mossSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
-                                  startEndPointSystem);
+                                  startEndPointSystem, vfxSystem);
 
                 // Check if all items collected
                 if (collectibleSystem.CheckAllCollected()) {
@@ -629,9 +631,12 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 }
 
                 fluidSystem.Update(deltaTime, {dirt, stone});
-                startEndPointSystem.Update(deltaTime,
-                                           fluidSystem.GetParticlePool(FluidType::Water));
-                portalSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water));
+                startEndPointSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
+                                           vfxSystem);
+                portalSystem.Update(
+                    deltaTime,
+                    fluidSystem.GetParticlePool(FluidType::Water), // Passing the specific VFX pool
+                    vfxSystem); // Passing the system for SpawnVFX calls
                 vfxSystem.Update(deltaTime);
 
                 // Animate goal bar icon
@@ -1023,8 +1028,8 @@ void UnloadLevel() {
     // NOTE: Do NOT reset currentLevel_ to 0 here.
     // WinScreen sets it to nextLevel_ before triggering StateId::Level.
     // Resetting it here would wipe that value and always reload Level 0.
-
-    // UI buttons
+   
+    // UI buttons   
     buttonPause.unload();
     buttonResume.unload();
     buttonRestart.unload();

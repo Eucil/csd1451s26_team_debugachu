@@ -184,7 +184,8 @@ bool CollectibleSystem::CheckCollisionWithWater(const Collectible& collectible,
     return distSq < (radiusSum * radiusSum);
 }
 
-void CollectibleSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool) {
+void CollectibleSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool,
+                               VFXSystem& vfxSystem) {
     globalTimer_ += dt;
 
     for (auto& c : collectibles_) {
@@ -216,7 +217,17 @@ void CollectibleSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool)
                 // if collision, mark collected, increment count, exit particle loop
                 c.collected_ = true;
                 collectedCount_++;
-
+                switch (c.type_) {
+                case CollectibleType::Star:
+                    vfxSystem.SpawnVFX(VFXType::StarCollect, c.transform_.pos_);
+                    break;
+                case CollectibleType::Gem:
+                    vfxSystem.SpawnVFX(VFXType::GemCollect, c.transform_.pos_);
+                    break;
+                case CollectibleType::Leaf:
+                    vfxSystem.SpawnVFX(VFXType::LeafCollect, c.transform_.pos_);
+                    break;
+                }
                 g_audioSystem.playSound("bell", "sfx", 0.4f, 0.7f);
 
                 break;

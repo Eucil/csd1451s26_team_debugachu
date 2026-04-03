@@ -41,7 +41,7 @@ private:
     Transform transform_;
     Graphics graphics_;
 
-    s8 font_;
+    s8 font_{0};
 
     // Win screen data
     int collectiblesCollected_{0};

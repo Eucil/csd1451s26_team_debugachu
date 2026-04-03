@@ -17,6 +17,7 @@
 #include "AEEngine.h"
 #include "Components.h"
 #include "FluidSystem.h"
+#include "VFXSystem.h"
 #include <vector>
 
 // Forward declarations instead of includes
@@ -68,7 +69,7 @@ private:
 
     std::vector<Moss> mosses_;
 
-    s8 font_;
+    s8 font_{0};
     bool showDebug_{false};
 
     float globalTimer_{0.0f};
@@ -79,7 +80,7 @@ public:
     void Initialize();
     void LoadLevelMoss(AEVec2 pos, MossType type);
     void Update(f32 dt, std::vector<FluidParticle>& particlePool,
-                StartEndPoint& startEndPointSystem);
+                StartEndPoint& startEndPointSystem, VFXSystem& vfx);
     void Draw();
     void DrawPreview();
     void Free();

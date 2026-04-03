@@ -209,7 +209,7 @@ bool MossSystem::CheckCollisionWithWater(const Moss& moss, const FluidParticle& 
 }
 
 void MossSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool,
-                        StartEndPoint& startEndPointSystem) {
+                        StartEndPoint& startEndPointSystem, VFXSystem& vfx) {
     (void)startEndPointSystem;
     globalTimer_ += dt;
 
@@ -220,6 +220,9 @@ void MossSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool,
         mossFrameTimer_ -= kMossFrameTime;
         mossFrame_ = (mossFrame_ == 0) ? 1 : 0;
     }
+
+    static f32 mossHitVfxCooldown = 0.0f;
+    mossHitVfxCooldown -= dt;
 
     for (auto& m : mosses_) {
         if (!m.active_ || m.currentHealth_ <= 0.0f)
@@ -240,8 +243,16 @@ void MossSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool,
             if (CheckCollisionWithWater(m, *it)) {
                 CollisionSystem::incrementCollisionCount();
                 m.currentHealth_ -= m.absorptionRate_;
+
+                if (mossHitVfxCooldown <= 0.0f) {
+                    vfx.SpawnVFX(VFXType::LeafCollect, it->transform_.pos_);
+                    mossHitVfxCooldown = 0.1f;
+                }
+
                 it = particlePool.erase(it);
+
                 if (m.currentHealth_ <= 0.0f) {
+                    vfx.SpawnVFX(VFXType::LeafCollect, m.transform_.pos_);
                     m.active_ = false;
                     break;
                 }
@@ -274,9 +285,6 @@ void MossSystem::DrawMoss(const Moss& m) {
     if (mossTexture_ && mossQuadMesh_) {
         // Frame 0 = idle, frame 1 = bouncy, frame 2 = dying (health < 40%)
         int frame = (healthPct < 0.40f) ? 2 : mossFrame_;
-
-        // U offset: frame 0 = 0.0, frame 1 = 0.333, frame 2 = 0.667
-        float uOffset = static_cast<float>(frame) / 3.0f;
 
         AEMtx33 worldCopy = m.transform_.worldMtx_;
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);

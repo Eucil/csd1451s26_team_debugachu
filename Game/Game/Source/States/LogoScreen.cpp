@@ -144,8 +144,8 @@ void UpdateLogoScreen(GameStateManager& GSM, f32 deltaTime) {
         }
 
         // Skip on any key / click
-        if (AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_RETURN) ||
-            AEInputCheckTriggered(AEVK_SPACE) || AEInputCheckTriggered(AEVK_LBUTTON)) {
+        if (AEInputCheckReleased(AEVK_ESCAPE) || AEInputCheckReleased(AEVK_RETURN) ||
+            AEInputCheckReleased(AEVK_SPACE) || AEInputCheckReleased(AEVK_LBUTTON)) {
             printf("[LogoScreen] Skip input detected -- jumping to MainMenu\n");
             SkipToMainMenu(GSM);
             return;
