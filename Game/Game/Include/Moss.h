@@ -17,6 +17,7 @@
 #include "AEEngine.h"
 #include "Components.h"
 #include "FluidSystem.h"
+#include "VFXSystem.h"
 #include <vector>
 
 // Forward declarations instead of includes
@@ -78,10 +79,11 @@ public:
     void Initialize();
     void LoadLevelMoss(AEVec2 pos, MossType type);
     void Update(f32 dt, std::vector<FluidParticle>& particlePool,
-                StartEndPoint& startEndPointSystem);
+                StartEndPoint& startEndPointSystem, VFXSystem& vfx);
     void Draw();
     void DrawPreview();
     void Free();
+    void Unload();
 
     void spawnAtMousePos();
     void destroyAtMousePos();

@@ -428,7 +428,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 collectibleSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
                                          vfxSystem);
                 mossSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
-                                  startEndPointSystem);
+                                  startEndPointSystem, vfxSystem);
                 portalSystem.RotatePortal();
 
                 // Inputs to build level
@@ -625,7 +625,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 collectibleSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
                                          vfxSystem);
                 mossSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
-                                  startEndPointSystem);
+                                  startEndPointSystem, vfxSystem);
 
                 // Check if all items collected
                 if (collectibleSystem.CheckAllCollected()) {
@@ -1048,13 +1048,13 @@ void UnloadLevel() {
         AEGfxTextureUnload(pHudGoalIconTex);
         pHudGoalIconTex = nullptr;
     }
-
+    mossSystem.Unload();
     levelManager.freeLevelEditor();
     // NOTE: Do NOT reset currentLevel_ to 0 here.
     // WinScreen sets it to nextLevel_ before triggering StateId::Level.
     // Resetting it here would wipe that value and always reload Level 0.
-
-    // UI buttons
+   
+    // UI buttons   
     buttonPause.unload();
     buttonBack.unload();
     buttonRestart.unload();

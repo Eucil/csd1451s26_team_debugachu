@@ -226,10 +226,12 @@ void PortalSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool, VFXS
                 if (portalVfxCooldown_ <= 0.0f) {
 
                     // Spawn particles at the INPUT portal pos
-                    vfx.SpawnVFX(VFXType::PortalBurst, portal->transform_.pos_);
+                    vfx.SpawnVFX(VFXType::PortalBurst, portal->transform_.pos_,
+                                 portal->transform_.rotationRad_);
 
                     // Spawn the particles at the OUTPUT portal pos
-                    vfx.SpawnVFX(VFXType::PortalBurst, portal->linkedPortal_->transform_.pos_);
+                    vfx.SpawnVFX(VFXType::PortalBurst, portal->linkedPortal_->transform_.pos_,
+                                 portal->linkedPortal_->transform_.rotationRad_);
 
                     // Lock the timer for 0.25 seconds (Only 4 bursts allowed per second)
                     portalVfxCooldown_ = 0.25f;

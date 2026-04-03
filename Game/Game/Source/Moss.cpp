@@ -208,7 +208,8 @@ bool MossSystem::CheckCollisionWithWater(const Moss& moss, const FluidParticle& 
 }
 
 void MossSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool,
-                        StartEndPoint& startEndPointSystem) {
+                        StartEndPoint& startEndPointSystem, VFXSystem& vfx)
+{
     (void)startEndPointSystem;
     globalTimer_ += dt;
 
@@ -219,6 +220,9 @@ void MossSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool,
         mossFrameTimer_ -= kMossFrameTime;
         mossFrame_ = (mossFrame_ == 0) ? 1 : 0;
     }
+
+    static f32 mossHitVfxCooldown = 0.0f;
+    mossHitVfxCooldown -= dt;
 
     for (auto& m : mosses_) {
         if (!m.active_ || m.currentHealth_ <= 0.0f)
@@ -238,8 +242,18 @@ void MossSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool,
         for (auto it = particlePool.begin(); it != particlePool.end();) {
             if (CheckCollisionWithWater(m, *it)) {
                 m.currentHealth_ -= m.absorptionRate_;
+
+                if (mossHitVfxCooldown <= 0.0f) {
+                    vfx.SpawnVFX(VFXType::LeafCollect, it->transform_.pos_);
+                    mossHitVfxCooldown = 0.1f; 
+                }
+
                 it = particlePool.erase(it);
+
+
+
                 if (m.currentHealth_ <= 0.0f) {
+                    vfx.SpawnVFX(VFXType::LeafCollect, m.transform_.pos_);
                     m.active_ = false;
                     break;
                 }
@@ -361,6 +375,10 @@ void MossSystem::Draw() {
 }
 
 void MossSystem::Free() {
+
+    mosses_.clear();
+}
+void MossSystem::Unload() {
     if (spikyMossMesh_) {
         AEGfxMeshFree(spikyMossMesh_);
         spikyMossMesh_ = nullptr;
@@ -385,7 +403,6 @@ void MossSystem::Free() {
         AEGfxTextureUnload(mossTexture_);
         mossTexture_ = nullptr;
     }
-    mosses_.clear();
 }
 
 void MossSystem::spawnAtMousePos() {

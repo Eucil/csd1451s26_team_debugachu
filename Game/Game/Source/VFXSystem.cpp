@@ -29,11 +29,13 @@
 // its initial batch of particles, then immediately deactivates the emitter.
 //
 // =========================================================
-void VFXSystem::InitializeEmitter(ParticleEmitter& emitter, VFXType type, AEVec2 pos) {
+void VFXSystem::InitializeEmitter(ParticleEmitter& emitter, VFXType type, AEVec2 pos,
+                                  f32 angleRad) {
 
     emitter.active_ = true;
     emitter.type_ = type;
     emitter.pos_ = pos;
+    emitter.angleRad_ = angleRad;
     emitter.emitterLifeTime_ = 0.0f;
 
     emitter.config_ = emitterConfigs_[static_cast<int>(type)];
@@ -302,7 +304,9 @@ void VFXSystem::Update(f32 dt) {
             }
 
             // apply gravity
-            p.vel_.y -= 500.0f * dt;
+            if (p.type_ != VFXType::PortalBurst) {
+                p.vel_.y -= 500.0f * dt;
+            }
             p.pos_.x += p.vel_.x * dt;
             p.pos_.y += p.vel_.y * dt;
 
@@ -455,10 +459,11 @@ void VFXSystem::Free() {
 // - Logs a warning if no emitter is available.
 //
 // =========================================================
-void VFXSystem::SpawnVFX(VFXType type, AEVec2 position) {
+void VFXSystem::SpawnVFX(VFXType type, AEVec2 position, f32 angleRad)
+{
     ParticleEmitter* emitter = GetFreeEmitter();
     if (emitter != nullptr) {
-        InitializeEmitter(*emitter, type, position);
+        InitializeEmitter(*emitter, type, position, angleRad);
     } else {
         std::cout << "Warning: No VFX Pools Available.";
     }
@@ -551,7 +556,20 @@ void VFXSystem::SpawnParticles(ParticleEmitter& emitter) {
 
         // Calculate the radial burst velocity
         // 6.2831853f is 2 * PI (a full circle in radians)
-        f32 angle = 0.0f + AERandFloat() * (6.2831853f - 0.0f);
+        // Calculate the radial burst velocity
+        f32 angle;
+
+        // Specifically for portals only, spawn the particles according to which direction the portal is facing
+        if (emitter.type_ == VFXType::PortalBurst) {
+            // Use the portal's angle, but add a tiny bit of random spread (e.g., +/- 0.5 radians)
+            // so it looks like a burst and not a perfect laser beam.
+            f32 spread = (AERandFloat() * 1.0f) - 0.5f;
+            angle = emitter.angleRad_ + spread;
+        } else {
+            // Original behavior: Full 360 degree random circle for dirt, gems, etc.
+            angle = 0.0f + AERandFloat() * (6.2831853f - 0.0f);
+        }
+
         f32 speed = emitter.config_.minSpeed_ +
                     AERandFloat() * (emitter.config_.maxSpeed_ - emitter.config_.minSpeed_);
 

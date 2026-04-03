@@ -66,6 +66,7 @@ struct ParticleEmitter {
     VFXType type_{VFXType::DirtBurst};
     AEVec2 pos_{0.0f, 0.0f};
     f32 emitterLifeTime_{0.0f}; // Timer for how long the emitter stays alive.
+    f32 angleRad_ = 0.0f;
 
     EmitterConfig config_;
 };
@@ -88,7 +89,7 @@ public:
 
     void SetGraphicsConfig(VFXType type, const Graphics& gfxConfig);
 
-    void SpawnVFX(VFXType type, AEVec2 position);
+    void SpawnVFX(VFXType type, AEVec2 position, f32 angleRad = 0.0f);
 
     // Used together with ResetSpawnTimer
     void SpawnContinuous(VFXType type, AEVec2 position, f32 deltaTime, f32 spawnRate = 0.1f);
@@ -104,7 +105,7 @@ private:
 
     EmitterConfig emitterConfigs_[static_cast<int>(VFXType::Count)];
 
-    void InitializeEmitter(ParticleEmitter& emitter, VFXType type, AEVec2 pos);
+    void InitializeEmitter(ParticleEmitter& emitter, VFXType type, AEVec2 pos, f32 angleRad);
 
     ParticleEmitter* GetFreeEmitter();
 
