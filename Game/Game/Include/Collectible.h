@@ -17,6 +17,7 @@
 #include "Button.h"
 #include "Components.h"
 #include "FluidSystem.h"
+#include "VFXSystem.h"
 #include <vector>
 
 enum class CollectibleType {
@@ -50,7 +51,7 @@ private:
 
     std::vector<Collectible> collectibles_;
 
-    s8 font_;
+    s8 font_{0};
     TextData collectionText_;
     int collectedCount_{0};
     int totalCollectibles_{0};
@@ -62,7 +63,8 @@ public:
     void Load(s8 font);
     void Initialize();
     void LoadLevelCollectibles(AEVec2 pos, CollectibleType type);
-    void Update(f32 dt, std::vector<FluidParticle>& particlePool);
+    void Update(f32 dt, std::vector<FluidParticle>& particlePool, VFXSystem& vfxSystem);
+
     void Draw();
     void DrawPreview();
     void DrawUI();

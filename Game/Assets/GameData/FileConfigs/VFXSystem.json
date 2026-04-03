@@ -14,5 +14,100 @@
     "g_": 0.2,
     "b_": 0.1,
     "a_": 1.0
+  },
+  "portalGFX": {
+    "layer": 5
+  },
+  "portalConfig": {
+    "spawnCount_": 20,
+    "minLife_": 0.2,
+    "maxLife_": 0.6,
+    "minSpeed_": 40.0,
+    "maxSpeed_": 120.0,
+    "minScale_": 3.0,
+    "maxScale_": 7.0,
+    "r_": 0.8,
+    "g_": 0.6,
+    "b_": 1.0,
+    "a_": 1.0
+  },
+  "pipeFlowGFX":   { 
+	"layer": 5 
+  },
+  "pipeFlowConfig": {
+    "spawnCount_": 20,
+	"minLife_": 0.2,
+	"maxLife_": 0.45,
+    "minSpeed_": 20.0,
+	"maxSpeed_": 60.0,
+    "minScale_": 3.0,
+	"maxScale_": 6.0,
+    "r_": 0.4,
+	"g_": 0.7,
+	"b_": 1.0,
+	"a_": 0.85
+  },
+  "flowerCollectGFX":   {
+	  "layer": 5 
+  },
+  "flowerCollectConfig": {
+    "spawnCount_": 12,
+	"minLife_": 0.25,
+	"maxLife_": 0.5,
+    "minSpeed_": 60.0,
+	"maxSpeed_": 160.0,
+    "minScale_": 4.0,
+	"maxScale_": 8.0,
+    "r_": 0.6,
+	"g_": 1.0,
+	"b_": 0.4,
+	"a_": 1.0
+  },
+   "starCollectGFX":   {
+	   "layer": 5 
+   },
+   "starCollectConfig": {
+    "spawnCount_": 15,
+	"minLife_": 0.3,
+	"maxLife_": 0.6,
+    "minSpeed_": 80.0,
+	"maxSpeed_": 200.0,
+    "minScale_": 4.0,
+	"maxScale_": 9.0,
+    "r_": 1.0,
+	"g_": 1.0,
+	"b_": 0.0,
+	"a_": 1.0
+  },
+  "gemCollectGFX":   {
+	  "layer": 5 
+	},
+  "gemCollectConfig": {
+    "spawnCount_": 15,
+	"minLife_": 0.3,
+	"maxLife_": 0.6,
+    "minSpeed_": 80.0,
+	"maxSpeed_": 200.0,
+    "minScale_": 4.0,
+	"maxScale_": 9.0,
+    "r_": 1.0,
+	"g_": 0.0, "b_": 1.0,
+	"a_": 1.0
+  },
+  "leafCollectGFX":   {
+	  "layer": 5 
+	},
+  "leafCollectConfig": {
+    "spawnCount_": 15,
+	"minLife_": 0.3,
+	"maxLife_": 0.6,
+    "minSpeed_": 80.0,
+	"maxSpeed_": 200.0,
+    "minScale_": 4.0,
+	"maxScale_": 9.0,
+    "r_": 0.0,
+	"g_": 1.0,
+	"b_": 0.0,
+	"a_": 1.0
   }
 }

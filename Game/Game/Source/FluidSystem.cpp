@@ -25,9 +25,19 @@
 #include "Utils.h"
 
 // ==========================================
-// FluidParticle
+//               FluidParticle
 // ==========================================
-// @todo incomplete, should set physics as well
+// 
+// 
+
+// =========================================================
+// 
+// Constructor for a single instance of a FluidParticle
+// - Sets pos,scale,rot,collidershape,data
+// 
+// - physics and graphics ccomponents are set by FluidSystem
+// 
+// =========================================================
 FluidParticle::FluidParticle(f32 posX, f32 posY, f32 radius, FluidType type) {
     transform_.pos_ = {posX, posY};
     transform_.scale_ = {radius * 2.0f,
@@ -42,9 +52,19 @@ FluidParticle::FluidParticle(f32 posX, f32 posY, f32 radius, FluidType type) {
 }
 
 // ==========================================
-// FluidSystem
+//                 FluidSystem
 // ==========================================
 
+
+// =================================================================
+//
+//  FluidSystem's graphicConfigs_ Initialization function 
+// 
+//  Initializes the graphicConfigs_ data member which contains
+//  graphic configs for every particle type within 
+//  FluidSystem
+// 
+// =================================================================
 void FluidSystem::InitializeGraphics(AEGfxVertexList* mesh, AEGfxTexture* texture, u32 layer,
                                      f32 red, f32 green, f32 blue, f32 alpha, FluidType type,
                                      u32 graphicsIndex) {
@@ -59,6 +79,15 @@ void FluidSystem::InitializeGraphics(AEGfxVertexList* mesh, AEGfxTexture* textur
     graphicsConfigs_[fluidIndex][graphicsIndex].alpha_ = alpha;
 }
 
+// =================================================================
+//
+//  FluidSystem's physicsConfigs_ Initialization function 
+// 
+//  Initializes the physicsConfigs_ data member which contains
+//  physics configs for every particle type within
+//  FluidSystem
+//
+// =================================================================
 void FluidSystem::InitializePhysics(f32 mass, f32 gravity, AEVec2 velocity, FluidType type) {
     size_t fluidIndex = static_cast<size_t>(type);
 
@@ -67,6 +96,14 @@ void FluidSystem::InitializePhysics(f32 mass, f32 gravity, AEVec2 velocity, Flui
     physicsConfigs_[fluidIndex].velocity_ = velocity;
 }
 
+// =================================================================
+//
+//  FluidSystem's Main Initialization function 
+// 
+// Initializes a single instance of a FluidSystem
+// - Initializes both graphics and physics of every FluidParticle type
+//
+// =================================================================
 void FluidSystem::Initialize() {
     // Reduces memory reallocation
     int typeCount{static_cast<int>(FluidType::Count)};
@@ -105,6 +142,14 @@ void FluidSystem::Initialize() {
                        FluidType::Lava, 2);
 }
 
+// =================================================================
+//
+//  FluidSystem's Transform matrices Update function 
+// 
+// - Updates the transform matrices for every particle in an inputted
+//   particle pool.
+//
+// =================================================================
 void FluidSystem::UpdateTransforms(std::vector<FluidParticle>& particlePool) {
 
     for (auto& p : particlePool) {
@@ -121,6 +166,21 @@ void FluidSystem::UpdateTransforms(std::vector<FluidParticle>& particlePool) {
     }
 }
 
+// =========================================================
+//
+//  FluidSystem's physics Update function 
+// 
+// Updates physics parameters, velocity and position for an inputted particle pool,
+// applies gravity to particles and contains various optimisations to maximise performance.
+// 
+// The list of optimisations include:
+// - Applies gravity and clamps delta time for consistency / prevent tunneling
+// - Enforces terminal velocity and horizontal speed caps to prevent tunneling
+// - Halts extremely slow-moving particles to optimize performance
+// - Applies anti-oscillation noise to nearly-stopped particles
+// - Updates final particle positions based on calculated velocities
+//
+// =========================================================
 void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt) {
 
     if (dt > 0.0166667f) {
@@ -136,7 +196,7 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
     for (auto& p : particlePool) {
 
         // ================================================ //
-        // EFFECT 1: Gravity
+        // Gravity
         // ================================================ //
         //
         // Applies gravity to the particle's velocity.
@@ -144,10 +204,12 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         p.physics_.velocity_.y += gravity * dt;
 
         // ================================================ //
-        // OPTIMISATION: ANTI-TUNNELLING CAP (FOR FAST PARTICLES)
+        // 1. Optimisation: CAP MAXIMUM SPEED (FOR FAST PARTICLES)
         // ================================================ //
-        // Without this, particles falling from a great height can reach very high speeds,
-        // which can cause them to tunnel through terrain colliders.
+        // Without this, particles falling from a height can reach very high speeds (negative velocity),
+        // which can cause them to tunnel through terrain colliders. 
+        // 
+        // This caps negative velocity at -500.0f vertically and 300.0f horizontally
         const f32 kTerminalFallSpeed = -500.0f;
         if (p.physics_.velocity_.y < kTerminalFallSpeed) {
             p.physics_.velocity_.y = kTerminalFallSpeed;
@@ -162,7 +224,7 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
             p.physics_.velocity_.x = -kMaxHorizontalSpeed;
 
         // ================================================ //
-        // OPTIMISATION: STOPS VERY SLOW PARTICLES
+        // 2. Optimisation: STOPS VERY SLOW PARTICLES
         // ================================================ //
         // Lowered from 1.41*1.41 (~2.0) to 0.5 so slow-moving particles are not
         // immediately zeroed. The original threshold was killing horizontal flow
@@ -179,7 +241,7 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         }
 
         // ANTI-OSCILLATION: Only apply noise to nearly-stopped particles.
-        // Previously noise ran on every particle every substep - in dense settled
+        // Previously noise ran on every particle every substep: in dense settled
         // groups this caused all particles to randomly oscillate together, creating
         // the vigorous left-right swinging behaviour.
         // Now noise only fires when a particle is nearly still (speed < ~2.2 units/s)
@@ -197,8 +259,11 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         // Prevents compounded velocity from UpdateCollision from pushing particles to extreme
         // speeds that can cause tunneling.
         // ================================================ //
-        // 3. ANTI-TUNNELING: CAP MAXIMUM SPEED
+        // 3. Optimisation: CAP MAXIMUM SPEED (again)
         // ================================================ //
+        
+        // Acts as a final emergency safety net to prevent particles from moving too fast after the 
+        // various optimisations above.
         if (currentSpeedSq > kMaxSpeedSq) {
             // If currentSpeedSq > kMaxSpeed, we are going too fast.
             // Calculate actual speed to normalize.
@@ -220,6 +285,15 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
     }
 }
 
+// =========================================================
+//
+// FluidSystem's portal invincibility frames Update function 
+// 
+// Manages portal teleportation cooldowns for fluid particles
+// - Decrements the iframe timer for particles that recently teleported
+// - Re-enables portal interaction once the timer reaches zero
+//
+// =========================================================
 void FluidSystem::UpdatePortalIframes(f32 dt, std::vector<FluidParticle>& particlePool) {
     // Loop through all particles in the current pool
     for (auto& p : particlePool) {
@@ -235,6 +309,62 @@ void FluidSystem::UpdatePortalIframes(f32 dt, std::vector<FluidParticle>& partic
     }
 }
 
+// =========================================================
+//
+//  FluidSystem's Main Update function 
+// 
+// Main update loop for the fluid simulation
+// - Divides the frame delta time into smaller substeps for physics stability
+// - Updates particle physics and processes terrain collisions per substep
+// - Updates final graphical transforms and portal iframes once per frame
+//
+// =========================================================
+void FluidSystem::Update(f32 dt, std::initializer_list<Terrain*> terrains) {
+    // DT clamp
+    if (dt > 0.016f && dt < 0.016f * 5.0f) {
+        dt = 0.016f;
+    }
+
+    // Substeps
+    const int subSteps = 4;
+    const f32 subDt = dt / (f32)subSteps;
+
+    for (int s = 0; s < subSteps; s++) {
+
+        for (int i = 0; i < (int)FluidType::Count; i++) {
+            if (particlePools_[i].empty())
+                continue;
+
+            // Physics
+            UpdatePhysics(particlePools_[i], subDt);
+        }
+
+        // Collision (there are more substeps within the function below)
+        for (Terrain* terrain : terrains) {
+            CollisionSystem::terrainToFluidCollision(*terrain, *this, subDt);
+        }
+    }
+
+    // Final per-frame updates
+    for (int i = 0; i < (int)FluidType::Count; i++) {
+        if (particlePools_[i].empty()) {
+            continue;
+        }
+        UpdateTransforms(particlePools_[i]);
+        UpdatePortalIframes(dt, particlePools_[i]);
+    }
+}
+
+// =========================================================
+//
+//  FluidSystem's draw color function 
+// 
+// Renders all active fluid particles using solid colors
+// - Sets graphics engine to color render mode and enables blending
+// - Iterates through fluid types and draws up to 3 layered meshes per particle
+// - Applies specific RGBA multipliers to tint the fluid layers
+//
+// =========================================================
 void FluidSystem::DrawColor() {
 
     // color render mode
@@ -264,6 +394,16 @@ void FluidSystem::DrawColor() {
     }
 }
 
+// =========================================================
+//
+//  FluidSystem's draw texture function
+// 
+// Renders active fluid particles using textures
+// - Sets graphics engine to texture render mode and enables blending
+// - Binds the appropriate texture for each of the 3 graphical layers
+// - Applies color tints and draws the textured meshes for each particle
+//
+// =========================================================
 void FluidSystem::DrawTexture() {
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 
@@ -293,6 +433,16 @@ void FluidSystem::DrawTexture() {
     }
 }
 
+// =========================================================
+//
+//  FluidSystem's free function
+// 
+// Frees memory and resources utilized by the FluidSystem
+// - Destroys allocated graphical meshes and nullifies pointers
+// - Unloads textures from the graphics engine
+// - Clears all fluid particle pools
+//
+// =========================================================
 void FluidSystem::Free() {
     // Free all fluid meshes
     for (size_t fluidIndex{0}; fluidIndex < static_cast<size_t>(FluidType::Count); ++fluidIndex) {
@@ -323,6 +473,16 @@ void FluidSystem::Free() {
     }
 }
 
+// =========================================================
+//
+//  FluidSystem's particle spawning utility function
+// 
+// Instantiates and spawns a new fluid particle
+// - Creates a particle with the specified position, size, and type
+// - Assigns the appropriate pre-initialized physics configuration
+// - Pushes the new particle into the corresponding fluid pool
+//
+// =========================================================
 void FluidSystem::SpawnParticle(f32 posX, f32 posY, f32 radius, FluidType type) {
     int i = (int)type;
     FluidParticle newParticle(posX, posY, radius, type);
@@ -330,46 +490,27 @@ void FluidSystem::SpawnParticle(f32 posX, f32 posY, f32 radius, FluidType type) 
     particlePools_[i].push_back(newParticle);
 }
 
+// =========================================================
+//
+// Fluidsystem's particle count getter function
+// 
+// Retrieves the current number of active particles for a fluid type
+// - Returns the size of the specified fluid's particle pool
+//
+// =========================================================
 u32 FluidSystem::GetParticleCount(FluidType type) {
     return static_cast<u32>(particlePools_[(u32)type].size());
 }
 
+// =========================================================
+//
+//  Fluidsystem's particle pool getter function
+// 
+// Retrieves a reference to a specific fluid type's particle pool
+// - Allows external systems to read or modify the active particles
+//
+// =========================================================
 std::vector<FluidParticle>& FluidSystem::GetParticlePool(FluidType type) {
     return particlePools_[(int)type];
 }
 
-void FluidSystem::Update(f32 dt, std::initializer_list<Terrain*> terrains) {
-    // DT clamp
-    if (dt > 0.016f && dt < 0.016f * 5.0f) {
-        dt = 0.016f;
-    }
-
-    // Substeps
-    const int subSteps = 4;
-    const f32 subDt = dt / (f32)subSteps;
-
-    for (int s = 0; s < subSteps; s++) {
-
-        for (int i = 0; i < (int)FluidType::Count; i++) {
-            if (particlePools_[i].empty())
-                continue;
-
-            // Physicss
-            UpdatePhysics(particlePools_[i], subDt);
-        }
-
-        // Collision
-        for (Terrain* terrain : terrains) {
-            CollisionSystem::terrainToFluidCollision(*terrain, *this, subDt);
-        }
-    }
-
-    // Final per-frame updates
-    for (int i = 0; i < (int)FluidType::Count; i++) {
-        if (particlePools_[i].empty()) {
-            continue;
-        }
-        UpdateTransforms(particlePools_[i]);
-        UpdatePortalIframes(dt, particlePools_[i]);
-    }
-}
