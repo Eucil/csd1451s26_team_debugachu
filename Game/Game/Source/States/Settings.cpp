@@ -16,6 +16,7 @@
 
 #include <AEEngine.h>
 
+#include "Animations.h"
 #include "AudioSystem.h"
 #include "Button.h"
 #include "DebugSystem.h"
@@ -56,7 +57,18 @@ static AEGfxTexture* pBgMagicTex{nullptr};
 static TiledBackground bg;
 static VFXSystem bgVfxSystem;
 
+// Animations
+static AnimationManager animManager;
+static ScreenFaderManager screenFader;
+static UIFader someOtherCoolAnimation;
+
 void loadSettings() {
+        
+    animManager.Clear();
+    animManager.Add(&screenFader);
+    animManager.Add(&someOtherCoolAnimation);
+    animManager.InitializeAll();
+
     titleFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
     buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
 
@@ -191,6 +203,7 @@ void updateSettings(GameStateManager& GSM, f32 deltaTime) {
         }
         g_debugSystem.update();
     }
+    animManager.UpdateAll(deltaTime);
 }
 
 void drawSettings() {
@@ -213,12 +226,15 @@ void drawSettings() {
     sfxVolumeAmountText.draw();
     bgmVolumeAmountText.draw();
 
+    animManager.DrawAll();
+
     g_debugSystem.drawAll();
 }
 
 void freeSettings() {
     g_debugSystem.clearScene();
     bgVfxSystem.Free();
+    animManager.FreeAll();
 
     delete bgDirt;
     bgDirt = nullptr;
