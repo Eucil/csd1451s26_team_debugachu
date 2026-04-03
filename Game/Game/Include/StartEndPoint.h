@@ -50,7 +50,7 @@ struct StartEnd {
     bool infiniteWater_{false};    // Debug/infinite mode
     // tc added end
 
-    StartEnd();
+    StartEnd(StartEndType type);
     StartEnd(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndType type, GoalDirection direction);
 };
 
@@ -71,8 +71,8 @@ private:
 public:
     // Can have multiple start points but only one end point
     std::vector<StartEnd> startPoints_;
-    StartEnd endPoint_ = {};
-    AEVec2 startendScale_ = {50.0f, 50.0f};
+    StartEnd endPoint_{StartEndType::Flower};
+    AEVec2 startendScale_{50.0f, 50.0f};
 
     s32 particlesCollected_{0};
 

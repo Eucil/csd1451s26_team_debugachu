@@ -24,7 +24,7 @@
 #include "AudioSystem.h"
 #include "Utils.h"
 
-StartEnd::StartEnd() {
+StartEnd::StartEnd(StartEndType type) {
     // Set up transform
     transform_.pos_ = {0.0f, 0.0f};
     transform_.scale_ = {0.f, 0.f};
@@ -45,7 +45,7 @@ StartEnd::StartEnd() {
     collider_.shapeData_.box_.size_ = {1.f, 1.f};
 
     // Set object type
-    type_ = {StartEndType::Pipe};
+    type_ = type;
     direction_ = {GoalDirection::Up};
     releaseWater_ = false;
     releaseWaterIframe_ = {false};
@@ -282,7 +282,7 @@ void StartEndPoint::DeleteAtMousePos() {
         mouseX <= (endPoint_.transform_.pos_.x + rectHalfWidth) &&
         mouseY >= (endPoint_.transform_.pos_.y - rectHalfHeight) &&
         mouseY <= (endPoint_.transform_.pos_.y + rectHalfHeight)) {
-        endPoint_ = StartEnd();
+        endPoint_ = StartEnd(StartEndType::Flower);
     }
 }
 
@@ -476,7 +476,7 @@ void StartEndPoint::Free() {
     }
 
     startPoints_.clear();
-    endPoint_ = StartEnd();
+    endPoint_ = StartEnd(StartEndType::Flower);
 }
 
 void StartEndPoint::CheckMouseClick() {
