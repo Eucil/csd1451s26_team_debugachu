@@ -314,7 +314,7 @@ void LoadHowToPlay() {
     s_flowerTex = AEGfxTextureLoad("Assets/Textures/pink_flower_sprite_sheet.png");
 
     s_fullUvMesh = MakeUvMesh(0.0f, 1.0f);
-    s_flowerMesh = MakeUvMesh(2.0f / 3.0f, 1.0f);
+    s_flowerMesh = MakeUvMesh(0.0f, 1.0f / 4.0f);
     s_portalMesh = MakeUvMesh(0.0f, 1.0f);
 
     s_magicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
