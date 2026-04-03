@@ -19,7 +19,7 @@
 #include <AEEngine.h>
 
 #include "States/Credits.h"
-#include "States/HowToPlay.h"
+#include "States/Controls.h"
 #include "States/Level.h"
 #include "States/LevelSelector.h"
 #include "States/LogoScreen.h"
@@ -39,7 +39,7 @@ enum class StateId {
     Level,
     Credits,
     Settings,
-    HowToPlay
+    Controls
 };
 
 class GameState {
@@ -132,13 +132,13 @@ public:
             fpFree_ = FreeLevel;
             fpUnload_ = UnloadLevel;
             break;
-        case StateId::HowToPlay:
-            fpLoad_ = LoadHowToPlay;
-            fpInitialize_ = InitializeHowToPlay;
-            fpUpdate_ = UpdateHowToPlay;
-            fpDraw_ = DrawHowToPlay;
-            fpFree_ = FreeHowToPlay;
-            fpUnload_ = UnloadHowToPlay;
+        case StateId::Controls:
+            fpLoad_ = LoadControls;
+            fpInitialize_ = InitializeControls;
+            fpUpdate_ = UpdateControls;
+            fpDraw_ = DrawControls;
+            fpFree_ = FreeControls;
+            fpUnload_ = UnloadControls;
             break;
         }
     }

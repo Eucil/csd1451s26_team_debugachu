@@ -27,8 +27,8 @@
     <ClCompile Include="Source\PortalSystem.cpp" />
     <ClCompile Include="Source\StartEndPoint.cpp" />
     <ClCompile Include="Source\Main.cpp" />
+    <ClCompile Include="Source\States\Controls.cpp" />
     <ClCompile Include="Source\States\Credits.cpp" />
-    <ClCompile Include="Source\States\HowToPlay.cpp" />
     <ClCompile Include="Source\States\Level.cpp" />
     <ClCompile Include="Source\States\LevelManager.cpp" />
     <ClCompile Include="Source\States\LevelSelector.cpp" />
@@ -61,8 +61,8 @@
     <ClInclude Include="Include\Pause.h" />
     <ClInclude Include="Include\PortalSystem.h" />
     <ClInclude Include="Include\StartEndPoint.h" />
+    <ClInclude Include="Include\States\Controls.h" />
     <ClInclude Include="Include\States\Credits.h" />
-    <ClInclude Include="Include\States\HowToPlay.h" />
     <ClInclude Include="Include\States\Level.h" />
     <ClInclude Include="Include\States\LevelManager.h" />
     <ClInclude Include="Include\States\LevelSelector.h" />

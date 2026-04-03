@@ -1,5 +1,5 @@
 /*!
-@file       HowToPlay.cpp
+@file       Controls.cpp
 @author     Han Tianchou/H.tianchou@digipen.edu
 @co_author  Sean Lee Hong Wei/seanhongwei.lee@digipen.edu,
             Chia Hanxin/c.hanxin@digipen.edu
@@ -14,7 +14,7 @@
             Technology is prohibited.
 *//*______________________________________________________________________*/
 
-#include "States/HowToPlay.h"
+#include "States/Controls.h"
 
 #include <cstdio>
 #include <cstring>
@@ -254,7 +254,7 @@ static void DrawPageIndicator() {
 // State functions
 // ----------------------------------------------------------------------------
 
-void LoadHowToPlay() {
+void LoadControls() {
     // Shared background (same as MainMenu and Credits)
     MenuBackground::Load();
 
@@ -344,7 +344,7 @@ void LoadHowToPlay() {
     buttonBack.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
 }
 
-void InitializeHowToPlay() {
+void InitializeControls() {
     MenuBackground::Initialize();
 
     // Reset to first page every time we enter
@@ -360,7 +360,7 @@ void InitializeHowToPlay() {
     buttonBack.setTextFont(buttonFont);
 }
 
-void UpdateHowToPlay(GameStateManager& GSM, f32 deltaTime) {
+void UpdateControls(GameStateManager& GSM, f32 deltaTime) {
     if (!g_debugSystem.isOpen()) {
         if (AEInputCheckTriggered(AEVK_Z)) {
             g_debugSystem.open();
@@ -427,7 +427,7 @@ void UpdateHowToPlay(GameStateManager& GSM, f32 deltaTime) {
     }
 }
 
-void DrawHowToPlay() {
+void DrawControls() {
     // 1. Live background (terrain + fluid + portals)
     MenuBackground::Draw();
 
@@ -488,7 +488,7 @@ void DrawHowToPlay() {
     g_debugSystem.drawAll();
 }
 
-void FreeHowToPlay() {
+void FreeControls() {
     MenuBackground::Free();
 
     if (overlayMesh) {
@@ -550,7 +550,7 @@ void FreeHowToPlay() {
     s_sprites.clear();
 }
 
-void UnloadHowToPlay() {
+void UnloadControls() {
     MenuBackground::Unload();
 
     // Unload fonts

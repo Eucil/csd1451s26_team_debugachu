@@ -80,7 +80,7 @@ void InitializeMainMenu() {
     // Initialize UI buttons from JSON
     startButton.initFromJson("main_menu_buttons", "Start");
     startButton.setTextFont(buttonFont);
-    howToPlayButton.initFromJson("main_menu_buttons", "HowToPlay");
+    howToPlayButton.initFromJson("main_menu_buttons", "Controls");
     howToPlayButton.setTextFont(buttonFont);
     settingsButton.initFromJson("main_menu_buttons", "Settings");
     settingsButton.setTextFont(buttonFont);
@@ -121,8 +121,7 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
                 screenFader.StartFadeOut(&GSM, StateId::LevelSelector);
             }
             if (howToPlayButton.checkMouseClick()) {
-                std::cout << "How To Play button clicked\n";
-                screenFader.StartFadeOut(&GSM, StateId::HowToPlay);
+                screenFader.StartFadeOut(&GSM, StateId::Controls);
             }
 
             // Settings button
