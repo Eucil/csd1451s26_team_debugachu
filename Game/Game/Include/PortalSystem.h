@@ -86,4 +86,6 @@ public:
     const std::vector<Portal*>& GetPortals() const;
 
     int GetPortalLimit() const;
+
+    int GetPortalCount() const;
 };

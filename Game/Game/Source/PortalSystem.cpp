@@ -416,3 +416,5 @@ f32 PortalSystem::GetRotationValue() const { return rotationValue_; }
 const std::vector<Portal*>& PortalSystem::GetPortals() const { return portalVec_; }
 
 int PortalSystem::GetPortalLimit() const { return portalLimit_; }
+
+int PortalSystem::GetPortalCount() const { return static_cast<int>(portalVec_.size()); }

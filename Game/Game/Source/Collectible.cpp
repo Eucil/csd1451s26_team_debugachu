@@ -63,7 +63,7 @@ Collectible::Collectible(AEVec2 pos, CollectibleType type) {
 void CollectibleSystem::Load(s8 font) {
     font_ = font;
     collectionText_.x_ =
-        g_configManager.getFloat("Collectible", "default", "collectionText_.x_", -0.6f);
+        g_configManager.getFloat("Collectible", "default", "collectionText_.x_", -0.9f);
     collectionText_.y_ =
         g_configManager.getFloat("Collectible", "default", "collectionText_.y_", 0.92f);
     collectionText_.scale_ =

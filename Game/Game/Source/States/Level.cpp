@@ -97,7 +97,11 @@ static TiledBackground bg;
 // HUD icon textures -- loaded in LoadLevel, freed in FreeLevel+UnloadLevel
 static AEGfxTexture* pHudWaterIconTex = nullptr;
 static AEGfxTexture* pHudGoalIconTex = nullptr;
+static AEGfxTexture* pHudPortalIconTex = nullptr;
 static AEGfxVertexList* g_hudIconMesh = nullptr;
+
+// Portal limit text
+static TextData portalLimitText;
 
 // Goal icon animation
 static f32 goalFlowerFrameTimer_ = 0.0f;
@@ -113,6 +117,7 @@ static UIFader someOtherCoolAnimation;
 
 // Static Functions
 static void SpawnWaterWithLimit(f32 deltaTime);
+static void DrawPortalLimitUI(f32 x, f32 y);
 static void DrawTotalWaterBar(f32 x, f32 y, f32 remaining, f32 capacity);
 static void DrawGoalBar(f32 x, f32 y, f32 percentage);
 
@@ -138,17 +143,23 @@ void LoadLevel() {
 
     startEndPointSystem.InitializeUI(font);
 
-    totalWaterText.x_ = -0.39f;
+    totalWaterText.x_ = -0.69f;
     totalWaterText.y_ = 0.92f;
     totalWaterText.scale_ = 0.5f;
     totalWaterText.content_ = "Water: 0/0";
     totalWaterText.font_ = font;
 
-    goalText.x_ = 0.2f;
+    goalText.x_ = -0.12f;
     goalText.y_ = 0.92f;
     goalText.scale_ = 0.5f;
     goalText.content_ = "Goal: 0%";
     goalText.font_ = font;
+
+    portalLimitText.x_ = 0.42f;
+    portalLimitText.y_ = 0.92f;
+    portalLimitText.scale_ = 0.5f;
+    portalLimitText.content_ = "Portals: 0/0";
+    portalLimitText.font_ = font;
 
     // tc added end
 
@@ -264,6 +275,10 @@ void InitializeLevel() {
         AEGfxTextureUnload(pHudGoalIconTex);
         pHudGoalIconTex = nullptr;
     }
+    if (pHudPortalIconTex) {
+        AEGfxTextureUnload(pHudPortalIconTex);
+        pHudPortalIconTex = nullptr;
+    }
     if (g_hudIconMesh) {
         AEGfxMeshFree(g_hudIconMesh);
         g_hudIconMesh = nullptr;
@@ -271,6 +286,7 @@ void InitializeLevel() {
 
     pHudWaterIconTex = AEGfxTextureLoad("Assets/Textures/hud_water_icon.png");
     pHudGoalIconTex = AEGfxTextureLoad("Assets/Textures/pink_flower_sprite_sheet.png");
+    pHudPortalIconTex = AEGfxTextureLoad("Assets/Textures/wormhole.png");
 
     AEGfxMeshStart();
     AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f, 0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 1.0f, -0.5f,
@@ -587,6 +603,13 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                     // Toggle infinite water for all start points
                     startEndPointSystem.ToggleInfiniteWater();
                 }
+
+                int portalsUsed =
+                    portalSystem.GetPortalCount(); // however your PortalSystem exposes this
+                int portalsLimit = portalSystem.GetPortalLimit();
+                portalLimitText.content_ =
+                    "Portals: " + std::to_string(portalsUsed) + "/" + std::to_string(portalsLimit);
+
                 // tc added end
 
                 for (auto& startPoint : startEndPointSystem.startPoints_) {
@@ -781,6 +804,17 @@ static void DrawPixelBar(f32 worldX, f32 worldY, f32 barWidth, f32 barHeight, f3
     }
 }
 
+static void DrawPortalLimitUI(f32 x, f32 y) {
+    f32 worldX = x * 710.0f;
+    f32 worldY = y * 510.0f;
+    f32 iconSize = 32.0f;
+
+    // Icon sits just to the left of where the text anchor is
+    DrawHudIcon(pHudPortalIconTex, g_hudIconMesh,
+                worldX - iconSize, // nudge left of text
+                worldY, iconSize);
+}
+
 static void DrawTotalWaterBar(f32 x, f32 y, f32 remaining, f32 capacity) {
     if (capacity <= 0.0f)
         return;
@@ -918,9 +952,12 @@ void DrawLevel() {
     totalWaterText.draw();
     goalText.draw();
 
-    DrawTotalWaterBar(totalWaterText.x_ + 0.39f, totalWaterText.y_ - 0.09f, totalWaterRemaining,
+    DrawTotalWaterBar(totalWaterText.x_ + 0.35f, totalWaterText.y_ - 0.09f, totalWaterRemaining,
                       totalWaterCapacity);
-    DrawGoalBar(goalText.x_ + 0.39f, goalText.y_ - 0.09f, goalPercentage);
+    DrawGoalBar(goalText.x_ + 0.35f, goalText.y_ - 0.09f, goalPercentage);
+
+    portalLimitText.draw();
+    DrawPortalLimitUI(portalLimitText.x_ + 0.06f, portalLimitText.y_ - 0.09f);
     // tc added end
 
     // Buttons
@@ -972,6 +1009,7 @@ void FreeLevel() {
         AEGfxMeshFree(s_flowerIconMesh);
         s_flowerIconMesh = nullptr;
     }
+
     // tc added end
 
     delete dirt;
@@ -1022,14 +1060,18 @@ void UnloadLevel() {
         AEGfxTextureUnload(pHudGoalIconTex);
         pHudGoalIconTex = nullptr;
     }
+    if (pHudPortalIconTex) {
+        AEGfxTextureUnload(pHudPortalIconTex);
+        pHudPortalIconTex = nullptr;
+    }
     bg.unload();
 
     levelManager.freeLevelEditor();
     // NOTE: Do NOT reset currentLevel_ to 0 here.
     // WinScreen sets it to nextLevel_ before triggering StateId::Level.
     // Resetting it here would wipe that value and always reload Level 0.
-   
-    // UI buttons   
+
+    // UI buttons
     buttonPause.unload();
     buttonResume.unload();
     buttonRestart.unload();
