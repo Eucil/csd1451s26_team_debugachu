@@ -106,5 +106,149 @@
       "blue": 1.0,
       "alpha": 1.0
     }
+  },
+    "IncreaseWidth": {
+    "position": {
+      "x": 300.0,
+      "y": 240.0
+    },
+    "scale": {
+      "x": 96.0,
+      "y": 96.0
+    },
+    "text": {
+      "content": "+",
+      "scale": 1.0,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+    "DecreaseWidth": {
+    "position": {
+      "x": -300.0,
+      "y": 240.0
+    },
+    "scale": {
+      "x": 96.0,
+      "y": 96.0
+    },
+    "text": {
+      "content": "-",
+      "scale": 1.0,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+    "IncreaseHeight": {
+    "position": {
+      "x": 300.0,
+      "y": 120.0
+    },
+    "scale": {
+      "x": 96.0,
+      "y": 96.0
+    },
+    "text": {
+      "content": "+",
+      "scale": 1.0,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+    "DecreaseHeight": {
+    "position": {
+      "x": -300.0,
+      "y": 120.0
+    },
+    "scale": {
+      "x": 96.0,
+      "y": 96.0
+    },
+    "text": {
+      "content": "-",
+      "scale": 1.0,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+    "IncreasePortalLimit": {
+    "position": {
+      "x": 300.0,
+      "y": 0.0
+    },
+    "scale": {
+      "x": 96.0,
+      "y": 96.0
+    },
+    "text": {
+      "content": "+",
+      "scale": 1.0,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+    "DecreasePortalLimit": {
+    "position": {
+      "x": -300.0,
+      "y": 0.0
+    },
+    "scale": {
+      "x": 96.0,
+      "y": 96.0
+    },
+    "text": {
+      "content": "-",
+      "scale": 1.0,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+    "ConfirmCreate": {
+    "position": {
+      "x": 300.0,
+      "y": -120.0
+    },
+    "scale": {
+      "x": 160.0,
+      "y": 96.0
+    },
+    "text": {
+      "content": "CONFIRM",
+      "scale": 0.8,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+    "CancelCreate": {
+    "position": {
+      "x": -300.0,
+      "y": -120.0
+    },
+    "scale": {
+      "x": 160.0,
+      "y": 96.0
+    },
+    "text": {
+      "content": "CANCEL",
+      "scale": 0.8,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
   }
 }

@@ -58,20 +58,30 @@ static UIFader someOtherCoolAnimation;
 
 // Buttons and Text
 static std::vector<Button> levelButtonPool_;
-static TextData titleText{"PLAYER LEVEL", 0.0f, 0.8f};
+static TextData titleText{};
+static std::string titleBaseText;
 static CollectibleSystem lsCollectibleSystem;
 
 // Level Creation UI
 static bool creatingLevel = false;
+static int inputWidthMin{}, inputWidthMax{}, inputHeightMin{}, inputHeightMax{},
+    inputPortalLimitMin{}, inputPortalLimitMax{};
 static int inputWidth{}, inputHeight{}, inputPortalLimit{};
-static int confirmInput{}, levelInput{};
-static std::string inputStr;
-static TextData inputPrompt{"Width", -0.4f, 0.6f};
-static TextData recommendedPrompt{"Input between: 20-50", 0.0f, 0.0f};
-static TextData quitCreatingPrompt{"Press Q to quit creating", 0.f, -0.3f};
-static TextData enterCreatingPrompt{"Press Enter to confirm", 0.f, -0.6f};
-
+static int levelInput{};
+static std::string widthBaseText, heightBaseText, portalLimitBaseText;
+static TextData inputWidthPrompt;
+static TextData inputHeightPrompt;
+static TextData inputPortalLimitPrompt;
+static Button buttonIncreaseWidth;
+static Button buttonDecreaseWidth;
+static Button buttonIncreaseHeight;
+static Button buttonDecreaseHeight;
+static Button buttonIncreasePortalLimit;
+static Button buttonDecreasePortalLimit;
+static Button buttonConfirmCreation;
+static Button buttonCancelCreation;
 static Button creationBackground;
+
 static Button buttonSelect;
 static Button buttonEdit;
 static Button buttonCreate;
@@ -96,8 +106,6 @@ void LoadPlayerLevel() {
     Terrain::createColliderLibrary();
 
     pBgDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
-    // pBgStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
-    // pBgMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
 
     MapPreviewLoad();
 
@@ -124,6 +132,15 @@ void LoadPlayerLevel() {
     f32 textA = g_configManager.getFloat("PlayerLevel", "default", "textA", 1.f);
     f32 extraOffsetX = 0.f;
 
+    inputWidthMin = g_configManager.getInt("PlayerLevel", "levelCreation", "inputWidthMin", 5);
+    inputHeightMin = g_configManager.getInt("PlayerLevel", "levelCreation", "inputHeightMin", 5);
+    inputPortalLimitMin =
+        g_configManager.getInt("PlayerLevel", "levelCreation", "inputPortalLimitMin", 1);
+    inputWidthMax = g_configManager.getInt("PlayerLevel", "levelCreation", "inputWidthMax", 85);
+    inputHeightMax = g_configManager.getInt("PlayerLevel", "levelCreation", "inputHeightMax", 40);
+    inputPortalLimitMax =
+        g_configManager.getInt("PlayerLevel", "levelCreation", "inputPortalLimitMax", 10);
+
     for (int i{}, x{}, y{}; i < numPlayerLevels; ++i, ++x) {
         // Push back button and text
         if (i % 4 == 0 && i != 0) {
@@ -147,16 +164,27 @@ void LoadPlayerLevel() {
         levelButtonPool_.push_back(tempButton);
     }
 
-    titleText.font_ = titleFont;
-    inputPrompt.font_ = titleFont;
-    recommendedPrompt.font_ = titleFont;
-    quitCreatingPrompt.font_ = titleFont;
-    enterCreatingPrompt.font_ = titleFont;
-
     animManager.Clear();
     animManager.Add(&screenFader);
     animManager.Add(&someOtherCoolAnimation);
     animManager.InitializeAll();
+
+    buttonIncreaseWidth.loadMesh();
+    buttonIncreaseWidth.loadTexture("Assets/Textures/brown_square_24_24.png");
+    buttonDecreaseWidth.loadMesh();
+    buttonDecreaseWidth.loadTexture("Assets/Textures/brown_square_24_24.png");
+    buttonIncreaseHeight.loadMesh();
+    buttonIncreaseHeight.loadTexture("Assets/Textures/brown_square_24_24.png");
+    buttonDecreaseHeight.loadMesh();
+    buttonDecreaseHeight.loadTexture("Assets/Textures/brown_square_24_24.png");
+    buttonIncreasePortalLimit.loadMesh();
+    buttonIncreasePortalLimit.loadTexture("Assets/Textures/brown_square_24_24.png");
+    buttonDecreasePortalLimit.loadMesh();
+    buttonDecreasePortalLimit.loadTexture("Assets/Textures/brown_square_24_24.png");
+    buttonConfirmCreation.loadMesh();
+    buttonConfirmCreation.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
+    buttonCancelCreation.loadMesh();
+    buttonCancelCreation.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
 
     creationBackground.loadMesh();
     creationBackground.setRGBA(0.f, 0.f, 0.f, 0.8f);
@@ -206,7 +234,10 @@ void InitializePlayerLevel() {
         }
     }
 
-    titleText.content_ = "PLAYER LEVEL";
+    titleText.initFromJson("player_level_texts", "Header");
+    titleText.font_ = titleFont;
+    titleBaseText = titleText.content_;
+
     // Initialize destructible Background
     bgVfxSystem.Initialize(800, 20);
     if (levelManager.getLevelData(100)) {
@@ -232,6 +263,43 @@ void InitializePlayerLevel() {
     g_debugSystem.setScene(bgDirt, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
                            &bgVfxSystem);
 
+    // Text and Buttons for level creation UI
+    inputWidthPrompt.initFromJson("player_level_texts", "inputWidthPrompt");
+    inputWidthPrompt.font_ = buttonFont;
+    widthBaseText = inputWidthPrompt.content_;
+    inputHeightPrompt.initFromJson("player_level_texts", "inputHeightPrompt");
+    inputHeightPrompt.font_ = buttonFont;
+    heightBaseText = inputHeightPrompt.content_;
+    inputPortalLimitPrompt.initFromJson("player_level_texts", "inputPortalLimitPrompt");
+    inputPortalLimitPrompt.font_ = buttonFont;
+    portalLimitBaseText = inputPortalLimitPrompt.content_;
+    buttonIncreaseWidth.initFromJson("player_level_buttons", "IncreaseWidth");
+    buttonIncreaseWidth.setTextFont(buttonFont);
+    buttonDecreaseWidth.initFromJson("player_level_buttons", "DecreaseWidth");
+    buttonDecreaseWidth.setTextFont(buttonFont);
+    buttonIncreaseHeight.initFromJson("player_level_buttons", "IncreaseHeight");
+    buttonIncreaseHeight.setTextFont(buttonFont);
+    buttonDecreaseHeight.initFromJson("player_level_buttons", "DecreaseHeight");
+    buttonDecreaseHeight.setTextFont(buttonFont);
+    buttonIncreasePortalLimit.initFromJson("player_level_buttons", "IncreasePortalLimit");
+    buttonIncreasePortalLimit.setTextFont(buttonFont);
+    buttonDecreasePortalLimit.initFromJson("player_level_buttons", "DecreasePortalLimit");
+    buttonDecreasePortalLimit.setTextFont(buttonFont);
+    buttonConfirmCreation.initFromJson("player_level_buttons", "ConfirmCreate");
+    buttonConfirmCreation.setTextFont(buttonFont);
+    buttonCancelCreation.initFromJson("player_level_buttons", "CancelCreate");
+    buttonCancelCreation.setTextFont(buttonFont);
+
+    buttonIncreaseWidth.updateTransform();
+    buttonDecreaseWidth.updateTransform();
+    buttonIncreaseHeight.updateTransform();
+    buttonDecreaseHeight.updateTransform();
+    buttonIncreasePortalLimit.updateTransform();
+    buttonDecreasePortalLimit.updateTransform();
+    buttonConfirmCreation.updateTransform();
+    buttonCancelCreation.updateTransform();
+
+    // Button for selecting/editing/creating/deleting levels
     buttonBack.initFromJson("player_level_buttons", "Back");
     buttonBack.setTextFont(buttonFont);
     buttonSelect.initFromJson("player_level_buttons", "Select");
@@ -273,7 +341,7 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
         if ((buttonSelect.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
             if (levelManager.getLevelEditorMode() != EditorMode::None) {
                 levelManager.setLevelEditorMode(EditorMode::None);
-                titleText.content_ = "PLAYER LEVEL";
+                titleText.content_ = titleBaseText;
             }
         }
 
@@ -283,7 +351,7 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
                 titleText.content_ = "EDIT LEVEL";
             } else {
                 levelManager.setLevelEditorMode(EditorMode::None);
-                titleText.content_ = "PLAYER LEVEL";
+                titleText.content_ = titleBaseText;
             }
         }
 
@@ -293,7 +361,7 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
                 titleText.content_ = "CREATE LEVEL";
             } else {
                 levelManager.setLevelEditorMode(EditorMode::None);
-                titleText.content_ = "PLAYER LEVEL";
+                titleText.content_ = titleBaseText;
             }
         }
         if ((buttonDelete.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
@@ -303,7 +371,7 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
                 titleText.content_ = "DELETE LEVEL";
             } else {
                 levelManager.setLevelEditorMode(EditorMode::None);
-                titleText.content_ = "PLAYER LEVEL";
+                titleText.content_ = titleBaseText;
             }
         }
 
@@ -347,11 +415,9 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
                         if (!levelManager.playableLevels_[j]) {
                             std::cout << "Level editor mode: Create\n";
                             creatingLevel = true;
-                            inputWidth = 0;
-                            inputHeight = 0;
-                            inputPortalLimit = 0;
-                            confirmInput = 0;
-                            inputStr = "";
+                            inputWidth = inputWidthMax;
+                            inputHeight = inputHeightMax;
+                            inputPortalLimit = inputPortalLimitMin;
                             levelInput = j + 1;
                         }
                         break;
@@ -385,70 +451,62 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
         bgVfxSystem.Update(deltaTime);
 
         if (creatingLevel) {
-            if (AEInputCheckReleased(AEVK_Q) || 0 == AESysDoesWindowExist()) {
+            inputWidthPrompt.content_ = widthBaseText + std::to_string(inputWidth);
+            inputHeightPrompt.content_ = heightBaseText + std::to_string(inputHeight);
+            inputPortalLimitPrompt.content_ =
+                portalLimitBaseText + std::to_string(inputPortalLimit);
+
+            if (buttonIncreaseWidth.checkMouseClick()) {
+                inputWidth += 5;
+                if (inputWidth > inputWidthMax)
+                    inputWidth = inputWidthMax;
+            }
+            if (buttonDecreaseWidth.checkMouseClick()) {
+                inputWidth -= 5;
+                if (inputWidth < inputWidthMin)
+                    inputWidth = inputWidthMin;
+            }
+            if (buttonIncreaseHeight.checkMouseClick()) {
+                inputHeight += 5;
+                if (inputHeight > inputHeightMax)
+                    inputHeight = inputHeightMax;
+            }
+            if (buttonDecreaseHeight.checkMouseClick()) {
+                inputHeight -= 5;
+                if (inputHeight < inputHeightMin)
+                    inputHeight = inputHeightMin;
+            }
+            if (buttonIncreasePortalLimit.checkMouseClick()) {
+                inputPortalLimit += 2;
+                if (inputPortalLimit > inputPortalLimitMax)
+                    inputPortalLimit = inputPortalLimitMax;
+            }
+            if (buttonDecreasePortalLimit.checkMouseClick()) {
+                inputPortalLimit -= 2;
+                if (inputPortalLimit < inputPortalLimitMin)
+                    inputPortalLimit = inputPortalLimitMin;
+            }
+            if (buttonConfirmCreation.checkMouseClick()) {
+                // Create level with input parameters
+                levelManager.createLevelData(levelInput, inputWidth, inputHeight, 20,
+                                             inputPortalLimit);
+                creatingLevel = false;
+                levelManager.setLevelEditorMode(EditorMode::None);
+                titleText.content_ = titleBaseText;
+                levelManager.checkLevelData();
+            }
+            if (buttonCancelCreation.checkMouseClick()) {
                 creatingLevel = false;
                 levelManager.SetCurrentLevel(0);
                 std::cout << "Cancelled level creation\n";
             }
-            switch (confirmInput) {
-            case 0:
-                inputNumbers(inputStr);
-                inputPrompt.content_ = "Width: " + inputStr;
-                recommendedPrompt.content_ = "Input between: 1 - 80";
-                if (AEInputCheckReleased(AEVK_RETURN)) {
-                    inputWidth = std::stoi(inputStr);
-                    if (inputWidth <= 0 || inputWidth > 80) {
-                        // Set back to 0 and prompt user again if input is invalid
-                        inputWidth = 0;
-                    } else {
-                        confirmInput++;
-                        inputStr = "";
-                    }
-                }
-                break;
-            case 1:
-                inputNumbers(inputStr);
-                inputPrompt.content_ = "Height: " + inputStr;
-                recommendedPrompt.content_ = "Input between: 1 - 45";
-                if (AEInputCheckReleased(AEVK_RETURN)) {
-                    inputHeight = std::stoi(inputStr);
-                    if (inputHeight <= 0 || inputHeight > 45) {
-                        // Set back to 0 and prompt user again if input is invalid
-                        inputHeight = 0;
-                    } else {
-                        confirmInput++;
-                        inputStr = "";
-                    }
-                }
-                break;
-            case 2:
-                inputNumbers(inputStr);
-                inputPrompt.content_ = "Portal Limit: " + inputStr;
-                recommendedPrompt.content_ = "Input between: 0 - 10";
-                if (AEInputCheckReleased(AEVK_RETURN)) {
-                    inputPortalLimit = std::stoi(inputStr);
-                    if (inputPortalLimit < 0 || inputPortalLimit > 10) {
-                        // Set back to 0 and prompt user again if input is invalid
-                        inputPortalLimit = 0;
-                    } else {
-                        levelManager.createLevelData(levelInput, static_cast<int>(inputWidth),
-                                                     static_cast<int>(inputHeight), 20,
-                                                     static_cast<int>(inputPortalLimit));
-                        creatingLevel = false;
-                        levelManager.setLevelEditorMode(EditorMode::None);
-                        titleText.content_ = "SELECT LEVEL";
-                        levelManager.checkLevelData();
-                    }
-                }
-                break;
-            }
-        }
 
-        for (int i = 0; i < numPlayerLevels; ++i) {
-            levelButtonPool_[i].updateTransform();
+            for (int i = 0; i < numPlayerLevels; ++i) {
+                levelButtonPool_[i].updateTransform();
+            }
+            std::vector<FluidParticle> dummyPool;
+            lsCollectibleSystem.Update(deltaTime, dummyPool, bgVfxSystem);
         }
-        std::vector<FluidParticle> dummyPool;
-        lsCollectibleSystem.Update(deltaTime, dummyPool, bgVfxSystem);
     } else {
         if (AEInputCheckTriggered(AEVK_Z)) {
             g_debugSystem.close();
@@ -474,10 +532,15 @@ void DrawPlayerLevel() {
     // Draw button with different color base on level editor mode
     for (int i = 0; i < numPlayerLevels; ++i) {
         if (levelManager.playableLevels_[i + startLevelIndex]) {
-            levelButtonPool_[i].setRGBA(1.0f, 1.0f, 1.f, 1.f); // Pale blue for playable levels
-            levelButtonPool_[i].draw();
+            levelButtonPool_[i].setRGBA(1.0f, 1.0f, 1.f, 1.f); // Base color for playable levels
         } else {
             levelButtonPool_[i].setRGBA(0.5f, 0.5f, 0.5f, 1.f); // Grey for non-playable levels
+        }
+
+        // Disable hover effect when creating level
+        if (creatingLevel) {
+            levelButtonPool_[i].draw(false);
+        } else {
             levelButtonPool_[i].draw();
         }
     }
@@ -501,25 +564,33 @@ void DrawPlayerLevel() {
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
 
-    buttonBack.draw();
-    buttonSelect.draw();
-    buttonEdit.draw();
-    buttonCreate.draw();
-    buttonDelete.draw();
-    buttonToLevelSelector.draw();
-
     titleText.draw(true);
 
     if (creatingLevel) {
         creationBackground.setRGBA(0.f, 0.f, 0.f, 0.8f);
         creationBackground.draw();
-        inputPrompt.draw();
-        recommendedPrompt.draw(true);
-        quitCreatingPrompt.draw(true);
-        enterCreatingPrompt.draw(true);
-    }
+        inputWidthPrompt.draw(true);
+        inputHeightPrompt.draw(true);
+        inputPortalLimitPrompt.draw(true);
 
-    MapPreviewDraw();
+        buttonIncreaseWidth.draw();
+        buttonDecreaseWidth.draw();
+        buttonIncreaseHeight.draw();
+        buttonDecreaseHeight.draw();
+        buttonIncreasePortalLimit.draw();
+        buttonDecreasePortalLimit.draw();
+        buttonConfirmCreation.draw();
+        buttonCancelCreation.draw();
+
+    } else {
+        buttonBack.draw();
+        buttonSelect.draw();
+        buttonEdit.draw();
+        buttonCreate.draw();
+        buttonDelete.draw();
+        buttonToLevelSelector.draw();
+        MapPreviewDraw();
+    }
 
     animManager.DrawAll();
     g_debugSystem.drawAll();
@@ -541,6 +612,15 @@ void UnloadPlayerLevel() {
     for (int i = 0; i < numPlayerLevels; ++i) {
         levelButtonPool_[i].unload();
     }
+
+    buttonIncreaseWidth.unload();
+    buttonDecreaseWidth.unload();
+    buttonIncreaseHeight.unload();
+    buttonDecreaseHeight.unload();
+    buttonIncreasePortalLimit.unload();
+    buttonDecreasePortalLimit.unload();
+    buttonConfirmCreation.unload();
+    buttonCancelCreation.unload();
 
     buttonBack.unload();
     buttonSelect.unload();

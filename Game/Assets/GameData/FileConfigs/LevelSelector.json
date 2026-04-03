@@ -16,5 +16,14 @@
     "textG" : 1.0,
     "textB" : 1.0,
     "textA" : 1.0
+  },
+    "levelCreation":
+  {
+    "inputWidthMin" : 5,
+    "inputWidthMax" : 80,
+    "inputHeightMin" : 5,
+    "inputHeightMax" : 45,
+    "inputPortalLimitMin" : 2,
+    "inputPortalLimitMax" : 10
   }
 }

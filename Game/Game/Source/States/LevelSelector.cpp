@@ -60,18 +60,20 @@ static UIFader someOtherCoolAnimation;
 
 // Buttons and Text
 static std::vector<Button> levelButtonPool_;
-static TextData titleText{"SELECT LEVEL", 0.0f, 0.8f};
+static TextData titleText{};
+static std::string titleBaseText;
 static CollectibleSystem lsCollectibleSystem;
 
 // Level Creation UI
 static bool creatingLevel = false;
-static int inputWidthMin{5}, inputWidthMax{85}, inputHeightMin{5}, inputHeightMax{40},
-    inputPortalLimitMin{2}, inputPortalLimitMax{10};
+static int inputWidthMin{}, inputWidthMax{}, inputHeightMin{}, inputHeightMax{},
+    inputPortalLimitMin{}, inputPortalLimitMax{};
 static int inputWidth{}, inputHeight{}, inputPortalLimit{};
 static int levelInput{};
-static TextData inputWidthPrompt{"Width:", 0.f, 0.6f};
-static TextData inputHeightPrompt{"Height:", 0.f, 0.3f};
-static TextData inputPortalLimitPrompt{"Portal:", 0.f, 0.f};
+static std::string widthBaseText, heightBaseText, portalLimitBaseText;
+static TextData inputWidthPrompt;
+static TextData inputHeightPrompt;
+static TextData inputPortalLimitPrompt;
 static Button buttonIncreaseWidth;
 static Button buttonDecreaseWidth;
 static Button buttonIncreaseHeight;
@@ -131,6 +133,15 @@ void LoadLevelSelector() {
     f32 textB = g_configManager.getFloat("LevelSelector", "default", "textB", 1.f);
     f32 textA = g_configManager.getFloat("LevelSelector", "default", "textA", 1.f);
     f32 extraOffsetX = 0.f;
+
+    inputWidthMin = g_configManager.getInt("LevelSelector", "levelCreation", "inputWidthMin", 5);
+    inputHeightMin = g_configManager.getInt("LevelSelector", "levelCreation", "inputHeightMin", 5);
+    inputPortalLimitMin =
+        g_configManager.getInt("LevelSelector", "levelCreation", "inputPortalLimitMin", 1);
+    inputWidthMax = g_configManager.getInt("LevelSelector", "levelCreation", "inputWidthMax", 85);
+    inputHeightMax = g_configManager.getInt("LevelSelector", "levelCreation", "inputHeightMax", 40);
+    inputPortalLimitMax =
+        g_configManager.getInt("PlayerLevel", "levelCreation", "inputPortalLimitMax", 10);
 
     for (int i{}, x{}, y{}; i < static_cast<int>(Level::PlayerLevels); ++i, ++x) {
         // Push back button and text
@@ -227,7 +238,10 @@ void InitializeLevelSelector() {
         }
     }
 
-    titleText.content_ = "SELECT LEVEL";
+    titleText.initFromJson("level_selector_texts", "Header");
+    titleText.font_ = titleFont;
+    titleBaseText = titleText.content_;
+
     // Initialize destructible Background
     bgVfxSystem.Initialize(800, 20);
     if (levelManager.getLevelData(100)) {
@@ -254,9 +268,15 @@ void InitializeLevelSelector() {
                            &bgVfxSystem);
 
     // Text and Buttons for level creation UI
+    inputWidthPrompt.initFromJson("level_selector_texts", "inputWidthPrompt");
     inputWidthPrompt.font_ = buttonFont;
+    widthBaseText = inputWidthPrompt.content_;
+    inputHeightPrompt.initFromJson("level_selector_texts", "inputHeightPrompt");
     inputHeightPrompt.font_ = buttonFont;
+    heightBaseText = inputHeightPrompt.content_;
+    inputPortalLimitPrompt.initFromJson("level_selector_texts", "inputPortalLimitPrompt");
     inputPortalLimitPrompt.font_ = buttonFont;
+    portalLimitBaseText = inputPortalLimitPrompt.content_;
     buttonIncreaseWidth.initFromJson("level_selector_buttons", "IncreaseWidth");
     buttonIncreaseWidth.setTextFont(buttonFont);
     buttonDecreaseWidth.initFromJson("level_selector_buttons", "DecreaseWidth");
@@ -324,7 +344,7 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
         if ((buttonSelect.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
             if (levelManager.getLevelEditorMode() != EditorMode::None) {
                 levelManager.setLevelEditorMode(EditorMode::None);
-                titleText.content_ = "SELECT LEVEL";
+                titleText.content_ = titleBaseText;
             }
         }
 
@@ -334,7 +354,7 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
                 titleText.content_ = "EDIT LEVEL";
             } else {
                 levelManager.setLevelEditorMode(EditorMode::None);
-                titleText.content_ = "SELECT LEVEL";
+                titleText.content_ = titleBaseText;
             }
         }
 
@@ -344,7 +364,7 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
                 titleText.content_ = "CREATE LEVEL";
             } else {
                 levelManager.setLevelEditorMode(EditorMode::None);
-                titleText.content_ = "SELECT LEVEL";
+                titleText.content_ = titleBaseText;
             }
         }
         if ((buttonDelete.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
@@ -354,7 +374,7 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
                 titleText.content_ = "DELETE LEVEL";
             } else {
                 levelManager.setLevelEditorMode(EditorMode::None);
-                titleText.content_ = "SELECT LEVEL";
+                titleText.content_ = titleBaseText;
             }
         }
 
@@ -434,15 +454,10 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
         bgVfxSystem.Update(deltaTime);
 
         if (creatingLevel) {
-            if (AEInputCheckReleased(AEVK_Q) || 0 == AESysDoesWindowExist()) {
-                creatingLevel = false;
-                levelManager.SetCurrentLevel(0);
-                std::cout << "Cancelled level creation\n";
-            }
-
-            inputWidthPrompt.content_ = "Width:\n\n" + std::to_string(inputWidth);
-            inputHeightPrompt.content_ = "Height:\n\n" + std::to_string(inputHeight);
-            inputPortalLimitPrompt.content_ = "Portal:\n\n" + std::to_string(inputPortalLimit);
+            inputWidthPrompt.content_ = widthBaseText + std::to_string(inputWidth);
+            inputHeightPrompt.content_ = heightBaseText + std::to_string(inputHeight);
+            inputPortalLimitPrompt.content_ =
+                portalLimitBaseText + std::to_string(inputPortalLimit);
 
             if (buttonIncreaseWidth.checkMouseClick()) {
                 inputWidth += 5;
@@ -480,8 +495,13 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
                                              inputPortalLimit);
                 creatingLevel = false;
                 levelManager.setLevelEditorMode(EditorMode::None);
-                titleText.content_ = "SELECT LEVEL";
+                titleText.content_ = titleBaseText;
                 levelManager.checkLevelData();
+            }
+            if (buttonCancelCreation.checkMouseClick()) {
+                creatingLevel = false;
+                levelManager.SetCurrentLevel(0);
+                std::cout << "Cancelled level creation\n";
             }
 
             for (int i = 0; i < static_cast<int>(Level::PlayerLevels); ++i) {

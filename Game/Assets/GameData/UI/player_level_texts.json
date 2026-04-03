@@ -1,0 +1,42 @@
+{
+  "inputWidthPrompt": {
+    "content": "Width:\n\n",
+    "x": 0.0,
+    "y": 0.55,
+    "scale": 1.0,
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  },
+  "inputHeightPrompt": {
+    "content": "Height:\n\n",
+    "x": 0.0,
+    "y": 0.25,
+    "scale": 1.0,
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  },
+  "inputPortalLimitPrompt": {
+    "content": "Portal Limit:\n\n",
+    "x": 0.0,
+    "y": -0.05,
+    "scale": 1.0,
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  },
+  "Header": {
+    "content": "PLAYER LEVEL",
+    "x": 0.0,
+    "y": 0.8,
+    "scale": 1.0,
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  }
+}
