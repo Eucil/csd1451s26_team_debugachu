@@ -12,7 +12,7 @@
         "alpha": 1.0
       },
       "body": {
-        "content": "LEFT CLICK - Dig / Destroy dirt\nRIGHT CLICK - Place portals\nMWHEEL-UP - Turn portal anti-clockwise\nMWHEEL-DOWN - Turn portal clockwise",
+        "content": "LEFT CLICK - Dig / Destroy dirt\nRIGHT CLICK - Place / Remove portals\nSCROLL WHEEL-UP - Turn portal anti-clockwise\nSCROLL WHEEL-DOWN - Turn portal clockwise",
         "x": 0.0,
         "y": 0.35,
         "scale": 0.8,
@@ -34,7 +34,7 @@
         "alpha": 1.0
       },
       "body": {
-        "content": "Turn on the PIPE\nDig Dirt\nPlace Portals\nWater the Flower!",
+        "content": "LEFT CLICK the PIPE for water\nDig Dirt\nPlace Portals\nWater the Flower!",
         "x": 0.0,
         "y": 0.35,
         "scale": 0.8,
