@@ -22,6 +22,7 @@
 
 #include <AEEngine.h>
 
+#include "Animations.h"
 #include "AudioSystem.h"
 #include "Button.h"
 #include "ConfigManager.h"
@@ -82,6 +83,11 @@ static float lineSpacing = 80.0f;
 static float scrollSpeed = -200.0f; // negative = scroll up
 std::vector<std::string> creditsData;
 
+// Animations
+static AnimationManager animManager;
+static ScreenFaderManager screenFader;
+static UIFader someOtherCoolAnimation;
+
 void LoadCredits() {
     // Load the destructible terrain background
     MenuBackground::Load();
@@ -122,6 +128,12 @@ void InitializeCredits() {
 
     buttonBack.initFromJson("credits_buttons", "Back");
     buttonBack.setTextFont(buttonFont);
+
+    // Animations
+    animManager.Clear();
+    animManager.Add(&screenFader);
+    animManager.Add(&someOtherCoolAnimation);
+    animManager.InitializeAll();
 }
 
 void UpdateCredits(GameStateManager& GSM, f32 deltaTime) {
@@ -135,11 +147,11 @@ void UpdateCredits(GameStateManager& GSM, f32 deltaTime) {
 
         // Input to skip or return
         if (AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_SPACE)) {
-            GSM.nextState_ = StateId::MainMenu;
+            screenFader.StartFadeOut(&GSM, StateId::MainMenu);
         }
 
         if (buttonBack.checkMouseClick()) {
-            GSM.nextState_ = StateId::MainMenu;
+            screenFader.StartFadeOut(&GSM, StateId::MainMenu);
         }
         buttonBack.updateTransform();
 
@@ -147,7 +159,7 @@ void UpdateCredits(GameStateManager& GSM, f32 deltaTime) {
         float lastLineY = yPos - (creditsData.size() - 1) * lineSpacing;
         if (lastLineY > 450.0f) {
             printf("Credits: Finished scrolling, returning to MainMenu\n");
-            GSM.nextState_ = StateId::MainMenu;
+            screenFader.StartFadeOut(&GSM, StateId::MainMenu);
         }
 
         // Left-click held: destroy dirt + VFX + audio (same as MainMenu)
@@ -166,6 +178,7 @@ void UpdateCredits(GameStateManager& GSM, f32 deltaTime) {
         }
         g_debugSystem.update();
     }
+    animManager.UpdateAll(deltaTime);
 }
 
 void DrawCredits() {
@@ -304,12 +317,13 @@ void DrawCredits() {
 
     // Draw back button on top
     buttonBack.draw();
-
+    animManager.DrawAll();
     g_debugSystem.drawAll();
 }
 void FreeCredits() {
     // Free the shared background simulation objects
     MenuBackground::Free();
+    animManager.FreeAll();
 }
 
 void UnloadCredits() {

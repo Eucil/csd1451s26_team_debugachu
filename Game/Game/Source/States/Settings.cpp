@@ -170,7 +170,7 @@ void updateSettings(GameStateManager& GSM, f32 deltaTime) {
 
         // Check for button press to go back to main menu
         if (buttonBack.checkMouseClick()) {
-            GSM.nextState_ = StateId::MainMenu;
+            screenFader.StartFadeOut(&GSM, StateId::MainMenu);
         }
 
         // Get volume amounts

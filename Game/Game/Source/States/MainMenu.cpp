@@ -127,19 +127,16 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
             // Settings button
             if (settingsButton.checkMouseClick()) {
                 std::cout << "Settings button clicked\n";                
-                GSM.nextState_ = StateId::Settings;
                 screenFader.StartFadeOut(&GSM, StateId::Settings);
             }
 
             // Credits button
             if (creditsButton.checkMouseClick()) {
                 std::cout << "Credits button clicked\n";
-                GSM.nextState_ = StateId::Credits;
                 screenFader.StartFadeOut(&GSM, StateId::Credits);
             }
             if (quitButton.checkMouseClick()) {
                 std::cout << "Quit button clicked - Exiting game\n";
-                GSM.nextState_ = StateId::Quit;
                 screenFader.StartFadeOut(&GSM, StateId::Quit);
             }
         }

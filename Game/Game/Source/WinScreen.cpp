@@ -147,7 +147,7 @@ void WinScreen::Hide() { isVisible_ = false; }
 // WinScreen::Update
 // Call every frame while the level state is active.
 // ----------------------------------------------------------------------------
-void WinScreen::Update(GameStateManager& GSM) {
+void WinScreen::Update(GameStateManager& GSM){
     if (!isVisible_)
         return;
 

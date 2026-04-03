@@ -335,7 +335,6 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
         // Press R to restart
         if (AEInputCheckTriggered(AEVK_R) || 0 == AESysDoesWindowExist()) {
             std::cout << "R triggered\n";
-            GSM.nextState_ = StateId::Restart;
             screenFader.StartFadeOut(&GSM, StateId::Restart);
         }
 
@@ -378,12 +377,10 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
 
         if ((buttonToLevelSelector.checkMouseClick() || 0 == AESysDoesWindowExist()) &&
             !creatingLevel) {
-            GSM.nextState_ = StateId::LevelSelector;
             screenFader.StartFadeOut(&GSM, StateId::LevelSelector);
         }
 
         if ((buttonBack.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
-            GSM.nextState_ = StateId::MainMenu;
             screenFader.StartFadeOut(&GSM, StateId::MainMenu);
         }
 
@@ -400,7 +397,6 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
                         if (levelManager.playableLevels_[j]) {
                             levelManager.SetCurrentLevel(j + 1);
                             screenFader.StartFadeOut(&GSM, StateId::Level);
-                            // GSM.nextState_ = StateId::Level;
                         }
                         break;
                     case EditorMode::Edit:

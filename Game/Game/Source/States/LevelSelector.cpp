@@ -380,12 +380,10 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
 
         if ((buttonToPlayerLevel.checkMouseClick() || 0 == AESysDoesWindowExist()) &&
             !creatingLevel) {          
-            GSM.nextState_ = StateId::PlayerLevel;
             screenFader.StartFadeOut(&GSM, StateId::PlayerLevel);
         }
 
         if ((buttonBack.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
-            GSM.nextState_ = StateId::MainMenu;
             screenFader.StartFadeOut(&GSM, StateId::MainMenu);
         }
 

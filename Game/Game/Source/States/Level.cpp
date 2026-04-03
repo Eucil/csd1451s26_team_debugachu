@@ -396,12 +396,10 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
             }
             if (buttonRestart.checkMouseClick()) {
                 screenFader.StartFadeOut(&GSM, StateId::Restart);
-                // GSM.nextState_ = StateId::Restart;
                 pauseSystem.resume();
             }
             if (buttonQuit.checkMouseClick()) {
                 screenFader.StartFadeOut(&GSM, StateId::MainMenu);
-                // GSM.nextState_ = StateId::MainMenu;
             }
 
             // UI buttons
@@ -604,8 +602,7 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                     startEndPointSystem.ToggleInfiniteWater();
                 }
 
-                int portalsUsed =
-                    portalSystem.GetPortalCount(); // however your PortalSystem exposes this
+                int portalsUsed = portalSystem.GetPortalCount(); // however your PortalSystem exposes this
                 int portalsLimit = portalSystem.GetPortalLimit();
                 portalLimitText.content_ =
                     "Portals: " + std::to_string(portalsUsed) + "/" + std::to_string(portalsLimit);

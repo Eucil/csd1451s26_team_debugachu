@@ -22,6 +22,7 @@
 
 #include <AEEngine.h>
 
+#include "Animations.h"
 #include "AudioSystem.h"
 #include "Button.h"
 #include "ConfigManager.h"
@@ -42,6 +43,11 @@ static s8 buttonFont = 0;   // font for buttons
 static Button buttonNext;
 static Button buttonPrevious;
 static Button buttonBack;
+
+// Animations
+static AnimationManager animManager;
+static ScreenFaderManager screenFader;
+static UIFader someOtherCoolAnimation;
 
 // Full-screen semi-transparent overlay mesh (created once, reused)
 static AEGfxVertexList* overlayMesh = nullptr;
@@ -347,6 +353,11 @@ void LoadControls() {
 void InitializeControls() {
     MenuBackground::Initialize();
 
+    // Animations
+    animManager.Clear();
+    animManager.Add(&screenFader);
+    animManager.Add(&someOtherCoolAnimation);
+    animManager.InitializeAll();
     // Reset to first page every time we enter
     currentPage = 1;
 
@@ -375,21 +386,21 @@ void UpdateControls(GameStateManager& GSM, f32 deltaTime) {
             if (currentPage < totalPages)
                 ++currentPage;
             else
-                GSM.nextState_ = StateId::MainMenu;
+                screenFader.StartFadeOut(&GSM, StateId::MainMenu);
         }
         if (AEInputCheckTriggered(AEVK_LEFT)) {
             if (currentPage > 1)
                 --currentPage;
         }
         if (AEInputCheckTriggered(AEVK_ESCAPE)) {
-            GSM.nextState_ = StateId::MainMenu;
+            screenFader.StartFadeOut(&GSM, StateId::MainMenu);
         }
 
         if (buttonNext.checkMouseClick()) {
             if (currentPage < totalPages)
                 ++currentPage;
             else
-                GSM.nextState_ = StateId::MainMenu;
+                screenFader.StartFadeOut(&GSM, StateId::MainMenu);
         }
 
         if (buttonPrevious.checkMouseClick()) {
@@ -398,7 +409,7 @@ void UpdateControls(GameStateManager& GSM, f32 deltaTime) {
         }
 
         if (buttonBack.checkMouseClick()) {
-            GSM.nextState_ = StateId::MainMenu;
+            screenFader.StartFadeOut(&GSM, StateId::MainMenu);
         }
 
         if (AEInputCheckCurr(AEVK_LBUTTON)) {
@@ -425,6 +436,8 @@ void UpdateControls(GameStateManager& GSM, f32 deltaTime) {
         }
         g_debugSystem.update();
     }
+    // Animations
+    animManager.UpdateAll(deltaTime);
 }
 
 void DrawControls() {
@@ -484,13 +497,13 @@ void DrawControls() {
         buttonPrevious.draw();
     }
     buttonBack.draw();
-
+    animManager.DrawAll();
     g_debugSystem.drawAll();
 }
 
 void FreeControls() {
     MenuBackground::Free();
-
+    animManager.FreeAll();
     if (overlayMesh) {
         AEGfxMeshFree(overlayMesh);
         overlayMesh = nullptr;
