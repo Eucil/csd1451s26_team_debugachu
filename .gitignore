@@ -18,3 +18,4 @@ Debug
 Release
 !**/lib/Debug/
 !**/lib/Release/
+!**/lib/Debug/*.pdb
