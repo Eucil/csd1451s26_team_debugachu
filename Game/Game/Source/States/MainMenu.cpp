@@ -126,8 +126,9 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
 
             // Settings button
             if (settingsButton.checkMouseClick()) {
-                std::cout << "Settings button clicked\n";
+                std::cout << "Settings button clicked\n";                
                 GSM.nextState_ = StateId::Settings;
+                screenFader.StartFadeOut(&GSM, StateId::Settings);
             }
 
             // Credits button

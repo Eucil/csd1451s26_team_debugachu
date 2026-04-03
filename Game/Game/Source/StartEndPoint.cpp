@@ -325,7 +325,8 @@ void StartEndPoint::Update(f32 dt, std::vector<FluidParticle>& particlePool, VFX
         }
 
         // VFX: emit a water-mist burst while the pipe is flowing
-        if (startPoint.releaseWater_) {
+        if (startPoint.releaseWater_ &&
+            (startPoint.waterRemaining_ > 0.0f || startPoint.infiniteWater_)) {
             startPoint.vfxTimer_ -= dt;
             if (startPoint.vfxTimer_ <= 0.0f) {
                 // Spawn at the pipe mouth (bottom-centre of the pipe rect)

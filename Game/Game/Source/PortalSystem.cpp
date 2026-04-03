@@ -1,4 +1,4 @@
-/*!
+ /*!
 @file       PortalSystem.cpp
 @author     Woo Guang Theng/guangtheng.woo@digipen.edu
 @co_author  Sean Lee Hong Wei/seanhongwei.lee@digipen.edu
@@ -228,8 +228,8 @@ void PortalSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool, VFXS
                 if (portalVfxCooldown_ <= 0.0f) {
 
                     // Spawn particles at the INPUT portal pos
-                    vfx.SpawnVFX(VFXType::PortalBurst, portal->transform_.pos_,
-                                 portal->transform_.rotationRad_);
+                    //vfx.SpawnVFX(VFXType::PortalBurst, portal->transform_.pos_,
+                                 //portal->transform_.rotationRad_);
 
                     // Spawn the particles at the OUTPUT portal pos
                     vfx.SpawnVFX(VFXType::PortalBurst, portal->linkedPortal_->transform_.pos_,
