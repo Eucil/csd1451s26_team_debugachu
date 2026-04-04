@@ -554,9 +554,8 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
             }
             g_debugSystem.update();
         }
-
-        animManager.UpdateAll(deltaTime);
     }
+    animManager.UpdateAll(deltaTime);
     confirmationSystem.update();
 }
 
