@@ -36,7 +36,7 @@
 namespace MenuBackground {
 
 // Load assets (textures, fonts, meshes).
-void Load();
+void Load(int backgroundLevel = 99);
 
 // Initialize/reset the simulation (terrain, fluid, portals, etc.)
 void Initialize();

@@ -41,5 +41,3 @@ struct TiledBackground {
 
     Graphics graphics_;
 };
-
-void inputNumbers(std::string& inputStr);

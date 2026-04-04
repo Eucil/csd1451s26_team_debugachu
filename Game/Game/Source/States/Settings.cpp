@@ -24,10 +24,7 @@
 #include "States/LevelManager.h"
 
 // Destructible Background
-#include "AudioSystem.h"
-#include "Terrain.h"
-#include "Utils.h"
-#include "VFXSystem.h"
+#include "MenuBackground.h" // <-- shared background
 
 static Button buttonIncreaseSfxVolume;
 static Button buttonDecreaseSfxVolume;
@@ -44,26 +41,13 @@ static TextData bgmVolumeText;
 static TextData sfxVolumeAmountText;
 static TextData bgmVolumeAmountText;
 
-// Destructible Background Variables
-static int bgHeight, bgWidth, bgTileSize, bgPortalLimit;
-static bool bgFileExist;
-
-static Terrain* bgDirt = nullptr;
-static Terrain* bgStone = nullptr;
-static Terrain* bgMagic = nullptr;
-static AEGfxTexture* pBgDirtTex{nullptr};
-static AEGfxTexture* pBgStoneTex{nullptr};
-static AEGfxTexture* pBgMagicTex{nullptr};
-static TiledBackground bg;
-static VFXSystem bgVfxSystem;
-
 // Animations
 static AnimationManager animManager;
 static ScreenFaderManager screenFader;
 static UIFader someOtherCoolAnimation;
 
 void loadSettings() {
-        
+
     animManager.Clear();
     animManager.Add(&screenFader);
     animManager.Add(&someOtherCoolAnimation);
@@ -84,14 +68,8 @@ void loadSettings() {
     buttonBack.loadMesh();
     buttonBack.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
 
-    // Destructible Terrain
-    Terrain::createMeshLibrary();
-    Terrain::createColliderLibrary();
-
-    pBgDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
-    pBgStoneTex = AEGfxTextureLoad("Assets/Textures/terrain_stone.png");
-    pBgMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
-    bg.loadFromJson("background", "Background");
+    // Load the destructible terrain background
+    MenuBackground::Load(100);
 }
 
 void initializeSettings() {
@@ -119,33 +97,8 @@ void initializeSettings() {
     bgmVolumeAmountText.initFromJson("settings_text", "BgmVolumeAmount");
     bgmVolumeAmountText.font_ = buttonFont;
 
-    // Initialize destructible Background
-    levelManager.init();
-    levelManager.checkLevelData();
-
-    bgVfxSystem.Initialize(800, 20);
-    if (levelManager.getLevelData(100)) {
-        levelManager.parseMapInfo(bgWidth, bgHeight, bgTileSize, bgPortalLimit);
-        bgFileExist = true;
-    } else {
-        bgWidth = 80;
-        bgHeight = 45;
-        bgTileSize = 20;
-        bgFileExist = false;
-    }
-    bgDirt = new Terrain(TerrainMaterial::Dirt, pBgDirtTex, {0.0f, 0.0f}, bgHeight, bgWidth,
-                         bgTileSize, true);
-
-    if (bgFileExist) {
-        levelManager.parseTerrainInfo(bgDirt->getNodes(), "Dirt");
-    }
-    bgDirt->initCellsTransform();
-    bgDirt->initCellsGraphics();
-    bgDirt->initCellsCollider();
-    bgDirt->updateTerrain();
-
-    g_debugSystem.setScene(bgDirt, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-                           &bgVfxSystem);
+    // Initialize the shared background simulation
+    MenuBackground::Initialize();
 }
 
 void updateSettings(GameStateManager& GSM, f32 deltaTime) {
@@ -185,18 +138,15 @@ void updateSettings(GameStateManager& GSM, f32 deltaTime) {
         buttonBack.updateTransform();
 
         if (AEInputCheckCurr(AEVK_LBUTTON)) {
-            bool hitDirt = bgDirt->destroyAtMouse(20.0f);
+            bool hitDirt = MenuBackground::DestroyDirtAtMouse(20.0f);
             if (hitDirt) {
-                bgVfxSystem.SpawnContinuous(VFXType::DirtBurst, GetMouseWorldPos(), deltaTime,
-                                            0.1f);
                 g_audioSystem.playSound("dirt_break", "sfx", 0.5f, 1.0f);
-            } else {
-                bgVfxSystem.ResetSpawnTimer();
             }
-        } else {
-            bgVfxSystem.ResetSpawnTimer();
         }
-        bgVfxSystem.Update(deltaTime);
+
+        // Update the shared background (fluid, portals, etc. keep running)
+        MenuBackground::Update(deltaTime);
+
     } else {
         if (AEInputCheckTriggered(AEVK_Z)) {
             g_debugSystem.close();
@@ -208,10 +158,8 @@ void updateSettings(GameStateManager& GSM, f32 deltaTime) {
 
 void drawSettings() {
 
-    bg.draw();
-
-    bgDirt->renderTerrain();
-    bgVfxSystem.Draw();
+    // Draw the shared live background first
+    MenuBackground::Draw();
 
     buttonIncreaseSfxVolume.draw();
     buttonDecreaseSfxVolume.draw();
@@ -233,11 +181,9 @@ void drawSettings() {
 
 void freeSettings() {
     g_debugSystem.clearScene();
-    bgVfxSystem.Free();
-    animManager.FreeAll();
+    MenuBackground::Free();
 
-    delete bgDirt;
-    bgDirt = nullptr;
+    animManager.FreeAll();
 }
 
 void unloadSettings() {
@@ -259,18 +205,5 @@ void unloadSettings() {
     buttonBack.unload();
 
     // Unload destructible background
-    Terrain::freeMeshLibrary();
-    if (pBgDirtTex) {
-        AEGfxTextureUnload(pBgDirtTex);
-        pBgDirtTex = nullptr;
-    }
-    if (pBgStoneTex) {
-        AEGfxTextureUnload(pBgStoneTex);
-        pBgStoneTex = nullptr;
-    }
-    if (pBgMagicTex) {
-        AEGfxTextureUnload(pBgMagicTex);
-        pBgMagicTex = nullptr;
-    }
-    bg.unload();
+    MenuBackground::Unload();
 }

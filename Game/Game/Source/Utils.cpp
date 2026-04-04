@@ -77,9 +77,9 @@ AEGfxVertexList* CreateRectMesh() {
 AEGfxVertexList* CreateWireRectMesh() {
     AEGfxMeshStart();
     AEGfxVertexAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
-    AEGfxVertexAdd( 0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
-    AEGfxVertexAdd( 0.5f,  0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
-    AEGfxVertexAdd(-0.5f,  0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
+    AEGfxVertexAdd(0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
+    AEGfxVertexAdd(0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
+    AEGfxVertexAdd(-0.5f, 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
     AEGfxVertexAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 0.0f); // close loop
     return AEGfxMeshEnd();
 }
@@ -111,12 +111,10 @@ void TiledBackground::loadFromJson(const std::string& file, const std::string& s
     graphics_.texture_ = AEGfxTextureLoad(s["texture"].asCString());
 
     AEGfxMeshStart();
-    AEGfxTriAdd(-halfW, -halfH, 0xFFFFFFFF, 0.0f,  tileY,
-                 halfW, -halfH, 0xFFFFFFFF, tileX, tileY,
-                -halfW,  halfH, 0xFFFFFFFF, 0.0f,  0.0f);
-    AEGfxTriAdd( halfW, -halfH, 0xFFFFFFFF, tileX, tileY,
-                 halfW,  halfH, 0xFFFFFFFF, tileX, 0.0f,
-                -halfW,  halfH, 0xFFFFFFFF, 0.0f,  0.0f);
+    AEGfxTriAdd(-halfW, -halfH, 0xFFFFFFFF, 0.0f, tileY, halfW, -halfH, 0xFFFFFFFF, tileX, tileY,
+                -halfW, halfH, 0xFFFFFFFF, 0.0f, 0.0f);
+    AEGfxTriAdd(halfW, -halfH, 0xFFFFFFFF, tileX, tileY, halfW, halfH, 0xFFFFFFFF, tileX, 0.0f,
+                -halfW, halfH, 0xFFFFFFFF, 0.0f, 0.0f);
     graphics_.mesh_ = AEGfxMeshEnd();
 }
 
@@ -135,8 +133,14 @@ void TiledBackground::draw() const {
 }
 
 void TiledBackground::unload() {
-    if (graphics_.texture_) { AEGfxTextureUnload(graphics_.texture_); graphics_.texture_ = nullptr; }
-    if (graphics_.mesh_)    { AEGfxMeshFree(graphics_.mesh_);         graphics_.mesh_    = nullptr; }
+    if (graphics_.texture_) {
+        AEGfxTextureUnload(graphics_.texture_);
+        graphics_.texture_ = nullptr;
+    }
+    if (graphics_.mesh_) {
+        AEGfxMeshFree(graphics_.mesh_);
+        graphics_.mesh_ = nullptr;
+    }
 }
 
 AEVec2 GetMouseWorldPos() {
@@ -147,32 +151,4 @@ AEVec2 GetMouseWorldPos() {
     worldPos.y = (AEGfxGetWindowHeight() / 2.0f) - (f32)mouseY;
 
     return worldPos;
-}
-
-void inputNumbers(std::string& inputStr) {
-    if (AEInputCheckReleased(AEVK_1)) {
-        inputStr += "1";
-    } else if (AEInputCheckReleased(AEVK_2)) {
-        inputStr += "2";
-    } else if (AEInputCheckReleased(AEVK_3)) {
-        inputStr += "3";
-    } else if (AEInputCheckReleased(AEVK_4)) {
-        inputStr += "4";
-    } else if (AEInputCheckReleased(AEVK_5)) {
-        inputStr += "5";
-    } else if (AEInputCheckReleased(AEVK_6)) {
-        inputStr += "6";
-    } else if (AEInputCheckReleased(AEVK_7)) {
-        inputStr += "7";
-    } else if (AEInputCheckReleased(AEVK_8)) {
-        inputStr += "8";
-    } else if (AEInputCheckReleased(AEVK_9)) {
-        inputStr += "9";
-    } else if (AEInputCheckReleased(AEVK_0)) {
-        inputStr += "0";
-    } else if (AEInputCheckReleased(AEVK_BACK)) {
-        if (!inputStr.empty()) {
-            inputStr.pop_back();
-        }
-    }
 }

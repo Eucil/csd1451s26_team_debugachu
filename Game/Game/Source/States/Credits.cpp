@@ -82,6 +82,7 @@ static Button buttonBack;
 static float lineSpacing = 80.0f;
 static float scrollSpeed = -200.0f; // negative = scroll up
 std::vector<std::string> creditsData;
+static AEGfxVertexList* overlayMesh = nullptr;
 
 // Animations
 static AnimationManager animManager;
@@ -186,7 +187,6 @@ void DrawCredits() {
     MenuBackground::Draw();
 
     // Semi-transparent dark overlay so text is readable
-    static AEGfxVertexList* overlayMesh = nullptr;
     if (overlayMesh == nullptr) {
         AEGfxMeshStart();
         AEGfxTriAdd(-0.5f, -0.5f, 0xFF000000, 0.0f, 1.0f, 0.5f, -0.5f, 0xFF000000, 1.0f, 1.0f,
@@ -338,6 +338,11 @@ void UnloadCredits() {
     if (buttonFont) {
         AEGfxDestroyFont(buttonFont);
         buttonFont = 0;
+    }
+
+    if (overlayMesh) {
+        AEGfxMeshFree(overlayMesh);
+        overlayMesh = nullptr;
     }
 
     buttonBack.unload();

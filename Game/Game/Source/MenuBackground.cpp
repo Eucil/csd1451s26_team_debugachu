@@ -123,7 +123,7 @@ static void BgSpawnWater(f32 deltaTime) {
 // MenuBackground public API
 // ----------------------------------------------------------------------------
 
-void MenuBackground::Load() {
+void MenuBackground::Load(int backgroundLevel) {
     // Only load GPU assets once, no matter how many states call Load()
     ++loadRefCount;
     if (loadRefCount > 1) {
@@ -132,11 +132,11 @@ void MenuBackground::Load() {
         return;
     }
 
-    if (levelManager.getLevelData(99)) {
+    if (levelManager.getLevelData(backgroundLevel)) {
         levelManager.parseMapInfo(width, height, tileSize, portalLimit);
         fileExist = true;
     } else {
-        std::cout << "[MenuBackground] Failed to load level 99, using defaults.\n";
+        std::cout << "[MenuBackground] Failed to load level, using defaults.\n";
         width = 80;
         height = 45;
         tileSize = 20;
