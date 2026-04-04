@@ -5,7 +5,8 @@
     "UnlimitedWater",
     "ShowCollisionCount",
     "ShowVfxParticleCount",
-    "ShowFluidParticleCount"
+    "ShowFluidParticleCount",
+    "LevelEditorAccess"
   ],
   "Layout": {
     "startX": -500.0,
@@ -56,6 +57,13 @@
   "ShowFluidParticleCount": {
     "content": "Show Fluid Particle Count",
     "hudFormat": "Fluid Particles: %.0f",
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  },
+  "LevelEditorAccess": {
+    "content": "Level Editor Access (Edit/Create/Delete Dev Levels)",
     "red": 1.0,
     "green": 1.0,
     "blue": 1.0,
