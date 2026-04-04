@@ -15,11 +15,14 @@
 
 #pragma once
 
+// Standard library
 #include <string>
 
+// Third-party
 #include <AEEngine.h>
 #include <json/json.h>
 
+// Project
 #include "Button.h"
 #include "Components.h"
 

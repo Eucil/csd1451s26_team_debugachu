@@ -14,6 +14,7 @@
 *//*______________________________________________________________________*/
 #pragma once
 
+// Third-party
 #include <AEEngine.h>
 
 // ----------------------------------------------------------------------------
@@ -24,40 +25,40 @@
 // the same live background without duplicating code or assets.
 //
 // Usage:
-//   Call MenuBackground::Load()             once during the state's Load()
-//   Call MenuBackground::Initialize()       each time the state is entered
-//   Call MenuBackground::Update()           every frame in Update()
-//   Call MenuBackground::Draw()             every frame in Draw()
-//   Call MenuBackground::DestroyDirtAtMouse() in Update() when left mouse held
-//   Call MenuBackground::Free()             in Free() when leaving the state
-//   Call MenuBackground::Unload()           in Unload() when done with menus
+//   Call MenuBackground::load()             once during the state's load()
+//   Call MenuBackground::initialize()       each time the state is entered
+//   Call MenuBackground::update()           every frame in update()
+//   Call MenuBackground::draw()             every frame in draw()
+//   Call MenuBackground::destroyDirtAtMouse() in update() when left mouse held
+//   Call MenuBackground::free()             in free() when leaving the state
+//   Call MenuBackground::unload()           in unload() when done with menus
 // ----------------------------------------------------------------------------
 
 namespace MenuBackground {
 
 // Load assets (textures, fonts, meshes).
-void Load(int backgroundLevel = 99);
+void load(int backgroundLevel = 99);
 
 // Initialize/reset the simulation (terrain, fluid, portals, etc.)
-void Initialize();
+void initialize();
 
 // Update physics, fluid, portals each frame.
-void Update(f32 deltaTime);
+void update(f32 deltaTime);
 
 // Render terrain, fluid, portals, VFX.
-void Draw();
+void draw();
 
 // Attempt to destroy dirt at the current mouse world position.
 // Returns true if dirt was actually destroyed so the caller can
 // trigger VFX and audio on the same frame.
-bool DestroyDirtAtMouse(f32 radius);
+bool destroyDirtAtMouse(f32 radius);
 
 // Free runtime objects (terrain heap allocs, particle pools).
-// Call in each state's Free() function.
-void Free();
+// Call in each state's free() function.
+void free();
 
 // Unload GPU assets (textures, meshes, fonts).
-// Call in Unload() when transitioning away from all menu states.
-void Unload();
+// Call in unload() when transitioning away from all menu states.
+void unload();
 
 } // namespace MenuBackground

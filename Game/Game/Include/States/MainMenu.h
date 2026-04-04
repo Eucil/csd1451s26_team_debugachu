@@ -15,18 +15,19 @@
 *//*______________________________________________________________________*/
 #pragma once
 
+// Third-party
 #include <AEEngine.h>
 
 class GameStateManager;
 
-void LoadMainMenu();
+void loadMainMenu();
 
-void InitializeMainMenu();
+void initializeMainMenu();
 
-void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime);
+void updateMainMenu(GameStateManager& GSM, f32 deltaTime);
 
-void DrawMainMenu();
+void drawMainMenu();
 
-void FreeMainMenu();
+void freeMainMenu();
 
-void UnloadMainMenu();
+void unloadMainMenu();

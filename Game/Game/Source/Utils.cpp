@@ -14,13 +14,16 @@
 *//*______________________________________________________________________*/
 #include "Utils.h"
 
+// Standard library
 #include <string>
 
+// Third-party
 #include <AEEngine.h>
 
+// Project
 #include "ConfigManager.h"
 
-AEGfxVertexList* CreateCircleMesh(u32 slices, f32 radius) {
+AEGfxVertexList* createCircleMesh(u32 slices, f32 radius) {
     AEGfxMeshStart();
 
     // 1. Constants
@@ -55,7 +58,7 @@ AEGfxVertexList* CreateCircleMesh(u32 slices, f32 radius) {
     return AEGfxMeshEnd();
 }
 
-AEGfxVertexList* CreateRectMesh() {
+AEGfxVertexList* createRectMesh() {
     AEGfxMeshStart();
 
     // This shape has 2 triangles that makes up a square
@@ -74,7 +77,7 @@ AEGfxVertexList* CreateRectMesh() {
     return mesh;
 }
 
-AEGfxVertexList* CreateWireRectMesh() {
+AEGfxVertexList* createWireRectMesh() {
     AEGfxMeshStart();
     AEGfxVertexAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
     AEGfxVertexAdd(0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
@@ -84,7 +87,7 @@ AEGfxVertexList* CreateWireRectMesh() {
     return AEGfxMeshEnd();
 }
 
-AEGfxVertexList* CreateWireCircleMesh(u32 slices) {
+AEGfxVertexList* createWireCircleMesh(u32 slices) {
     AEGfxMeshStart();
     f32 angleStep = (3.14159265f * 2.0f) / static_cast<f32>(slices);
     for (u32 i = 0; i <= slices; ++i) {
@@ -94,7 +97,7 @@ AEGfxVertexList* CreateWireCircleMesh(u32 slices) {
     return AEGfxMeshEnd();
 }
 
-AEGfxVertexList* CreateWireLineMesh() {
+AEGfxVertexList* createWireLineMesh() {
     AEGfxMeshStart();
     AEGfxVertexAdd(0.0f, 0.0f, 0xFFFFFFFF, 0.0f, 0.0f);
     AEGfxVertexAdd(1.0f, 0.0f, 0xFFFFFFFF, 0.0f, 0.0f);
@@ -143,7 +146,7 @@ void TiledBackground::unload() {
     }
 }
 
-AEVec2 GetMouseWorldPos() {
+AEVec2 getMouseWorldPos() {
     s32 mouseX = 0, mouseY = 0;
     AEInputGetCursorPosition(&mouseX, &mouseY);
     AEVec2 worldPos{};

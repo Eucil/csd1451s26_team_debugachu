@@ -14,10 +14,13 @@
 *//*______________________________________________________________________*/
 #pragma once
 
+// Standard library
 #include <vector>
 
+// Third-party
 #include <AEEngine.h>
 
+// Project
 #include "Components.h"
 #include "FluidSystem.h"
 
@@ -81,46 +84,46 @@ public:
     // Make use of direction to determine where the water should come out of
     // Use draw texture instead
 
-    void Initialize();
+    void initialize();
 
     // tc added start
-    void InitializeUI(s8 font);
+    void initializeUI(s8 font);
     // tc added end
 
-    void SetupPoint(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndType type,
+    void setupPoint(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndType type,
                     GoalDirection direction);
 
-    void SpawnAtMousePos(StartEndType type, GoalDirection direction);
+    void spawnAtMousePos(StartEndType type, GoalDirection direction);
 
-    void DeleteAtMousePos();
+    void deleteAtMousePos();
 
-    bool CollisionCheckWithWater(StartEnd startend, FluidParticle particle);
+    bool collisionCheckWithWater(StartEnd startend, FluidParticle particle);
 
-    void Update(f32 dt, std::vector<FluidParticle>& particlePool, VFXSystem& vfxSystem);
+    void update(f32 dt, std::vector<FluidParticle>& particlePool, VFXSystem& vfxSystem);
 
-    void DrawColor();
+    void drawColor();
 
     // tc added start
-    void DrawWaterIndicator(const StartEnd& startPoint, const AEVec2& screenPos);
+    void drawWaterIndicator(const StartEnd& startPoint, const AEVec2& screenPos);
     // tc added end
 
-    void DrawTexture(s32 particleMaxCount);
+    void drawTexture(s32 particleMaxCount);
 
-    void DrawPreview(StartEndType type);
+    void drawPreview(StartEndType type);
 
-    void Free();
+    void free();
 
-    void CheckMouseClick();
+    void checkMouseClick();
 
-    void ResetIframe();
+    void resetIframe();
 
-    bool CheckWinCondition(s32 particleMaxCount) const;
+    bool checkWinCondition(s32 particleMaxCount) const;
 
     // tc added start
     //  getter/setter for water
-    float GetWaterRemaining(int startPointIndex) const;
-    void SetWaterRemaining(int startPointIndex, float amount);
-    void RefillAllWater();
-    void ToggleInfiniteWater();
+    float getWaterRemaining(int startPointIndex) const;
+    void setWaterRemaining(int startPointIndex, float amount);
+    void refillAllWater();
+    void toggleInfiniteWater();
     // tc added end
 };

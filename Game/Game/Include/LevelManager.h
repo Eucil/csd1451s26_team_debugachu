@@ -15,12 +15,15 @@
 *//*______________________________________________________________________*/
 #pragma once
 
+// Standard library
 #include <filesystem>
 #include <vector>
 
+// Third-party
 #include <AEEngine.h>
 #include <json/json.h>
 
+// Project
 #include "Button.h"
 #include "Collectible.h"
 #include "Moss.h"
@@ -60,7 +63,7 @@ public:
     EditorMode getLevelEditorMode() const;
     void setLevelEditorMode(EditorMode mode);
     int getCurrentLevel() const;
-    void SetCurrentLevel(int level);
+    void setCurrentLevel(int level);
     GameBlock getCurrentGameBlock() const;
     void setCurrentGameBlock(GameBlock block);
     bool getDisplayBuilderContainer() const;

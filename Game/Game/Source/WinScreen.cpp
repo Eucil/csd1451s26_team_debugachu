@@ -14,8 +14,10 @@
 *//*______________________________________________________________________*/
 #include "WinScreen.h"
 
+// Standard library
 #include <cstdio>
 
+// Project
 #include "AudioSystem.h"
 #include "LevelManager.h"
 #include "Utils.h"
@@ -34,11 +36,11 @@ static constexpr int MAX_LEVELS = static_cast<int>(Level::None);
 // WinScreen::Load
 // Call once when the level state loads.
 // ----------------------------------------------------------------------------
-void WinScreen::Load(s8 font) {
+void WinScreen::load(s8 font) {
     font_ = font;
 
     // Background panel mesh (full-screen semi-transparent black)
-    graphics_.mesh_ = CreateRectMesh();
+    graphics_.mesh_ = createRectMesh();
     graphics_.red_ = 0.0f;
     graphics_.green_ = 0.0f;
     graphics_.blue_ = 0.0f;
@@ -76,7 +78,7 @@ void WinScreen::Load(s8 font) {
 // currentLevel -- the 1-based level number that was just completed.
 //                 Pass levelManager.getCurrentLevel() from the Level state.
 // ----------------------------------------------------------------------------
-void WinScreen::Show(int collected, int total, int currentLevel) {
+void WinScreen::show(int collected, int total, int currentLevel) {
     collectiblesCollected_ = collected;
     totalCollectibles_ = total;
 
@@ -141,13 +143,13 @@ void WinScreen::Show(int collected, int total, int currentLevel) {
 // ----------------------------------------------------------------------------
 // WinScreen::Hide
 // ----------------------------------------------------------------------------
-void WinScreen::Hide() { isVisible_ = false; }
+void WinScreen::hide() { isVisible_ = false; }
 
 // ----------------------------------------------------------------------------
 // WinScreen::Update
 // Call every frame while the level state is active.
 // ----------------------------------------------------------------------------
-void WinScreen::Update(GameStateManager& GSM) {
+void WinScreen::update(GameStateManager& GSM) {
     if (!isVisible_)
         return;
 
@@ -178,7 +180,7 @@ void WinScreen::Update(GameStateManager& GSM) {
     if (nextLevelButton_.checkMouseClick()) {
         if (hasNextLevel_) {
             printf("WinScreen: Loading level %d\n", nextLevel_);
-            levelManager.SetCurrentLevel(nextLevel_);
+            levelManager.setCurrentLevel(nextLevel_);
             // The GSM loop only triggers a full reload when nextState_ != currentState_.
             // If we always use NextLevel, the second next-level click finds
             // currentState_ == NextLevel == nextState_ and does nothing.
@@ -186,25 +188,25 @@ void WinScreen::Update(GameStateManager& GSM) {
             // Solution: alternate - pick whichever ID differs from currentState_.
             GSM.nextState_ =
                 (GSM.currentState_ == StateId::NextLevel) ? StateId::Level : StateId::NextLevel;
-            Hide();
+            hide();
         }
     }
 
     if (restartButton_.checkMouseClick()) {
         GSM.nextState_ = StateId::Restart;
-        Hide();
+        hide();
     }
 
     if (mainMenuButton_.checkMouseClick()) {
         GSM.nextState_ = StateId::MainMenu;
-        Hide();
+        hide();
     }
 }
 
 // ----------------------------------------------------------------------------
 // WinScreen::Draw
 // ----------------------------------------------------------------------------
-void WinScreen::Draw() {
+void WinScreen::draw() {
     if (!isVisible_)
         return;
 
@@ -264,9 +266,9 @@ void WinScreen::Draw() {
 }
 
 // ----------------------------------------------------------------------------
-// WinScreen::Free  -- call in Level::Free()
+// WinScreen::Free  -- call in Level::free()
 // ----------------------------------------------------------------------------
-void WinScreen::Free() {
+void WinScreen::free() {
     isVisible_ = false;
     collectiblesCollected_ = 0;
     totalCollectibles_ = 0;
@@ -274,9 +276,9 @@ void WinScreen::Free() {
 }
 
 // ----------------------------------------------------------------------------
-// WinScreen::Unload  -- call in Level::Unload()
+// WinScreen::Unload  -- call in Level::unload()
 // ----------------------------------------------------------------------------
-void WinScreen::Unload() {
+void WinScreen::unload() {
     nextLevelButton_.unload();
     restartButton_.unload();
     mainMenuButton_.unload();

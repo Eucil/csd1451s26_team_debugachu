@@ -13,10 +13,13 @@
             Technology is prohibited.
 *//*______________________________________________________________________*/
 #pragma once
+// Standard library
 #include <string>
 
+// Third-party
 #include <AEEngine.h>
 
+// Project
 #include "Button.h"
 #include "GameStateManager.h"
 
@@ -51,20 +54,20 @@ private:
     bool hasNextLevel_{false}; // true when a playable next level exists
 
 public:
-    void Load(s8 font);
+    void load(s8 font);
 
     // currentLevel should be the 1-based level number currently being played
     // (i.e. the same value stored in levelManager.getCurrentLevel())
-    void Show(int collected, int total, int currentLevel);
-    void Hide();
-    bool IsVisible() const { return isVisible_; }
+    void show(int collected, int total, int currentLevel);
+    void hide();
+    bool isVisible() const { return isVisible_; }
 
-    void Update(GameStateManager& GSM);
-    void Draw();
-    void Free();
-    void Unload();
+    void update(GameStateManager& GSM);
+    void draw();
+    void free();
+    void unload();
 
-    void SetCollectibles(int collected, int total) {
+    void setCollectibles(int collected, int total) {
         collectiblesCollected_ = collected;
         totalCollectibles_ = total;
     }

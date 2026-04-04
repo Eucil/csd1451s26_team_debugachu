@@ -14,17 +14,17 @@
 *//*______________________________________________________________________*/
 #include "States/Settings.h"
 
+// Third-party
 #include <AEEngine.h>
 
+// Project
 #include "Animations.h"
 #include "AudioSystem.h"
 #include "Button.h"
 #include "DebugSystem.h"
 #include "GameStateManager.h"
 #include "LevelManager.h"
-
-// Destructible Background
-#include "MenuBackground.h" // <-- shared background
+#include "MenuBackground.h"
 
 static Button buttonIncreaseSfxVolume;
 static Button buttonDecreaseSfxVolume;
@@ -48,10 +48,10 @@ static UIFader someOtherCoolAnimation;
 
 void loadSettings() {
 
-    animManager.Clear();
-    animManager.Add(&screenFader);
-    animManager.Add(&someOtherCoolAnimation);
-    animManager.InitializeAll();
+    animManager.clear();
+    animManager.add(&screenFader);
+    animManager.add(&someOtherCoolAnimation);
+    animManager.initializeAll();
 
     titleFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
     buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
@@ -69,7 +69,7 @@ void loadSettings() {
     buttonBack.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
 
     // Load the destructible terrain background
-    MenuBackground::Load(100);
+    MenuBackground::load(100);
 }
 
 void initializeSettings() {
@@ -98,7 +98,7 @@ void initializeSettings() {
     bgmVolumeAmountText.font_ = buttonFont;
 
     // Initialize the shared background simulation
-    MenuBackground::Initialize();
+    MenuBackground::initialize();
 }
 
 void updateSettings(GameStateManager& GSM, f32 deltaTime) {
@@ -123,7 +123,7 @@ void updateSettings(GameStateManager& GSM, f32 deltaTime) {
 
         // Check for button press to go back to main menu
         if (buttonBack.checkMouseClick()) {
-            screenFader.StartFadeOut(&GSM, StateId::MainMenu);
+            screenFader.startFadeOut(&GSM, StateId::MainMenu);
         }
 
         // Get volume amounts
@@ -138,14 +138,14 @@ void updateSettings(GameStateManager& GSM, f32 deltaTime) {
         buttonBack.updateTransform();
 
         if (AEInputCheckCurr(AEVK_LBUTTON)) {
-            bool hitDirt = MenuBackground::DestroyDirtAtMouse(20.0f);
+            bool hitDirt = MenuBackground::destroyDirtAtMouse(20.0f);
             if (hitDirt) {
                 g_audioSystem.playSound("dirt_break", "sfx", 0.5f, 1.0f);
             }
         }
 
         // Update the shared background (fluid, portals, etc. keep running)
-        MenuBackground::Update(deltaTime);
+        MenuBackground::update(deltaTime);
 
     } else {
         if (AEInputCheckTriggered(AEVK_Z)) {
@@ -153,13 +153,13 @@ void updateSettings(GameStateManager& GSM, f32 deltaTime) {
         }
         g_debugSystem.update();
     }
-    animManager.UpdateAll(deltaTime);
+    animManager.updateAll(deltaTime);
 }
 
 void drawSettings() {
 
     // Draw the shared live background first
-    MenuBackground::Draw();
+    MenuBackground::draw();
 
     buttonIncreaseSfxVolume.draw();
     buttonDecreaseSfxVolume.draw();
@@ -174,16 +174,16 @@ void drawSettings() {
     sfxVolumeAmountText.draw();
     bgmVolumeAmountText.draw();
 
-    animManager.DrawAll();
+    animManager.drawAll();
 
     g_debugSystem.drawAll();
 }
 
 void freeSettings() {
     g_debugSystem.clearScene();
-    MenuBackground::Free();
+    MenuBackground::free();
 
-    animManager.FreeAll();
+    animManager.freeAll();
 }
 
 void unloadSettings() {
@@ -205,5 +205,5 @@ void unloadSettings() {
     buttonBack.unload();
 
     // Unload destructible background
-    MenuBackground::Unload();
+    MenuBackground::unload();
 }

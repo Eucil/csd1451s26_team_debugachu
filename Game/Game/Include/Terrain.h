@@ -14,11 +14,14 @@
 *//*______________________________________________________________________*/
 #pragma once
 
+// Standard library
 #include <random>
 #include <vector>
 
+// Third-party
 #include <AEEngine.h>
 
+// Project
 #include "Components.h"
 
 enum class TerrainMaterial { Dirt, Stone, Magic };

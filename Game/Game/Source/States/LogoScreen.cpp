@@ -14,10 +14,13 @@
 *//*______________________________________________________________________*/
 #include "States/LogoScreen.h"
 
+// Standard library
 #include <cstdio>
 
+// Third-party
 #include <AEEngine.h>
 
+// Project
 #include "DebugSystem.h"
 #include "GameStateManager.h"
 #include "Utils.h"
@@ -42,13 +45,13 @@ static f32 holdTimer_ = 0.0f;
 static bool fadingIn_ = true;
 static bool done_ = false;
 
-// Tracks how many frames have been drawn -- lets us confirm Draw() is running
+// Tracks how many frames have been drawn -- lets us confirm draw() is running
 static int frameCount_ = 0;
 
 // ----------------------------------------------------------------------------
 // Helper
 // ----------------------------------------------------------------------------
-static void SkipToMainMenu(GameStateManager& GSM) {
+static void skipToMainMenu(GameStateManager& GSM) {
     if (!done_) {
         done_ = true;
         printf("[LogoScreen] Transitioning to MainMenu\n");
@@ -59,8 +62,8 @@ static void SkipToMainMenu(GameStateManager& GSM) {
 // ----------------------------------------------------------------------------
 // Load
 // ----------------------------------------------------------------------------
-void LoadLogoScreen() {
-    printf("[LogoScreen] LoadLogoScreen() called\n");
+void loadLogoScreen() {
+    printf("[LogoScreen] loadLogoScreen() called\n");
 
     // --- CHECK 1: Texture load ---
     const char* texturePath = "Assets/Logo/DigiPen_Singapore_WEB_WHITE_2026.png";
@@ -90,14 +93,14 @@ void LoadLogoScreen() {
         printf("[LogoScreen] OK: Mesh created successfully (ptr=%p)\n", (void*)logoMesh);
     }
 
-    printf("[LogoScreen] LoadLogoScreen() complete\n");
+    printf("[LogoScreen] loadLogoScreen() complete\n");
 }
 
 // ----------------------------------------------------------------------------
 // Initialize
 // ----------------------------------------------------------------------------
-void InitializeLogoScreen() {
-    printf("[LogoScreen] InitializeLogoScreen() called\n");
+void initializeLogoScreen() {
+    printf("[LogoScreen] initializeLogoScreen() called\n");
 
     alpha_ = 0.0f;
     holdTimer_ = HOLD_DURATION;
@@ -113,27 +116,27 @@ void InitializeLogoScreen() {
     printf("[LogoScreen] Texture ptr: %p  Mesh ptr: %p\n", (void*)logoTexture, (void*)logoMesh);
     if (logoTexture == nullptr) {
         printf("[LogoScreen] WARNING: Texture is null at Initialize time.\n");
-        printf("[LogoScreen]          This means LoadLogoScreen() was not called,\n");
+        printf("[LogoScreen]          This means loadLogoScreen() was not called,\n");
         printf("[LogoScreen]          OR the starting state is not StateId::LogoScreen.\n");
         printf("[LogoScreen]          Check GSM.init() call in your game entry point.\n");
     }
 
-    printf("[LogoScreen] InitializeLogoScreen() complete\n");
+    printf("[LogoScreen] initializeLogoScreen() complete\n");
 }
 
 // ----------------------------------------------------------------------------
 // Update
 // ----------------------------------------------------------------------------
-void UpdateLogoScreen(GameStateManager& GSM, f32 deltaTime) {
+void updateLogoScreen(GameStateManager& GSM, f32 deltaTime) {
 
     // Cap deltaTime to 1/30s so a spike never skips through phases.
     // The first frame often has an inflated dt due to load time.
     if (deltaTime > 0.0333f)
         deltaTime = 0.0333f;
 
-    // --- CHECK 5: Confirm Update() is being called ---
+    // --- CHECK 5: Confirm update() is being called ---
     if (frameCount_ <= 3) {
-        printf("[LogoScreen] UpdateLogoScreen() frame=%d  dt=%.4f  alpha=%.3f  phase=%s\n",
+        printf("[LogoScreen] updateLogoScreen() frame=%d  dt=%.4f  alpha=%.3f  phase=%s\n",
                frameCount_, deltaTime, alpha_,
                fadingIn_ ? "FADE_IN" : (holdTimer_ > 0.0f ? "HOLD" : "FADE_OUT"));
     }
@@ -147,7 +150,7 @@ void UpdateLogoScreen(GameStateManager& GSM, f32 deltaTime) {
         if (AEInputCheckReleased(AEVK_ESCAPE) || AEInputCheckReleased(AEVK_RETURN) ||
             AEInputCheckReleased(AEVK_SPACE) || AEInputCheckReleased(AEVK_LBUTTON)) {
             printf("[LogoScreen] Skip input detected -- jumping to MainMenu\n");
-            SkipToMainMenu(GSM);
+            skipToMainMenu(GSM);
             return;
         }
 
@@ -169,7 +172,7 @@ void UpdateLogoScreen(GameStateManager& GSM, f32 deltaTime) {
             if (alpha_ <= 0.0f) {
                 alpha_ = 0.0f;
                 printf("[LogoScreen] Fade-out complete\n");
-                SkipToMainMenu(GSM);
+                skipToMainMenu(GSM);
             }
         }
     } else {
@@ -183,25 +186,25 @@ void UpdateLogoScreen(GameStateManager& GSM, f32 deltaTime) {
 // ----------------------------------------------------------------------------
 // Draw
 // ----------------------------------------------------------------------------
-void DrawLogoScreen() {
+void drawLogoScreen() {
     ++frameCount_;
 
     // Black background
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
-    // --- CHECK 6: Confirm Draw() is being called ---
+    // --- CHECK 6: Confirm draw() is being called ---
     if (frameCount_ <= 3) {
-        printf("[LogoScreen] DrawLogoScreen() frame=%d  alpha=%.3f\n", frameCount_, alpha_);
+        printf("[LogoScreen] drawLogoScreen() frame=%d  alpha=%.3f\n", frameCount_, alpha_);
     }
 
     // --- CHECK 7: Guard on null resources ---
     if (logoTexture == nullptr) {
-        printf("[LogoScreen] WARNING: DrawLogoScreen() -- logoTexture is null, "
+        printf("[LogoScreen] WARNING: drawLogoScreen() -- logoTexture is null, "
                "nothing will render!\n");
         return;
     }
     if (logoMesh == nullptr) {
-        printf("[LogoScreen] WARNING: DrawLogoScreen() -- logoMesh is null, "
+        printf("[LogoScreen] WARNING: drawLogoScreen() -- logoMesh is null, "
                "nothing will render!\n");
         return;
     }
@@ -262,10 +265,10 @@ void DrawLogoScreen() {
 // ----------------------------------------------------------------------------
 // Free / Unload
 // ----------------------------------------------------------------------------
-void FreeLogoScreen() { printf("[LogoScreen] FreeLogoScreen() called\n"); }
+void freeLogoScreen() { printf("[LogoScreen] freeLogoScreen() called\n"); }
 
-void UnloadLogoScreen() {
-    printf("[LogoScreen] UnloadLogoScreen() called\n");
+void unloadLogoScreen() {
+    printf("[LogoScreen] unloadLogoScreen() called\n");
 
     if (logoTexture) {
         AEGfxTextureUnload(logoTexture);

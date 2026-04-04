@@ -14,25 +14,23 @@
 *//*______________________________________________________________________*/
 #pragma once
 
+// Standard library
 #include <cmath>
 #include <string>
 
+// Third-party
 #include <AEEngine.h>
 
+// Project
 #include "Components.h"
 
-/*
-usage: call AEGfxMeshStart -> AddCircleMesh -> meshPtr = AEGfxMeshEnd; -> waterParticle.mesh_ =
-meshPtr;
-*/
+AEGfxVertexList* createCircleMesh(u32 slices, f32 radius);
+AEGfxVertexList* createWireCircleMesh(u32 slices);
 
-AEGfxVertexList* CreateCircleMesh(u32 slices, f32 radius);
-AEGfxVertexList* CreateWireCircleMesh(u32 slices);
-
-AEGfxVertexList* CreateRectMesh();
-AEGfxVertexList* CreateWireRectMesh();
-AEGfxVertexList* CreateWireLineMesh();
-AEVec2 GetMouseWorldPos();
+AEGfxVertexList* createRectMesh();
+AEGfxVertexList* createWireRectMesh();
+AEGfxVertexList* createWireLineMesh();
+AEVec2 getMouseWorldPos();
 
 struct TiledBackground {
     void loadFromJson(const std::string& file, const std::string& section);

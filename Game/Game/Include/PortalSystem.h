@@ -14,10 +14,13 @@
 *//*______________________________________________________________________*/
 #pragma once
 
+// Standard library
 #include <vector>
 
+// Third-party
 #include <AEEngine.h>
 
+// Project
 #include "Components.h"
 #include "FluidSystem.h"
 #include "VFXSystem.h"
@@ -44,11 +47,11 @@ private:
 
     // Can have multiple portals
     std::vector<Portal*> portalVec_;
-    Portal* current_portal_{nullptr};
+    Portal* currentPortal_{nullptr};
 
     // graphic configs for each portal
-    Graphics portal_graphicsConfigs_;
-    Graphics arrow_graphicsConfigs_;
+    Graphics portalGraphicsConfigs_;
+    Graphics arrowGraphicsConfigs_;
 
     f32 nextRed_{};
     f32 nextGreen_{};
@@ -61,31 +64,31 @@ private:
     f32 portalVfxCooldown_{0.0f};
 
 public:
-    void Initialize(int const& portalMax = 0);
+    void initialize(int const& portalMax = 0);
 
-    bool SetupPortal(AEVec2 pos, AEVec2 scale, f32 rotationDeg);
+    bool setupPortal(AEVec2 pos, AEVec2 scale, f32 rotationDeg);
 
-    bool CollisionCheckWithWater(Portal portal, FluidParticle particle);
+    bool collisionCheckWithWater(Portal portal, FluidParticle particle);
 
-    void Update(f32 dt, std::vector<FluidParticle>& particlePool, VFXSystem& vfx);
+    void update(f32 dt, std::vector<FluidParticle>& particlePool, VFXSystem& vfx);
 
-    void Draw();
+    void draw();
 
-    void DrawPreview();
+    void drawPreview();
 
-    void Free();
+    void free();
 
-    void CheckMouseClick();
+    void checkMouseClick();
 
-    void ResetIframe();
+    void resetIframe();
 
-    void RotatePortal();
+    void rotatePortal();
 
-    f32 GetRotationValue() const;
+    f32 getRotationValue() const;
 
-    const std::vector<Portal*>& GetPortals() const;
+    const std::vector<Portal*>& getPortals() const;
 
-    int GetPortalLimit() const;
+    int getPortalLimit() const;
 
-    int GetPortalCount() const;
+    int getPortalCount() const;
 };

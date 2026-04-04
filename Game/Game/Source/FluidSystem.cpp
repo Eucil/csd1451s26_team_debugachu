@@ -15,11 +15,14 @@
 *//*______________________________________________________________________*/
 #include "FluidSystem.h"
 
+// Standard library
 #include <cmath>
 #include <iostream>
 
+// Third-party
 #include <AEEngine.h>
 
+// Project
 #include "CollisionSystem.h"
 #include "ConfigManager.h"
 #include "Utils.h"
@@ -65,7 +68,7 @@ FluidParticle::FluidParticle(f32 posX, f32 posY, f32 radius, FluidType type) {
 //  FluidSystem
 // 
 // =================================================================
-void FluidSystem::InitializeGraphics(AEGfxVertexList* mesh, AEGfxTexture* texture, u32 layer,
+void FluidSystem::initializeGraphics(AEGfxVertexList* mesh, AEGfxTexture* texture, u32 layer,
                                      f32 red, f32 green, f32 blue, f32 alpha, FluidType type,
                                      u32 graphicsIndex) {
     size_t fluidIndex = static_cast<size_t>(type);
@@ -88,7 +91,7 @@ void FluidSystem::InitializeGraphics(AEGfxVertexList* mesh, AEGfxTexture* textur
 //  FluidSystem
 //
 // =================================================================
-void FluidSystem::InitializePhysics(f32 mass, f32 gravity, AEVec2 velocity, FluidType type) {
+void FluidSystem::initializePhysics(f32 mass, f32 gravity, AEVec2 velocity, FluidType type) {
     size_t fluidIndex = static_cast<size_t>(type);
 
     physicsConfigs_[fluidIndex].mass_ = mass;
@@ -104,7 +107,7 @@ void FluidSystem::InitializePhysics(f32 mass, f32 gravity, AEVec2 velocity, Flui
 // - Initializes both graphics and physics of every FluidParticle type
 //
 // =================================================================
-void FluidSystem::Initialize() {
+void FluidSystem::initialize() {
     // Reduces memory reallocation
     int typeCount{static_cast<int>(FluidType::Count)};
     for (int i{0}; i < typeCount; i++) {
@@ -113,12 +116,12 @@ void FluidSystem::Initialize() {
 
     // @todo To change to read values from a json file instead and load them into private containers
     // instead of using magic numbers Initialize physics for each fluid type
-    InitializePhysics(
+    initializePhysics(
         g_configManager.getFloat("FluidSystem", "Water", "mass", 1.0f),
         g_configManager.getFloat("FluidSystem", "Water", "gravity", -500.0f),
         g_configManager.getAEVec2("FluidSystem", "Water", "velocity", AEVec2{0.0f, 0.0f}),
         FluidType::Water);
-    InitializePhysics(
+    initializePhysics(
         g_configManager.getFloat("FluidSystem", "Lava", "mass", 1.0f),
         g_configManager.getFloat("FluidSystem", "Lava", "gravity", -200.0f),
         g_configManager.getAEVec2("FluidSystem", "Lava", "velocity", AEVec2{0.0f, 0.0f}),
@@ -127,18 +130,18 @@ void FluidSystem::Initialize() {
     // Initialize graphics for each fluid type
     // 3 Layers per particle to make our particles look more like water visually. (white, light
     // blue, dark blue)
-    InitializeGraphics(CreateCircleMesh(10, 0.5f), nullptr, 2, 1.0f, 1.0f, 1.0f, 1.0f,
+    initializeGraphics(createCircleMesh(10, 0.5f), nullptr, 2, 1.0f, 1.0f, 1.0f, 1.0f,
                        FluidType::Water, 0);
-    InitializeGraphics(CreateCircleMesh(10, 0.47f), nullptr, 2, 0.4f, 0.7f, 1.0f, 1.0f,
+    initializeGraphics(createCircleMesh(10, 0.47f), nullptr, 2, 0.4f, 0.7f, 1.0f, 1.0f,
                        FluidType::Water, 1);
-    InitializeGraphics(CreateCircleMesh(10, 0.4f), nullptr, 2, 0.0f, 0.5f, 1.0f, 1.0f,
+    initializeGraphics(createCircleMesh(10, 0.4f), nullptr, 2, 0.0f, 0.5f, 1.0f, 1.0f,
                        FluidType::Water, 2);
 
-    InitializeGraphics(CreateCircleMesh(10, 0.5f), nullptr, 2, 1.0f, 0.2f, 0.0f, 1.0f,
+    initializeGraphics(createCircleMesh(10, 0.5f), nullptr, 2, 1.0f, 0.2f, 0.0f, 1.0f,
                        FluidType::Lava, 0);
-    InitializeGraphics(CreateCircleMesh(10, 0.45f), nullptr, 2, 1.0f, 0.2f, 0.0f, 1.0f,
+    initializeGraphics(createCircleMesh(10, 0.45f), nullptr, 2, 1.0f, 0.2f, 0.0f, 1.0f,
                        FluidType::Lava, 1);
-    InitializeGraphics(CreateCircleMesh(10, 0.4f), nullptr, 2, 1.0f, 0.2f, 0.0f, 1.0f,
+    initializeGraphics(createCircleMesh(10, 0.4f), nullptr, 2, 1.0f, 0.2f, 0.0f, 1.0f,
                        FluidType::Lava, 2);
 }
 
@@ -150,7 +153,7 @@ void FluidSystem::Initialize() {
 //   particle pool.
 //
 // =================================================================
-void FluidSystem::UpdateTransforms(std::vector<FluidParticle>& particlePool) {
+void FluidSystem::updateTransforms(std::vector<FluidParticle>& particlePool) {
 
     for (auto& p : particlePool) {
 
@@ -181,7 +184,7 @@ void FluidSystem::UpdateTransforms(std::vector<FluidParticle>& particlePool) {
 // - Updates final particle positions based on calculated velocities
 //
 // =========================================================
-void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt) {
+void FluidSystem::updatePhysics(std::vector<FluidParticle>& particlePool, f32 dt) {
 
     if (dt > 0.0166667f) {
         dt = 0.0166667f;
@@ -294,7 +297,7 @@ void FluidSystem::UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
 // - Re-enables portal interaction once the timer reaches zero
 //
 // =========================================================
-void FluidSystem::UpdatePortalIframes(f32 dt, std::vector<FluidParticle>& particlePool) {
+void FluidSystem::updatePortalIframes(f32 dt, std::vector<FluidParticle>& particlePool) {
     // Loop through all particles in the current pool
     for (auto& p : particlePool) {
         // If the particle is in iframe, reduce the iframe timer
@@ -319,7 +322,7 @@ void FluidSystem::UpdatePortalIframes(f32 dt, std::vector<FluidParticle>& partic
 // - Updates final graphical transforms and portal iframes once per frame
 //
 // =========================================================
-void FluidSystem::Update(f32 dt, std::initializer_list<Terrain*> terrains) {
+void FluidSystem::update(f32 dt, std::initializer_list<Terrain*> terrains) {
     // DT clamp
     if (dt > 0.016f && dt < 0.016f * 5.0f) {
         dt = 0.016f;
@@ -336,7 +339,7 @@ void FluidSystem::Update(f32 dt, std::initializer_list<Terrain*> terrains) {
                 continue;
 
             // Physics
-            UpdatePhysics(particlePools_[i], subDt);
+            updatePhysics(particlePools_[i], subDt);
         }
 
         // Collision (there are more substeps within the function below)
@@ -350,8 +353,8 @@ void FluidSystem::Update(f32 dt, std::initializer_list<Terrain*> terrains) {
         if (particlePools_[i].empty()) {
             continue;
         }
-        UpdateTransforms(particlePools_[i]);
-        UpdatePortalIframes(dt, particlePools_[i]);
+        updateTransforms(particlePools_[i]);
+        updatePortalIframes(dt, particlePools_[i]);
     }
 }
 
@@ -365,7 +368,7 @@ void FluidSystem::Update(f32 dt, std::initializer_list<Terrain*> terrains) {
 // - Applies specific RGBA multipliers to tint the fluid layers
 //
 // =========================================================
-void FluidSystem::DrawColor() {
+void FluidSystem::drawColor() {
 
     // color render mode
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
@@ -404,7 +407,7 @@ void FluidSystem::DrawColor() {
 // - Applies color tints and draws the textured meshes for each particle
 //
 // =========================================================
-void FluidSystem::DrawTexture() {
+void FluidSystem::drawTexture() {
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 
     // Loops through (0) Water, (1) Lava, ...
@@ -443,7 +446,7 @@ void FluidSystem::DrawTexture() {
 // - Clears all fluid particle pools
 //
 // =========================================================
-void FluidSystem::Free() {
+void FluidSystem::free() {
     // Free all fluid meshes
     for (size_t fluidIndex{0}; fluidIndex < static_cast<size_t>(FluidType::Count); ++fluidIndex) {
         for (size_t i{0}; i < 3; ++i) {
@@ -483,7 +486,7 @@ void FluidSystem::Free() {
 // - Pushes the new particle into the corresponding fluid pool
 //
 // =========================================================
-void FluidSystem::SpawnParticle(f32 posX, f32 posY, f32 radius, FluidType type) {
+void FluidSystem::spawnParticle(f32 posX, f32 posY, f32 radius, FluidType type) {
     int i = (int)type;
     FluidParticle newParticle(posX, posY, radius, type);
     newParticle.physics_ = physicsConfigs_[i];
@@ -498,7 +501,7 @@ void FluidSystem::SpawnParticle(f32 posX, f32 posY, f32 radius, FluidType type) 
 // - Returns the size of the specified fluid's particle pool
 //
 // =========================================================
-u32 FluidSystem::GetParticleCount(FluidType type) {
+u32 FluidSystem::getParticleCount(FluidType type) {
     return static_cast<u32>(particlePools_[(u32)type].size());
 }
 
@@ -510,7 +513,7 @@ u32 FluidSystem::GetParticleCount(FluidType type) {
 // - Allows external systems to read or modify the active particles
 //
 // =========================================================
-std::vector<FluidParticle>& FluidSystem::GetParticlePool(FluidType type) {
+std::vector<FluidParticle>& FluidSystem::getParticlePool(FluidType type) {
     return particlePools_[(int)type];
 }
 

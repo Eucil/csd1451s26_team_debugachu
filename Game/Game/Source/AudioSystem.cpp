@@ -14,9 +14,11 @@
 *//*______________________________________________________________________*/
 #include "AudioSystem.h"
 
+// Standard library
 #include <string>
 #include <unordered_map>
 
+// Third-party
 #include <AEEngine.h>
 
 AudioSystem g_audioSystem;

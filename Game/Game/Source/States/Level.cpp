@@ -16,13 +16,16 @@
 *//*______________________________________________________________________*/
 #include "States/Level.h"
 
+// Standard library
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 
+// Third-party
 #include <AEEngine.h>
 
+// Project
 #include "Animations.h"
 #include "AudioSystem.h"
 #include "Button.h"
@@ -96,7 +99,7 @@ static AEGfxVertexList* g_barMesh = nullptr; // Global bar mesh for cleanup
 // Background
 static TiledBackground bg;
 
-// HUD icon textures -- loaded in LoadLevel, freed in FreeLevel+UnloadLevel
+// HUD icon textures -- loaded in loadLevel, freed in freeLevel+unloadLevel
 static AEGfxTexture* pHudWaterIconTex = nullptr;
 static AEGfxTexture* pHudGoalIconTex = nullptr;
 static AEGfxTexture* pHudPortalIconTex = nullptr;
@@ -119,12 +122,12 @@ static ScreenFaderManager screenFader;
 static UIFader someOtherCoolAnimation;
 
 // Static Functions
-static void SpawnWaterWithLimit(f32 deltaTime);
-static void DrawPortalLimitUI(f32 x, f32 y);
-static void DrawTotalWaterBar(f32 x, f32 y, f32 remaining, f32 capacity);
-static void DrawGoalBar(f32 x, f32 y, f32 percentage);
+static void spawnWaterWithLimit(f32 deltaTime);
+static void drawPortalLimitUI(f32 x, f32 y);
+static void drawTotalWaterBar(f32 x, f32 y, f32 remaining, f32 capacity);
+static void drawGoalBar(f32 x, f32 y, f32 percentage);
 
-void LoadLevel() {
+void loadLevel() {
     // std::cout << "Load level 3\n";
     Terrain::createMeshLibrary();
     Terrain::createColliderLibrary();
@@ -140,11 +143,11 @@ void LoadLevel() {
     buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
 
     // tc added start
-    collectibleSystem.Load(font);
-    winScreen.Load(font);
-    mossSystem.Load(font);
+    collectibleSystem.load(font);
+    winScreen.load(font);
+    mossSystem.load(font);
 
-    startEndPointSystem.InitializeUI(font);
+    startEndPointSystem.initializeUI(font);
 
     totalWaterText.x_ = -0.69f;
     totalWaterText.y_ = 0.92f;
@@ -199,11 +202,11 @@ void LoadLevel() {
     confirmationSystem.hide();
 }
 
-void InitializeLevel() {
+void initializeLevel() {
     // std::cout << "Initialize level 3\n";
-    fluidSystem.Initialize();
-    portalSystem.Initialize(portalLimit);
-    mossSystem.Initialize();
+    fluidSystem.initialize();
+    portalSystem.initialize(portalLimit);
+    mossSystem.initialize();
 
     dirt = new Terrain(TerrainMaterial::Dirt, pTerrainDirtTex, {0.0f, 0.0f}, height, width,
                        tileSize, true);
@@ -235,7 +238,7 @@ void InitializeLevel() {
     magic->initCellsCollider();
     magic->updateTerrain();
 
-    startEndPointSystem.Initialize();
+    startEndPointSystem.initialize();
     if (fileExist) {
         levelManager.parseStartEndInfo(startEndPointSystem);
     }
@@ -253,7 +256,7 @@ void InitializeLevel() {
     printf("Total water: %.1f\n", totalWater);
     printf("===================\n");
 
-    collectibleSystem.Initialize();
+    collectibleSystem.initialize();
     if (fileExist) {
         levelManager.parseCollectibleInfo(collectibleSystem);
     }
@@ -264,7 +267,7 @@ void InitializeLevel() {
         levelManager.parsePortalInfo(portalSystem);
     }
 
-    vfxSystem.Initialize(800, 20);
+    vfxSystem.initialize(800, 20);
     winTriggered = false; // reset win latch for this level
 
     // Reset HUD animation state every level start (including Restart)
@@ -272,7 +275,7 @@ void InitializeLevel() {
     goalFlowerFrame_ = 0;
 
     // HUD icon textures and mesh -- created here so Restart (Free+Initialize)
-    // always recreates them. LoadLevel/UnloadLevel are NOT called on Restart.
+    // always recreates them. loadLevel/unloadLevel are NOT called on Restart.
     if (pHudWaterIconTex) {
         AEGfxTextureUnload(pHudWaterIconTex);
         pHudWaterIconTex = nullptr;
@@ -317,10 +320,10 @@ void InitializeLevel() {
     pauseHeaderText.font_ = titleFont;
 
     // Animations
-    animManager.Clear();
-    animManager.Add(&screenFader);
-    animManager.Add(&someOtherCoolAnimation);
-    animManager.InitializeAll();
+    animManager.clear();
+    animManager.add(&screenFader);
+    animManager.add(&someOtherCoolAnimation);
+    animManager.initializeAll();
 
     g_debugSystem.setScene(dirt, stone, magic, &fluidSystem, &collectibleSystem, &portalSystem,
                            &startEndPointSystem, &vfxSystem);
@@ -329,7 +332,7 @@ void InitializeLevel() {
     confirmationSystem.init(buttonFont);
 }
 
-void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
+void updateLevel(GameStateManager& GSM, f32 deltaTime) {
     // std::cout << "Update level 3\n";
 
     if (!g_debugSystem.isOpen()) {
@@ -362,10 +365,10 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
 
             if (confirmationSystem.confirmationYesClicked()) {
                 if (confirmationSystem.getTask() == ConfirmationTask::Restart) {
-                    screenFader.StartFadeOut(&GSM, StateId::Restart);
+                    screenFader.startFadeOut(&GSM, StateId::Restart);
                     pauseSystem.resume();
                 } else if (confirmationSystem.getTask() == ConfirmationTask::MainMenu) {
-                    screenFader.StartFadeOut(&GSM, StateId::MainMenu);
+                    screenFader.startFadeOut(&GSM, StateId::MainMenu);
                 }
             }
             if (confirmationSystem.confirmationNoClicked()) {
@@ -407,11 +410,11 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 // Level editor mode
                 // ====================
                 levelManager.updateLevelEditor();
-                collectibleSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
+                collectibleSystem.update(deltaTime, fluidSystem.getParticlePool(FluidType::Water),
                                          vfxSystem);
-                mossSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
+                mossSystem.update(deltaTime, fluidSystem.getParticlePool(FluidType::Water),
                                   startEndPointSystem, vfxSystem);
-                portalSystem.RotatePortal();
+                portalSystem.rotatePortal();
 
                 // Inputs to build level
                 if (!levelManager.getDisplayBuilderContainer()) {
@@ -440,18 +443,18 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                         break;
                     case GameBlock::StartPoint:
                         if (AEInputCheckReleased(AEVK_LBUTTON)) {
-                            startEndPointSystem.SpawnAtMousePos(StartEndType::Pipe,
+                            startEndPointSystem.spawnAtMousePos(StartEndType::Pipe,
                                                                 GoalDirection::Down);
                         } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
-                            startEndPointSystem.DeleteAtMousePos();
+                            startEndPointSystem.deleteAtMousePos();
                         }
                         break;
                     case GameBlock::EndPoint:
                         if (AEInputCheckReleased(AEVK_LBUTTON)) {
-                            startEndPointSystem.SpawnAtMousePos(StartEndType::Flower,
+                            startEndPointSystem.spawnAtMousePos(StartEndType::Flower,
                                                                 GoalDirection::Up);
                         } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
-                            startEndPointSystem.DeleteAtMousePos();
+                            startEndPointSystem.deleteAtMousePos();
                         }
                         break;
                     case GameBlock::Collectible:
@@ -472,13 +475,13 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                         if (magic->isNearestNodeToMouseAtThreshold() == true) {
                             if (AEInputCheckTriggered(AEVK_RBUTTON) ||
                                 0 == AESysDoesWindowExist()) {
-                                portalSystem.CheckMouseClick();
+                                portalSystem.checkMouseClick();
                             } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
-                                portalSystem.ResetIframe();
+                                portalSystem.resetIframe();
                             }
                         }
                         if (AEInputCheckTriggered(AEVK_MBUTTON)) {
-                            portalSystem.RotatePortal();
+                            portalSystem.rotatePortal();
                         }
                         break;
                     default:
@@ -488,14 +491,14 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                 // Inputs to save level
                 if (AEInputCheckReleased(AEVK_S)) {
                     levelManager.saveMapInfo(width, height, tileSize,
-                                             portalSystem.GetPortalLimit());
+                                             portalSystem.getPortalLimit());
                     levelManager.saveTerrainInfo(dirt->getNodes(), "Dirt");
                     levelManager.saveTerrainInfo(stone->getNodes(), "Stone");
                     levelManager.saveTerrainInfo(magic->getNodes(), "Magic");
                     levelManager.saveStartEndInfo(startEndPointSystem.startPoints_,
                                                   startEndPointSystem.endPoint_);
-                    levelManager.saveCollectibleInfo(collectibleSystem.GetCollectibles());
-                    levelManager.saveMossInfo(mossSystem.GetMosses());
+                    levelManager.saveCollectibleInfo(collectibleSystem.getCollectibles());
+                    levelManager.saveMossInfo(mossSystem.getMosses());
                     levelManager.savePortalInfo(portalSystem);
                     levelManager.writeToFile(levelManager.getCurrentLevel());
                 }
@@ -508,34 +511,34 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                     bool hitDirt = dirt->destroyAtMouse(20.0f);
                     // Only run the VFX timer if we actually dug through dirt
                     if (hitDirt) {
-                        vfxSystem.SpawnContinuous(VFXType::DirtBurst, GetMouseWorldPos(), deltaTime,
+                        vfxSystem.spawnContinuous(VFXType::DirtBurst, getMouseWorldPos(), deltaTime,
                                                   0.1f);
                         g_audioSystem.playSound("dirt_break", "sfx", 0.5f, 1.0f);
                     } else {
-                        vfxSystem.ResetSpawnTimer();
+                        vfxSystem.resetSpawnTimer();
                     }
                 } else {
-                    vfxSystem.ResetSpawnTimer();
+                    vfxSystem.resetSpawnTimer();
                 }
 
                 if (AEInputCheckTriggered(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
 
-                    startEndPointSystem.CheckMouseClick();
+                    startEndPointSystem.checkMouseClick();
 
                 } else if (AEInputCheckReleased(AEVK_LBUTTON)) {
 
-                    startEndPointSystem.ResetIframe();
+                    startEndPointSystem.resetIframe();
                 }
 
                 // If magic terrain is near mouse click, place portal
                 if (magic->isNearestNodeToMouseAtThreshold() == true) {
                     if (AEInputCheckTriggered(AEVK_RBUTTON) || 0 == AESysDoesWindowExist()) {
-                        portalSystem.CheckMouseClick();
+                        portalSystem.checkMouseClick();
                     } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
-                        portalSystem.ResetIframe();
+                        portalSystem.resetIframe();
                     }
                 }
-                portalSystem.RotatePortal();
+                portalSystem.rotatePortal();
 
                 // tc added start
                 totalWaterRemaining = 0.0f;
@@ -565,17 +568,17 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
 
                 if (AEInputCheckTriggered(AEVK_F)) {
                     // Refill all start points
-                    startEndPointSystem.RefillAllWater();
+                    startEndPointSystem.refillAllWater();
                 }
 
                 if (AEInputCheckTriggered(AEVK_G)) {
                     // Toggle infinite water for all start points
-                    startEndPointSystem.ToggleInfiniteWater();
+                    startEndPointSystem.toggleInfiniteWater();
                 }
 
                 int portalsUsed =
-                    portalSystem.GetPortalCount(); // however your PortalSystem exposes this
-                int portalsLimit = portalSystem.GetPortalLimit();
+                    portalSystem.getPortalCount(); // however your PortalSystem exposes this
+                int portalsLimit = portalSystem.getPortalLimit();
                 portalLimitText.content_ =
                     "Portals: " + std::to_string(portalsUsed) + "/" + std::to_string(portalsLimit);
 
@@ -603,33 +606,33 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
 
                             // Call the water spawn function
                             // tc added end
-                            // fluidSystem.SpawnParticle(position.x, position.y, randRadius,
+                            // fluidSystem.spawnParticle(position.x, position.y, randRadius,
                             // FluidType::Water);
                         }
-                        SpawnWaterWithLimit(deltaTime);
+                        spawnWaterWithLimit(deltaTime);
                     }
                 }
 
                 // tc added start - Update collectibles
-                collectibleSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
+                collectibleSystem.update(deltaTime, fluidSystem.getParticlePool(FluidType::Water),
                                          vfxSystem);
-                mossSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
+                mossSystem.update(deltaTime, fluidSystem.getParticlePool(FluidType::Water),
                                   startEndPointSystem, vfxSystem);
 
                 // Check if all items collected
-                if (collectibleSystem.CheckAllCollected()) {
+                if (collectibleSystem.checkAllCollected()) {
                     std::cout << "All items collected!\n";
                     // You can trigger level complete here
                 }
 
-                fluidSystem.Update(deltaTime, {dirt, stone});
-                startEndPointSystem.Update(deltaTime, fluidSystem.GetParticlePool(FluidType::Water),
+                fluidSystem.update(deltaTime, {dirt, stone});
+                startEndPointSystem.update(deltaTime, fluidSystem.getParticlePool(FluidType::Water),
                                            vfxSystem);
-                portalSystem.Update(
+                portalSystem.update(
                     deltaTime,
-                    fluidSystem.GetParticlePool(FluidType::Water), // Passing the specific VFX pool
+                    fluidSystem.getParticlePool(FluidType::Water), // Passing the specific VFX pool
                     vfxSystem); // Passing the system for SpawnVFX calls
-                vfxSystem.Update(deltaTime);
+                vfxSystem.update(deltaTime);
 
                 // Animate goal bar icon
                 goalFlowerFrameTimer_ += deltaTime;
@@ -649,13 +652,13 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
 
                     // Save highscore
                     levelManager.saveLevelProgress(levelManager.getCurrentLevel(),
-                                                   collectibleSystem.GetCollectedCount());
-                    winScreen.Show(collectibleSystem.GetCollectedCount(),
-                                   collectibleSystem.GetTotalCount(),
+                                                   collectibleSystem.getCollectedCount());
+                    winScreen.show(collectibleSystem.getCollectedCount(),
+                                   collectibleSystem.getTotalCount(),
                                    levelManager.getCurrentLevel());
                 }
 
-                winScreen.Update(GSM);
+                winScreen.update(GSM);
                 // Pause system
                 pauseSystem.setTransformFillScreen();
                 pauseSystem.updateTransform();
@@ -672,12 +675,12 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
 
         g_debugSystem.update();
     }
-    animManager.UpdateAll(deltaTime);
+    animManager.updateAll(deltaTime);
 
     confirmationSystem.update();
 }
 
-void DrawLevel() {
+void drawLevel() {
     // std::cout << "Draw level 2\n";
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
@@ -686,20 +689,20 @@ void DrawLevel() {
     // ====================
     // Gameplay mode
     // ====================
-    fluidSystem.DrawColor();
-    startEndPointSystem.DrawTexture(fluidSystem.particleMaxCount_);
+    fluidSystem.drawColor();
+    startEndPointSystem.drawTexture(fluidSystem.particleMaxCount_);
 
     dirt->renderTerrain();
     stone->renderTerrain();
     magic->renderTerrain();
-    portalSystem.Draw();
-    vfxSystem.Draw();
+    portalSystem.draw();
+    vfxSystem.draw();
 
     // tc added start
     // Draw collectibles
-    collectibleSystem.Draw();
+    collectibleSystem.draw();
     // Draw moss
-    mossSystem.Draw();
+    mossSystem.draw();
 
     // Add preview render in gameplay
     if (levelManager.getLevelEditorMode() == EditorMode::None) {
@@ -707,7 +710,7 @@ void DrawLevel() {
         // preview
         if (magic->isNearestNodeToMouseAtThreshold() == true) {
             // Draw portal preview if mouse is near magic terrain
-            portalSystem.DrawPreview();
+            portalSystem.drawPreview();
         } else {
             levelManager.drawBrushPreview(TerrainMaterial::Dirt, 20.f);
         }
@@ -729,19 +732,19 @@ void DrawLevel() {
             levelManager.drawBrushPreview(TerrainMaterial::Magic);
             break;
         case GameBlock::StartPoint:
-            startEndPointSystem.DrawPreview(StartEndType::Pipe);
+            startEndPointSystem.drawPreview(StartEndType::Pipe);
             break;
         case GameBlock::EndPoint:
-            startEndPointSystem.DrawPreview(StartEndType::Flower);
+            startEndPointSystem.drawPreview(StartEndType::Flower);
             break;
         case GameBlock::Collectible:
-            collectibleSystem.DrawPreview();
+            collectibleSystem.drawPreview();
             break;
         case GameBlock::Moss:
-            mossSystem.DrawPreview();
+            mossSystem.drawPreview();
             break;
         case GameBlock::Portal:
-            portalSystem.DrawPreview();
+            portalSystem.drawPreview();
             break;
         default:
             break;
@@ -751,23 +754,23 @@ void DrawLevel() {
     // ====================
     // UI Elements
     // ====================
-    collectibleSystem.DrawUI();
+    collectibleSystem.drawUI();
     // Show total water counter with progress bar and goal progress bar
     totalWaterText.draw();
     goalText.draw();
 
-    DrawTotalWaterBar(totalWaterText.x_ + 0.35f, totalWaterText.y_ - 0.09f, totalWaterRemaining,
+    drawTotalWaterBar(totalWaterText.x_ + 0.35f, totalWaterText.y_ - 0.09f, totalWaterRemaining,
                       totalWaterCapacity);
-    DrawGoalBar(goalText.x_ + 0.35f, goalText.y_ - 0.09f, goalPercentage);
+    drawGoalBar(goalText.x_ + 0.35f, goalText.y_ - 0.09f, goalPercentage);
 
     portalLimitText.draw();
-    DrawPortalLimitUI(portalLimitText.x_ + 0.06f, portalLimitText.y_ - 0.09f);
+    drawPortalLimitUI(portalLimitText.x_ + 0.06f, portalLimitText.y_ - 0.09f);
     // tc added end
 
     // Buttons
     buttonPause.draw();
 
-    winScreen.Draw();
+    winScreen.draw();
 
     if (pauseSystem.isPaused()) { // Game is paused
         // Background
@@ -790,21 +793,21 @@ void DrawLevel() {
     g_debugSystem.drawAll();
 
     // Animations
-    animManager.DrawAll();
+    animManager.drawAll();
 }
 
-void FreeLevel() {
+void freeLevel() {
     // std::cout << "Free level 2\n";
     g_debugSystem.clearScene();
-    winScreen.Free();
-    fluidSystem.Free();
-    startEndPointSystem.Free();
-    portalSystem.Free();
-    vfxSystem.Free();
-    animManager.FreeAll();
+    winScreen.free();
+    fluidSystem.free();
+    startEndPointSystem.free();
+    portalSystem.free();
+    vfxSystem.free();
+    animManager.freeAll();
     // tc added start
-    mossSystem.Free();
-    collectibleSystem.Free();
+    mossSystem.free();
+    collectibleSystem.free();
 
     if (g_barMesh) {
         AEGfxMeshFree(g_barMesh);
@@ -829,9 +832,9 @@ void FreeLevel() {
     magic = nullptr;
 }
 
-void UnloadLevel() {
+void unloadLevel() {
     // std::cout << "Unload level 2\n";
-    mossSystem.Unload();
+    mossSystem.unload();
     Terrain::freeMeshLibrary();
 
     // Unload fonts
@@ -889,13 +892,13 @@ void UnloadLevel() {
     // Pause system
     pauseSystem.unload();
 
-    winScreen.Unload();
+    winScreen.unload();
 
     confirmationSystem.unload();
 }
 
 // tc added start - Function to handle water spawning with limit
-static void SpawnWaterWithLimit(f32 deltaTime) {
+static void spawnWaterWithLimit(f32 deltaTime) {
     // Use a static timer that persists between function calls
     static f32 globalSpawnTimer = 0.0f;
 
@@ -938,7 +941,7 @@ static void SpawnWaterWithLimit(f32 deltaTime) {
                                                         (randRadius)};
 
                         // Spawn the water particle
-                        fluidSystem.SpawnParticle(position.x, position.y, randRadius,
+                        fluidSystem.spawnParticle(position.x, position.y, randRadius,
                                                   FluidType::Water);
                     }
                 }
@@ -952,7 +955,7 @@ static void SpawnWaterWithLimit(f32 deltaTime) {
 // HUD helpers
 // =============================================================================
 
-static void DrawHudIcon(AEGfxTexture* tex, AEGfxVertexList* mesh, f32 worldX, f32 worldY,
+static void drawHudIcon(AEGfxTexture* tex, AEGfxVertexList* mesh, f32 worldX, f32 worldY,
                         f32 iconSize, f32 uvOffsetX = 0.0f) {
     if (!tex || !mesh)
         return;
@@ -969,10 +972,10 @@ static void DrawHudIcon(AEGfxTexture* tex, AEGfxVertexList* mesh, f32 worldX, f3
     AEGfxMeshDraw(mesh, AE_GFX_MDM_TRIANGLES);
 }
 
-static void DrawPixelBar(f32 worldX, f32 worldY, f32 barWidth, f32 barHeight, f32 fillR, f32 fillG,
+static void drawPixelBar(f32 worldX, f32 worldY, f32 barWidth, f32 barHeight, f32 fillR, f32 fillG,
                          f32 fillB, f32 borderR, f32 borderG, f32 borderB, f32 percentage) {
     if (!g_barMesh)
-        g_barMesh = CreateRectMesh();
+        g_barMesh = createRectMesh();
     if (percentage < 0.0f)
         percentage = 0.0f;
     if (percentage > 1.0f)
@@ -1046,32 +1049,32 @@ static void DrawPixelBar(f32 worldX, f32 worldY, f32 barWidth, f32 barHeight, f3
     }
 }
 
-static void DrawPortalLimitUI(f32 x, f32 y) {
+static void drawPortalLimitUI(f32 x, f32 y) {
     f32 worldX = x * 710.0f;
     f32 worldY = y * 510.0f;
     f32 iconSize = 32.0f;
 
     // Icon sits just to the left of where the text anchor is
-    DrawHudIcon(pHudPortalIconTex, g_hudIconMesh,
+    drawHudIcon(pHudPortalIconTex, g_hudIconMesh,
                 worldX - iconSize, // nudge left of text
                 worldY, iconSize);
 }
 
-static void DrawTotalWaterBar(f32 x, f32 y, f32 remaining, f32 capacity) {
+static void drawTotalWaterBar(f32 x, f32 y, f32 remaining, f32 capacity) {
     if (capacity <= 0.0f)
         return;
     f32 worldX = x * 710.0f;
     f32 worldY = y * 510.0f;
     f32 barW = 200.0f, barH = 20.0f, iconSize = 32.0f;
 
-    DrawHudIcon(pHudWaterIconTex, g_hudIconMesh, worldX - barW * 0.5f - iconSize * 0.5f - 4.0f,
+    drawHudIcon(pHudWaterIconTex, g_hudIconMesh, worldX - barW * 0.5f - iconSize * 0.5f - 4.0f,
                 worldY, iconSize);
 
-    DrawPixelBar(worldX, worldY, barW, barH, 0.18f, 0.57f, 1.0f, 0.0f, 0.0f, 0.45f,
+    drawPixelBar(worldX, worldY, barW, barH, 0.18f, 0.57f, 1.0f, 0.0f, 0.0f, 0.45f,
                  remaining / capacity);
 }
 
-static void DrawGoalBar(f32 x, f32 y, f32 percentage) {
+static void drawGoalBar(f32 x, f32 y, f32 percentage) {
     if (percentage < 0.0f)
         percentage = 0.0f;
     if (percentage > 100.0f)
@@ -1108,7 +1111,7 @@ static void DrawGoalBar(f32 x, f32 y, f32 percentage) {
         AEGfxMeshDraw(s_flowerIconMesh, AE_GFX_MDM_TRIANGLES);
     }
 
-    DrawPixelBar(worldX, worldY, barW, barH, 0.16f, 0.72f, 0.22f, 0.0f, 0.35f, 0.0f,
+    drawPixelBar(worldX, worldY, barW, barH, 0.16f, 0.72f, 0.22f, 0.0f, 0.35f, 0.0f,
                  percentage / 100.0f);
 }
 // tc added end

@@ -15,11 +15,14 @@
 *//*______________________________________________________________________*/
 #pragma once
 
+// Standard library
 #include <initializer_list>
 #include <vector>
 
+// Third-party
 #include <AEEngine.h>
 
+// Project
 #include "Components.h"
 #include "Terrain.h"
 
@@ -45,21 +48,21 @@ class FluidSystem {
 public:
     u32 particleMaxCount_{300};
 
-    void Initialize();
+    void initialize();
 
-    void Update(f32 dt, std::initializer_list<Terrain*> terrains);
+    void update(f32 dt, std::initializer_list<Terrain*> terrains);
 
-    void DrawColor();
+    void drawColor();
 
-    void DrawTexture();
+    void drawTexture();
 
-    void Free();
+    void free();
 
-    void SpawnParticle(f32 posX, f32 posY, f32 radius, FluidType type);
+    void spawnParticle(f32 posX, f32 posY, f32 radius, FluidType type);
 
-    u32 GetParticleCount(FluidType type);
+    u32 getParticleCount(FluidType type);
 
-    std::vector<FluidParticle>& GetParticlePool(FluidType type);
+    std::vector<FluidParticle>& getParticlePool(FluidType type);
 
 private:
     // particles[0] holds Water, particles[1] holds Lava, etc.
@@ -71,14 +74,14 @@ private:
 
     RigidBody2D physicsConfigs_[static_cast<int>(FluidType::Count)];
 
-    void InitializeGraphics(AEGfxVertexList* mesh_, AEGfxTexture* texture_, u32 layer_, f32 red,
+    void initializeGraphics(AEGfxVertexList* mesh_, AEGfxTexture* texture_, u32 layer_, f32 red,
                             f32 green, f32 blue, f32 alpha, FluidType type, u32 graphicsIndex);
 
-    void InitializePhysics(f32 mass, f32 gravity, AEVec2 velocity, FluidType type);
+    void initializePhysics(f32 mass, f32 gravity, AEVec2 velocity, FluidType type);
 
-    void UpdateTransforms(std::vector<FluidParticle>& particlePool);
+    void updateTransforms(std::vector<FluidParticle>& particlePool);
 
-    void UpdatePhysics(std::vector<FluidParticle>& particlePool, f32 dt);
+    void updatePhysics(std::vector<FluidParticle>& particlePool, f32 dt);
 
-    void UpdatePortalIframes(f32 dt, std::vector<FluidParticle>& particlePool);
+    void updatePortalIframes(f32 dt, std::vector<FluidParticle>& particlePool);
 };

@@ -16,12 +16,15 @@
 
 #include "States/Controls.h"
 
+// Standard library
 #include <cstdio>
 #include <cstring>
 #include <sstream>
 
+// Third-party
 #include <AEEngine.h>
 
+// Project
 #include "Animations.h"
 #include "AudioSystem.h"
 #include "Button.h"
@@ -107,7 +110,7 @@ static AEGfxVertexList* MakeUvMesh(float u0, float u1) {
     return AEGfxMeshEnd();
 }
 
-static void CreateCollectibleMeshes() {
+static void createCollectibleMeshes() {
     // Star (5-pointed) -- matches Collectible.cpp
     AEGfxMeshStart();
     constexpr int kStarPoints = 5;
@@ -149,7 +152,7 @@ static void CreateCollectibleMeshes() {
     s_leafMesh = AEGfxMeshEnd();
 }
 
-static void DrawCollectibleIcons() {
+static void drawCollectibleIcons() {
     if (!s_starMesh || !s_gemMesh || !s_leafMesh)
         return;
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
@@ -193,7 +196,7 @@ static void DrawCollectibleIcons() {
 // ----------------------------------------------------------------------------
 
 // Build and cache the full-screen overlay quad
-static void EnsureOverlayMesh() {
+static void ensureOverlayMesh() {
     if (overlayMesh != nullptr)
         return;
     AEGfxMeshStart();
@@ -205,8 +208,8 @@ static void EnsureOverlayMesh() {
 }
 
 // Draw the dark overlay over the live background
-static void DrawOverlay(f32 alpha) {
-    EnsureOverlayMesh();
+static void drawOverlay(f32 alpha) {
+    ensureOverlayMesh();
 
     AEMtx33 scale, trans, world;
     AEMtx33Scale(&scale, (f32)AEGfxGetWindowWidth(), (f32)AEGfxGetWindowHeight());
@@ -223,7 +226,7 @@ static void DrawOverlay(f32 alpha) {
 }
 
 // Draw text centered horizontally at a given screen-space y (-1..+1)
-static void DrawCenteredText(s8 font, const char* text, f32 screenY, f32 size, f32 r, f32 g,
+static void drawCenteredText(s8 font, const char* text, f32 screenY, f32 size, f32 r, f32 g,
                              f32 b) {
     if (!text || strlen(text) == 0)
         return;
@@ -241,7 +244,7 @@ static void DrawCenteredText(s8 font, const char* text, f32 screenY, f32 size, f
 }
 
 // Draw the page indicator (e.g. "2 / 4")
-static void DrawPageIndicator() {
+static void drawPageIndicator() {
     int totalPages = static_cast<int>(pages.size());
     if (totalPages == 0)
         totalPages = 1;
@@ -260,9 +263,9 @@ static void DrawPageIndicator() {
 // State functions
 // ----------------------------------------------------------------------------
 
-void LoadControls() {
+void loadControls() {
     // Shared background (same as MainMenu and Credits)
-    MenuBackground::Load();
+    MenuBackground::load();
 
     // Load fonts
     titleFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
@@ -327,7 +330,7 @@ void LoadControls() {
     s_magicMesh = MakeUvMesh(0.0f, 1.0f);
     s_mossTex = AEGfxTextureLoad("Assets/Textures/moss_sprite_sheet.png");
     s_mossMesh = MakeUvMesh(0.0f, 1.0f / 3.0f); // frame 0 (idle) of moss sheet
-    CreateCollectibleMeshes();
+    createCollectibleMeshes();
 
     // {tex, mesh, page, screenX, screenY, sizeX, sizeY}
     // Portal in-game is 30w x 60h -- mirror that 1:2 ratio here scaled up
@@ -350,14 +353,14 @@ void LoadControls() {
     buttonBack.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
 }
 
-void InitializeControls() {
-    MenuBackground::Initialize();
+void initializeControls() {
+    MenuBackground::initialize();
 
     // Animations
-    animManager.Clear();
-    animManager.Add(&screenFader);
-    animManager.Add(&someOtherCoolAnimation);
-    animManager.InitializeAll();
+    animManager.clear();
+    animManager.add(&screenFader);
+    animManager.add(&someOtherCoolAnimation);
+    animManager.initializeAll();
     // Reset to first page every time we enter
     currentPage = 1;
 
@@ -371,7 +374,7 @@ void InitializeControls() {
     buttonBack.setTextFont(buttonFont);
 }
 
-void UpdateControls(GameStateManager& GSM, f32 deltaTime) {
+void updateControls(GameStateManager& GSM, f32 deltaTime) {
     if (!g_debugSystem.isOpen()) {
         if (AEInputCheckTriggered(AEVK_Z)) {
             g_debugSystem.open();
@@ -386,21 +389,21 @@ void UpdateControls(GameStateManager& GSM, f32 deltaTime) {
             if (currentPage < totalPages)
                 ++currentPage;
             else
-                screenFader.StartFadeOut(&GSM, StateId::MainMenu);
+                screenFader.startFadeOut(&GSM, StateId::MainMenu);
         }
         if (AEInputCheckTriggered(AEVK_LEFT)) {
             if (currentPage > 1)
                 --currentPage;
         }
         if (AEInputCheckTriggered(AEVK_ESCAPE)) {
-            screenFader.StartFadeOut(&GSM, StateId::MainMenu);
+            screenFader.startFadeOut(&GSM, StateId::MainMenu);
         }
 
         if (buttonNext.checkMouseClick()) {
             if (currentPage < totalPages)
                 ++currentPage;
             else
-                screenFader.StartFadeOut(&GSM, StateId::MainMenu);
+                screenFader.startFadeOut(&GSM, StateId::MainMenu);
         }
 
         if (buttonPrevious.checkMouseClick()) {
@@ -409,11 +412,11 @@ void UpdateControls(GameStateManager& GSM, f32 deltaTime) {
         }
 
         if (buttonBack.checkMouseClick()) {
-            screenFader.StartFadeOut(&GSM, StateId::MainMenu);
+            screenFader.startFadeOut(&GSM, StateId::MainMenu);
         }
 
         if (AEInputCheckCurr(AEVK_LBUTTON)) {
-            bool hitDirt = MenuBackground::DestroyDirtAtMouse(20.0f);
+            bool hitDirt = MenuBackground::destroyDirtAtMouse(20.0f);
             if (hitDirt) {
                 g_audioSystem.playSound("dirt_break", "sfx", 0.5f, 1.0f);
             }
@@ -429,7 +432,7 @@ void UpdateControls(GameStateManager& GSM, f32 deltaTime) {
         s_collectPulse += deltaTime * 3.0f;
 
         // Keep background alive
-        MenuBackground::Update(deltaTime);
+        MenuBackground::update(deltaTime);
     } else {
         if (AEInputCheckTriggered(AEVK_Z)) {
             g_debugSystem.close();
@@ -437,39 +440,39 @@ void UpdateControls(GameStateManager& GSM, f32 deltaTime) {
         g_debugSystem.update();
     }
     // Animations
-    animManager.UpdateAll(deltaTime);
+    animManager.updateAll(deltaTime);
 }
 
-void DrawControls() {
+void drawControls() {
     // 1. Live background (terrain + fluid + portals)
-    MenuBackground::Draw();
+    MenuBackground::draw();
 
     // 2. Dark overlay to make text readable
-    DrawOverlay(s_overlayAlpha);
+    drawOverlay(s_overlayAlpha);
 
     // 3. Draw title and body for the current page
     if (currentPage >= 1 && currentPage <= static_cast<int>(pages.size())) {
         const HTPPage& page = pages[currentPage - 1];
 
-        DrawCenteredText(titleFont, page.title.content_.c_str(), page.title.y_, page.title.scale_,
+        drawCenteredText(titleFont, page.title.content_.c_str(), page.title.y_, page.title.scale_,
                          page.title.r_, page.title.g_, page.title.b_);
 
         std::istringstream stream(page.body.content_);
         std::string line;
         f32 lineY = page.body.y_;
         while (std::getline(stream, line)) {
-            DrawCenteredText(bodyFont, line.c_str(), lineY, page.body.scale_, page.body.r_,
+            drawCenteredText(bodyFont, line.c_str(), lineY, page.body.scale_, page.body.r_,
                              page.body.g_, page.body.b_);
             lineY -= s_bodyLineSpacing;
         }
     }
 
     // 4. Page indicator (e.g. "2 / 4")
-    DrawPageIndicator();
+    drawPageIndicator();
 
     // 5a. Collectible icons on page 5
     if (currentPage == 5) {
-        DrawCollectibleIcons();
+        drawCollectibleIcons();
     }
 
     // 5b. Sprite illustrations for current page
@@ -497,13 +500,13 @@ void DrawControls() {
         buttonPrevious.draw();
     }
     buttonBack.draw();
-    animManager.DrawAll();
+    animManager.drawAll();
     g_debugSystem.drawAll();
 }
 
-void FreeControls() {
-    MenuBackground::Free();
-    animManager.FreeAll();
+void freeControls() {
+    MenuBackground::free();
+    animManager.freeAll();
     if (overlayMesh) {
         AEGfxMeshFree(overlayMesh);
         overlayMesh = nullptr;
@@ -563,8 +566,8 @@ void FreeControls() {
     s_sprites.clear();
 }
 
-void UnloadControls() {
-    MenuBackground::Unload();
+void unloadControls() {
+    MenuBackground::unload();
 
     // Unload fonts
     if (titleFont) {

@@ -14,11 +14,14 @@
 *//*______________________________________________________________________*/
 #pragma once
 
+// Standard library
 #include <string>
 
+// Third-party
 #include <AEEngine.h>
 #include <json/json.h>
 
+// Project
 #include "Components.h"
 
 struct TextData {

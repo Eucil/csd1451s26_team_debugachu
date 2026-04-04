@@ -12,11 +12,14 @@
             without the prior written consent of DigiPen Institute of
             Technology is prohibited.
 *//*______________________________________________________________________*/
+// Standard library
 #include <iostream>
 
+// Third-party
 #include <AEEngine.h>
 #include <crtdbg.h>
 
+// Project
 #include "AudioSystem.h"
 #include "ConfigManager.h"
 #include "DebugSystem.h"

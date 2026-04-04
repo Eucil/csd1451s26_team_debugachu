@@ -13,12 +13,14 @@
             Technology is prohibited.
 *//*______________________________________________________________________*/
 #include "Collectible.h"
-#include "CollisionSystem.h"
 
+// Standard library
 #include <cmath>
 #include <cstdio>
 
+// Project
 #include "AudioSystem.h"
+#include "CollisionSystem.h"
 #include "ConfigManager.h"
 #include "Utils.h"
 
@@ -60,7 +62,7 @@ Collectible::Collectible(AEVec2 pos, CollectibleType type) {
 
 // Load system w font
 // reads UI posit from JSON config file
-void CollectibleSystem::Load(s8 font) {
+void CollectibleSystem::load(s8 font) {
     font_ = font;
     collectionText_.x_ =
         g_configManager.getFloat("Collectible", "default", "collectionText_.x_", -0.9f);
@@ -73,13 +75,13 @@ void CollectibleSystem::Load(s8 font) {
     collectionText_.font_ = font_;
 }
 
-// CreateMeshes() - builds the 3D shapes for collectibles
+// createMeshes() - builds the 3D shapes for collectibles
 // collectedCount_ = 0 - reset collected counter
 // totalCollectibles_ = 0 - reset total count
 // globalTimer_ = 0 - reset animation timer
 // collectibles_.clear() - remove all collectibles from previous level
-void CollectibleSystem::Initialize() {
-    CreateMeshes();
+void CollectibleSystem::initialize() {
+    createMeshes();
     collectedCount_ = 0;
     totalCollectibles_ = 0;
     globalTimer_ = 0.0f;
@@ -90,7 +92,7 @@ void CollectibleSystem::Initialize() {
 // AEGfxMeshStart() - starts building a mesh
 // kOuterRadius = 0.5f - distance from center to star tips
 // kInnerRadius = 0.25f - distance from center to inner points
-void CollectibleSystem::CreateMeshes() {
+void CollectibleSystem::createMeshes() {
     // Star mesh (5-pointed star shape)
     AEGfxMeshStart();
     constexpr int kStarPoints = 5;
@@ -156,7 +158,7 @@ void CollectibleSystem::CreateMeshes() {
 }
 
 // Add collectible to level
-void CollectibleSystem::LoadLevelCollectibles(AEVec2 pos, CollectibleType type) {
+void CollectibleSystem::loadLevelCollectibles(AEVec2 pos, CollectibleType type) {
 
     // emplace_back constructs collectible directly in vector
     // Updates total count based on vector size
@@ -166,7 +168,7 @@ void CollectibleSystem::LoadLevelCollectibles(AEVec2 pos, CollectibleType type) 
 }
 
 // collision check start
-bool CollectibleSystem::CheckCollisionWithWater(const Collectible& collectible,
+bool CollectibleSystem::checkCollisionWithWater(const Collectible& collectible,
                                                 const FluidParticle& particle) {
     if (!collectible.active_ || collectible.collected_)
         return false;
@@ -184,7 +186,7 @@ bool CollectibleSystem::CheckCollisionWithWater(const Collectible& collectible,
     return distSq < (radiusSum * radiusSum);
 }
 
-void CollectibleSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool,
+void CollectibleSystem::update(f32 dt, std::vector<FluidParticle>& particlePool,
                                VFXSystem& vfxSystem) {
     globalTimer_ += dt;
 
@@ -212,20 +214,20 @@ void CollectibleSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool,
 
         // Check collision with water particles
         for (const auto& particle : particlePool) {
-            if (CheckCollisionWithWater(c, particle)) {
+            if (checkCollisionWithWater(c, particle)) {
                 CollisionSystem::incrementCollisionCount();
                 // if collision, mark collected, increment count, exit particle loop
                 c.collected_ = true;
                 collectedCount_++;
                 switch (c.type_) {
                 case CollectibleType::Star:
-                    vfxSystem.SpawnVFX(VFXType::StarCollect, c.transform_.pos_);
+                    vfxSystem.spawnVFX(VFXType::StarCollect, c.transform_.pos_);
                     break;
                 case CollectibleType::Gem:
-                    vfxSystem.SpawnVFX(VFXType::GemCollect, c.transform_.pos_);
+                    vfxSystem.spawnVFX(VFXType::GemCollect, c.transform_.pos_);
                     break;
                 case CollectibleType::Leaf:
-                    vfxSystem.SpawnVFX(VFXType::LeafCollect, c.transform_.pos_);
+                    vfxSystem.spawnVFX(VFXType::LeafCollect, c.transform_.pos_);
                     break;
                 }
                 g_audioSystem.playSound("bell", "sfx", 0.4f, 0.7f);
@@ -241,7 +243,7 @@ void CollectibleSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool,
     collectionText_.content_ = buffer;
 }
 
-void CollectibleSystem::DrawCollectible(const Collectible& c) {
+void CollectibleSystem::drawCollectible(const Collectible& c) {
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(1.0f);
@@ -267,18 +269,18 @@ void CollectibleSystem::DrawCollectible(const Collectible& c) {
 
 // Loop through all collectibles, Skip inactive or collected ones,
 // Call DrawCollectible for each active one
-void CollectibleSystem::Draw() {
+void CollectibleSystem::draw() {
     // Draw collectibles
     for (const auto& c : collectibles_) {
         if (!c.active_ || c.collected_)
             continue;
-        DrawCollectible(c);
+        drawCollectible(c);
     }
 }
 
-void CollectibleSystem::DrawPreview() {
+void CollectibleSystem::drawPreview() {
 
-    AEVec2 mousePos = GetMouseWorldPos();
+    AEVec2 mousePos = getMouseWorldPos();
 
     AEMtx33 scaleMtx, rotMtx, transMtx, worldMtx;
     AEMtx33Scale(&scaleMtx, 30.0f, 30.0f);
@@ -310,13 +312,13 @@ void CollectibleSystem::DrawPreview() {
     }
 }
 
-void CollectibleSystem::DrawUI() {
+void CollectibleSystem::drawUI() {
     // Draw collection counter
     collectionText_.draw();
 }
 
 // Free each mesh if it exists
-void CollectibleSystem::Free() {
+void CollectibleSystem::free() {
     if (starMesh_) {
         AEGfxMeshFree(starMesh_);
         starMesh_ = nullptr;
@@ -333,14 +335,14 @@ void CollectibleSystem::Free() {
 }
 
 void CollectibleSystem::spawnAtMousePos() {
-    AEVec2 mousePos = GetMouseWorldPos();
+    AEVec2 mousePos = getMouseWorldPos();
     collectibles_.emplace_back(mousePos, static_cast<CollectibleType>(totalCollectibles_ % 3));
     totalCollectibles_ = static_cast<int>(collectibles_.size());
 }
 
 void CollectibleSystem::destroyAtMousePos() {
     // Get mouse position
-    AEVec2 mousePos = GetMouseWorldPos();
+    AEVec2 mousePos = getMouseWorldPos();
     f32 mouseX = static_cast<f32>(mousePos.x);
     f32 mouseY = static_cast<f32>(mousePos.y);
 
@@ -361,7 +363,7 @@ void CollectibleSystem::destroyAtMousePos() {
     }
 }
 
-void CollectibleSystem::ResetCollection() {
+void CollectibleSystem::resetCollection() {
     collectedCount_ = 0;
     for (auto& c : collectibles_) {
         c.collected_ = false;

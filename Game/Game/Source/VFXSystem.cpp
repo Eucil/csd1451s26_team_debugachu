@@ -14,8 +14,10 @@
 *//*______________________________________________________________________*/
 #include "VFXSystem.h"
 
+// Standard library
 #include <iostream>
 
+// Project
 #include "ConfigManager.h"
 
 // private
@@ -29,7 +31,7 @@
 // its initial batch of particles, then immediately deactivates the emitter.
 //
 // =========================================================
-void VFXSystem::InitializeEmitter(ParticleEmitter& emitter, VFXType type, AEVec2 pos,
+void VFXSystem::initializeEmitter(ParticleEmitter& emitter, VFXType type, AEVec2 pos,
                                   f32 angleRad) {
 
     emitter.active_ = true;
@@ -40,7 +42,7 @@ void VFXSystem::InitializeEmitter(ParticleEmitter& emitter, VFXType type, AEVec2
 
     emitter.config_ = emitterConfigs_[static_cast<int>(type)];
 
-    SpawnParticles(emitter);
+    spawnParticles(emitter);
 
     emitter.active_ = false;
 }
@@ -55,7 +57,7 @@ void VFXSystem::InitializeEmitter(ParticleEmitter& emitter, VFXType type, AEVec2
 // - Loads all graphics and emitter configurations for each VFXType from the ConfigManager.
 //
 // =========================================================
-void VFXSystem::Initialize(u32 maxParticles, u32 maxEmitters) {
+void VFXSystem::initialize(u32 maxParticles, u32 maxEmitters) {
     for (int i = 0; i < static_cast<int>(VFXType::Count); ++i) {
         graphicsConfigs_[i].mesh_ = nullptr;
         graphicsConfigs_[i].texture_ = nullptr;
@@ -72,54 +74,54 @@ void VFXSystem::Initialize(u32 maxParticles, u32 maxEmitters) {
     // All data below are readed from json file
 
     // DirtBurst
-    AEGfxVertexList* particleMesh = CreateRectMesh();
+    AEGfxVertexList* particleMesh = createRectMesh();
     Graphics dirtGfx;
     dirtGfx.mesh_ = particleMesh;
     dirtGfx.texture_ = nullptr; // AEGfxTextureLoad("Assets/Textures/Dirt02.png");
     dirtGfx.layer_ = g_configManager.getInt("VFXSystem", "dirtGFX", "layer", 5);
-    SetGraphicsConfig(VFXType::DirtBurst, dirtGfx);
+    setGraphicsConfig(VFXType::DirtBurst, dirtGfx);
 
     // PortalBurst
     Graphics portalGfx;
     portalGfx.mesh_ = particleMesh; // Reuse the exact same rect mesh
     portalGfx.texture_ = nullptr;
     portalGfx.layer_ = g_configManager.getInt("VFXSystem", "portalGFX", "layer", 5);
-    SetGraphicsConfig(VFXType::PortalBurst, portalGfx);
+    setGraphicsConfig(VFXType::PortalBurst, portalGfx);
 
     // PipeFlow
     Graphics pipeFlowGfx;
     pipeFlowGfx.mesh_ = particleMesh; // reuse the same rect mesh
     pipeFlowGfx.texture_ = nullptr;
     pipeFlowGfx.layer_ = g_configManager.getInt("VFXSystem", "pipeFlowGFX", "layer", 5);
-    SetGraphicsConfig(VFXType::PipeFlow, pipeFlowGfx);
+    setGraphicsConfig(VFXType::PipeFlow, pipeFlowGfx);
 
     // FlowerCollect
     Graphics flowerCollectGfx;
     flowerCollectGfx.mesh_ = particleMesh;
     flowerCollectGfx.texture_ = nullptr;
     flowerCollectGfx.layer_ = g_configManager.getInt("VFXSystem", "flowerCollectGFX", "layer", 5);
-    SetGraphicsConfig(VFXType::FlowerCollect, flowerCollectGfx);
+    setGraphicsConfig(VFXType::FlowerCollect, flowerCollectGfx);
 
     // Starcollect
     Graphics starCollectGfx;
     starCollectGfx.mesh_ = particleMesh;
     starCollectGfx.texture_ = nullptr;
     starCollectGfx.layer_ = g_configManager.getInt("VFXSystem", "starCollectGFX", "layer", 5);
-    SetGraphicsConfig(VFXType::StarCollect, starCollectGfx);
+    setGraphicsConfig(VFXType::StarCollect, starCollectGfx);
 
     // GemCollect — magenta burst
     Graphics gemCollectGfx;
     gemCollectGfx.mesh_ = particleMesh;
     gemCollectGfx.texture_ = nullptr;
     gemCollectGfx.layer_ = g_configManager.getInt("VFXSystem", "gemCollectGFX", "layer", 5);
-    SetGraphicsConfig(VFXType::GemCollect, gemCollectGfx);
+    setGraphicsConfig(VFXType::GemCollect, gemCollectGfx);
 
     // LeafCollect — green burst
     Graphics leafCollectGfx;
     leafCollectGfx.mesh_ = particleMesh;
     leafCollectGfx.texture_ = nullptr;
     leafCollectGfx.layer_ = g_configManager.getInt("VFXSystem", "leafCollectGFX", "layer", 5);
-    SetGraphicsConfig(VFXType::LeafCollect, leafCollectGfx);
+    setGraphicsConfig(VFXType::LeafCollect, leafCollectGfx);
 
     // Emitter setup
     // DirtBurst
@@ -135,7 +137,7 @@ void VFXSystem::Initialize(u32 maxParticles, u32 maxEmitters) {
     dirtConfig.g_ = g_configManager.getFloat("VFXSystem", "dirtConfig", "g_", 0.2f);
     dirtConfig.b_ = g_configManager.getFloat("VFXSystem", "dirtConfig", "b_", 0.1f);
     dirtConfig.a_ = g_configManager.getFloat("VFXSystem", "dirtConfig", "a_", 1.0f);
-    SetEmitterConfig(VFXType::DirtBurst, dirtConfig);
+    setEmitterConfig(VFXType::DirtBurst, dirtConfig);
 
     // PortalBurst
     EmitterConfig portalConfig;
@@ -155,7 +157,7 @@ void VFXSystem::Initialize(u32 maxParticles, u32 maxEmitters) {
     portalConfig.g_ = g_configManager.getFloat("VFXSystem", "portalConfig", "g_", 0.1f);
     portalConfig.b_ = g_configManager.getFloat("VFXSystem", "portalConfig", "b_", 1.0f);
     portalConfig.a_ = g_configManager.getFloat("VFXSystem", "portalConfig", "a_", 1.0f);
-    SetEmitterConfig(VFXType::PortalBurst, portalConfig);
+    setEmitterConfig(VFXType::PortalBurst, portalConfig);
 
     // Pipe flow
     EmitterConfig pipeFlowConfig;
@@ -177,7 +179,7 @@ void VFXSystem::Initialize(u32 maxParticles, u32 maxEmitters) {
     pipeFlowConfig.g_ = g_configManager.getFloat("VFXSystem", "pipeFlowConfig", "g_", 0.7f);
     pipeFlowConfig.b_ = g_configManager.getFloat("VFXSystem", "pipeFlowConfig", "b_", 1.0f);
     pipeFlowConfig.a_ = g_configManager.getFloat("VFXSystem", "pipeFlowConfig", "a_", 0.85f);
-    SetEmitterConfig(VFXType::PipeFlow, pipeFlowConfig);
+    setEmitterConfig(VFXType::PipeFlow, pipeFlowConfig);
 
     // Flowercollect
     EmitterConfig flowerCollectConfig;
@@ -203,7 +205,7 @@ void VFXSystem::Initialize(u32 maxParticles, u32 maxEmitters) {
         g_configManager.getFloat("VFXSystem", "flowerCollectConfig", "b_", 0.4f);
     flowerCollectConfig.a_ =
         g_configManager.getFloat("VFXSystem", "flowerCollectConfig", "a_", 1.0f);
-    SetEmitterConfig(VFXType::FlowerCollect, flowerCollectConfig);
+    setEmitterConfig(VFXType::FlowerCollect, flowerCollectConfig);
 
     // Starcollect
     EmitterConfig starCollectConfig;
@@ -225,7 +227,7 @@ void VFXSystem::Initialize(u32 maxParticles, u32 maxEmitters) {
     starCollectConfig.g_ = g_configManager.getFloat("VFXSystem", "starCollectConfig", "g_", 1.0f);
     starCollectConfig.b_ = g_configManager.getFloat("VFXSystem", "starCollectConfig", "b_", 0.0f);
     starCollectConfig.a_ = g_configManager.getFloat("VFXSystem", "starCollectConfig", "a_", 1.0f);
-    SetEmitterConfig(VFXType::StarCollect, starCollectConfig);
+    setEmitterConfig(VFXType::StarCollect, starCollectConfig);
 
     // gemCollect
     EmitterConfig gemCollectConfig;
@@ -247,7 +249,7 @@ void VFXSystem::Initialize(u32 maxParticles, u32 maxEmitters) {
     gemCollectConfig.g_ = g_configManager.getFloat("VFXSystem", "gemCollectConfig", "g_", 0.0f);
     gemCollectConfig.b_ = g_configManager.getFloat("VFXSystem", "gemCollectConfig", "b_", 1.0f);
     gemCollectConfig.a_ = g_configManager.getFloat("VFXSystem", "gemCollectConfig", "a_", 1.0f);
-    SetEmitterConfig(VFXType::GemCollect, gemCollectConfig);
+    setEmitterConfig(VFXType::GemCollect, gemCollectConfig);
 
     // leafCollect
     EmitterConfig leafCollectConfig;
@@ -269,7 +271,7 @@ void VFXSystem::Initialize(u32 maxParticles, u32 maxEmitters) {
     leafCollectConfig.g_ = g_configManager.getFloat("VFXSystem", "leafCollectConfig", "g_", 1.0f);
     leafCollectConfig.b_ = g_configManager.getFloat("VFXSystem", "leafCollectConfig", "b_", 0.0f);
     leafCollectConfig.a_ = g_configManager.getFloat("VFXSystem", "leafCollectConfig", "a_", 1.0f);
-    SetEmitterConfig(VFXType::LeafCollect, leafCollectConfig);
+    setEmitterConfig(VFXType::LeafCollect, leafCollectConfig);
 }
 
 // =========================================================
@@ -283,7 +285,7 @@ void VFXSystem::Initialize(u32 maxParticles, u32 maxEmitters) {
 // - Fades alpha out smoothly in the latter half of each particle's lifetime.
 //
 // =========================================================
-void VFXSystem::Update(f32 dt) {
+void VFXSystem::update(f32 dt) {
 
     for (int i = 0; i < static_cast<int>(VFXType::Count); ++i) {
 
@@ -341,7 +343,7 @@ void VFXSystem::Update(f32 dt) {
 // - Issues a mesh draw call with the particle's current color and transparency values.
 //
 // =========================================================
-void VFXSystem::Draw() {
+void VFXSystem::draw() {
 
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
@@ -396,7 +398,7 @@ void VFXSystem::Draw() {
 // -Clears all emitter and particle pool containers afterwards.
 //
 // =========================================================
-void VFXSystem::Free() {
+void VFXSystem::free() {
     // Free Meshes
     for (int i = 0; i < static_cast<int>(VFXType::Count); ++i) {
         AEGfxVertexList* currentMesh = graphicsConfigs_[i].mesh_;
@@ -463,10 +465,10 @@ void VFXSystem::Free() {
 // - Logs a warning if no emitter is available.
 //
 // =========================================================
-void VFXSystem::SpawnVFX(VFXType type, AEVec2 position, f32 angleRad) {
-    ParticleEmitter* emitter = GetFreeEmitter();
+void VFXSystem::spawnVFX(VFXType type, AEVec2 position, f32 angleRad) {
+    ParticleEmitter* emitter = getFreeEmitter();
     if (emitter != nullptr) {
-        InitializeEmitter(*emitter, type, position, angleRad);
+        initializeEmitter(*emitter, type, position, angleRad);
     } else {
         std::cout << "Warning: No VFX Pools Available.";
     }
@@ -481,7 +483,7 @@ void VFXSystem::SpawnVFX(VFXType type, AEVec2 position, f32 angleRad) {
 // - Returns nullptr if all emitters are currently active.
 //
 // =========================================================
-ParticleEmitter* VFXSystem::GetFreeEmitter() {
+ParticleEmitter* VFXSystem::getFreeEmitter() {
 
     for (auto& p : vfxEmitters_) {
         if (!p.active_) {
@@ -492,7 +494,7 @@ ParticleEmitter* VFXSystem::GetFreeEmitter() {
 }
 
 // todo
-std::vector<VFXParticle>& VFXSystem::GetParticlePool(VFXType type) {
+std::vector<VFXParticle>& VFXSystem::getParticlePool(VFXType type) {
     return vfxParticlePool_[static_cast<int>(type)];
 }
 
@@ -506,7 +508,7 @@ std::vector<VFXParticle>& VFXSystem::GetParticlePool(VFXType type) {
 // - Returns nullptr if the entire pool for that type is currently active.
 //
 // =========================================================
-VFXParticle* VFXSystem::GetFreeParticle(VFXType type) {
+VFXParticle* VFXSystem::getFreeParticle(VFXType type) {
 
     int typeIndex = static_cast<int>(type);
 
@@ -532,13 +534,13 @@ VFXParticle* VFXSystem::GetFreeParticle(VFXType type) {
 // values interpolated between the emitter config's min and max bounds.
 //
 // =========================================================
-void VFXSystem::SpawnParticles(ParticleEmitter& emitter) {
+void VFXSystem::spawnParticles(ParticleEmitter& emitter) {
 
     // Loop exactly spawnCount_ times
     for (int i = 0; i < emitter.config_.spawnCount_; ++i) {
 
         // Grab a dead particle from the pool
-        VFXParticle* p = GetFreeParticle(emitter.type_);
+        VFXParticle* p = getFreeParticle(emitter.type_);
 
         // If the pool is completely full of active particles, stop trying to spawn
         if (p == nullptr) {
@@ -603,7 +605,7 @@ void VFXSystem::SpawnParticles(ParticleEmitter& emitter) {
 // used when that type is next spawned.
 //
 // =========================================================
-void VFXSystem::SetEmitterConfig(VFXType type, const EmitterConfig& config) {
+void VFXSystem::setEmitterConfig(VFXType type, const EmitterConfig& config) {
     emitterConfigs_[static_cast<int>(type)] = config;
 }
 
@@ -617,7 +619,7 @@ void VFXSystem::SetEmitterConfig(VFXType type, const EmitterConfig& config) {
 // used when drawing particles of that type.
 //
 // =========================================================
-void VFXSystem::SetGraphicsConfig(VFXType type, const Graphics& gfxConfig) {
+void VFXSystem::setGraphicsConfig(VFXType type, const Graphics& gfxConfig) {
     graphicsConfigs_[static_cast<int>(type)] = gfxConfig;
 }
 
@@ -634,11 +636,11 @@ void VFXSystem::SetGraphicsConfig(VFXType type, const Graphics& gfxConfig) {
 // spawn rate interval.
 //
 // =========================================================
-void VFXSystem::SpawnContinuous(VFXType type, AEVec2 position, f32 deltaTime, f32 spawnRate) {
+void VFXSystem::spawnContinuous(VFXType type, AEVec2 position, f32 deltaTime, f32 spawnRate) {
     vfxSpawnTimer_ -= deltaTime;
 
     if (vfxSpawnTimer_ <= 0.0f) {
-        SpawnVFX(type, position);
+        spawnVFX(type, position);
         vfxSpawnTimer_ = spawnRate; // Reset the timer using the inputted rate
     }
 }
@@ -651,4 +653,4 @@ void VFXSystem::SpawnContinuous(VFXType type, AEVec2 position, f32 deltaTime, f3
 // SpawnContinuous to trigger a new spawn on its very next call.
 //
 // =========================================================
-void VFXSystem::ResetSpawnTimer() { vfxSpawnTimer_ = 0.0f; }
+void VFXSystem::resetSpawnTimer() { vfxSpawnTimer_ = 0.0f; }

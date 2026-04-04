@@ -14,9 +14,13 @@
 *//*______________________________________________________________________*/
 #include "States/PlayerLevel.h"
 
-#include <AEEngine.h>
+// Standard library
 #include <iostream>
 
+// Third-party
+#include <AEEngine.h>
+
+// Project
 #include "Animations.h"
 #include "Button.h"
 #include "Collectible.h"
@@ -93,18 +97,18 @@ static ConfirmationSystem confirmationSystem;
 static int levelToDeleteIndex = -1;
 
 // Static functions
-static void MapPreviewLoad();
-static void MapPreviewUpdate(f32 deltaTime);
-static void MapPreviewDraw();
-static void DrawPlaceholderSlots(AEVec2 buttonPos, int collectedCount, AEGfxVertexList* mesh);
+static void mapPreviewLoad();
+static void mapPreviewUpdate(f32 deltaTime);
+static void mapPreviewDraw();
+static void drawPlaceholderSlots(AEVec2 buttonPos, int collectedCount, AEGfxVertexList* mesh);
 
-void LoadPlayerLevel() {
+void loadPlayerLevel() {
     titleFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
     buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
 
-    MenuBackground::Load(100);
+    MenuBackground::load(100);
 
-    MapPreviewLoad();
+    mapPreviewLoad();
 
     // Setup texts
     f32 buttonStartposX =
@@ -161,10 +165,10 @@ void LoadPlayerLevel() {
         levelButtonPool_.push_back(tempButton);
     }
 
-    animManager.Clear();
-    animManager.Add(&screenFader);
-    animManager.Add(&someOtherCoolAnimation);
-    animManager.InitializeAll();
+    animManager.clear();
+    animManager.add(&screenFader);
+    animManager.add(&someOtherCoolAnimation);
+    animManager.initializeAll();
 
     buttonIncreaseWidth.loadMesh();
     buttonIncreaseWidth.loadTexture("Assets/Textures/brown_square_24_24.png");
@@ -204,15 +208,15 @@ void LoadPlayerLevel() {
     confirmationSystem.hide();
 }
 
-void InitializePlayerLevel() {
+void initializePlayerLevel() {
 
-    MenuBackground::Initialize();
-    lsVfxSystem.Initialize(800, 20);
+    MenuBackground::initialize();
+    lsVfxSystem.initialize(800, 20);
 
     levelManager.init();
     levelManager.checkLevelData();
 
-    lsCollectibleSystem.Initialize(); // Creates the meshes and clears the list
+    lsCollectibleSystem.initialize(); // Creates the meshes and clears the list
     for (int i{}; i < numPlayerLevels; ++i) {
         int count = levelManager.getHighScore(i + 1 + startLevelIndex);
         std::cout << count << '\n';
@@ -233,7 +237,7 @@ void InitializePlayerLevel() {
             AEVec2 pos = {startX + j * spacing, posY};
             // Type 0 = Star, Type 1 = Gem, Type 2 = Leaf
             CollectibleType type = static_cast<CollectibleType>(j);
-            lsCollectibleSystem.LoadLevelCollectibles(pos, type);
+            lsCollectibleSystem.loadLevelCollectibles(pos, type);
         }
     }
 
@@ -303,7 +307,7 @@ void InitializePlayerLevel() {
     confirmationSystem.init(buttonFont);
 }
 
-void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
+void updatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
     if (!g_debugSystem.isOpen()) {
         if (AEInputCheckTriggered(AEVK_Z)) {
             g_debugSystem.open();
@@ -311,12 +315,12 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
 
         (void)deltaTime; // Unused parameter, but required by function signature
 
-        MapPreviewUpdate(deltaTime);
+        mapPreviewUpdate(deltaTime);
 
         // Press R to restart
         if (AEInputCheckTriggered(AEVK_R) || 0 == AESysDoesWindowExist()) {
             std::cout << "R triggered\n";
-            screenFader.StartFadeOut(&GSM, StateId::Restart);
+            screenFader.startFadeOut(&GSM, StateId::Restart);
         }
 
         if (!confirmationSystem.isShowing()) {
@@ -366,12 +370,12 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
             // To Level Selector Button
             if ((buttonToLevelSelector.checkMouseClick() || 0 == AESysDoesWindowExist()) &&
                 !creatingLevel) {
-                screenFader.StartFadeOut(&GSM, StateId::LevelSelector);
+                screenFader.startFadeOut(&GSM, StateId::LevelSelector);
             }
 
             // Back Button
             if ((buttonBack.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
-                screenFader.StartFadeOut(&GSM, StateId::MainMenu);
+                screenFader.startFadeOut(&GSM, StateId::MainMenu);
             }
 
             // Level Selection Buttons
@@ -387,14 +391,14 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
                         case EditorMode::None:
                             // If none, just play the level if it's playable
                             if (levelManager.playableLevels_[j]) {
-                                levelManager.SetCurrentLevel(j + 1);
-                                screenFader.StartFadeOut(&GSM, StateId::Level);
+                                levelManager.setCurrentLevel(j + 1);
+                                screenFader.startFadeOut(&GSM, StateId::Level);
                             }
                             break;
                         case EditorMode::Edit:
                             // If edit, go to level editor with selected level
                             if (levelManager.playableLevels_[j]) {
-                                levelManager.SetCurrentLevel(j + 1);
+                                levelManager.setCurrentLevel(j + 1);
                                 GSM.nextState_ = StateId::Level;
                             }
                             break;
@@ -444,13 +448,13 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
         // Digging for destructible background
         if (!creatingLevel) {
             if (AEInputCheckCurr(AEVK_LBUTTON)) {
-                bool hitDirt = MenuBackground::DestroyDirtAtMouse(20.0f);
+                bool hitDirt = MenuBackground::destroyDirtAtMouse(20.0f);
                 if (hitDirt)
                     g_audioSystem.playSound("dirt_break", "sfx", 0.5f, 1.0f);
             }
         }
-        MenuBackground::Update(deltaTime);
-        lsVfxSystem.Update(deltaTime);
+        MenuBackground::update(deltaTime);
+        lsVfxSystem.update(deltaTime);
 
         if (creatingLevel) {
             inputWidthPrompt.content_ = widthBaseText + std::to_string(inputWidth);
@@ -499,7 +503,7 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
             }
             if (buttonCancelCreation.checkMouseClick()) {
                 creatingLevel = false;
-                levelManager.SetCurrentLevel(0);
+                levelManager.setCurrentLevel(0);
                 std::cout << "Cancelled level creation\n";
             }
 
@@ -514,13 +518,13 @@ void UpdatePlayerLevel(GameStateManager& GSM, f32 deltaTime) {
         g_debugSystem.update();
     }
     std::vector<FluidParticle> dummyPool;
-    lsCollectibleSystem.Update(deltaTime, dummyPool, lsVfxSystem);
+    lsCollectibleSystem.update(deltaTime, dummyPool, lsVfxSystem);
 
-    animManager.UpdateAll(deltaTime);
+    animManager.updateAll(deltaTime);
     confirmationSystem.update();
 }
 
-void DrawPlayerLevel() {
+void drawPlayerLevel() {
 
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
@@ -529,8 +533,8 @@ void DrawPlayerLevel() {
     AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
     AEGfxSetTransparency(1.0f);
 
-    MenuBackground::Draw();
-    lsVfxSystem.Draw();
+    MenuBackground::draw();
+    lsVfxSystem.draw();
 
     // Draw button with different color base on level editor mode
     for (int i = 0; i < numPlayerLevels; ++i) {
@@ -548,7 +552,7 @@ void DrawPlayerLevel() {
         }
     }
 
-    lsCollectibleSystem.Draw();
+    lsCollectibleSystem.draw();
 
     // --- DRAW BLACK PLACEHOLDERS FOR UNCOLLECTED ITEMS (Local to PlayerLevel) ---
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
@@ -560,7 +564,7 @@ void DrawPlayerLevel() {
         int count = levelManager.getHighScore(i + startLevelIndex + 1);
         if (count > 3)
             count = 3;
-        DrawPlaceholderSlots(levelButtonPool_[i].getTransform().pos_, count, previewMesh);
+        drawPlaceholderSlots(levelButtonPool_[i].getTransform().pos_, count, previewMesh);
     }
 
     // --- RESET ENGINE GRAPHICS STATE FOR THE REST OF THE UI ---
@@ -593,26 +597,26 @@ void DrawPlayerLevel() {
         buttonCreate.draw();
         buttonDelete.draw();
         buttonToLevelSelector.draw();
-        MapPreviewDraw();
+        mapPreviewDraw();
     }
 
     confirmationSystem.draw();
 
-    animManager.DrawAll();
+    animManager.drawAll();
     g_debugSystem.drawAll();
 }
 
-void FreePlayerLevel() {
-    MenuBackground::Free();
-    lsVfxSystem.Free();
+void freePlayerLevel() {
+    MenuBackground::free();
+    lsVfxSystem.free();
 
     g_debugSystem.clearScene();
-    animManager.FreeAll();
+    animManager.freeAll();
 
-    lsCollectibleSystem.Free();
+    lsCollectibleSystem.free();
 }
 
-void UnloadPlayerLevel() {
+void unloadPlayerLevel() {
 
     for (int i = 0; i < numPlayerLevels; ++i) {
         levelButtonPool_[i].unload();
@@ -666,11 +670,11 @@ void UnloadPlayerLevel() {
     }
 
     // Unload destructible background
-    MenuBackground::Unload();
+    MenuBackground::unload();
 
     confirmationSystem.unload();
 
-    animManager.FreeAll();
+    animManager.freeAll();
 }
 
 // =========================================================
@@ -678,8 +682,8 @@ void UnloadPlayerLevel() {
 //              Map Preview Functions
 //
 // =========================================================
-static void MapPreviewLoad() {
-    previewMesh = CreateRectMesh();
+static void mapPreviewLoad() {
+    previewMesh = createRectMesh();
     defaultPreviewTex = AEGfxTextureLoad("Assets/Previews/Empty.png");
     // Preload all preview images
     for (int i = 0; i < static_cast<int>(Level::None); ++i) {
@@ -688,7 +692,7 @@ static void MapPreviewLoad() {
         previewTextures.push_back(AEGfxTextureLoad(filePath.c_str()));
     }
 }
-static void MapPreviewUpdate(f32 deltaTime) {
+static void mapPreviewUpdate(f32 deltaTime) {
     hoveredLevelIndex = -1;
     for (int i = 0; i < levelButtonPool_.size(); ++i) {
         levelButtonPool_[i].updateTransform();
@@ -700,19 +704,19 @@ static void MapPreviewUpdate(f32 deltaTime) {
     }
     if (hoveredLevelIndex != -1) {
         displayLevelIndex = hoveredLevelIndex; // Remember what we are looking at
-        previewFader.FadeIn();                 // Tell it to animate in
+        previewFader.fadeIn();                 // Tell it to animate in
     } else {
-        previewFader.FadeOut(); // Tell it to animate out
+        previewFader.fadeOut(); // Tell it to animate out
     }
 
     // Process the math for this frame
-    previewFader.Update(deltaTime);
+    previewFader.update(deltaTime);
 }
 
-static void MapPreviewDraw() {
+static void mapPreviewDraw() {
     // If mouse is within a button, hoveredLevelIndex = button level.
     // Ensure that hLI is < number of elements within the vector container
-    if (previewFader.IsVisible() && displayLevelIndex != -1 &&
+    if (previewFader.isVisible() && displayLevelIndex != -1 &&
         displayLevelIndex < previewTextures.size()) {
 
         // Set current texture pointer to point to the current hovered level's image preview
@@ -761,7 +765,7 @@ static void MapPreviewDraw() {
             AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
             AEGfxSetBlendMode(AE_GFX_BM_BLEND);
             // Set alpha based on UIFader value
-            AEGfxSetTransparency(previewFader.GetAlpha());
+            AEGfxSetTransparency(previewFader.getAlpha());
 
             // Transform matrix for the image
             AEMtx33 scale, trans, world;
@@ -781,7 +785,7 @@ static void MapPreviewDraw() {
 //
 // =========================================================
 // Static helper to draw placeholder collectible slots below a level button
-static void DrawPlaceholderSlots(AEVec2 buttonPos, int collectedCount, AEGfxVertexList* mesh) {
+static void drawPlaceholderSlots(AEVec2 buttonPos, int collectedCount, AEGfxVertexList* mesh) {
     // Only need to draw if they haven't collected everything
     if (collectedCount >= 3)
         return;

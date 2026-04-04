@@ -14,11 +14,17 @@
 *//*______________________________________________________________________*/
 
 #pragma once
-#include "AEEngine.h"
+
+// Standard library
+#include <vector>
+
+// Third-party
+#include <AEEngine.h>
+
+// Project
 #include "Components.h"
 #include "FluidSystem.h"
 #include "VFXSystem.h"
-#include <vector>
 
 // Forward declarations instead of includes
 class StartEndPoint;
@@ -75,23 +81,23 @@ private:
     float globalTimer_{0.0f};
 
 public:
-    void Load(s8 font);
-    void Unload();
-    void Initialize();
-    void LoadLevelMoss(AEVec2 pos, MossType type);
-    void Update(f32 dt, std::vector<FluidParticle>& particlePool,
+    void load(s8 font);
+    void unload();
+    void initialize();
+    void loadLevelMoss(AEVec2 pos, MossType type);
+    void update(f32 dt, std::vector<FluidParticle>& particlePool,
                 StartEndPoint& startEndPointSystem, VFXSystem& vfx);
-    void Draw();
-    void DrawPreview();
-    void Free();
+    void draw();
+    void drawPreview();
+    void free();
 
     void spawnAtMousePos();
     void destroyAtMousePos();
 
-    std::vector<Moss>& GetMosses() { return mosses_; }
+    std::vector<Moss>& getMosses() { return mosses_; }
 
 private:
-    void CreateMeshes();
-    bool CheckCollisionWithWater(const Moss& moss, const FluidParticle& particle);
-    void DrawMoss(const Moss& m);
+    void createMeshes();
+    bool checkCollisionWithWater(const Moss& moss, const FluidParticle& particle);
+    void drawMoss(const Moss& m);
 };

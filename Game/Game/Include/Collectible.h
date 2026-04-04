@@ -13,12 +13,18 @@
             Technology is prohibited.
 *//*______________________________________________________________________*/
 #pragma once
-#include "AEEngine.h"
+
+// Standard library
+#include <vector>
+
+// Third-party
+#include <AEEngine.h>
+
+// Project
 #include "Button.h"
 #include "Components.h"
 #include "FluidSystem.h"
 #include "VFXSystem.h"
-#include <vector>
 
 enum class CollectibleType {
     Star, // Yellow
@@ -60,27 +66,27 @@ private:
     float globalTimer_{0.0f};
 
 public:
-    void Load(s8 font);
-    void Initialize();
-    void LoadLevelCollectibles(AEVec2 pos, CollectibleType type);
-    void Update(f32 dt, std::vector<FluidParticle>& particlePool, VFXSystem& vfxSystem);
+    void load(s8 font);
+    void initialize();
+    void loadLevelCollectibles(AEVec2 pos, CollectibleType type);
+    void update(f32 dt, std::vector<FluidParticle>& particlePool, VFXSystem& vfxSystem);
 
-    void Draw();
-    void DrawPreview();
-    void DrawUI();
-    void Free();
+    void draw();
+    void drawPreview();
+    void drawUI();
+    void free();
 
     void spawnAtMousePos();
     void destroyAtMousePos();
 
-    bool CheckAllCollected() const { return collectedCount_ >= totalCollectibles_; }
-    int GetCollectedCount() const { return collectedCount_; }
-    int GetTotalCount() const { return totalCollectibles_; }
-    std::vector<Collectible>& GetCollectibles() { return collectibles_; }
-    void ResetCollection();
+    bool checkAllCollected() const { return collectedCount_ >= totalCollectibles_; }
+    int getCollectedCount() const { return collectedCount_; }
+    int getTotalCount() const { return totalCollectibles_; }
+    std::vector<Collectible>& getCollectibles() { return collectibles_; }
+    void resetCollection();
 
 private:
-    void CreateMeshes();
-    bool CheckCollisionWithWater(const Collectible& collectible, const FluidParticle& particle);
-    void DrawCollectible(const Collectible& c);
+    void createMeshes();
+    bool checkCollisionWithWater(const Collectible& collectible, const FluidParticle& particle);
+    void drawCollectible(const Collectible& c);
 };

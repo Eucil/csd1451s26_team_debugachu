@@ -15,12 +15,15 @@
 *//*______________________________________________________________________*/
 #include "LevelManager.h"
 
+// Standard library
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 
+// Third-party
 #include <json/json.h>
 
+// Project
 #include "ConfigManager.h"
 #include "Moss.h"
 #include "Utils.h"
@@ -79,7 +82,7 @@ void LevelManager::initEditorUI(s8 font) {
     updateInnerButtonPosition();
 
     // Setup brush preview
-    circleMesh_ = CreateCircleMesh(20, 0.5f);
+    circleMesh_ = createCircleMesh(20, 0.5f);
 
     savingRoot_ = Json::Value();
     readingRoot_ = Json::Value();
@@ -91,7 +94,7 @@ void LevelManager::setLevelEditorMode(EditorMode mode) { levelEditorMode_ = mode
 
 int LevelManager::getCurrentLevel() const { return currentLevel_; }
 
-void LevelManager::SetCurrentLevel(int level) { currentLevel_ = level; }
+void LevelManager::setCurrentLevel(int level) { currentLevel_ = level; }
 
 GameBlock LevelManager::getCurrentGameBlock() const { return currentGameBlock_; }
 
@@ -426,7 +429,7 @@ void LevelManager::parseMossInfo(MossSystem& mossSystem) {
             for (Json::ArrayIndex i = 0; i < mosses.size(); ++i) {
                 AEVec2 pos{mosses[i]["posX"].asFloat(), mosses[i]["posY"].asFloat()};
                 MossType type = static_cast<MossType>(mosses[i]["type"].asInt());
-                mossSystem.LoadLevelMoss(pos, type);
+                mossSystem.loadLevelMoss(pos, type);
 
                 // Optional: restore health if saved
                 // You'd need to modify LoadLevelMoss to accept more parameters
@@ -438,7 +441,7 @@ void LevelManager::parseMossInfo(MossSystem& mossSystem) {
 void LevelManager::savePortalInfo(PortalSystem& portalSystem) {
     Json::Value portalsJsonArray(Json::arrayValue);
 
-    for (const auto& portal : portalSystem.GetPortals()) {
+    for (const auto& portal : portalSystem.getPortals()) {
         Json::Value portalJson;
         portalJson["posX"] = portal->transform_.pos_.x;
         portalJson["posY"] = portal->transform_.pos_.y;
@@ -624,7 +627,7 @@ void LevelManager::parseStartEndInfo(StartEndPoint& startEndPointSystem) {
                 f32 rotationRad = startPointsJson[i]["rotation"].asFloat();
                 auto type = static_cast<StartEndType>(startPointsJson[i]["type"].asInt());
                 auto dir = static_cast<GoalDirection>(startPointsJson[i]["direction"].asInt());
-                startEndPointSystem.SetupPoint(pos, scale, rotationRad, type, dir);
+                startEndPointSystem.setupPoint(pos, scale, rotationRad, type, dir);
             }
         } else {
             std::cout << "Start points not found in JSON\n";
@@ -638,7 +641,7 @@ void LevelManager::parseStartEndInfo(StartEndPoint& startEndPointSystem) {
             f32 rotationRad = endPointJson["rotation"].asFloat();
             auto type = static_cast<StartEndType>(endPointJson["type"].asInt());
             auto dir = static_cast<GoalDirection>(endPointJson["direction"].asInt());
-            startEndPointSystem.SetupPoint(pos, scale, rotationRad, type, dir);
+            startEndPointSystem.setupPoint(pos, scale, rotationRad, type, dir);
         } else {
             std::cout << "End point not found in JSON\n";
         }
@@ -659,7 +662,7 @@ void LevelManager::parseCollectibleInfo(CollectibleSystem& collectibleSystem) {
                 AEVec2 pos{collectibles[i]["posX"].asFloat(), collectibles[i]["posY"].asFloat()};
                 CollectibleType type =
                     static_cast<CollectibleType>(collectibles[i]["type"].asInt());
-                collectibleSystem.LoadLevelCollectibles(pos, type);
+                collectibleSystem.loadLevelCollectibles(pos, type);
             }
         } else {
             std::cout << "Collectibles info not found in JSON\n";
@@ -684,7 +687,7 @@ void LevelManager::parsePortalInfo(PortalSystem& portalSystem) {
                 f32 rotationRad = portalsJson[i]["rotation"].asFloat();
                 f32 rotationDeg = AERadToDeg(rotationRad);
 
-                portalSystem.SetupPortal(pos, scale, rotationDeg);
+                portalSystem.setupPortal(pos, scale, rotationDeg);
             }
         } else {
             std::cout << "Portals not found in JSON\n";
@@ -693,7 +696,7 @@ void LevelManager::parsePortalInfo(PortalSystem& portalSystem) {
 }
 
 void LevelManager::drawBrushPreview(TerrainMaterial terrainType, f32 radius_) {
-    AEVec2 mousePos = GetMouseWorldPos();
+    AEVec2 mousePos = getMouseWorldPos();
 
     // Set up world matrix
     AEMtx33 scaleMtx, rotMtx, transMtx, worldMtx;

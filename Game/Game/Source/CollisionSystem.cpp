@@ -15,7 +15,7 @@
 *//*______________________________________________________________________*/
 #include "CollisionSystem.h"
 
-u32 CollisionSystem::s_collisionCount_ = 0;
+u32 CollisionSystem::collisionCount_ = 0;
 
 void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& fluidSystem, f32 dt) {
     using BucketEntry = std::pair<FluidType, u32>; // (type, index)
@@ -99,11 +99,11 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
                     continue;
 
                 for (const BucketEntry& a : fluidGrid[cell]) {
-                    FluidParticle& fluidParticleA = fluidSystem.GetParticlePool(a.first)[a.second];
+                    FluidParticle& fluidParticleA = fluidSystem.getParticlePool(a.first)[a.second];
 
                     for (const BucketEntry& b : neighbourParticles) {
                         FluidParticle& fluidParticleB =
-                            fluidSystem.GetParticlePool(b.first)[b.second];
+                            fluidSystem.getParticlePool(b.first)[b.second];
 
                         // Memory address comparison ensures each pair (A,B) is only
                         // resolved once. Without this, we would resolve (A,B) when A
@@ -164,7 +164,7 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
                     // Loops through every particle within the selected cell
                     for (const BucketEntry& a : fluidGrid[cell]) {
                         FluidParticle& fluidParticleA =
-                            fluidSystem.GetParticlePool(a.first)[a.second];
+                            fluidSystem.getParticlePool(a.first)[a.second];
 
                         // Returns contact info based on whether there is collision detected or not
                         // (If not, nothing happens at all)
@@ -689,7 +689,7 @@ void CollisionSystem::buildGrid(std::vector<std::vector<BucketEntry>>& fluidGrid
 
     for (u32 t = 0; t < static_cast<u32>(FluidType::Count); ++t) {
         std::vector<FluidParticle>& particlePool =
-            fluidSystem.GetParticlePool(static_cast<FluidType>(t));
+            fluidSystem.getParticlePool(static_cast<FluidType>(t));
 
         for (size_t pIdx = 0; pIdx < particlePool.size(); ++pIdx) {
             FluidParticle& particle = particlePool[pIdx];

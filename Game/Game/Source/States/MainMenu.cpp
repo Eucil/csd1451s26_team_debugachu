@@ -15,21 +15,21 @@
 *//*______________________________________________________________________*/
 #include "States/MainMenu.h"
 
+// Standard library
 #include <iostream>
 
+// Third-party
 #include <AEEngine.h>
 
-#include "DebugSystem.h"
-#include "MenuBackground.h" // shared background
-#include "Utils.h"
-// Destructible Terrain
-#include "AudioSystem.h"
-
-// UI includes
+// Project
 #include "Animations.h"
+#include "AudioSystem.h"
 #include "Button.h"
 #include "Confirmation.h"
+#include "DebugSystem.h"
 #include "GameStateManager.h"
+#include "MenuBackground.h"
+#include "Utils.h"
 
 // ----------------------------------------------------------------------------
 // UI-only state  (background lives in MenuBackground)
@@ -53,11 +53,11 @@ static UIFader someOtherCoolAnimation;
 
 static ConfirmationSystem confirmationSystem;
 
-void LoadMainMenu() {
+void loadMainMenu() {
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
     // Load the shared animated background (terrain, fluid, portals, etc.)
-    MenuBackground::Load();
+    MenuBackground::load();
 
     // Load fonts for UI
     titleFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 72);
@@ -79,9 +79,9 @@ void LoadMainMenu() {
     confirmationSystem.hide();
 }
 
-void InitializeMainMenu() {
+void initializeMainMenu() {
     // Initialize the shared background simulation
-    MenuBackground::Initialize();
+    MenuBackground::initialize();
 
     // Initialize UI buttons from JSON
     startButton.initFromJson("main_menu_buttons", "Start");
@@ -100,16 +100,16 @@ void InitializeMainMenu() {
     titleText.font_ = titleFont;
 
     // Animations
-    animManager.Clear();
-    animManager.Add(&screenFader);
-    animManager.Add(&someOtherCoolAnimation);
-    animManager.InitializeAll();
+    animManager.clear();
+    animManager.add(&screenFader);
+    animManager.add(&someOtherCoolAnimation);
+    animManager.initializeAll();
 
     // Confirmation System
     confirmationSystem.init(buttonFont);
 }
 
-void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
+void updateMainMenu(GameStateManager& GSM, f32 deltaTime) {
     if (!g_debugSystem.isOpen()) {
         if (AEInputCheckTriggered(AEVK_Z)) {
             g_debugSystem.open();
@@ -129,22 +129,22 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
                 if (startButton.checkMouseClick()) {
                     std::cout << "Start button clicked - Going to Level Selector\n";
 
-                    screenFader.StartFadeOut(&GSM, StateId::LevelSelector);
+                    screenFader.startFadeOut(&GSM, StateId::LevelSelector);
                 }
                 if (howToPlayButton.checkMouseClick()) {
-                    screenFader.StartFadeOut(&GSM, StateId::Controls);
+                    screenFader.startFadeOut(&GSM, StateId::Controls);
                 }
 
                 // Settings button
                 if (settingsButton.checkMouseClick()) {
                     std::cout << "Settings button clicked\n";
-                    screenFader.StartFadeOut(&GSM, StateId::Settings);
+                    screenFader.startFadeOut(&GSM, StateId::Settings);
                 }
 
                 // Credits button
                 if (creditsButton.checkMouseClick()) {
                     std::cout << "Credits button clicked\n";
-                    screenFader.StartFadeOut(&GSM, StateId::Credits);
+                    screenFader.startFadeOut(&GSM, StateId::Credits);
                 }
                 if (quitButton.checkMouseClick()) {
                     confirmationSystem.show();
@@ -155,7 +155,7 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
 
         if (confirmationSystem.confirmationYesClicked()) {
             if (confirmationSystem.getTask() == ConfirmationTask::Quit) {
-                screenFader.StartFadeOut(&GSM, StateId::Quit);
+                screenFader.startFadeOut(&GSM, StateId::Quit);
             }
         }
         if (confirmationSystem.confirmationNoClicked()) {
@@ -167,7 +167,7 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
         // Left-click held: destroy dirt + VFX + audio
         // ------------------------------------------------------------
         if (AEInputCheckCurr(AEVK_LBUTTON)) {
-            bool hitDirt = MenuBackground::DestroyDirtAtMouse(20.0f);
+            bool hitDirt = MenuBackground::destroyDirtAtMouse(20.0f);
             if (hitDirt) {
                 g_audioSystem.playSound("dirt_break", "sfx", 0.5f, 1.0f);
             }
@@ -181,7 +181,7 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
         quitButton.updateTransform();
 
         // Update shared background (fluid, portals, collectibles, VFX)
-        MenuBackground::Update(deltaTime);
+        MenuBackground::update(deltaTime);
     } else {
         if (AEInputCheckTriggered(AEVK_Z)) {
             g_debugSystem.close();
@@ -189,14 +189,14 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
         g_debugSystem.update();
     }
 
-    animManager.UpdateAll(deltaTime);
+    animManager.updateAll(deltaTime);
 
     confirmationSystem.update();
 }
 
-void DrawMainMenu() {
+void drawMainMenu() {
     // Draw shared background (terrain, fluid, portals, collectibles, VFX)
-    MenuBackground::Draw();
+    MenuBackground::draw();
 
     // Draw UI on top
     if (confirmationSystem.isShowing()) {
@@ -218,19 +218,19 @@ void DrawMainMenu() {
 
     confirmationSystem.draw();
 
-    animManager.DrawAll();
+    animManager.drawAll();
     g_debugSystem.drawAll();
 }
 
-void FreeMainMenu() {
+void freeMainMenu() {
 
-    animManager.FreeAll();
-    MenuBackground::Free();
+    animManager.freeAll();
+    MenuBackground::free();
 }
 
-void UnloadMainMenu() {
+void unloadMainMenu() {
     // Unload shared GPU assets
-    MenuBackground::Unload();
+    MenuBackground::unload();
 
     // Unload button assets
     startButton.unload();

@@ -15,13 +15,14 @@
 *//*______________________________________________________________________*/
 #pragma once
 
+// Third-party
 #include <AEEngine.h>
 
 class GameStateManager;
 
-void LoadControls();
-void InitializeControls();
-void UpdateControls(GameStateManager& GSM, f32 deltaTime);
-void DrawControls();
-void FreeControls();
-void UnloadControls();
+void loadControls();
+void initializeControls();
+void updateControls(GameStateManager& GSM, f32 deltaTime);
+void drawControls();
+void freeControls();
+void unloadControls();

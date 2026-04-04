@@ -14,10 +14,12 @@
 *//*______________________________________________________________________*/
 #pragma once
 
+// Standard library
 #include <string>
 #include <unordered_map>
 #include <vector>
 
+// Third-party
 #include <AEEngine.h>
 #include <json/json.h>
 

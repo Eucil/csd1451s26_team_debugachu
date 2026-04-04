@@ -14,6 +14,7 @@
 *//*______________________________________________________________________*/
 #pragma once
 
+// Third-party
 #include <AEEngine.h>
 
 class GameStateManager;
@@ -33,9 +34,9 @@ class GameStateManager;
 // Pressing any key or clicking skips directly to the MainMenu.
 // ----------------------------------------------------------------------------
 
-void LoadLogoScreen();
-void InitializeLogoScreen();
-void UpdateLogoScreen(GameStateManager& GSM, f32 deltaTime);
-void DrawLogoScreen();
-void FreeLogoScreen();
-void UnloadLogoScreen();
+void loadLogoScreen();
+void initializeLogoScreen();
+void updateLogoScreen(GameStateManager& GSM, f32 deltaTime);
+void drawLogoScreen();
+void freeLogoScreen();
+void unloadLogoScreen();

@@ -20,39 +20,39 @@
 
 // =========================================================
 //
-// IAnimation::Initialize()
+// IAnimation::initialize()
 //
 // - Provides a default implementation of the Initialize interface.
 //
 // =========================================================
-void IAnimation::Initialize() {}
+void IAnimation::initialize() {}
 
 // =========================================================
 //
-// IAnimation::Update()
+// IAnimation::update()
 //
 // - Provides a default implementation of the Update interface.
 //
 // =========================================================
-void IAnimation::Update(f32 /*dt*/) {}
+void IAnimation::update(f32 /*dt*/) {}
 
 // =========================================================
 //
-// IAnimation::Draw()
+// IAnimation::draw()
 //
 // - Provides a default implementation of the Draw interface.
 //
 // =========================================================
-void IAnimation::Draw() {}
+void IAnimation::draw() {}
 
 // =========================================================
 //
-// IAnimation::Free()
+// IAnimation::free()
 //
 // - Provides a default implementation of the Free interface.
 //
 // =========================================================
-void IAnimation::Free() {}
+void IAnimation::free() {}
 
 // =========================================================
 //
@@ -62,7 +62,7 @@ void IAnimation::Free() {}
 // - Appends the animation pointer to the internal animations list.
 //
 // =========================================================
-void AnimationManager::Add(IAnimation* anim) {
+void AnimationManager::add(IAnimation* anim) {
     if (anim) {
         animations_.push_back(anim);
     }
@@ -70,57 +70,57 @@ void AnimationManager::Add(IAnimation* anim) {
 
 // =========================================================
 //
-// AnimationManager::InitializeAll()
+// AnimationManager::initializeAll()
 //
 // - Iterates over every registered animation pointer.
-// - Calls Initialize() on each animation in order of registration.
+// - Calls initialize() on each animation in order of registration.
 //
 // =========================================================
-void AnimationManager::InitializeAll() {
+void AnimationManager::initializeAll() {
     for (auto* anim : animations_) {
-        anim->Initialize();
+        anim->initialize();
     }
 }
 
 // =========================================================
 //
-// AnimationManager::UpdateAll()
+// AnimationManager::updateAll()
 //
 // - Iterates over every registered animation pointer.
-// - Calls Update() with the given delta time on each animation.
+// - Calls update() with the given delta time on each animation.
 //
 // =========================================================
-void AnimationManager::UpdateAll(f32 dt) {
+void AnimationManager::updateAll(f32 dt) {
     for (auto* anim : animations_) {
-        anim->Update(dt);
+        anim->update(dt);
     }
 }
 
 // =========================================================
 //
-// AnimationManager::DrawAll()
+// AnimationManager::drawAll()
 //
 // - Iterates over every registered animation pointer.
-// - Calls Draw() on each animation in order of registration.
+// - Calls draw() on each animation in order of registration.
 //
 // =========================================================
-void AnimationManager::DrawAll() {
+void AnimationManager::drawAll() {
     for (auto* anim : animations_) {
-        anim->Draw();
+        anim->draw();
     }
 }
 
 // =========================================================
 //
-// AnimationManager::FreeAll()
+// AnimationManager::freeAll()
 //
 // - Iterates over every registered animation pointer.
-// - Calls Free() on each animation to release its resources.
+// - Calls free() on each animation to release its resources.
 //
 // =========================================================
-void AnimationManager::FreeAll() {
+void AnimationManager::freeAll() {
     for (auto* anim : animations_) {
-        anim->Free();
+        anim->free();
     }
 }
 
@@ -131,7 +131,7 @@ void AnimationManager::FreeAll() {
 // - Empties the internal animations list, removing all registered pointers.
 //
 // =========================================================
-void AnimationManager::Clear() { animations_.clear(); }
+void AnimationManager::clear() { animations_.clear(); }
 
 // ==========================================
 //                  UIFader
@@ -148,7 +148,7 @@ UIFader::UIFader(f32 speed) : fadeSpeed_(speed) {}
 
 // =========================================================
 //
-// UIFader::Update()
+// UIFader::update()
 //
 // - Checks whether the current alpha is below the target alpha.
 // - If below, increments current alpha by fade speed scaled to delta time.
@@ -158,7 +158,7 @@ UIFader::UIFader(f32 speed) : fadeSpeed_(speed) {}
 // - Clamps current alpha to the target if it overshoots downward.
 //
 // =========================================================
-void UIFader::Update(f32 dt) {
+void UIFader::update(f32 dt) {
     if (currentAlpha_ < targetAlpha_) {
         currentAlpha_ += fadeSpeed_ * dt;
         if (currentAlpha_ > targetAlpha_) {
@@ -174,50 +174,50 @@ void UIFader::Update(f32 dt) {
 
 // =========================================================
 //
-// UIFader::FadeIn()
+// UIFader::fadeIn()
 //
 // - Sets the target alpha to 1.0, causing the fader to animate toward full opacity.
 //
 // =========================================================
-void UIFader::FadeIn() { targetAlpha_ = 1.0f; }
+void UIFader::fadeIn() { targetAlpha_ = 1.0f; }
 
 // =========================================================
 //
-// UIFader::FadeOut()
+// UIFader::fadeOut()
 //
 // - Sets the target alpha to 0.0, causing the fader to animate toward full transparency.
 //
 // =========================================================
-void UIFader::FadeOut() { targetAlpha_ = 0.0f; }
+void UIFader::fadeOut() { targetAlpha_ = 0.0f; }
 
 
 // =========================================================
 //
-// UIFader::SetAlpha()
+// UIFader::setAlpha()
 //
 // - Assigns the provided alpha value to both current and target alpha simultaneously.
 // - Bypasses any interpolation, snapping opacity instantly to the given value.
 //
 // =========================================================
-void UIFader::SetAlpha(f32 alpha) { currentAlpha_ = targetAlpha_ = alpha; }
+void UIFader::setAlpha(f32 alpha) { currentAlpha_ = targetAlpha_ = alpha; }
 
 // =========================================================
 //
-// UIFader::GetAlpha()
+// UIFader::getAlpha()
 //
 // - Returns the current interpolated alpha value of the fader.
 //
 // =========================================================
-f32 UIFader::GetAlpha() const { return currentAlpha_; }
+f32 UIFader::getAlpha() const { return currentAlpha_; }
 
 // =========================================================
 //
-// UIFader::IsVisible()
+// UIFader::isVisible()
 //
 // - Returns true if current alpha is greater than zero, false otherwise.
 //
 // =========================================================
-bool UIFader::IsVisible() const { return currentAlpha_ > 0.0f; }
+bool UIFader::isVisible() const { return currentAlpha_ > 0.0f; }
 
 // ==========================================
 //              Screen Fader
@@ -234,7 +234,7 @@ ScreenFaderManager::ScreenFaderManager(f32 speed) : fader_(speed) {}
 
 // =========================================================
 //
-// ScreenFaderManager::Initialize()
+// ScreenFaderManager::initialize()
 //
 // - Creates the fullscreen black mesh if one does not already exist.
 // - Snaps the fader's alpha immediately to fully opaque.
@@ -242,18 +242,18 @@ ScreenFaderManager::ScreenFaderManager(f32 speed) : fader_(speed) {}
 // - Resets the isFadingOut_ flag to false.
 //
 // =========================================================
-void ScreenFaderManager::Initialize() {
+void ScreenFaderManager::initialize() {
     if (!blackMesh_) {
-        blackMesh_ = CreateRectMesh();
+        blackMesh_ = createRectMesh();
     }
-    fader_.SetAlpha(1.0f);
-    fader_.FadeOut();
+    fader_.setAlpha(1.0f);
+    fader_.fadeOut();
     isFadingOut_ = false;
 }
 
 // =========================================================
 //
-// ScreenFaderManager::StartFadeOut()
+// ScreenFaderManager::startFadeOut()
 //
 // - Checks that a fade-out is not already in progress before proceeding.
 // - Stores the provided GameStateManager pointer for use upon fade completion.
@@ -262,27 +262,27 @@ void ScreenFaderManager::Initialize() {
 // - Begins fading the screen to fully opaque black.
 //
 // =========================================================
-void ScreenFaderManager::StartFadeOut(GameStateManager* gsm, StateId target) {
+void ScreenFaderManager::startFadeOut(GameStateManager* gsm, StateId target) {
     if (!isFadingOut_) {
         gsm_ = gsm;
         targetState_ = target;
         isFadingOut_ = true;
-        fader_.FadeIn();
+        fader_.fadeIn();
     }
 }
 
 // =========================================================
 //
-// ScreenFaderManager::Update()
+// ScreenFaderManager::update()
 //
 // - Advances the internal UIFader by one timestep using the given delta time.
 // - Checks if a fade-out is in progress and the alpha has reached full opacity.
 // - If both conditions are met, assigns the target state to the GameStateManager.
 //
 // =========================================================
-void ScreenFaderManager::Update(f32 dt) {
-    fader_.Update(dt);
-    if (isFadingOut_ && fader_.GetAlpha() >= 1.0f) {
+void ScreenFaderManager::update(f32 dt) {
+    fader_.update(dt);
+    if (isFadingOut_ && fader_.getAlpha() >= 1.0f) {
         if (gsm_) {
             gsm_->nextState_ = targetState_;
         }
@@ -291,7 +291,7 @@ void ScreenFaderManager::Update(f32 dt) {
 
 // =========================================================
 //
-// ScreenFaderManager::Draw()
+// ScreenFaderManager::draw()
 //
 // - Checks that the fader is visible and a valid mesh exists before drawing.
 // - Sets the render mode to color and blend mode to alpha blend.
@@ -303,11 +303,11 @@ void ScreenFaderManager::Update(f32 dt) {
 // - Applies the world transform and draws the fullscreen black mesh.
 //
 // =========================================================
-void ScreenFaderManager::Draw() {
-    if (fader_.IsVisible() && blackMesh_) {
+void ScreenFaderManager::draw() {
+    if (fader_.isVisible() && blackMesh_) {
         AEGfxSetRenderMode(AE_GFX_RM_COLOR);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxSetTransparency(fader_.GetAlpha());
+        AEGfxSetTransparency(fader_.getAlpha());
         AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
 
         f32 w = static_cast<f32>(AEGfxGetWindowWidth());
@@ -325,14 +325,14 @@ void ScreenFaderManager::Draw() {
 
 // =========================================================
 //
-// ScreenFaderManager::Free()
+// ScreenFaderManager::free()
 //
 // - Checks that the black mesh pointer is valid before attempting to free it.
 // - Frees the GPU mesh resource.
 // - Nulls out the mesh pointer to prevent dangling references.
 //
 // =========================================================
-void ScreenFaderManager::Free() {
+void ScreenFaderManager::free() {
     if (blackMesh_) {
         AEGfxMeshFree(blackMesh_);
         blackMesh_ = nullptr;
@@ -341,9 +341,9 @@ void ScreenFaderManager::Free() {
 
 // =========================================================
 //
-// ScreenFaderManager::IsFadingOut()
+// ScreenFaderManager::isFadingOut()
 //
 // - Returns the current state of the isFadingOut_ flag.
 //
 // =========================================================
-bool ScreenFaderManager::IsFadingOut() const { return isFadingOut_; }
+bool ScreenFaderManager::isFadingOut() const { return isFadingOut_; }

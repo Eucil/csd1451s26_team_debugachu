@@ -14,10 +14,13 @@
 *//*______________________________________________________________________*/
 #pragma once
 
+// Standard library
 #include <vector>
 
+// Third-party
 #include <AEEngine.h>
 
+// Project
 #include "Components.h"
 #include "Utils.h"
 enum class VFXType {
@@ -75,28 +78,28 @@ class VFXSystem {
 public:
     f32 vfxSpawnTimer_{0.0f};
 
-    void Initialize(u32 maxParticles = 800, u32 maxEmitters = 20);
+    void initialize(u32 maxParticles = 800, u32 maxEmitters = 20);
 
-    void Update(f32 dt);
+    void update(f32 dt);
 
-    void Draw();
+    void draw();
 
-    void Free();
+    void free();
 
-    std::vector<VFXParticle>& GetParticlePool(VFXType type);
+    std::vector<VFXParticle>& getParticlePool(VFXType type);
 
-    void SetEmitterConfig(VFXType type, const EmitterConfig& config);
+    void setEmitterConfig(VFXType type, const EmitterConfig& config);
 
-    void SetGraphicsConfig(VFXType type, const Graphics& gfxConfig);
+    void setGraphicsConfig(VFXType type, const Graphics& gfxConfig);
 
-    void SpawnVFX(VFXType type, AEVec2 position, f32 angleRad = 0.0f);
+    void spawnVFX(VFXType type, AEVec2 position, f32 angleRad = 0.0f);
 
     // Used together with ResetSpawnTimer
-    void SpawnContinuous(VFXType type, AEVec2 position, f32 deltaTime, f32 spawnRate = 0.1f);
+    void spawnContinuous(VFXType type, AEVec2 position, f32 deltaTime, f32 spawnRate = 0.1f);
 
-    void ResetSpawnTimer();
+    void resetSpawnTimer();
 
-    u32 GetActiveParticleCount() const {
+    u32 getActiveParticleCount() const {
         u32 count = 0;
         for (int i = 0; i < static_cast<int>(VFXType::Count); ++i) {
             for (const auto& p : vfxParticlePool_[i]) {
@@ -116,11 +119,11 @@ private:
 
     EmitterConfig emitterConfigs_[static_cast<int>(VFXType::Count)];
 
-    void InitializeEmitter(ParticleEmitter& emitter, VFXType type, AEVec2 pos, f32 angleRad);
+    void initializeEmitter(ParticleEmitter& emitter, VFXType type, AEVec2 pos, f32 angleRad);
 
-    ParticleEmitter* GetFreeEmitter();
+    ParticleEmitter* getFreeEmitter();
 
-    VFXParticle* GetFreeParticle(VFXType type);
+    VFXParticle* getFreeParticle(VFXType type);
 
-    void SpawnParticles(ParticleEmitter& emitter);
+    void spawnParticles(ParticleEmitter& emitter);
 };

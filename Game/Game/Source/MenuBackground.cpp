@@ -14,10 +14,13 @@
 *//*______________________________________________________________________*/
 #include "MenuBackground.h"
 
+// Standard library
 #include <iostream>
 
+// Third-party
 #include <AEEngine.h>
 
+// Project
 #include "AudioSystem.h"
 #include "DebugSystem.h"
 #include "FluidSystem.h"
@@ -36,14 +39,14 @@ namespace {
 // ----------------------------------------------------------------------------
 // Reference counter for Load/Unload
 // ----------------------------------------------------------------------------
-// Both MainMenu and Credits call Load() and Unload(). Without a guard,
+// Both MainMenu and Credits call load() and unload(). Without a guard,
 // navigating MainMenu -> Credits -> MainMenu would:
-//   1. Load()   (MainMenu)   -- loads textures/meshes
-//   2. Unload() (MainMenu)   -- frees them
-//   3. Load()   (Credits)    -- loads again fine
-//   4. Unload() (Credits)    -- frees again fine
-// BUT if the game state manager calls Load() for Credits BEFORE calling
-// Unload() for MainMenu, assets would be double-loaded. The ref count
+//   1. load()   (MainMenu)   -- loads textures/meshes
+//   2. unload() (MainMenu)   -- frees them
+//   3. load()   (Credits)    -- loads again fine
+//   4. unload() (Credits)    -- frees again fine
+// BUT if the game state manager calls load() for Credits BEFORE calling
+// unload() for MainMenu, assets would be double-loaded. The ref count
 // makes Load/Unload idempotent: assets are loaded exactly once and freed
 // exactly once no matter how many states share the background.
 static int loadRefCount = 0;
@@ -73,10 +76,10 @@ static PortalSystem bgPortalSystem;
 static VFXSystem bgVfxSystem;
 static CollectibleSystem bgCollectibleSystem;
 // ----------------------------------------------------------------------------
-// BgSpawnWater
+// bgSpawnWater
 // Automatically trickles water from pipe start-points on a timer.
 // ----------------------------------------------------------------------------
-static void BgSpawnWater(f32 deltaTime) {
+static void bgSpawnWater(f32 deltaTime) {
     static bool isWaiting = true;
     static f32 stateTimer = 3.5f;
     static f32 particleTimer = 0.0f;
@@ -105,7 +108,7 @@ static void BgSpawnWater(f32 deltaTime) {
                     f32 yOffset = startPoint.transform_.pos_.y -
                                   (startPoint.transform_.scale_.y / 2.f) - randRadius;
 
-                    bgFluidSystem.SpawnParticle(xOffset, yOffset, randRadius, FluidType::Water);
+                    bgFluidSystem.spawnParticle(xOffset, yOffset, randRadius, FluidType::Water);
                 }
             }
         }
@@ -123,11 +126,11 @@ static void BgSpawnWater(f32 deltaTime) {
 // MenuBackground public API
 // ----------------------------------------------------------------------------
 
-void MenuBackground::Load(int backgroundLevel) {
-    // Only load GPU assets once, no matter how many states call Load()
+void MenuBackground::load(int backgroundLevel) {
+    // Only load GPU assets once, no matter how many states call load()
     ++loadRefCount;
     if (loadRefCount > 1) {
-        std::cout << "[MenuBackground] Load() skipped (already loaded, refCount=" << loadRefCount
+        std::cout << "[MenuBackground] load() skipped (already loaded, refCount=" << loadRefCount
                   << ")\n";
         return;
     }
@@ -151,13 +154,13 @@ void MenuBackground::Load(int backgroundLevel) {
     pBgMagicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
     bg.loadFromJson("background", "Background");
 
-    std::cout << "[MenuBackground] Load() complete.\n";
+    std::cout << "[MenuBackground] load() complete.\n";
 }
 
-void MenuBackground::Initialize() {
-    bgFluidSystem.Initialize();
-    bgPortalSystem.Initialize(portalLimit);
-    bgVfxSystem.Initialize(800, 20);
+void MenuBackground::initialize() {
+    bgFluidSystem.initialize();
+    bgPortalSystem.initialize(portalLimit);
+    bgVfxSystem.initialize(800, 20);
     bgDirt =
         new Terrain(TerrainMaterial::Dirt, pBgDirtTex, {0.0f, 0.0f}, height, width, tileSize, true);
     bgStone = new Terrain(TerrainMaterial::Stone, pBgStoneTex, {0.0f, 0.0f}, height, width,
@@ -189,7 +192,7 @@ void MenuBackground::Initialize() {
     bgMagic->initCellsCollider();
     bgMagic->updateTerrain();
 
-    bgStartEndPoint.Initialize();
+    bgStartEndPoint.initialize();
     if (fileExist) {
         levelManager.parseStartEndInfo(bgStartEndPoint);
         levelManager.parsePortalInfo(bgPortalSystem);
@@ -204,20 +207,20 @@ void MenuBackground::Initialize() {
                            &bgStartEndPoint, &bgVfxSystem);
 }
 
-void MenuBackground::Update(f32 deltaTime) {
-    bgCollectibleSystem.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water),
+void MenuBackground::update(f32 deltaTime) {
+    bgCollectibleSystem.update(deltaTime, bgFluidSystem.getParticlePool(FluidType::Water),
                                bgVfxSystem);
-    bgStartEndPoint.Update(deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water), bgVfxSystem);
-    BgSpawnWater(deltaTime);
-    bgFluidSystem.Update(deltaTime, {bgDirt, bgStone});
-    bgPortalSystem.Update(
-        deltaTime, bgFluidSystem.GetParticlePool(FluidType::Water), // Fills the waterPool param
+    bgStartEndPoint.update(deltaTime, bgFluidSystem.getParticlePool(FluidType::Water), bgVfxSystem);
+    bgSpawnWater(deltaTime);
+    bgFluidSystem.update(deltaTime, {bgDirt, bgStone});
+    bgPortalSystem.update(
+        deltaTime, bgFluidSystem.getParticlePool(FluidType::Water), // Fills the waterPool param
         bgVfxSystem                                                 // Allows VFX spawning
     );
-    bgVfxSystem.Update(deltaTime);
+    bgVfxSystem.update(deltaTime);
 }
 
-void MenuBackground::Draw() {
+void MenuBackground::draw() {
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
     bg.draw();
@@ -226,11 +229,11 @@ void MenuBackground::Draw() {
     bgStone->renderTerrain();
     bgMagic->renderTerrain();
 
-    bgStartEndPoint.DrawTexture(0);
-    bgPortalSystem.Draw();
+    bgStartEndPoint.drawTexture(0);
+    bgPortalSystem.draw();
 
-    bgVfxSystem.Draw();
-    bgFluidSystem.DrawColor();
+    bgVfxSystem.draw();
+    bgFluidSystem.drawColor();
 }
 
 // ----------------------------------------------------------------------------
@@ -238,27 +241,27 @@ void MenuBackground::Draw() {
 // Delegates dirt destruction + VFX burst to the internal systems.
 // Returns true if dirt was actually removed so the caller can play audio.
 // ----------------------------------------------------------------------------
-bool MenuBackground::DestroyDirtAtMouse(f32 radius) {
+bool MenuBackground::destroyDirtAtMouse(f32 radius) {
     if (bgDirt == nullptr)
         return false;
 
     bool hitDirt = bgDirt->destroyAtMouse(radius);
 
     if (hitDirt) {
-        bgVfxSystem.SpawnContinuous(VFXType::DirtBurst, GetMouseWorldPos(), 0.016f, 0.1f);
+        bgVfxSystem.spawnContinuous(VFXType::DirtBurst, getMouseWorldPos(), 0.016f, 0.1f);
     } else {
-        bgVfxSystem.ResetSpawnTimer();
+        bgVfxSystem.resetSpawnTimer();
     }
 
     return hitDirt;
 }
 
-void MenuBackground::Free() {
+void MenuBackground::free() {
     g_debugSystem.clearScene();
-    bgFluidSystem.Free();
-    bgStartEndPoint.Free();
-    bgPortalSystem.Free();
-    bgVfxSystem.Free();
+    bgFluidSystem.free();
+    bgStartEndPoint.free();
+    bgPortalSystem.free();
+    bgVfxSystem.free();
     delete bgDirt;
     bgDirt = nullptr;
     delete bgStone;
@@ -267,16 +270,16 @@ void MenuBackground::Free() {
     bgMagic = nullptr;
 }
 
-void MenuBackground::Unload() {
+void MenuBackground::unload() {
     // Only unload GPU assets when every state that loaded them has unloaded
     if (loadRefCount <= 0) {
-        std::cout << "[MenuBackground] Unload() called with refCount <= 0, ignoring.\n";
+        std::cout << "[MenuBackground] unload() called with refCount <= 0, ignoring.\n";
         return;
     }
 
     --loadRefCount;
     if (loadRefCount > 0) {
-        std::cout << "[MenuBackground] Unload() deferred (refCount=" << loadRefCount << ")\n";
+        std::cout << "[MenuBackground] unload() deferred (refCount=" << loadRefCount << ")\n";
         return;
     }
 
@@ -297,5 +300,5 @@ void MenuBackground::Unload() {
     }
     bg.unload();
 
-    std::cout << "[MenuBackground] Unload() complete.\n";
+    std::cout << "[MenuBackground] unload() complete.\n";
 }

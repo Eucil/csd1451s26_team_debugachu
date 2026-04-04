@@ -14,11 +14,14 @@
 *//*______________________________________________________________________*/
 #include "DebugSystem.h"
 
+// Standard library
 #include <cmath>
 #include <cstdio>
 
+// Third-party
 #include <AEEngine.h>
 
+// Project
 #include "Collectible.h"
 #include "CollisionSystem.h"
 #include "Components.h"
@@ -35,11 +38,11 @@ DebugSystem g_debugSystem;
 void DebugSystem::load(s8 font) {
     font_ = font;
 
-    graphics_.mesh_ = CreateRectMesh();
-    hudMesh_ = CreateRectMesh();
-    wireRectMesh_ = CreateWireRectMesh();
-    wireCircleMesh_ = CreateWireCircleMesh(24);
-    wireLineMesh_ = CreateWireLineMesh();
+    graphics_.mesh_ = createRectMesh();
+    hudMesh_ = createRectMesh();
+    wireRectMesh_ = createWireRectMesh();
+    wireCircleMesh_ = createWireCircleMesh(24);
+    wireLineMesh_ = createWireLineMesh();
 
     buttonClose_.loadMesh();
     buttonClose_.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
@@ -294,12 +297,12 @@ void DebugSystem::drawAll() {
     u32 totalFluidParticles = 0;
     if (fluidSystem_) {
         for (int fi = 0; fi < static_cast<int>(FluidType::Count); ++fi) {
-            totalFluidParticles += fluidSystem_->GetParticleCount(static_cast<FluidType>(fi));
+            totalFluidParticles += fluidSystem_->getParticleCount(static_cast<FluidType>(fi));
         }
     }
     hudValues_["ShowFluidParticleCount"] = static_cast<float>(totalFluidParticles);
     hudValues_["ShowVfxParticleCount"] =
-        vfx_ ? static_cast<float>(vfx_->GetActiveParticleCount()) : 0.0f;
+        vfx_ ? static_cast<float>(vfx_->getActiveParticleCount()) : 0.0f;
     hudValues_["ShowCollisionCount"] =
         static_cast<float>(CollisionSystem::getLastFrameCollisionCount());
     CollisionSystem::resetCollisionCount();
@@ -368,7 +371,7 @@ void DebugSystem::drawCollectibleColliders(CollectibleSystem& system) {
     AEGfxSetTransparency(1.0f);
     AEGfxSetColorToMultiply(0.0f, 1.0f, 0.0f, 1.0f);
 
-    for (const auto& c : system.GetCollectibles()) {
+    for (const auto& c : system.getCollectibles()) {
         if (!c.active_ || c.collected_)
             continue;
         drawSingleCollider(c.transform_, c.collider_);
@@ -384,7 +387,7 @@ void DebugSystem::drawPortalColliders(PortalSystem& system) {
     AEGfxSetTransparency(1.0f);
     AEGfxSetColorToMultiply(0.0f, 1.0f, 0.0f, 1.0f);
 
-    for (const Portal* p : system.GetPortals()) {
+    for (const Portal* p : system.getPortals()) {
         drawSingleCollider(p->transform_, p->collider_);
     }
 }
@@ -474,7 +477,7 @@ void DebugSystem::drawFluidColliders(FluidSystem& fluidSystem) {
     AEGfxSetColorToMultiply(0.0f, 1.0f, 0.0f, 1.0f);
 
     for (int fi = 0; fi < static_cast<int>(FluidType::Count); ++fi) {
-        const auto& pool = fluidSystem.GetParticlePool(static_cast<FluidType>(fi));
+        const auto& pool = fluidSystem.getParticlePool(static_cast<FluidType>(fi));
         for (const auto& p : pool) {
             drawSingleCollider(p.transform_, p.collider_);
         }

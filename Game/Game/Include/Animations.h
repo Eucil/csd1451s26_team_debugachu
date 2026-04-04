@@ -25,10 +25,16 @@
 *//*______________________________________________________________________*/
 
 #pragma once
+
+// Standard library
+#include <vector>
+
+// Third-party
+#include <AEEngine.h>
+
+// Project
 #include "GameStateManager.h"
 #include "Utils.h"
-#include <AEEngine.h>
-#include <vector>
 
 // ==========================================
 // INTERFACE 
@@ -38,10 +44,10 @@ public:
     virtual ~IAnimation() = default;
 
     // Empty virtual functions declared
-    virtual void Initialize();
-    virtual void Update(f32 dt);
-    virtual void Draw();
-    virtual void Free();
+    virtual void initialize();
+    virtual void update(f32 dt);
+    virtual void draw();
+    virtual void free();
 };
 
 // ==========================================
@@ -52,12 +58,12 @@ private:
     std::vector<IAnimation*> animations_;
 
 public:
-    void Add(IAnimation* anim);
-    void InitializeAll();
-    void UpdateAll(f32 dt);
-    void DrawAll();
-    void FreeAll();
-    void Clear();
+    void add(IAnimation* anim);
+    void initializeAll();
+    void updateAll(f32 dt);
+    void drawAll();
+    void freeAll();
+    void clear();
 };
 
 // ==========================================
@@ -72,13 +78,13 @@ private:
 public:
     UIFader(f32 speed = 5.0f);
 
-    void Update(f32 dt) override;
-    void FadeIn();
-    void FadeOut();
-    void SetAlpha(f32 alpha);
+    void update(f32 dt) override;
+    void fadeIn();
+    void fadeOut();
+    void setAlpha(f32 alpha);
 
-    f32 GetAlpha() const;
-    bool IsVisible() const;
+    f32 getAlpha() const;
+    bool isVisible() const;
 };
 
 // ==========================================
@@ -95,10 +101,10 @@ private:
 public:
     ScreenFaderManager(f32 speed = 2.0f);
 
-    void Initialize() override;
-    void StartFadeOut(GameStateManager* gsm, StateId target);
-    void Update(f32 dt) override;
-    void Draw() override;
-    void Free() override;
-    bool IsFadingOut() const;
+    void initialize() override;
+    void startFadeOut(GameStateManager* gsm, StateId target);
+    void update(f32 dt) override;
+    void draw() override;
+    void free() override;
+    bool isFadingOut() const;
 };

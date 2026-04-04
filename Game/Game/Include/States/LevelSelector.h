@@ -16,18 +16,19 @@
 *//*______________________________________________________________________*/
 #pragma once
 
+// Third-party
 #include <AEEngine.h>
 
 class GameStateManager;
 
-void LoadLevelSelector();
+void loadLevelSelector();
 
-void InitializeLevelSelector();
+void initializeLevelSelector();
 
-void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime);
+void updateLevelSelector(GameStateManager& GSM, f32 deltaTime);
 
-void DrawLevelSelector();
+void drawLevelSelector();
 
-void FreeLevelSelector();
+void freeLevelSelector();
 
-void UnloadLevelSelector();
+void unloadLevelSelector();

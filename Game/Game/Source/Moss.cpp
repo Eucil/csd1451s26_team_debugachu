@@ -13,11 +13,13 @@
             Technology is prohibited.
 *//*______________________________________________________________________*/
 #include "Moss.h"
-#include "CollisionSystem.h"
 
+// Standard library
 #include <cmath>
 #include <cstdio>
 
+// Project
+#include "CollisionSystem.h"
 #include "Utils.h"
 
 Moss::Moss() {
@@ -54,7 +56,7 @@ Moss::Moss(AEVec2 pos, MossType type) {
     growthTimer_ = 0.0f;
 }
 
-void MossSystem::Load(s8 font) {
+void MossSystem::load(s8 font) {
     font_ = font;
 
     // Load moss sprite sheet (48x16, 3 frames: idle / pulsing / collected)
@@ -65,18 +67,18 @@ void MossSystem::Load(s8 font) {
     } else {
         printf("[MossSystem] OK: moss_sprite_sheet.png loaded (ptr=%p)\n", (void*)mossTexture_);
     }
-    // Note: meshes are created in Initialize(), not here.
+    // Note: meshes are created in initialize(), not here.
 }
 
-void MossSystem::Initialize() {
-    CreateMeshes();
+void MossSystem::initialize() {
+    createMeshes();
     mosses_.clear();
     globalTimer_ = 0.0f;
     mossFrameTimer_ = 0.0f;
     mossFrame_ = 0;
 }
 
-void MossSystem::CreateMeshes() {
+void MossSystem::createMeshes() {
     // -----------------------------------------------------------------
     // Moss cluster mesh  (replaces old "spiky moss")
     //
@@ -188,13 +190,13 @@ void MossSystem::CreateMeshes() {
     }
 }
 
-void MossSystem::LoadLevelMoss(AEVec2 pos, MossType type) {
+void MossSystem::loadLevelMoss(AEVec2 pos, MossType type) {
     // Ignore the type parameter and always use Spiky
     (void)type;
     mosses_.emplace_back(pos, MossType::Spiky);
 }
 
-bool MossSystem::CheckCollisionWithWater(const Moss& moss, const FluidParticle& particle) {
+bool MossSystem::checkCollisionWithWater(const Moss& moss, const FluidParticle& particle) {
     if (!moss.active_ || moss.currentHealth_ <= 0.0f)
         return false;
 
@@ -208,7 +210,7 @@ bool MossSystem::CheckCollisionWithWater(const Moss& moss, const FluidParticle& 
     return distSq < (radiusSum * radiusSum);
 }
 
-void MossSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool,
+void MossSystem::update(f32 dt, std::vector<FluidParticle>& particlePool,
                         StartEndPoint& startEndPointSystem, VFXSystem& vfx) {
     (void)startEndPointSystem;
     globalTimer_ += dt;
@@ -240,19 +242,19 @@ void MossSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool,
         AEMtx33Concat(&m.transform_.worldMtx_, &trans, &m.transform_.worldMtx_);
 
         for (auto it = particlePool.begin(); it != particlePool.end();) {
-            if (CheckCollisionWithWater(m, *it)) {
+            if (checkCollisionWithWater(m, *it)) {
                 CollisionSystem::incrementCollisionCount();
                 m.currentHealth_ -= m.absorptionRate_;
 
                 if (mossHitVfxCooldown <= 0.0f) {
-                    vfx.SpawnVFX(VFXType::LeafCollect, it->transform_.pos_);
+                    vfx.spawnVFX(VFXType::LeafCollect, it->transform_.pos_);
                     mossHitVfxCooldown = 0.1f;
                 }
 
                 it = particlePool.erase(it);
 
                 if (m.currentHealth_ <= 0.0f) {
-                    vfx.SpawnVFX(VFXType::LeafCollect, m.transform_.pos_);
+                    vfx.spawnVFX(VFXType::LeafCollect, m.transform_.pos_);
                     m.active_ = false;
                     break;
                 }
@@ -263,7 +265,7 @@ void MossSystem::Update(f32 dt, std::vector<FluidParticle>& particlePool,
     }
 }
 
-void MossSystem::DrawMoss(const Moss& m) {
+void MossSystem::drawMoss(const Moss& m) {
     if (!m.active_ || m.currentHealth_ <= 0.0f)
         return;
 
@@ -349,8 +351,8 @@ void MossSystem::DrawMoss(const Moss& m) {
     }
 }
 
-void MossSystem::DrawPreview() {
-    AEVec2 mousePos = GetMouseWorldPos();
+void MossSystem::drawPreview() {
+    AEVec2 mousePos = getMouseWorldPos();
 
     AEMtx33 scaleMtx, rotMtx, transMtx, worldMtx;
     AEMtx33Scale(&scaleMtx, 40.0f, 40.0f);
@@ -367,13 +369,13 @@ void MossSystem::DrawPreview() {
     AEGfxMeshDraw(spikyMossMesh_, AE_GFX_MDM_TRIANGLES);
 }
 
-void MossSystem::Draw() {
+void MossSystem::draw() {
     for (const auto& m : mosses_) {
-        DrawMoss(m);
+        drawMoss(m);
     }
 }
 
-void MossSystem::Free() {
+void MossSystem::free() {
     if (spikyMossMesh_) {
         AEGfxMeshFree(spikyMossMesh_);
         spikyMossMesh_ = nullptr;
@@ -397,7 +399,7 @@ void MossSystem::Free() {
     mosses_.clear();
 }
 
-void MossSystem::Unload() {
+void MossSystem::unload() {
     if (mossTexture_) {
         AEGfxTextureUnload(mossTexture_);
         mossTexture_ = nullptr;
@@ -405,12 +407,12 @@ void MossSystem::Unload() {
 }
 
 void MossSystem::spawnAtMousePos() {
-    AEVec2 mousePos = GetMouseWorldPos();
+    AEVec2 mousePos = getMouseWorldPos();
     mosses_.emplace_back(mousePos, MossType::Spiky);
 }
 
 void MossSystem::destroyAtMousePos() {
-    AEVec2 mousePos = GetMouseWorldPos();
+    AEVec2 mousePos = getMouseWorldPos();
     float mouseX = mousePos.x;
     float mouseY = mousePos.y;
 

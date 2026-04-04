@@ -16,10 +16,12 @@
 *//*______________________________________________________________________*/
 #pragma once
 
+// Third-party
 #include <AEEngine.h>
 
-#include "States/Credits.h"
+// Project
 #include "States/Controls.h"
+#include "States/Credits.h"
 #include "States/Level.h"
 #include "States/LevelSelector.h"
 #include "States/LogoScreen.h"
@@ -65,52 +67,52 @@ public:
     void update(StateId updateStateId) {
         switch (updateStateId) {
         case StateId::LogoScreen:
-            fpLoad_ = LoadLogoScreen;
-            fpInitialize_ = InitializeLogoScreen;
-            fpUpdate_ = UpdateLogoScreen;
-            fpDraw_ = DrawLogoScreen;
-            fpFree_ = FreeLogoScreen;
-            fpUnload_ = UnloadLogoScreen;
+            fpLoad_ = loadLogoScreen;
+            fpInitialize_ = initializeLogoScreen;
+            fpUpdate_ = updateLogoScreen;
+            fpDraw_ = drawLogoScreen;
+            fpFree_ = freeLogoScreen;
+            fpUnload_ = unloadLogoScreen;
             break;
         case StateId::MainMenu:
-            fpLoad_ = LoadMainMenu;
-            fpInitialize_ = InitializeMainMenu;
-            fpUpdate_ = UpdateMainMenu;
-            fpDraw_ = DrawMainMenu;
-            fpFree_ = FreeMainMenu;
-            fpUnload_ = UnloadMainMenu;
+            fpLoad_ = loadMainMenu;
+            fpInitialize_ = initializeMainMenu;
+            fpUpdate_ = updateMainMenu;
+            fpDraw_ = drawMainMenu;
+            fpFree_ = freeMainMenu;
+            fpUnload_ = unloadMainMenu;
             break;
         case StateId::LevelSelector:
-            fpLoad_ = LoadLevelSelector;
-            fpInitialize_ = InitializeLevelSelector;
-            fpUpdate_ = UpdateLevelSelector;
-            fpDraw_ = DrawLevelSelector;
-            fpFree_ = FreeLevelSelector;
-            fpUnload_ = UnloadLevelSelector;
+            fpLoad_ = loadLevelSelector;
+            fpInitialize_ = initializeLevelSelector;
+            fpUpdate_ = updateLevelSelector;
+            fpDraw_ = drawLevelSelector;
+            fpFree_ = freeLevelSelector;
+            fpUnload_ = unloadLevelSelector;
             break;
         case StateId::PlayerLevel:
-            fpLoad_ = LoadPlayerLevel;
-            fpInitialize_ = InitializePlayerLevel;
-            fpUpdate_ = UpdatePlayerLevel;
-            fpDraw_ = DrawPlayerLevel;
-            fpFree_ = FreePlayerLevel;
-            fpUnload_ = UnloadPlayerLevel;
+            fpLoad_ = loadPlayerLevel;
+            fpInitialize_ = initializePlayerLevel;
+            fpUpdate_ = updatePlayerLevel;
+            fpDraw_ = drawPlayerLevel;
+            fpFree_ = freePlayerLevel;
+            fpUnload_ = unloadPlayerLevel;
             break;
         case StateId::Level:
-            fpLoad_ = LoadLevel;
-            fpInitialize_ = InitializeLevel;
-            fpUpdate_ = UpdateLevel;
-            fpDraw_ = DrawLevel;
-            fpFree_ = FreeLevel;
-            fpUnload_ = UnloadLevel;
+            fpLoad_ = loadLevel;
+            fpInitialize_ = initializeLevel;
+            fpUpdate_ = updateLevel;
+            fpDraw_ = drawLevel;
+            fpFree_ = freeLevel;
+            fpUnload_ = unloadLevel;
             break;
         case StateId::Credits:
-            fpLoad_ = LoadCredits;
-            fpInitialize_ = InitializeCredits;
-            fpUpdate_ = UpdateCredits;
-            fpDraw_ = DrawCredits;
-            fpFree_ = FreeCredits;
-            fpUnload_ = UnloadCredits;
+            fpLoad_ = loadCredits;
+            fpInitialize_ = initializeCredits;
+            fpUpdate_ = updateCredits;
+            fpDraw_ = drawCredits;
+            fpFree_ = freeCredits;
+            fpUnload_ = unloadCredits;
             break;
         case StateId::Settings:
             fpLoad_ = loadSettings;
@@ -125,20 +127,20 @@ public:
             // while (currentState_ == nextState_) condition breaks and
             // triggers a full Free/Unload/Load/Initialize cycle.
             // The Level functions are reused -- only the state ID differs.
-            fpLoad_ = LoadLevel;
-            fpInitialize_ = InitializeLevel;
-            fpUpdate_ = UpdateLevel;
-            fpDraw_ = DrawLevel;
-            fpFree_ = FreeLevel;
-            fpUnload_ = UnloadLevel;
+            fpLoad_ = loadLevel;
+            fpInitialize_ = initializeLevel;
+            fpUpdate_ = updateLevel;
+            fpDraw_ = drawLevel;
+            fpFree_ = freeLevel;
+            fpUnload_ = unloadLevel;
             break;
         case StateId::Controls:
-            fpLoad_ = LoadControls;
-            fpInitialize_ = InitializeControls;
-            fpUpdate_ = UpdateControls;
-            fpDraw_ = DrawControls;
-            fpFree_ = FreeControls;
-            fpUnload_ = UnloadControls;
+            fpLoad_ = loadControls;
+            fpInitialize_ = initializeControls;
+            fpUpdate_ = updateControls;
+            fpDraw_ = drawControls;
+            fpFree_ = freeControls;
+            fpUnload_ = unloadControls;
             break;
         }
     }

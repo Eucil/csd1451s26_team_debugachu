@@ -14,13 +14,14 @@
             Technology is prohibited.
 *//*______________________________________________________________________*/
 #pragma once
+// Third-party
 #include <AEEngine.h>
 
 class GameStateManager;
 
-void LoadCredits();
-void InitializeCredits();
-void UpdateCredits(GameStateManager& GSM, f32 deltaTime);
-void DrawCredits();
-void FreeCredits();
-void UnloadCredits();
+void loadCredits();
+void initializeCredits();
+void updateCredits(GameStateManager& GSM, f32 deltaTime);
+void drawCredits();
+void freeCredits();
+void unloadCredits();

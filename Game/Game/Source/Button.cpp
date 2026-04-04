@@ -15,15 +15,18 @@
 
 #include "Button.h"
 
+// Standard library
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
 
+// Third-party
 #include <AEEngine.h>
 #include <json/json.h>
 
+// Project
 #include "AudioSystem.h"
 #include "Components.h"
 #include "ConfigManager.h"
@@ -31,7 +34,7 @@
 
 void Button::loadTexture(const char* path) { graphics_.texture_ = AEGfxTextureLoad(path); }
 
-void Button::loadMesh() { graphics_.mesh_ = CreateRectMesh(); }
+void Button::loadMesh() { graphics_.mesh_ = createRectMesh(); }
 
 // Usage example:
 // obj.initFromJson("level_buttons", "buttons", "Restart");

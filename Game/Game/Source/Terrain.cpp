@@ -15,11 +15,14 @@
 
 #include "Terrain.h"
 
+// Standard library
 #include <iostream>
 #include <vector>
 
+// Third-party
 #include <AEEngine.h>
 
+// Project
 #include "CollisionSystem.h"
 
 AEGfxVertexList* Terrain::meshLibrary_[16]{nullptr}; // There are 16 possible meshes

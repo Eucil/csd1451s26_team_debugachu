@@ -14,13 +14,16 @@
 *//*______________________________________________________________________*/
 #include "Pause.h"
 
+// Standard library
 #include <fstream>
 #include <iostream>
 #include <string>
 
+// Third-party
 #include <AEEngine.h>
 #include <json/json.h>
 
+// Project
 #include "Components.h"
 #include "ConfigManager.h"
 #include "Utils.h"
@@ -66,7 +69,7 @@ void PauseSystem::updateTransform() {
     AEMtx33Concat(&transform_.worldMtx_, &transMtx, &transform_.worldMtx_);
 }
 
-void PauseSystem::loadMesh() { graphics_.mesh_ = CreateRectMesh(); }
+void PauseSystem::loadMesh() { graphics_.mesh_ = createRectMesh(); }
 
 void PauseSystem::initFromJson(const std::string& file, const std::string& section) {
     const Json::Value& pauseSection = g_configManager.getSection(file, section);

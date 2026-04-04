@@ -16,19 +16,22 @@
 
 #include "States/Credits.h"
 
+// Standard library
 #include <cstdio>
 #include <cstring>
 #include <string>
 
+// Third-party
 #include <AEEngine.h>
 
+// Project
 #include "Animations.h"
 #include "AudioSystem.h"
 #include "Button.h"
 #include "ConfigManager.h"
 #include "DebugSystem.h"
 #include "GameStateManager.h"
-#include "MenuBackground.h" // <-- shared background
+#include "MenuBackground.h"
 #include "Utils.h"
 
 // ----------------------------------------------------------------------------
@@ -89,9 +92,9 @@ static AnimationManager animManager;
 static ScreenFaderManager screenFader;
 static UIFader someOtherCoolAnimation;
 
-void LoadCredits() {
+void loadCredits() {
     // Load the destructible terrain background
-    MenuBackground::Load();
+    MenuBackground::load();
 
     // Load credits font
     creditsFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 36);
@@ -119,9 +122,9 @@ void LoadCredits() {
     buttonBack.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
 }
 
-void InitializeCredits() {
+void initializeCredits() {
     // Initialize the shared background simulation
-    MenuBackground::Initialize();
+    MenuBackground::initialize();
 
     // Reset credits scroll position
     yPos = -450.0f;
@@ -131,13 +134,13 @@ void InitializeCredits() {
     buttonBack.setTextFont(buttonFont);
 
     // Animations
-    animManager.Clear();
-    animManager.Add(&screenFader);
-    animManager.Add(&someOtherCoolAnimation);
-    animManager.InitializeAll();
+    animManager.clear();
+    animManager.add(&screenFader);
+    animManager.add(&someOtherCoolAnimation);
+    animManager.initializeAll();
 }
 
-void UpdateCredits(GameStateManager& GSM, f32 deltaTime) {
+void updateCredits(GameStateManager& GSM, f32 deltaTime) {
     if (!g_debugSystem.isOpen()) {
         if (AEInputCheckTriggered(AEVK_Z)) {
             g_debugSystem.open();
@@ -148,11 +151,11 @@ void UpdateCredits(GameStateManager& GSM, f32 deltaTime) {
 
         // Input to skip or return
         if (AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_SPACE)) {
-            screenFader.StartFadeOut(&GSM, StateId::MainMenu);
+            screenFader.startFadeOut(&GSM, StateId::MainMenu);
         }
 
         if (buttonBack.checkMouseClick()) {
-            screenFader.StartFadeOut(&GSM, StateId::MainMenu);
+            screenFader.startFadeOut(&GSM, StateId::MainMenu);
         }
         buttonBack.updateTransform();
 
@@ -160,31 +163,31 @@ void UpdateCredits(GameStateManager& GSM, f32 deltaTime) {
         float lastLineY = yPos - (creditsData.size() - 1) * lineSpacing;
         if (lastLineY > 450.0f) {
             printf("Credits: Finished scrolling, returning to MainMenu\n");
-            screenFader.StartFadeOut(&GSM, StateId::MainMenu);
+            screenFader.startFadeOut(&GSM, StateId::MainMenu);
         }
 
         // Left-click held: destroy dirt + VFX + audio (same as MainMenu)
         if (AEInputCheckCurr(AEVK_LBUTTON)) {
-            bool hitDirt = MenuBackground::DestroyDirtAtMouse(20.0f);
+            bool hitDirt = MenuBackground::destroyDirtAtMouse(20.0f);
             if (hitDirt) {
                 g_audioSystem.playSound("dirt_break", "sfx", 0.5f, 1.0f);
             }
         }
 
         // Update the shared background (fluid, portals, etc. keep running)
-        MenuBackground::Update(deltaTime);
+        MenuBackground::update(deltaTime);
     } else {
         if (AEInputCheckTriggered(AEVK_Z)) {
             g_debugSystem.close();
         }
         g_debugSystem.update();
     }
-    animManager.UpdateAll(deltaTime);
+    animManager.updateAll(deltaTime);
 }
 
-void DrawCredits() {
+void drawCredits() {
     // Draw the shared live background first
-    MenuBackground::Draw();
+    MenuBackground::draw();
 
     // Semi-transparent dark overlay so text is readable
     if (overlayMesh == nullptr) {
@@ -317,18 +320,18 @@ void DrawCredits() {
 
     // Draw back button on top
     buttonBack.draw();
-    animManager.DrawAll();
+    animManager.drawAll();
     g_debugSystem.drawAll();
 }
-void FreeCredits() {
+void freeCredits() {
     // Free the shared background simulation objects
-    MenuBackground::Free();
-    animManager.FreeAll();
+    MenuBackground::free();
+    animManager.freeAll();
 }
 
-void UnloadCredits() {
+void unloadCredits() {
     // Unload shared GPU assets
-    MenuBackground::Unload();
+    MenuBackground::unload();
 
     if (creditsFont) {
         AEGfxDestroyFont(creditsFont);

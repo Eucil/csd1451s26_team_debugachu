@@ -13,15 +13,18 @@
                         Technology is prohibited.
 *//*______________________________________________________________________*/
 #include "StartEndPoint.h"
-#include "CollisionSystem.h"
 
+// Standard library
 #include <cmath>
 #include <cstdio>
 #include <iostream>
 
+// Third-party
 #include <AEEngine.h>
 
+// Project
 #include "AudioSystem.h"
+#include "CollisionSystem.h"
 #include "Utils.h"
 
 StartEnd::StartEnd(StartEndType type) {
@@ -94,9 +97,9 @@ StartEnd::StartEnd(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndType type,
     // tc added end
 }
 
-void StartEndPoint::Initialize() {
+void StartEndPoint::initialize() {
     // Make mesh
-    rectMesh_ = CreateRectMesh();
+    rectMesh_ = createRectMesh();
 
     // Assign rect mesh to all StartEnd types
     for (int i{0}; i < static_cast<int>(StartEndType::Count); ++i) {
@@ -126,13 +129,13 @@ void StartEndPoint::Initialize() {
 }
 
 // tc added start
-void StartEndPoint::InitializeUI(s8 font) {
+void StartEndPoint::initializeUI(s8 font) {
     font_ = font;
-    barMesh_ = CreateRectMesh();
+    barMesh_ = createRectMesh();
 }
 // tc added end
 
-void StartEndPoint::SetupPoint(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndType type,
+void StartEndPoint::setupPoint(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndType type,
                                GoalDirection direction) {
     if (type == StartEndType::Pipe) {
         startPoints_.emplace_back(pos, scale, rotation, type, direction);
@@ -142,7 +145,7 @@ void StartEndPoint::SetupPoint(AEVec2 pos, AEVec2 scale, f32 rotation, StartEndT
 }
 
 // tc added start
-void StartEndPoint::DrawWaterIndicator(const StartEnd& startPoint, const AEVec2& screenPos) {
+void StartEndPoint::drawWaterIndicator(const StartEnd& startPoint, const AEVec2& screenPos) {
     (void)screenPos; // Unused parameter for now, can be used for screen coordinate conversion
 
     if (!barMesh_ || font_ == 0)
@@ -208,14 +211,14 @@ void StartEndPoint::DrawWaterIndicator(const StartEnd& startPoint, const AEVec2&
     AEGfxPrint(font_, buffer, textX, textY, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
 }
 
-float StartEndPoint::GetWaterRemaining(int startPointIndex) const {
+float StartEndPoint::getWaterRemaining(int startPointIndex) const {
     if (startPointIndex >= 0 && startPointIndex < static_cast<int>(startPoints_.size())) {
         return startPoints_[startPointIndex].waterRemaining_;
     }
     return 0.0f;
 }
 
-void StartEndPoint::SetWaterRemaining(int startPointIndex, float amount) {
+void StartEndPoint::setWaterRemaining(int startPointIndex, float amount) {
     if (startPointIndex >= 0 && startPointIndex < static_cast<int>(startPoints_.size())) {
         startPoints_[startPointIndex].waterRemaining_ = amount;
         if (startPoints_[startPointIndex].waterRemaining_ >
@@ -229,7 +232,7 @@ void StartEndPoint::SetWaterRemaining(int startPointIndex, float amount) {
     }
 }
 
-void StartEndPoint::RefillAllWater() {
+void StartEndPoint::refillAllWater() {
     for (auto& startPoint : startPoints_) {
         if (startPoint.active_ && startPoint.type_ == StartEndType::Pipe) {
             startPoint.waterRemaining_ = startPoint.waterCapacity_;
@@ -237,7 +240,7 @@ void StartEndPoint::RefillAllWater() {
     }
 }
 
-void StartEndPoint::ToggleInfiniteWater() {
+void StartEndPoint::toggleInfiniteWater() {
     for (auto& startPoint : startPoints_) {
         if (startPoint.active_ && startPoint.type_ == StartEndType::Pipe) {
             startPoint.infiniteWater_ = !startPoint.infiniteWater_;
@@ -246,19 +249,19 @@ void StartEndPoint::ToggleInfiniteWater() {
 }
 // tc added end
 
-void StartEndPoint::SpawnAtMousePos(StartEndType type, GoalDirection direction) {
+void StartEndPoint::spawnAtMousePos(StartEndType type, GoalDirection direction) {
     // Get mouse position
-    AEVec2 mousePos = GetMouseWorldPos();
+    AEVec2 mousePos = getMouseWorldPos();
     AEVec2 pos = {static_cast<f32>(mousePos.x), static_cast<f32>(mousePos.y)};
     AEVec2 scale = {50.0f, 50.0f};
     f32 rotation = 0.0f;
 
-    SetupPoint(pos, scale, rotation, type, direction);
+    setupPoint(pos, scale, rotation, type, direction);
 }
 
-void StartEndPoint::DeleteAtMousePos() {
+void StartEndPoint::deleteAtMousePos() {
     // Get mouse position
-    AEVec2 mousePos = GetMouseWorldPos();
+    AEVec2 mousePos = getMouseWorldPos();
     f32 mouseX = static_cast<f32>(mousePos.x);
     f32 mouseY = static_cast<f32>(mousePos.y);
     // Check if mouse is over any start point
@@ -286,7 +289,7 @@ void StartEndPoint::DeleteAtMousePos() {
     }
 }
 
-bool StartEndPoint::CollisionCheckWithWater(StartEnd startend, FluidParticle particle) {
+bool StartEndPoint::collisionCheckWithWater(StartEnd startend, FluidParticle particle) {
     // Circle to Rectangle Collision Detection
     // Find the closest point to the circle within the rectangle
     f32 rectHalfWidth = startend.collider_.shapeData_.box_.size_.x / 2.0f;
@@ -307,7 +310,7 @@ bool StartEndPoint::CollisionCheckWithWater(StartEnd startend, FluidParticle par
     return distance_squared < (radius * radius);
 }
 
-void StartEndPoint::Update(f32 dt, std::vector<FluidParticle>& particlePool, VFXSystem& vfxSystem) {
+void StartEndPoint::update(f32 dt, std::vector<FluidParticle>& particlePool, VFXSystem& vfxSystem) {
     (void)dt; // unused for now
 
     // Check collision for each start/end point with each water particle
@@ -316,7 +319,7 @@ void StartEndPoint::Update(f32 dt, std::vector<FluidParticle>& particlePool, VFX
             continue;
         }
         for (auto& particle : particlePool) {
-            if (CollisionCheckWithWater(startPoint, particle)) {
+            if (collisionCheckWithWater(startPoint, particle)) {
                 CollisionSystem::incrementCollisionCount();
                 // Handle collision with start point
                 // For example, you can reset the particle's position or apply some effect
@@ -333,7 +336,7 @@ void StartEndPoint::Update(f32 dt, std::vector<FluidParticle>& particlePool, VFX
                 AEVec2 spawnPos = {startPoint.transform_.pos_.x,
                                    startPoint.transform_.pos_.y -
                                        startPoint.transform_.scale_.y * 0.5f};
-                vfxSystem.SpawnVFX(VFXType::PipeFlow, spawnPos);
+                vfxSystem.spawnVFX(VFXType::PipeFlow, spawnPos);
                 startPoint.vfxTimer_ = 0.12f; // ~8-9 bursts per second
             }
         } else {
@@ -343,13 +346,13 @@ void StartEndPoint::Update(f32 dt, std::vector<FluidParticle>& particlePool, VFX
 
     // Check collision for end point with each water particle
     for (auto particleIt = particlePool.begin(); particleIt != particlePool.end();) {
-        if (CollisionCheckWithWater(endPoint_, *particleIt)) {
+        if (collisionCheckWithWater(endPoint_, *particleIt)) {
             CollisionSystem::incrementCollisionCount();
             // Handle collision with end point
             // std::cout << "Particle collided with end point! Removing particle.\n";
             particlesCollected_++;
 
-            vfxSystem.SpawnVFX(VFXType::FlowerCollect, endPoint_.transform_.pos_);
+            vfxSystem.spawnVFX(VFXType::FlowerCollect, endPoint_.transform_.pos_);
 
             // Remove this particle from the pool
             particleIt = particlePool.erase(particleIt); // Erase returns the next valid iterator
@@ -362,7 +365,7 @@ void StartEndPoint::Update(f32 dt, std::vector<FluidParticle>& particlePool, VFX
     }
 }
 
-void StartEndPoint::DrawColor() {
+void StartEndPoint::drawColor() {
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
 
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -380,7 +383,7 @@ void StartEndPoint::DrawColor() {
     AEGfxMeshDraw(graphicsConfigs_[(int)endPoint_.type_].mesh_, AE_GFX_MDM_TRIANGLES);
 }
 
-void StartEndPoint::DrawTexture(s32 particleMaxCount) {
+void StartEndPoint::drawTexture(s32 particleMaxCount) {
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(1.0f);
@@ -415,9 +418,9 @@ void StartEndPoint::DrawTexture(s32 particleMaxCount) {
     AEGfxMeshDraw(flowerMesh_, AE_GFX_MDM_TRIANGLES);
 }
 
-void StartEndPoint::DrawPreview(StartEndType type) {
+void StartEndPoint::drawPreview(StartEndType type) {
     // Set transform matrix based on mouse position
-    AEVec2 mousePos = GetMouseWorldPos();
+    AEVec2 mousePos = getMouseWorldPos();
 
     // Set up world matrix
     AEMtx33 scaleMtx, rotMtx, transMtx, worldMtx;
@@ -445,7 +448,7 @@ void StartEndPoint::DrawPreview(StartEndType type) {
     }
 }
 
-void StartEndPoint::Free() {
+void StartEndPoint::free() {
 
     if (rectMesh_) {
         AEGfxMeshFree(rectMesh_);
@@ -480,9 +483,9 @@ void StartEndPoint::Free() {
     endPoint_ = StartEnd(StartEndType::Flower);
 }
 
-void StartEndPoint::CheckMouseClick() {
+void StartEndPoint::checkMouseClick() {
     // Get mouse position
-    AEVec2 mousePos = GetMouseWorldPos();
+    AEVec2 mousePos = getMouseWorldPos();
 
     // Use mouse pos to check collision with start point
     // Check by checking if mouse pos falls within the start point's collider box
@@ -505,7 +508,7 @@ void StartEndPoint::CheckMouseClick() {
     }
 }
 
-void StartEndPoint::ResetIframe() {
+void StartEndPoint::resetIframe() {
     for (auto& startPoint : startPoints_) {
         if (startPoint.releaseWaterIframe_) {
             startPoint.releaseWaterIframe_ = false;
@@ -514,7 +517,7 @@ void StartEndPoint::ResetIframe() {
 }
 // How much water needs to be collected to win
 // Currently: 25% of max water particle count
-bool StartEndPoint::CheckWinCondition(s32 particleMaxCount) const {
+bool StartEndPoint::checkWinCondition(s32 particleMaxCount) const {
     if (particlesCollected_ >= (particleMaxCount * 0.25f)) {
         return true;
     }

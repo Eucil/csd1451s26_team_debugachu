@@ -14,13 +14,16 @@
 *//*______________________________________________________________________*/
 #include "Confirmation.h"
 
+// Standard library
 #include <fstream>
 #include <iostream>
 #include <string>
 
+// Third-party
 #include <AEEngine.h>
 #include <json/json.h>
 
+// Project
 #include "Components.h"
 #include "ConfigManager.h"
 #include "Utils.h"
@@ -35,7 +38,7 @@ void ConfirmationSystem::hide() { show_ = false; }
 bool ConfirmationSystem::isShowing() const { return show_; }
 
 void ConfirmationSystem::load() {
-    graphics_.mesh_ = CreateRectMesh();
+    graphics_.mesh_ = createRectMesh();
 
     buttonYes_.loadTexture("Assets/Textures/brown_rectangle_80_24.png");
     buttonYes_.loadMesh();

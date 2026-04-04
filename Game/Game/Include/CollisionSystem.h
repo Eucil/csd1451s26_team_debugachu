@@ -15,13 +15,16 @@
 *//*______________________________________________________________________*/
 #pragma once
 
+// Standard library
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <vector>
 
+// Third-party
 #include <AEEngine.h>
 
+// Project
 #include "Components.h"
 #include "FluidSystem.h"
 #include "Terrain.h"
@@ -36,9 +39,9 @@ class CollisionSystem {
 public:
     static void terrainToFluidCollision(Terrain& terrain, FluidSystem& fluidSystem, f32 dt = {});
 
-    static u32  getLastFrameCollisionCount() { return s_collisionCount_; }
-    static void resetCollisionCount()        { s_collisionCount_ = 0; }
-    static void incrementCollisionCount()    { ++s_collisionCount_; }
+    static u32  getLastFrameCollisionCount() { return collisionCount_; }
+    static void resetCollisionCount()        { collisionCount_ = 0; }
+    static void incrementCollisionCount()    { ++collisionCount_; }
 
 private:
     using BucketEntry = std::pair<FluidType, u32>;
@@ -87,5 +90,5 @@ private:
                           FluidSystem& fluidSystem, const AEVec2& gridBottomLeftPos, u32 gridCols,
                           u32 gridRows, u32 gridSize);
 
-    static u32 s_collisionCount_;
+    static u32 collisionCount_;
 };
