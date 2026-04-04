@@ -29,7 +29,7 @@
 #include "DebugSystem.h"
 #include "GameStateManager.h"
 #include "MenuBackground.h"
-#include "Utils.h"
+
 
 // ----------------------------------------------------------------------------
 // UI-only state  (background lives in MenuBackground)

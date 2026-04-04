@@ -32,7 +32,7 @@
 
 // Project
 #include "Components.h"
-#include "Utils.h"
+#include "MeshUtils.h"
 enum class VFXType {
     DirtBurst,
     PortalBurst,

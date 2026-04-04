@@ -1,4 +1,4 @@
- /*!
+/*!
 @file       PortalSystem.cpp
 @author     Woo Guang Theng/guangtheng.woo@digipen.edu
 @co_author  Sean Lee Hong Wei/seanhongwei.lee@digipen.edu
@@ -8,9 +8,9 @@
 @brief      This source file contains the declaration of functions that
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
-            Reproduction or disclosure of this file or its contents
-            without the prior written consent of DigiPen Institute of
-            Technology is prohibited.
+           Reproduction or disclosure of this file or its contents
+           without the prior written consent of DigiPen Institute of
+           Technology is prohibited.
 *//*______________________________________________________________________*/
 #include "PortalSystem.h"
 
@@ -25,7 +25,7 @@
 #include "AudioSystem.h"
 #include "CollisionSystem.h"
 #include "ConfigManager.h"
-#include "Utils.h"
+#include "MouseUtils.h"
 
 Portal::Portal() {
     // Set up transform
@@ -231,8 +231,8 @@ void PortalSystem::update(f32 dt, std::vector<FluidParticle>& particlePool, VFXS
                 if (portalVfxCooldown_ <= 0.0f) {
 
                     // Spawn particles at the INPUT portal pos
-                    //vfx.spawnVFX(VFXType::PortalBurst, portal->transform_.pos_,
-                                 //portal->transform_.rotationRad_);
+                    // vfx.spawnVFX(VFXType::PortalBurst, portal->transform_.pos_,
+                    // portal->transform_.rotationRad_);
 
                     // Spawn the particles at the OUTPUT portal pos
                     vfx.spawnVFX(VFXType::PortalBurst, portal->linkedPortal_->transform_.pos_,

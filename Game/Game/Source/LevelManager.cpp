@@ -26,7 +26,7 @@
 // Project
 #include "ConfigManager.h"
 #include "Moss.h"
-#include "Utils.h"
+#include "MouseUtils.h"
 
 LevelManager levelManager;
 

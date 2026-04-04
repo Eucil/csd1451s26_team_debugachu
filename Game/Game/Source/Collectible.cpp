@@ -22,7 +22,7 @@
 #include "AudioSystem.h"
 #include "CollisionSystem.h"
 #include "ConfigManager.h"
-#include "Utils.h"
+#include "MouseUtils.h"
 
 // constructor to set posit, scale, rotation,collider type, radius
 Collectible::Collectible() {

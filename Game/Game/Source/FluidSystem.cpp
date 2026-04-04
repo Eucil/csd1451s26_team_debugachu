@@ -34,21 +34,21 @@
 // Project
 #include "CollisionSystem.h"
 #include "ConfigManager.h"
-#include "Utils.h"
+#include "MeshUtils.h"
 
 // ==========================================
 //               FluidParticle
 // ==========================================
-// 
-// 
+//
+//
 
 // =========================================================
-// 
+//
 // Constructor for a single instance of a FluidParticle
 // - Sets pos,scale,rot,collidershape,data
-// 
+//
 // - physics and graphics ccomponents are set by FluidSystem
-// 
+//
 // =========================================================
 FluidParticle::FluidParticle(f32 posX, f32 posY, f32 radius, FluidType type) {
     transform_.pos_ = {posX, posY};
@@ -67,15 +67,14 @@ FluidParticle::FluidParticle(f32 posX, f32 posY, f32 radius, FluidType type) {
 //                 FluidSystem
 // ==========================================
 
-
 // =================================================================
 //
-//  FluidSystem's graphicConfigs_ Initialization function 
-// 
+//  FluidSystem's graphicConfigs_ Initialization function
+//
 //  Initializes the graphicConfigs_ data member which contains
-//  graphic configs for every particle type within 
+//  graphic configs for every particle type within
 //  FluidSystem
-// 
+//
 // =================================================================
 void FluidSystem::initializeGraphics(AEGfxVertexList* mesh, AEGfxTexture* texture, u32 layer,
                                      f32 red, f32 green, f32 blue, f32 alpha, FluidType type,
@@ -93,8 +92,8 @@ void FluidSystem::initializeGraphics(AEGfxVertexList* mesh, AEGfxTexture* textur
 
 // =================================================================
 //
-//  FluidSystem's physicsConfigs_ Initialization function 
-// 
+//  FluidSystem's physicsConfigs_ Initialization function
+//
 //  Initializes the physicsConfigs_ data member which contains
 //  physics configs for every particle type within
 //  FluidSystem
@@ -110,8 +109,8 @@ void FluidSystem::initializePhysics(f32 mass, f32 gravity, AEVec2 velocity, Flui
 
 // =================================================================
 //
-//  FluidSystem's Main Initialization function 
-// 
+//  FluidSystem's Main Initialization function
+//
 // Initializes a single instance of a FluidSystem
 // - Initializes both graphics and physics of every FluidParticle type
 //
@@ -156,8 +155,8 @@ void FluidSystem::initialize() {
 
 // =================================================================
 //
-//  FluidSystem's Transform matrices Update function 
-// 
+//  FluidSystem's Transform matrices Update function
+//
 // - Updates the transform matrices for every particle in an inputted
 //   particle pool.
 //
@@ -180,11 +179,11 @@ void FluidSystem::updateTransforms(std::vector<FluidParticle>& particlePool) {
 
 // =========================================================
 //
-//  FluidSystem's physics Update function 
-// 
+//  FluidSystem's physics Update function
+//
 // Updates physics parameters, velocity and position for an inputted particle pool,
 // applies gravity to particles and contains various optimisations to maximise performance.
-// 
+//
 // The list of optimisations include:
 // - Applies gravity and clamps delta time for consistency / prevent tunneling
 // - Enforces terminal velocity and horizontal speed caps to prevent tunneling
@@ -218,9 +217,9 @@ void FluidSystem::updatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         // ================================================ //
         // 1. Optimisation: CAP MAXIMUM SPEED (FOR FAST PARTICLES)
         // ================================================ //
-        // Without this, particles falling from a height can reach very high speeds (negative velocity),
-        // which can cause them to tunnel through terrain colliders. 
-        // 
+        // Without this, particles falling from a height can reach very high speeds (negative
+        // velocity), which can cause them to tunnel through terrain colliders.
+        //
         // This caps negative velocity at -500.0f vertically and 300.0f horizontally
         const f32 kTerminalFallSpeed = -500.0f;
         if (p.physics_.velocity_.y < kTerminalFallSpeed) {
@@ -273,8 +272,8 @@ void FluidSystem::updatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         // ================================================ //
         // 3. Optimisation: CAP MAXIMUM SPEED (again)
         // ================================================ //
-        
-        // Acts as a final emergency safety net to prevent particles from moving too fast after the 
+
+        // Acts as a final emergency safety net to prevent particles from moving too fast after the
         // various optimisations above.
         if (currentSpeedSq > kMaxSpeedSq) {
             // If currentSpeedSq > kMaxSpeed, we are going too fast.
@@ -299,8 +298,8 @@ void FluidSystem::updatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
 
 // =========================================================
 //
-// FluidSystem's portal invincibility frames Update function 
-// 
+// FluidSystem's portal invincibility frames Update function
+//
 // Manages portal teleportation cooldowns for fluid particles
 // - Decrements the iframe timer for particles that recently teleported
 // - Re-enables portal interaction once the timer reaches zero
@@ -323,8 +322,8 @@ void FluidSystem::updatePortalIframes(f32 dt, std::vector<FluidParticle>& partic
 
 // =========================================================
 //
-//  FluidSystem's Main Update function 
-// 
+//  FluidSystem's Main Update function
+//
 // Main update loop for the fluid simulation
 // - Divides the frame delta time into smaller substeps for physics stability
 // - Updates particle physics and processes terrain collisions per substep
@@ -369,8 +368,8 @@ void FluidSystem::update(f32 dt, std::initializer_list<Terrain*> terrains) {
 
 // =========================================================
 //
-//  FluidSystem's draw color function 
-// 
+//  FluidSystem's draw color function
+//
 // Renders all active fluid particles using solid colors
 // - Sets graphics engine to color render mode and enables blending
 // - Iterates through fluid types and draws up to 3 layered meshes per particle
@@ -409,7 +408,7 @@ void FluidSystem::drawColor() {
 // =========================================================
 //
 //  FluidSystem's draw texture function
-// 
+//
 // Renders active fluid particles using textures
 // - Sets graphics engine to texture render mode and enables blending
 // - Binds the appropriate texture for each of the 3 graphical layers
@@ -448,7 +447,7 @@ void FluidSystem::drawTexture() {
 // =========================================================
 //
 //  FluidSystem's free function
-// 
+//
 // Frees memory and resources utilized by the FluidSystem
 // - Destroys allocated graphical meshes and nullifies pointers
 // - Unloads textures from the graphics engine
@@ -488,7 +487,7 @@ void FluidSystem::free() {
 // =========================================================
 //
 //  FluidSystem's particle spawning utility function
-// 
+//
 // Instantiates and spawns a new fluid particle
 // - Creates a particle with the specified position, size, and type
 // - Assigns the appropriate pre-initialized physics configuration
@@ -505,7 +504,7 @@ void FluidSystem::spawnParticle(f32 posX, f32 posY, f32 radius, FluidType type) 
 // =========================================================
 //
 // Fluidsystem's particle count getter function
-// 
+//
 // Retrieves the current number of active particles for a fluid type
 // - Returns the size of the specified fluid's particle pool
 //
@@ -517,7 +516,7 @@ u32 FluidSystem::getParticleCount(FluidType type) {
 // =========================================================
 //
 //  Fluidsystem's particle pool getter function
-// 
+//
 // Retrieves a reference to a specific fluid type's particle pool
 // - Allows external systems to read or modify the active particles
 //
@@ -525,4 +524,3 @@ u32 FluidSystem::getParticleCount(FluidType type) {
 std::vector<FluidParticle>& FluidSystem::getParticlePool(FluidType type) {
     return particlePools_[(int)type];
 }
-

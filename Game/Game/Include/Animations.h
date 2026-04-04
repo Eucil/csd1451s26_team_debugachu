@@ -32,10 +32,10 @@
 
 // Project
 #include "GameStateManager.h"
-#include "Utils.h"
+#include "MeshUtils.h"
 
 // ==========================================
-// INTERFACE 
+// INTERFACE
 // ==========================================
 class IAnimation {
 public:

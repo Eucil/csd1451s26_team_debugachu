@@ -32,7 +32,7 @@
 #include "DebugSystem.h"
 #include "GameStateManager.h"
 #include "MenuBackground.h"
-#include "Utils.h"
+#include "MeshUtils.h"
 
 // ----------------------------------------------------------------------------
 // Credits text list (NULL-terminated)

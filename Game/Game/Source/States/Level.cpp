@@ -39,11 +39,13 @@
 #include "GameStateManager.h"
 #include "LevelManager.h"
 #include "Moss.h"
+#include "MouseUtils.h"
 #include "Pause.h"
 #include "PortalSystem.h"
 #include "StartEndPoint.h"
 #include "States/MainMenu.h"
 #include "Terrain.h"
+#include "TileBackground.h"
 #include "VFXSystem.h"
 #include "WinScreen.h"
 

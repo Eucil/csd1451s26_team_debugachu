@@ -23,7 +23,7 @@
     "inputWidthMax" : 80,
     "inputHeightMin" : 5,
     "inputHeightMax" : 45,
-    "inputPortalLimitMin" : 2,
+    "inputPortalLimitMin" : 0,
     "inputPortalLimitMax" : 10
   }
 }

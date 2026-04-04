@@ -1,5 +1,5 @@
 /*!
-@file       Utils.h
+@file       MouseUtils.h
 @author     Sean Lee Hong Wei/seanhongwei.lee@digipen.edu
 @co_author  Woo Guang Theng/guangtheng.woo@digipen.edu
 
@@ -24,18 +24,4 @@
 // Project
 #include "Components.h"
 
-AEGfxVertexList* createCircleMesh(u32 slices, f32 radius);
-AEGfxVertexList* createWireCircleMesh(u32 slices);
-
-AEGfxVertexList* createRectMesh();
-AEGfxVertexList* createWireRectMesh();
-AEGfxVertexList* createWireLineMesh();
 AEVec2 getMouseWorldPos();
-
-struct TiledBackground {
-    void loadFromJson(const std::string& file, const std::string& section);
-    void draw() const;
-    void unload();
-
-    Graphics graphics_;
-};
