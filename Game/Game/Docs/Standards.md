@@ -6,13 +6,6 @@
 
 Use camelCase
 ```cpp
-
-
-
-
-
-
-
 velocityChange;
 float totalDistance;
 ```
