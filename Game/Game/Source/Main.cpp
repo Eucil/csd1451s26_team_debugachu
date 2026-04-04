@@ -21,6 +21,7 @@
 
 // Project
 #include "AudioSystem.h"
+#include "Button.h"
 #include "ConfigManager.h"
 #include "DebugSystem.h"
 #include "GameStateManager.h"
@@ -43,6 +44,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     // Initalise config manager
     g_configManager.init("Assets/GameData/FileConfigs");
     g_configManager.init("Assets/GameData/UI");
+    Button::loadConfigFromJson("button_config", "Settings");
 
     GameStateManager GSM{};
     GSM.init(StateId::LogoScreen);

@@ -32,6 +32,23 @@
 #include "ConfigManager.h"
 #include "Utils.h"
 
+f32 Button::hoverDim_    = 1.30f;
+f32 Button::pressScale_  = 0.95f;
+f32 Button::hoverVolume_ = 0.8f;
+f32 Button::hoverPitch_  = 1.0f;
+f32 Button::clickVolume_ = 0.8f;
+f32 Button::clickPitch_  = 1.0f;
+
+void Button::loadConfigFromJson(const std::string& file, const std::string& section) {
+    const Json::Value& vfx = g_configManager.getSection(file, section);
+    hoverDim_    = vfx.get("hoverDim",    hoverDim_).asFloat();
+    pressScale_  = vfx.get("pressScale",  pressScale_).asFloat();
+    hoverVolume_ = vfx.get("hoverVolume", hoverVolume_).asFloat();
+    hoverPitch_  = vfx.get("hoverPitch",  hoverPitch_).asFloat();
+    clickVolume_ = vfx.get("clickVolume", clickVolume_).asFloat();
+    clickPitch_  = vfx.get("clickPitch",  clickPitch_).asFloat();
+}
+
 void Button::loadTexture(const char* path) { graphics_.texture_ = AEGfxTextureLoad(path); }
 
 void Button::loadMesh() { graphics_.mesh_ = createRectMesh(); }
@@ -117,19 +134,18 @@ void Button::draw(bool hoverEffect) {
     AEMtx33 drawMtx = transform_.worldMtx_;
 
     if (hoverEffect) {
-        const f32 kDimmed = 1.30f;
         bool hovered = isHovered();
         if (hovered && !wasHovered_) {
-            g_audioSystem.playSound("hover", "sfx", 0.8f, 1.0f);
+            g_audioSystem.playSound("hover", "sfx", hoverVolume_, hoverPitch_);
         }
         wasHovered_ = hovered;
-        f32 tint = hovered ? 1.0f : kDimmed;
+        f32 tint = hovered ? 1.0f : hoverDim_;
         drawR *= tint;
         drawG *= tint;
         drawB *= tint;
 
         if (isPressed()) {
-            constexpr f32 kPressScale = 0.95f;
+            const f32 kPressScale = pressScale_;
             AEMtx33 scaleMtx, rotMtx, transMtx;
             AEMtx33Scale(&scaleMtx, transform_.scale_.x * kPressScale,
                          transform_.scale_.y * kPressScale);
@@ -160,7 +176,7 @@ void Button::draw(bool hoverEffect) {
     // Render text, scaled toward button center when pressed
     if (text_.font_ != 0) {
         if (hoverEffect && isPressed()) {
-            constexpr f32 kPressScale = 0.95f;
+            const f32 kPressScale = pressScale_;
             f32 centerX = transform_.pos_.x / (AEGfxGetWindowWidth() / 2.0f);
             f32 centerY = transform_.pos_.y / (AEGfxGetWindowHeight() / 2.0f);
             TextData pressedText = text_;
@@ -206,7 +222,7 @@ bool Button::checkMouseClick() const {
             mouseY >= (transform_.pos_.y - rectHalfHeight) &&
             mouseY <= (transform_.pos_.y + rectHalfHeight)) {
 
-            g_audioSystem.playSound("click", "sfx", 0.8f, 1.0f);
+            g_audioSystem.playSound("click", "sfx", clickVolume_, clickPitch_);
             return true;
         }
     }

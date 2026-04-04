@@ -1,0 +1,10 @@
+{
+  "Settings": {
+    "hoverDim": 1.30,
+    "pressScale": 0.95,
+    "hoverVolume": 0.8,
+    "hoverPitch": 1.0,
+    "clickVolume": 0.8,
+    "clickPitch": 1.0
+  }
+}

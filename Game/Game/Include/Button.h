@@ -40,6 +40,8 @@ struct TextData {
 
 class Button {
 public:
+    static void loadConfigFromJson(const std::string& file, const std::string& section);
+
     void loadTexture(const char* path);
     void loadMesh();
     void initFromJson(const std::string& file, const std::string& section);
@@ -63,4 +65,11 @@ private:
     Graphics graphics_;
     TextData text_;
     bool wasHovered_{false}; // tracks previous frame hover to fire sound once on enter
+
+    static f32 hoverDim_;
+    static f32 pressScale_;
+    static f32 hoverVolume_;
+    static f32 hoverPitch_;
+    static f32 clickVolume_;
+    static f32 clickPitch_;
 };
