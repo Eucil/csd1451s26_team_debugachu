@@ -13,7 +13,7 @@
             without the prior written consent of DigiPen Institute of
             Technology is prohibited.
 *//*______________________________________________________________________*/
-#include "States/LevelManager.h"
+#include "LevelManager.h"
 
 #include <filesystem>
 #include <fstream>

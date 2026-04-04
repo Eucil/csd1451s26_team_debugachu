@@ -15,6 +15,7 @@
     <ClCompile Include="Source\AudioSystem.cpp" />
     <ClCompile Include="Source\Confirmation.cpp" />
     <ClCompile Include="Source\DebugSystem.cpp" />
+    <ClCompile Include="Source\LevelManager.cpp" />
     <ClCompile Include="Source\MenuBackground.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
@@ -31,7 +32,6 @@
     <ClCompile Include="Source\States\Controls.cpp" />
     <ClCompile Include="Source\States\Credits.cpp" />
     <ClCompile Include="Source\States\Level.cpp" />
-    <ClCompile Include="Source\States\LevelManager.cpp" />
     <ClCompile Include="Source\States\LevelSelector.cpp" />
     <ClCompile Include="Source\States\LogoScreen.cpp" />
     <ClCompile Include="Source\States\MainMenu.cpp" />
@@ -58,6 +58,7 @@
     <ClInclude Include="Include\DebugSystem.h" />
     <ClInclude Include="Include\FluidSystem.h" />
     <ClInclude Include="Include\GameStateManager.h" />
+    <ClInclude Include="Include\LevelManager.h" />
     <ClInclude Include="Include\MenuBackground.h" />
     <ClInclude Include="Include\Moss.h" />
     <ClInclude Include="Include\Pause.h" />
@@ -66,7 +67,6 @@
     <ClInclude Include="Include\States\Controls.h" />
     <ClInclude Include="Include\States\Credits.h" />
     <ClInclude Include="Include\States\Level.h" />
-    <ClInclude Include="Include\States\LevelManager.h" />
     <ClInclude Include="Include\States\LevelSelector.h" />
     <ClInclude Include="Include\States\LogoScreen.h" />
     <ClInclude Include="Include\States\MainMenu.h" />
