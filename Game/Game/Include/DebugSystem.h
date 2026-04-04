@@ -71,6 +71,8 @@ private:
     void updateTransform();
     void renderBackground();
     void drawSingleCollider(const Transform& transform, const Collider2D& col);
+    void drawVelocity(const Transform& transform, const RigidBody2D& rb);
+    void drawFluidVelocities(FluidSystem& fluidSystem);
     void drawTerrainColliders(Terrain& terrain);
     void drawFluidColliders(FluidSystem& fluidSystem);
     void drawCollectibleColliders(CollectibleSystem& system);

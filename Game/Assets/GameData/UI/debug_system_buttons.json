@@ -6,7 +6,8 @@
     "ShowCollisionCount",
     "ShowVfxParticleCount",
     "ShowFluidParticleCount",
-    "LevelEditorAccess"
+    "LevelEditorAccess",
+    "ShowVelocity"
   ],
   "Layout": {
     "startX": -500.0,
@@ -64,6 +65,13 @@
   },
   "LevelEditorAccess": {
     "content": "Level Editor Access (Edit/Create/Delete Dev Levels)",
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  },
+  "ShowVelocity": {
+    "content": "Show Velocity Vectors",
     "red": 1.0,
     "green": 1.0,
     "blue": 1.0,
