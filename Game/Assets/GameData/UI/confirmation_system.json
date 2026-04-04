@@ -1,0 +1,64 @@
+{
+  "ConfirmationText": {
+    "content": "ARE YOU SURE?",
+    "x": 0.0,
+    "y": 0.8,
+    "scale": 1.4,
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  },
+  "Background": {
+    "position": {
+      "x": 0.0,
+      "y": 100.0
+    },
+    "scale": {
+      "x": 320.0,
+      "y": 96.0
+    },
+    "graphics": {
+      "red": 0.0,
+      "green": 0.0,
+      "blue": 0.0,
+      "alpha": 0.5
+    }
+  },
+    "ButtonYes": {
+    "position": {
+      "x": 200.0,
+      "y": 0.0
+    },
+    "scale": {
+      "x": 320.0,
+      "y": 96.0
+    },
+    "text": {
+      "content": "YES",
+      "scale": 1.1,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  },
+    "ButtonNo": {
+    "position": {
+      "x": -200.0,
+      "y": 0.0
+    },
+    "scale": {
+      "x": 320.0,
+      "y": 96.0
+    },
+    "text": {
+      "content": "NO",
+      "scale": 1.1,
+      "red": 1.0,
+      "green": 1.0,
+      "blue": 1.0,
+      "alpha": 1.0
+    }
+  }
+}

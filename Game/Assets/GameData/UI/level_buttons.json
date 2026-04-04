@@ -28,7 +28,7 @@
     },
     "text": {
       "content": "RESUME",
-      "scale": 1.0,
+      "scale": 1.1,
       "red": 1.0,
       "green": 1.0,
       "blue": 1.0,
@@ -46,14 +46,14 @@
     },
     "text": {
       "content": "RESTART",
-      "scale": 1.0,
+      "scale": 1.1,
       "red": 1.0,
       "green": 1.0,
       "blue": 1.0,
       "alpha": 1.0
     }
   },
-  "Quit": {
+  "MainMenu": {
     "position": {
       "x": 0.0,
       "y": -150.0
@@ -63,8 +63,8 @@
       "y": 96.0
     },
     "text": {
-      "content": "QUIT",
-      "scale": 1.0,
+      "content": "MAIN MENU",
+      "scale": 1.1,
       "red": 1.0,
       "green": 1.0,
       "blue": 1.0,

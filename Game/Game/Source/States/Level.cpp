@@ -30,6 +30,7 @@
 #include "CollisionSystem.h"
 #include "Components.h"
 #include "ConfigManager.h"
+#include "Confirmation.h"
 #include "DebugSystem.h"
 #include "FluidSystem.h"
 #include "GameStateManager.h"
@@ -80,6 +81,7 @@ static Button buttonRestart;
 static Button buttonQuit;
 
 static PauseSystem pauseSystem;
+static ConfirmationSystem confirmationSystem;
 static bool winTriggered = false; // latches true once win fires this session
 
 // tc added start
@@ -191,6 +193,9 @@ void LoadLevel() {
     pauseSystem.loadMesh();
     // Once level is loaded, make sure it is not paused
     pauseSystem.resume();
+
+    confirmationSystem.load();
+    confirmationSystem.hide();
 }
 
 void InitializeLevel() {
@@ -302,7 +307,7 @@ void InitializeLevel() {
     buttonResume.setTextFont(buttonFont);
     buttonRestart.initFromJson("level_buttons", "Restart");
     buttonRestart.setTextFont(buttonFont);
-    buttonQuit.initFromJson("level_buttons", "Quit");
+    buttonQuit.initFromJson("level_buttons", "MainMenu");
     buttonQuit.setTextFont(buttonFont);
 
     // Pause system
@@ -318,6 +323,9 @@ void InitializeLevel() {
 
     g_debugSystem.setScene(dirt, stone, magic, &fluidSystem, &collectibleSystem, &portalSystem,
                            &startEndPointSystem, &vfxSystem);
+
+    // Confirmation System
+    confirmationSystem.init(buttonFont);
 }
 
 // tc added start - Function to handle water spawning with limit
@@ -391,15 +399,31 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
             // Game is paused
             // ====================
 
-            if (buttonResume.checkMouseClick()) {
-                pauseSystem.resume();
+            if (!confirmationSystem.isShowing()) {
+                if (buttonResume.checkMouseClick()) {
+                    pauseSystem.resume();
+                }
+                if (buttonRestart.checkMouseClick()) {
+                    confirmationSystem.show();
+                    confirmationSystem.setTask(ConfirmationTask::Restart);
+                }
+                if (buttonQuit.checkMouseClick()) {
+                    confirmationSystem.show();
+                    confirmationSystem.setTask(ConfirmationTask::MainMenu);
+                }
             }
-            if (buttonRestart.checkMouseClick()) {
-                screenFader.StartFadeOut(&GSM, StateId::Restart);
-                pauseSystem.resume();
+
+            if (confirmationSystem.confirmationYesClicked()) {
+                if (confirmationSystem.getTask() == ConfirmationTask::Restart) {
+                    screenFader.StartFadeOut(&GSM, StateId::Restart);
+                    pauseSystem.resume();
+                } else if (confirmationSystem.getTask() == ConfirmationTask::MainMenu) {
+                    screenFader.StartFadeOut(&GSM, StateId::MainMenu);
+                }
             }
-            if (buttonQuit.checkMouseClick()) {
-                screenFader.StartFadeOut(&GSM, StateId::MainMenu);
+            if (confirmationSystem.confirmationNoClicked()) {
+                confirmationSystem.hide();
+                confirmationSystem.setTask(ConfirmationTask::No);
             }
 
             // UI buttons
@@ -602,7 +626,8 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
                     startEndPointSystem.ToggleInfiniteWater();
                 }
 
-                int portalsUsed = portalSystem.GetPortalCount(); // however your PortalSystem exposes this
+                int portalsUsed =
+                    portalSystem.GetPortalCount(); // however your PortalSystem exposes this
                 int portalsLimit = portalSystem.GetPortalLimit();
                 portalLimitText.content_ =
                     "Portals: " + std::to_string(portalsUsed) + "/" + std::to_string(portalsLimit);
@@ -701,6 +726,8 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
         g_debugSystem.update();
     }
     animManager.UpdateAll(deltaTime);
+
+    confirmationSystem.update();
 }
 
 // =============================================================================
@@ -964,16 +991,21 @@ void DrawLevel() {
 
     if (pauseSystem.isPaused()) { // Game is paused
         // Background
-        pauseSystem.renderBackground();
+        if (!confirmationSystem.isShowing()) {
 
-        pauseHeaderText.draw(true);
+            pauseSystem.renderBackground();
 
-        // UI buttons
-        buttonResume.draw();
-        buttonRestart.draw();
-        buttonQuit.draw();
+            pauseHeaderText.draw(true);
+
+            // UI buttons
+            buttonResume.draw();
+            buttonRestart.draw();
+            buttonQuit.draw();
+        }
     } else { // Game is not paused
     }
+
+    confirmationSystem.render();
 
     g_debugSystem.drawAll();
 
@@ -1078,4 +1110,6 @@ void UnloadLevel() {
     pauseSystem.unload();
 
     winScreen.Unload();
+
+    confirmationSystem.unload();
 }

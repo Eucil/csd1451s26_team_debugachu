@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClCompile Include="Source\Animations.cpp" />
     <ClCompile Include="Source\AudioSystem.cpp" />
+    <ClCompile Include="Source\Confirmation.cpp" />
     <ClCompile Include="Source\DebugSystem.cpp" />
     <ClCompile Include="Source\MenuBackground.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -53,6 +54,7 @@
     <ClInclude Include="Include\CollisionSystem.h" />
     <ClInclude Include="Include\Components.h" />
     <ClInclude Include="Include\ConfigManager.h" />
+    <ClInclude Include="Include\Confirmation.h" />
     <ClInclude Include="Include\DebugSystem.h" />
     <ClInclude Include="Include\FluidSystem.h" />
     <ClInclude Include="Include\GameStateManager.h" />
