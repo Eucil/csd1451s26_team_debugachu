@@ -32,19 +32,14 @@
 // Destructible Background
 #include "AudioSystem.h"
 #include "DebugSystem.h"
+#include "MenuBackground.h"
 #include "Terrain.h"
 #include "VFXSystem.h"
 
 static s8 titleFont = 0;
 static s8 buttonFont = 0;
 
-// Destructible Background Variables
-static int bgHeight, bgWidth, bgTileSize, bgPortalLimit;
-static bool bgFileExist;
-
-static Terrain* bgDirt = nullptr;
-static AEGfxTexture* pBgDirtTex{nullptr};
-static VFXSystem bgVfxSystem;
+static VFXSystem lsVfxSystem;
 
 // Map Preview Variables
 static std::vector<AEGfxTexture*> previewTextures;
@@ -106,10 +101,7 @@ void LoadLevelSelector() {
     titleFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
     buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
 
-    Terrain::createMeshLibrary();
-    Terrain::createColliderLibrary();
-
-    pBgDirtTex = AEGfxTextureLoad("Assets/Textures/terrain_dirt.png");
+    MenuBackground::Load(100);
 
     MapPreviewLoad();
 
@@ -217,6 +209,10 @@ void LoadLevelSelector() {
 
 void InitializeLevelSelector() {
 
+    // Initialize destructible Background
+    MenuBackground::Initialize();
+    lsVfxSystem.Initialize(800, 20);
+
     levelManager.init();
     levelManager.checkLevelData();
 
@@ -248,31 +244,6 @@ void InitializeLevelSelector() {
     titleText.initFromJson("level_selector_texts", "Header");
     titleText.font_ = titleFont;
     titleBaseText = titleText.content_;
-
-    // Initialize destructible Background
-    bgVfxSystem.Initialize(800, 20);
-    if (levelManager.getLevelData(100)) {
-        levelManager.parseMapInfo(bgWidth, bgHeight, bgTileSize, bgPortalLimit);
-        bgFileExist = true;
-    } else {
-        bgWidth = 80;
-        bgHeight = 45;
-        bgTileSize = 20;
-        bgFileExist = false;
-    }
-    bgDirt = new Terrain(TerrainMaterial::Dirt, pBgDirtTex, {0.0f, 0.0f}, bgHeight, bgWidth,
-                         bgTileSize, true);
-
-    if (bgFileExist) {
-        levelManager.parseTerrainInfo(bgDirt->getNodes(), "Dirt");
-    }
-    bgDirt->initCellsTransform();
-    bgDirt->initCellsGraphics();
-    bgDirt->initCellsCollider();
-    bgDirt->updateTerrain();
-
-    g_debugSystem.setScene(bgDirt, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-                           &bgVfxSystem);
 
     // Text and Buttons for level creation UI
     inputWidthPrompt.initFromJson("level_selector_texts", "inputWidthPrompt");
@@ -477,19 +448,13 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
         // Digging for destructible background
         if (!creatingLevel) {
             if (AEInputCheckCurr(AEVK_LBUTTON)) {
-                bool hitDirt = bgDirt->destroyAtMouse(20.0f);
-                if (hitDirt) {
-                    bgVfxSystem.SpawnContinuous(VFXType::DirtBurst, GetMouseWorldPos(), deltaTime,
-                                                0.1f);
+                bool hitDirt = MenuBackground::DestroyDirtAtMouse(20.0f);
+                if (hitDirt)
                     g_audioSystem.playSound("dirt_break", "sfx", 0.5f, 1.0f);
-                } else {
-                    bgVfxSystem.ResetSpawnTimer();
-                }
-            } else {
-                bgVfxSystem.ResetSpawnTimer();
             }
         }
-        bgVfxSystem.Update(deltaTime);
+        MenuBackground::Update(deltaTime);
+        lsVfxSystem.Update(deltaTime);
 
         if (creatingLevel) {
             inputWidthPrompt.content_ = widthBaseText + std::to_string(inputWidth);
@@ -545,8 +510,6 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
             for (int i = 0; i < static_cast<int>(Level::PlayerLevels); ++i) {
                 levelButtonPool_[i].updateTransform();
             }
-            std::vector<FluidParticle> dummyPool;
-            lsCollectibleSystem.Update(deltaTime, dummyPool, bgVfxSystem);
 
         } else {
             if (AEInputCheckTriggered(AEVK_Z)) {
@@ -555,6 +518,9 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
             g_debugSystem.update();
         }
     }
+    std::vector<FluidParticle> dummyPool;
+    lsCollectibleSystem.Update(deltaTime, dummyPool, lsVfxSystem);
+
     animManager.UpdateAll(deltaTime);
     confirmationSystem.update();
 }
@@ -568,8 +534,8 @@ void DrawLevelSelector() {
     AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
     AEGfxSetTransparency(1.0f);
 
-    bgDirt->renderTerrain();
-    bgVfxSystem.Draw();
+    MenuBackground::Draw();
+    lsVfxSystem.Draw();
 
     // Draw button with different color base on level editor mode
     for (int i = 0; i < static_cast<int>(Level::PlayerLevels); ++i) {
@@ -642,14 +608,13 @@ void DrawLevelSelector() {
 }
 
 void FreeLevelSelector() {
+    MenuBackground::Free();
+    lsVfxSystem.Free();
+
     g_debugSystem.clearScene();
-    bgVfxSystem.Free();
     animManager.FreeAll();
 
     lsCollectibleSystem.Free();
-
-    delete bgDirt;
-    bgDirt = nullptr;
 }
 
 void UnloadLevelSelector() {
@@ -706,11 +671,7 @@ void UnloadLevelSelector() {
     }
 
     // Unload destructible background
-    Terrain::freeMeshLibrary();
-    if (pBgDirtTex) {
-        AEGfxTextureUnload(pBgDirtTex);
-        pBgDirtTex = nullptr;
-    }
+    MenuBackground::Unload();
 
     confirmationSystem.unload();
 
