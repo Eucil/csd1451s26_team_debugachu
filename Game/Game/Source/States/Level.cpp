@@ -101,6 +101,7 @@ static AEGfxTexture* pHudWaterIconTex = nullptr;
 static AEGfxTexture* pHudGoalIconTex = nullptr;
 static AEGfxTexture* pHudPortalIconTex = nullptr;
 static AEGfxVertexList* g_hudIconMesh = nullptr;
+static AEGfxVertexList* s_flowerIconMesh = nullptr;
 
 // Portal limit text
 static TextData portalLimitText;
@@ -327,60 +328,6 @@ void InitializeLevel() {
     // Confirmation System
     confirmationSystem.init(buttonFont);
 }
-
-// tc added start - Function to handle water spawning with limit
-static void SpawnWaterWithLimit(f32 deltaTime) {
-    // Use a static timer that persists between function calls
-    static f32 globalSpawnTimer = 0.0f;
-
-    // Decrement the global timer
-    globalSpawnTimer -= deltaTime;
-
-    // Only spawn if enough time has passed
-    if (globalSpawnTimer <= 0.0f) {
-        // Reset timer to control spawn rate across all start points
-        globalSpawnTimer = 0.025f; // Same spawn rate as before
-
-        // Loop through all start points
-        for (auto& startPoint : startEndPointSystem.startPoints_) {
-            // Only process active pipe-type start points that are releasing water
-            if (startPoint.releaseWater_ && startPoint.type_ == StartEndType::Pipe) {
-
-                // Check if there's water remaining (or infinite mode)
-                if (startPoint.waterRemaining_ > 0.0f || startPoint.infiniteWater_) {
-
-                    // Consume water (unless infinite)
-                    if (!startPoint.infiniteWater_) {
-                        startPoint.waterRemaining_ -= 0.5f; // Adjust consumption rate as needed
-                        if (startPoint.waterRemaining_ < 0.0f) {
-                            startPoint.waterRemaining_ = 0.0f;
-                            startPoint.releaseWater_ = false; // Auto-stop when empty
-                        }
-                    }
-
-                    // Only spawn particle if there's still water
-                    if (startPoint.waterRemaining_ > 0.0f || startPoint.infiniteWater_) {
-                        // Spawn particle at the start point position
-                        f32 randRadius = 10.0f;
-
-                        // Calculate random x offset within the start point's width
-                        f32 xOffset = startPoint.transform_.pos_.x +
-                                      AERandFloat() * startPoint.transform_.scale_.x -
-                                      (startPoint.transform_.scale_.x / 2.f);
-                        AEVec2 position = {xOffset, startPoint.transform_.pos_.y -
-                                                        (startPoint.transform_.scale_.y / 2.f) -
-                                                        (randRadius)};
-
-                        // Spawn the water particle
-                        fluidSystem.SpawnParticle(position.x, position.y, randRadius,
-                                                  FluidType::Water);
-                    }
-                }
-            }
-        }
-    }
-}
-// tc added end
 
 void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
     // std::cout << "Update level 3\n";
@@ -730,173 +677,6 @@ void UpdateLevel(GameStateManager& GSM, f32 deltaTime) {
     confirmationSystem.update();
 }
 
-// =============================================================================
-// HUD helpers
-// =============================================================================
-
-static void DrawHudIcon(AEGfxTexture* tex, AEGfxVertexList* mesh, f32 worldX, f32 worldY,
-                        f32 iconSize, f32 uvOffsetX = 0.0f) {
-    if (!tex || !mesh)
-        return;
-    AEMtx33 S, T, W;
-    AEMtx33Scale(&S, iconSize, iconSize);
-    AEMtx33Trans(&T, worldX, worldY);
-    AEMtx33Concat(&W, &T, &S);
-    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetTransparency(1.0f);
-    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-    AEGfxSetTransform(W.m);
-    AEGfxTextureSet(tex, uvOffsetX, 0.0f);
-    AEGfxMeshDraw(mesh, AE_GFX_MDM_TRIANGLES);
-}
-
-static void DrawPixelBar(f32 worldX, f32 worldY, f32 barWidth, f32 barHeight, f32 fillR, f32 fillG,
-                         f32 fillB, f32 borderR, f32 borderG, f32 borderB, f32 percentage) {
-    if (!g_barMesh)
-        g_barMesh = CreateRectMesh();
-    if (percentage < 0.0f)
-        percentage = 0.0f;
-    if (percentage > 1.0f)
-        percentage = 1.0f;
-
-    AEMtx33 T, S, W;
-    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-
-    // Outer dark panel
-    AEMtx33Trans(&T, worldX, worldY);
-    AEMtx33Scale(&S, barWidth + 6.0f, barHeight + 6.0f);
-    AEMtx33Concat(&W, &T, &S);
-    AEGfxSetTransparency(1.0f);
-    AEGfxSetColorToMultiply(0.08f, 0.05f, 0.02f, 1.0f);
-    AEGfxSetTransform(W.m);
-    AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
-
-    // Accent border
-    AEMtx33Trans(&T, worldX, worldY);
-    AEMtx33Scale(&S, barWidth + 4.0f, barHeight + 4.0f);
-    AEMtx33Concat(&W, &T, &S);
-    AEGfxSetColorToMultiply(borderR, borderG, borderB, 1.0f);
-    AEGfxSetTransform(W.m);
-    AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
-
-    // Empty track
-    AEMtx33Trans(&T, worldX, worldY);
-    AEMtx33Scale(&S, barWidth, barHeight);
-    AEMtx33Concat(&W, &T, &S);
-    AEGfxSetColorToMultiply(0.04f, 0.06f, 0.02f, 1.0f);
-    AEGfxSetTransform(W.m);
-    AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
-
-    if (percentage > 0.0f) {
-        constexpr int kTiles = 7;
-        f32 fillW = barWidth * percentage;
-        f32 tileW = barWidth / static_cast<f32>(kTiles);
-        f32 startX = worldX - barWidth * 0.5f;
-
-        for (int i = 0; i < kTiles; ++i) {
-            f32 tileLeft = startX + i * tileW;
-            if (tileLeft >= startX + fillW)
-                break;
-            f32 actualW = tileW - 1.0f;
-            if (tileLeft + actualW > startX + fillW)
-                actualW = startX + fillW - tileLeft;
-            if (actualW <= 0.0f)
-                break;
-            f32 tileCX = tileLeft + actualW * 0.5f;
-            f32 t = static_cast<f32>(i) / static_cast<f32>(kTiles - 1);
-            f32 bright = 0.55f + t * 0.45f;
-
-            AEMtx33Trans(&T, tileCX, worldY);
-            AEMtx33Scale(&S, actualW, barHeight - 2.0f);
-            AEMtx33Concat(&W, &T, &S);
-            AEGfxSetTransparency(0.9f);
-            AEGfxSetColorToMultiply(fillR * bright, fillG * bright, fillB * bright, 1.0f);
-            AEGfxSetTransform(W.m);
-            AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
-
-            // Shimmer
-            AEMtx33Trans(&T, tileCX, worldY + (barHeight - 2.0f) * 0.5f - 1.5f);
-            AEMtx33Scale(&S, actualW, 2.0f);
-            AEMtx33Concat(&W, &T, &S);
-            AEGfxSetTransparency(0.22f);
-            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-            AEGfxSetTransform(W.m);
-            AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
-        }
-    }
-}
-
-static void DrawPortalLimitUI(f32 x, f32 y) {
-    f32 worldX = x * 710.0f;
-    f32 worldY = y * 510.0f;
-    f32 iconSize = 32.0f;
-
-    // Icon sits just to the left of where the text anchor is
-    DrawHudIcon(pHudPortalIconTex, g_hudIconMesh,
-                worldX - iconSize, // nudge left of text
-                worldY, iconSize);
-}
-
-static void DrawTotalWaterBar(f32 x, f32 y, f32 remaining, f32 capacity) {
-    if (capacity <= 0.0f)
-        return;
-    f32 worldX = x * 710.0f;
-    f32 worldY = y * 510.0f;
-    f32 barW = 200.0f, barH = 20.0f, iconSize = 32.0f;
-
-    DrawHudIcon(pHudWaterIconTex, g_hudIconMesh, worldX - barW * 0.5f - iconSize * 0.5f - 4.0f,
-                worldY, iconSize);
-
-    DrawPixelBar(worldX, worldY, barW, barH, 0.18f, 0.57f, 1.0f, 0.0f, 0.0f, 0.45f,
-                 remaining / capacity);
-}
-
-static AEGfxVertexList* s_flowerIconMesh = nullptr;
-
-static void DrawGoalBar(f32 x, f32 y, f32 percentage) {
-    if (percentage < 0.0f)
-        percentage = 0.0f;
-    if (percentage > 100.0f)
-        percentage = 100.0f;
-    f32 worldX = x * 710.0f;
-    f32 worldY = y * 510.0f;
-    f32 barW = 200.0f, barH = 20.0f, iconSize = 32.0f;
-
-    // pink_flower_sprite_sheet.png is 4 frames wide.
-    // We show frame 3 (the fully bloomed flower) as the goal icon.
-    // A dedicated mesh with baked UVs avoids the stretch that would
-    // occur if we used g_hudIconMesh (which spans U 0.0 -> 1.0).
-    if (pHudGoalIconTex) {
-        if (!s_flowerIconMesh) {
-            constexpr float u0 = 3.0f / 4.0f, u1 = 1.0f;
-            AEGfxMeshStart();
-            AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, u0, 1.0f, 0.5f, -0.5f, 0xFFFFFFFF, u1, 1.0f,
-                        -0.5f, 0.5f, 0xFFFFFFFF, u0, 0.0f);
-            AEGfxTriAdd(0.5f, -0.5f, 0xFFFFFFFF, u1, 1.0f, 0.5f, 0.5f, 0xFFFFFFFF, u1, 0.0f, -0.5f,
-                        0.5f, 0xFFFFFFFF, u0, 0.0f);
-            s_flowerIconMesh = AEGfxMeshEnd();
-        }
-        f32 iconX = worldX - barW * 0.5f - iconSize * 0.5f - 4.0f;
-        AEMtx33 S, T, W;
-        AEMtx33Scale(&S, iconSize, iconSize);
-        AEMtx33Trans(&T, iconX, worldY);
-        AEMtx33Concat(&W, &T, &S);
-        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-        AEGfxSetTransparency(1.0f);
-        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
-        AEGfxSetTransform(W.m);
-        AEGfxTextureSet(pHudGoalIconTex, 0.0f, 0.0f);
-        AEGfxMeshDraw(s_flowerIconMesh, AE_GFX_MDM_TRIANGLES);
-    }
-
-    DrawPixelBar(worldX, worldY, barW, barH, 0.16f, 0.72f, 0.22f, 0.0f, 0.35f, 0.0f,
-                 percentage / 100.0f);
-}
-// tc added end
-
 void DrawLevel() {
     // std::cout << "Draw level 2\n";
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
@@ -1113,3 +893,222 @@ void UnloadLevel() {
 
     confirmationSystem.unload();
 }
+
+// tc added start - Function to handle water spawning with limit
+static void SpawnWaterWithLimit(f32 deltaTime) {
+    // Use a static timer that persists between function calls
+    static f32 globalSpawnTimer = 0.0f;
+
+    // Decrement the global timer
+    globalSpawnTimer -= deltaTime;
+
+    // Only spawn if enough time has passed
+    if (globalSpawnTimer <= 0.0f) {
+        // Reset timer to control spawn rate across all start points
+        globalSpawnTimer = 0.025f; // Same spawn rate as before
+
+        // Loop through all start points
+        for (auto& startPoint : startEndPointSystem.startPoints_) {
+            // Only process active pipe-type start points that are releasing water
+            if (startPoint.releaseWater_ && startPoint.type_ == StartEndType::Pipe) {
+
+                // Check if there's water remaining (or infinite mode)
+                if (startPoint.waterRemaining_ > 0.0f || startPoint.infiniteWater_) {
+
+                    // Consume water (unless infinite)
+                    if (!startPoint.infiniteWater_) {
+                        startPoint.waterRemaining_ -= 0.5f; // Adjust consumption rate as needed
+                        if (startPoint.waterRemaining_ < 0.0f) {
+                            startPoint.waterRemaining_ = 0.0f;
+                            startPoint.releaseWater_ = false; // Auto-stop when empty
+                        }
+                    }
+
+                    // Only spawn particle if there's still water
+                    if (startPoint.waterRemaining_ > 0.0f || startPoint.infiniteWater_) {
+                        // Spawn particle at the start point position
+                        f32 randRadius = 10.0f;
+
+                        // Calculate random x offset within the start point's width
+                        f32 xOffset = startPoint.transform_.pos_.x +
+                                      AERandFloat() * startPoint.transform_.scale_.x -
+                                      (startPoint.transform_.scale_.x / 2.f);
+                        AEVec2 position = {xOffset, startPoint.transform_.pos_.y -
+                                                        (startPoint.transform_.scale_.y / 2.f) -
+                                                        (randRadius)};
+
+                        // Spawn the water particle
+                        fluidSystem.SpawnParticle(position.x, position.y, randRadius,
+                                                  FluidType::Water);
+                    }
+                }
+            }
+        }
+    }
+}
+// tc added end
+
+// =============================================================================
+// HUD helpers
+// =============================================================================
+
+static void DrawHudIcon(AEGfxTexture* tex, AEGfxVertexList* mesh, f32 worldX, f32 worldY,
+                        f32 iconSize, f32 uvOffsetX = 0.0f) {
+    if (!tex || !mesh)
+        return;
+    AEMtx33 S, T, W;
+    AEMtx33Scale(&S, iconSize, iconSize);
+    AEMtx33Trans(&T, worldX, worldY);
+    AEMtx33Concat(&W, &T, &S);
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+    AEGfxSetTransform(W.m);
+    AEGfxTextureSet(tex, uvOffsetX, 0.0f);
+    AEGfxMeshDraw(mesh, AE_GFX_MDM_TRIANGLES);
+}
+
+static void DrawPixelBar(f32 worldX, f32 worldY, f32 barWidth, f32 barHeight, f32 fillR, f32 fillG,
+                         f32 fillB, f32 borderR, f32 borderG, f32 borderB, f32 percentage) {
+    if (!g_barMesh)
+        g_barMesh = CreateRectMesh();
+    if (percentage < 0.0f)
+        percentage = 0.0f;
+    if (percentage > 1.0f)
+        percentage = 1.0f;
+
+    AEMtx33 T, S, W;
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+
+    // Outer dark panel
+    AEMtx33Trans(&T, worldX, worldY);
+    AEMtx33Scale(&S, barWidth + 6.0f, barHeight + 6.0f);
+    AEMtx33Concat(&W, &T, &S);
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(0.08f, 0.05f, 0.02f, 1.0f);
+    AEGfxSetTransform(W.m);
+    AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
+
+    // Accent border
+    AEMtx33Trans(&T, worldX, worldY);
+    AEMtx33Scale(&S, barWidth + 4.0f, barHeight + 4.0f);
+    AEMtx33Concat(&W, &T, &S);
+    AEGfxSetColorToMultiply(borderR, borderG, borderB, 1.0f);
+    AEGfxSetTransform(W.m);
+    AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
+
+    // Empty track
+    AEMtx33Trans(&T, worldX, worldY);
+    AEMtx33Scale(&S, barWidth, barHeight);
+    AEMtx33Concat(&W, &T, &S);
+    AEGfxSetColorToMultiply(0.04f, 0.06f, 0.02f, 1.0f);
+    AEGfxSetTransform(W.m);
+    AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
+
+    if (percentage > 0.0f) {
+        constexpr int kTiles = 7;
+        f32 fillW = barWidth * percentage;
+        f32 tileW = barWidth / static_cast<f32>(kTiles);
+        f32 startX = worldX - barWidth * 0.5f;
+
+        for (int i = 0; i < kTiles; ++i) {
+            f32 tileLeft = startX + i * tileW;
+            if (tileLeft >= startX + fillW)
+                break;
+            f32 actualW = tileW - 1.0f;
+            if (tileLeft + actualW > startX + fillW)
+                actualW = startX + fillW - tileLeft;
+            if (actualW <= 0.0f)
+                break;
+            f32 tileCX = tileLeft + actualW * 0.5f;
+            f32 t = static_cast<f32>(i) / static_cast<f32>(kTiles - 1);
+            f32 bright = 0.55f + t * 0.45f;
+
+            AEMtx33Trans(&T, tileCX, worldY);
+            AEMtx33Scale(&S, actualW, barHeight - 2.0f);
+            AEMtx33Concat(&W, &T, &S);
+            AEGfxSetTransparency(0.9f);
+            AEGfxSetColorToMultiply(fillR * bright, fillG * bright, fillB * bright, 1.0f);
+            AEGfxSetTransform(W.m);
+            AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
+
+            // Shimmer
+            AEMtx33Trans(&T, tileCX, worldY + (barHeight - 2.0f) * 0.5f - 1.5f);
+            AEMtx33Scale(&S, actualW, 2.0f);
+            AEMtx33Concat(&W, &T, &S);
+            AEGfxSetTransparency(0.22f);
+            AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+            AEGfxSetTransform(W.m);
+            AEGfxMeshDraw(g_barMesh, AE_GFX_MDM_TRIANGLES);
+        }
+    }
+}
+
+static void DrawPortalLimitUI(f32 x, f32 y) {
+    f32 worldX = x * 710.0f;
+    f32 worldY = y * 510.0f;
+    f32 iconSize = 32.0f;
+
+    // Icon sits just to the left of where the text anchor is
+    DrawHudIcon(pHudPortalIconTex, g_hudIconMesh,
+                worldX - iconSize, // nudge left of text
+                worldY, iconSize);
+}
+
+static void DrawTotalWaterBar(f32 x, f32 y, f32 remaining, f32 capacity) {
+    if (capacity <= 0.0f)
+        return;
+    f32 worldX = x * 710.0f;
+    f32 worldY = y * 510.0f;
+    f32 barW = 200.0f, barH = 20.0f, iconSize = 32.0f;
+
+    DrawHudIcon(pHudWaterIconTex, g_hudIconMesh, worldX - barW * 0.5f - iconSize * 0.5f - 4.0f,
+                worldY, iconSize);
+
+    DrawPixelBar(worldX, worldY, barW, barH, 0.18f, 0.57f, 1.0f, 0.0f, 0.0f, 0.45f,
+                 remaining / capacity);
+}
+
+static void DrawGoalBar(f32 x, f32 y, f32 percentage) {
+    if (percentage < 0.0f)
+        percentage = 0.0f;
+    if (percentage > 100.0f)
+        percentage = 100.0f;
+    f32 worldX = x * 710.0f;
+    f32 worldY = y * 510.0f;
+    f32 barW = 200.0f, barH = 20.0f, iconSize = 32.0f;
+
+    // pink_flower_sprite_sheet.png is 4 frames wide.
+    // We show frame 3 (the fully bloomed flower) as the goal icon.
+    // A dedicated mesh with baked UVs avoids the stretch that would
+    // occur if we used g_hudIconMesh (which spans U 0.0 -> 1.0).
+    if (pHudGoalIconTex) {
+        if (!s_flowerIconMesh) {
+            constexpr float u0 = 3.0f / 4.0f, u1 = 1.0f;
+            AEGfxMeshStart();
+            AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, u0, 1.0f, 0.5f, -0.5f, 0xFFFFFFFF, u1, 1.0f,
+                        -0.5f, 0.5f, 0xFFFFFFFF, u0, 0.0f);
+            AEGfxTriAdd(0.5f, -0.5f, 0xFFFFFFFF, u1, 1.0f, 0.5f, 0.5f, 0xFFFFFFFF, u1, 0.0f, -0.5f,
+                        0.5f, 0xFFFFFFFF, u0, 0.0f);
+            s_flowerIconMesh = AEGfxMeshEnd();
+        }
+        f32 iconX = worldX - barW * 0.5f - iconSize * 0.5f - 4.0f;
+        AEMtx33 S, T, W;
+        AEMtx33Scale(&S, iconSize, iconSize);
+        AEMtx33Trans(&T, iconX, worldY);
+        AEMtx33Concat(&W, &T, &S);
+        AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+        AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+        AEGfxSetTransparency(1.0f);
+        AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
+        AEGfxSetTransform(W.m);
+        AEGfxTextureSet(pHudGoalIconTex, 0.0f, 0.0f);
+        AEGfxMeshDraw(s_flowerIconMesh, AE_GFX_MDM_TRIANGLES);
+    }
+
+    DrawPixelBar(worldX, worldY, barW, barH, 0.16f, 0.72f, 0.22f, 0.0f, 0.35f, 0.0f,
+                 percentage / 100.0f);
+}
+// tc added end
