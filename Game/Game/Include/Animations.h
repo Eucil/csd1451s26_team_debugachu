@@ -5,17 +5,15 @@
 
 @date		March, 31, 2026
 
-@brief      This header file contains the declaration of functions and classes
-            for the animation system which includes:
+@brief      This header file contains the declarations of functions and classes
+            for the animation system which includes the following classes:
 
-                - IAnimation, an interface for modular animations
-
-                - AnimationManager, a manager for all sub-animation classes
-
-                - UIFader, an animation sub-class which acts as a reusable component 
-                  for interpolating alpha transparency on UI elements.
-     
-                - ScreenFaderManager, an animation sub-class which coordinates 
+                - IAnimation, a base-class which acts as an interface for
+                  modular animations
+                - AnimationManager, a manager class for all sub-animation classes
+                - UIFader, an animation sub-class which acts as a reusable
+                  component for interpolating alpha transparency on UI elements.
+                - ScreenFaderManager, an animation sub-class which coordinates
                   with the GameStateManager for state-transition overlays
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.

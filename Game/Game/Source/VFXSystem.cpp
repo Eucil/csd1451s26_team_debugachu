@@ -5,7 +5,17 @@
 
 @date		March, 31, 2026
 
-@brief      This source file contains the declaration of functions that
+@brief      This source file contains the definitions of functions and classes
+            for the visual effects system which includes the following:
+                - VFXType, an enumeration for identifying various visual effects
+                  such as bursts for dirt, portals, and collectible items.
+                - VFXParticle, a struct representing an individual effect unit
+                  with properties for life, transform, velocity, and color.
+                - ParticleEmitter, a structure used to trigger and initialize
+                  batches of particles at specific world positions.
+                - VFXSystem, a manager class that handles memory preallocation,
+                  resource loading, particle lifecycle updates (aging/fading),
+                  and batch rendering.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
            Reproduction or disclosure of this file or its contents

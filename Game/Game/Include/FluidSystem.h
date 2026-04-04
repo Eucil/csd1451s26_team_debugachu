@@ -6,7 +6,16 @@
 
 @date		March, 31, 2026
 
-@brief      This header file contains the declaration of functions that
+@brief      This header file contains the declarations of functions and classes
+            for the fluid simulation system which includes the following:
+
+                - FluidType, an enumeration for identifying different fluid
+                  materials such as Water and Lava.
+                - FluidParticle, a struct representing an individual particle
+                  with transform, physics, and collider components.
+                - FluidSystem, a manager class that handles the initialization,
+                  spawning, physics updates, and rendering for all active
+                  fluid particle pools.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents

@@ -6,7 +6,16 @@
 
 @date		March, 31, 2026
 
-@brief      This source file contains the declaration of functions that
+@brief      This source file contains the definitions of functions and classes
+            for the fluid simulation system which includes the following:
+
+                - FluidParticle: A struct representing an individual
+                  fluid unit with integrated transform,
+                  physics, and collision properties.
+                - FluidSystem: A manager class responsible for
+                  initializing fluid types, handling stable physics through
+                  substeps, managing portal-teleportation iframes, and
+                  rendering multi-layered particles using color or textures.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents
