@@ -54,6 +54,7 @@ public:
     void unload();
     bool checkMouseClick() const;
     bool isHovered() const;
+    bool isPressed() const;
     AEGfxVertexList* getMesh() const { return graphics_.mesh_; }
     AEGfxTexture* getTexture() const { return graphics_.texture_; }
 

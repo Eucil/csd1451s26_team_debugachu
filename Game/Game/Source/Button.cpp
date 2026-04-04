@@ -113,6 +113,9 @@ void Button::draw(bool hoverEffect) {
     f32 drawR = graphics_.red_;
     f32 drawG = graphics_.green_;
     f32 drawB = graphics_.blue_;
+
+    AEMtx33 drawMtx = transform_.worldMtx_;
+
     if (hoverEffect) {
         const f32 kDimmed = 1.30f;
         bool hovered = isHovered();
@@ -124,6 +127,17 @@ void Button::draw(bool hoverEffect) {
         drawR *= tint;
         drawG *= tint;
         drawB *= tint;
+
+        if (isPressed()) {
+            constexpr f32 kPressScale = 0.95f;
+            AEMtx33 scaleMtx, rotMtx, transMtx;
+            AEMtx33Scale(&scaleMtx, transform_.scale_.x * kPressScale,
+                         transform_.scale_.y * kPressScale);
+            AEMtx33Rot(&rotMtx, transform_.rotationRad_);
+            AEMtx33Trans(&transMtx, transform_.pos_.x, transform_.pos_.y);
+            AEMtx33Concat(&drawMtx, &rotMtx, &scaleMtx);
+            AEMtx33Concat(&drawMtx, &transMtx, &drawMtx);
+        }
     }
 
     if (graphics_.texture_ == nullptr) {
@@ -131,21 +145,34 @@ void Button::draw(bool hoverEffect) {
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(drawR, drawG, drawB, graphics_.alpha_);
-        AEGfxSetTransform(transform_.worldMtx_.m);
+        AEGfxSetTransform(drawMtx.m);
         AEGfxMeshDraw(graphics_.mesh_, AE_GFX_MDM_TRIANGLES);
     } else {
         AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
         AEGfxSetBlendMode(AE_GFX_BM_BLEND);
         AEGfxSetTransparency(1.0f);
         AEGfxSetColorToMultiply(drawR, drawG, drawB, graphics_.alpha_);
-        AEGfxSetTransform(transform_.worldMtx_.m);
+        AEGfxSetTransform(drawMtx.m);
         AEGfxTextureSet(graphics_.texture_, 0.0f, 0.0f);
         AEGfxMeshDraw(graphics_.mesh_, AE_GFX_MDM_TRIANGLES);
     }
 
-    // Render text at full brightness regardless of hover state
+    // Render text, scaled toward button center when pressed
     if (text_.font_ != 0) {
-        text_.draw();
+        if (hoverEffect && isPressed()) {
+            constexpr f32 kPressScale = 0.95f;
+            f32 centerX = transform_.pos_.x / (AEGfxGetWindowWidth() / 2.0f);
+            f32 centerY = transform_.pos_.y / (AEGfxGetWindowHeight() / 2.0f);
+            TextData pressedText = text_;
+            pressedText.scale_ *= kPressScale;
+
+            // Move text position toward button center by (1 - kPressScale)
+            pressedText.x_ = centerX + (text_.x_ - centerX) * kPressScale;
+            pressedText.y_ = centerY + (text_.y_ - centerY) * kPressScale;
+            pressedText.draw();
+        } else {
+            text_.draw();
+        }
     }
 }
 
@@ -253,6 +280,8 @@ void TextData::setTransform(const f32& x, const f32& y, const f32& scale, const 
     b_ = b;
     a_ = a;
 }
+
+bool Button::isPressed() const { return AEInputCheckCurr(AEVK_LBUTTON) && isHovered(); }
 
 bool Button::isHovered() const {
     // Get mouse position
