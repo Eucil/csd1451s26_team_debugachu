@@ -32,21 +32,21 @@
 #include "ConfigManager.h"
 #include "Utils.h"
 
-f32 Button::hoverDim_    = 1.30f;
-f32 Button::pressScale_  = 0.95f;
+f32 Button::hoverDim_ = 1.30f;
+f32 Button::pressScale_ = 0.95f;
 f32 Button::hoverVolume_ = 0.8f;
-f32 Button::hoverPitch_  = 1.0f;
+f32 Button::hoverPitch_ = 1.0f;
 f32 Button::clickVolume_ = 0.8f;
-f32 Button::clickPitch_  = 1.0f;
+f32 Button::clickPitch_ = 1.0f;
 
 void Button::loadConfigFromJson(const std::string& file, const std::string& section) {
     const Json::Value& vfx = g_configManager.getSection(file, section);
-    hoverDim_    = vfx.get("hoverDim",    hoverDim_).asFloat();
-    pressScale_  = vfx.get("pressScale",  pressScale_).asFloat();
+    hoverDim_ = vfx.get("hoverDim", hoverDim_).asFloat();
+    pressScale_ = vfx.get("pressScale", pressScale_).asFloat();
     hoverVolume_ = vfx.get("hoverVolume", hoverVolume_).asFloat();
-    hoverPitch_  = vfx.get("hoverPitch",  hoverPitch_).asFloat();
+    hoverPitch_ = vfx.get("hoverPitch", hoverPitch_).asFloat();
     clickVolume_ = vfx.get("clickVolume", clickVolume_).asFloat();
-    clickPitch_  = vfx.get("clickPitch",  clickPitch_).asFloat();
+    clickPitch_ = vfx.get("clickPitch", clickPitch_).asFloat();
 }
 
 void Button::loadTexture(const char* path) { graphics_.texture_ = AEGfxTextureLoad(path); }
