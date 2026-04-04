@@ -324,6 +324,8 @@ void DebugSystem::drawAll() {
         drawTerrainColliders(*magic_);
     if (fluidSystem_)
         drawFluidColliders(*fluidSystem_);
+    if (fluidSystem_)
+        drawFluidVelocities(*fluidSystem_);
     if (collectibles_)
         drawCollectibleColliders(*collectibles_);
     if (portals_)
@@ -482,4 +484,41 @@ void DebugSystem::drawFluidColliders(FluidSystem& fluidSystem) {
             drawSingleCollider(p.transform_, p.collider_);
         }
     }
+}
+
+void DebugSystem::drawFluidVelocities(FluidSystem& fluidSystem) {
+    if (!options_.count("ShowVelocity") || !options_.at("ShowVelocity"))
+        return;
+
+    for (int fi = 0; fi < static_cast<int>(FluidType::Count); ++fi) {
+        const auto& pool = fluidSystem.getParticlePool(static_cast<FluidType>(fi));
+        for (const auto& p : pool) {
+            drawVelocity(p.transform_, p.physics_);
+        }
+    }
+}
+
+void DebugSystem::drawVelocity(const Transform& transform, const RigidBody2D& rb) {
+    if (!options_.count("ShowVelocity") || !options_.at("ShowVelocity"))
+        return;
+
+    const f32 vx = rb.velocity_.x;
+    const f32 vy = rb.velocity_.y;
+    const f32 len = std::sqrt(vx * vx + vy * vy);
+    if (len < 0.001f)
+        return;
+
+    AEMtx33 scale, rot, trans, world;
+    AEMtx33Scale(&scale, len, 1.0f);
+    AEMtx33Rot(&rot, std::atan2(vy, vx));
+    AEMtx33Trans(&trans, transform.pos_.x, transform.pos_.y);
+    AEMtx33Concat(&world, &rot, &scale);
+    AEMtx33Concat(&world, &trans, &world);
+
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(1.0f);
+    AEGfxSetColorToMultiply(1.0f, 1.0f, 0.0f, 1.0f); // yellow
+    AEGfxSetTransform(world.m);
+    AEGfxMeshDraw(wireLineMesh_, AE_GFX_MDM_LINES_STRIP);
 }

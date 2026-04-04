@@ -328,8 +328,18 @@ void updateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
 
         if (!confirmationSystem.isShowing()) {
 
+            const bool levelEditorEnabled = g_debugSystem.options_.count("LevelEditorAccess") &&
+                                            g_debugSystem.options_.at("LevelEditorAccess");
+
+            // Reset editor mode if access was revoked
+            if (!levelEditorEnabled && levelManager.getLevelEditorMode() != EditorMode::None) {
+                levelManager.setLevelEditorMode(EditorMode::None);
+                titleText.content_ = titleBaseText;
+            }
+
             // Select Button
-            if ((buttonSelect.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
+            if (levelEditorEnabled &&
+                (buttonSelect.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
                 if (levelManager.getLevelEditorMode() != EditorMode::None) {
                     levelManager.setLevelEditorMode(EditorMode::None);
                     titleText.content_ = titleBaseText;
@@ -337,7 +347,8 @@ void updateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
             }
 
             // Edit Button
-            if ((buttonEdit.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
+            if (levelEditorEnabled &&
+                (buttonEdit.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
                 if (levelManager.getLevelEditorMode() != EditorMode::Edit) {
                     levelManager.setLevelEditorMode(EditorMode::Edit);
                     titleText.content_ = "EDIT LEVEL";
@@ -348,7 +359,8 @@ void updateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
             }
 
             // Create Button
-            if ((buttonCreate.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
+            if (levelEditorEnabled &&
+                (buttonCreate.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
                 if (levelManager.getLevelEditorMode() != EditorMode::Create) {
                     levelManager.setLevelEditorMode(EditorMode::Create);
                     titleText.content_ = "CREATE LEVEL";
@@ -359,8 +371,8 @@ void updateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
             }
 
             // Delete Button
-            if ((buttonDelete.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
-                // Add level deletion logic here
+            if (levelEditorEnabled &&
+                (buttonDelete.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
                 if (levelManager.getLevelEditorMode() != EditorMode::Delete) {
                     levelManager.setLevelEditorMode(EditorMode::Delete);
                     titleText.content_ = "DELETE LEVEL";
@@ -515,12 +527,12 @@ void updateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
                 levelButtonPool_[i].updateTransform();
             }
 
-        } else {
-            if (AEInputCheckTriggered(AEVK_Z)) {
-                g_debugSystem.close();
-            }
-            g_debugSystem.update();
         }
+    } else {
+        if (AEInputCheckTriggered(AEVK_Z)) {
+            g_debugSystem.close();
+        }
+        g_debugSystem.update();
     }
     std::vector<FluidParticle> dummyPool;
     lsCollectibleSystem.update(deltaTime, dummyPool, lsVfxSystem);
@@ -597,11 +609,16 @@ void drawLevelSelector() {
 
     if (!creatingLevel && !confirmationSystem.isShowing()) {
         buttonBack.draw();
-        buttonSelect.draw();
-        buttonEdit.draw();
-        buttonCreate.draw();
-        buttonDelete.draw();
         buttonToPlayerLevel.draw();
+
+        if (g_debugSystem.options_.count("LevelEditorAccess") &&
+            g_debugSystem.options_.at("LevelEditorAccess")) {
+            buttonSelect.draw();
+            buttonEdit.draw();
+            buttonCreate.draw();
+            buttonDelete.draw();
+        }
+
         mapPreviewDraw();
     }
 
