@@ -1,13 +1,13 @@
 {
   "Toggles": [
-    "RenderColliders",
-    "ShowFps",
-    "UnlimitedWater",
-    "ShowCollisionCount",
-    "ShowVfxParticleCount",
-    "ShowFluidParticleCount",
     "LevelEditorAccess",
-    "ShowVelocity"
+    "RenderColliders",
+    "ShowCollisionCount",
+    "ShowFluidParticleCount",
+    "ShowFps",
+    "ShowVelocity",
+    "ShowVfxParticleCount",
+    "UnlimitedWater"
   ],
   "Layout": {
     "startX": -500.0,
@@ -17,23 +17,15 @@
     "labelOffsetX": 20.0,
     "labelScale": 0.6
   },
+  "LevelEditorAccess": {
+    "content": "Level Editor Access (Edit/Create/Delete Dev Levels)",
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  },
   "RenderColliders": {
     "content": "Render Colliders",
-    "red": 1.0,
-    "green": 1.0,
-    "blue": 1.0,
-    "alpha": 1.0
-  },
-  "ShowFps": {
-    "content": "Show FPS",
-    "hudFormat": "FPS: %.0f",
-    "red": 1.0,
-    "green": 1.0,
-    "blue": 1.0,
-    "alpha": 1.0
-  },
-  "UnlimitedWater": {
-    "content": "Unlimited Water",
     "red": 1.0,
     "green": 1.0,
     "blue": 1.0,
@@ -47,14 +39,6 @@
     "blue": 1.0,
     "alpha": 1.0
   },
-  "ShowVfxParticleCount": {
-    "content": "Show VFX Particle Count",
-    "hudFormat": "VFX Particles: %.0f",
-    "red": 1.0,
-    "green": 1.0,
-    "blue": 1.0,
-    "alpha": 1.0
-  },
   "ShowFluidParticleCount": {
     "content": "Show Fluid Particle Count",
     "hudFormat": "Fluid Particles: %.0f",
@@ -63,8 +47,9 @@
     "blue": 1.0,
     "alpha": 1.0
   },
-  "LevelEditorAccess": {
-    "content": "Level Editor Access (Edit/Create/Delete Dev Levels)",
+  "ShowFps": {
+    "content": "Show FPS",
+    "hudFormat": "FPS: %.0f",
     "red": 1.0,
     "green": 1.0,
     "blue": 1.0,
@@ -72,6 +57,21 @@
   },
   "ShowVelocity": {
     "content": "Show Velocity Vectors",
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  },
+  "ShowVfxParticleCount": {
+    "content": "Show VFX Particle Count",
+    "hudFormat": "VFX Particles: %.0f",
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  },
+  "UnlimitedWater": {
+    "content": "Unlimited Water",
     "red": 1.0,
     "green": 1.0,
     "blue": 1.0,
