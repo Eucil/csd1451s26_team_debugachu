@@ -23,7 +23,7 @@
 #include "Button.h"
 #include "Components.h"
 
-enum class ConfirmationTask { Restart, MainMenu, Quit, No };
+enum class ConfirmationTask { Restart, MainMenu, Quit, Delete, No };
 
 class ConfirmationSystem {
 public:
@@ -38,7 +38,7 @@ public:
 
     void update();
 
-    void render();
+    void draw();
 
     void renderBackground();
 

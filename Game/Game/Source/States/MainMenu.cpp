@@ -28,6 +28,7 @@
 // UI includes
 #include "Animations.h"
 #include "Button.h"
+#include "Confirmation.h"
 #include "GameStateManager.h"
 
 // ----------------------------------------------------------------------------
@@ -50,6 +51,8 @@ static AnimationManager animManager;
 static ScreenFaderManager screenFader;
 static UIFader someOtherCoolAnimation;
 
+static ConfirmationSystem confirmationSystem;
+
 void LoadMainMenu() {
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
@@ -71,6 +74,9 @@ void LoadMainMenu() {
     creditsButton.loadTexture("Assets/Textures/brown_rectangle_80_24.png");
     quitButton.loadMesh();
     quitButton.loadTexture("Assets/Textures/brown_rectangle_80_24.png");
+
+    confirmationSystem.load();
+    confirmationSystem.hide();
 }
 
 void InitializeMainMenu() {
@@ -98,6 +104,9 @@ void InitializeMainMenu() {
     animManager.Add(&screenFader);
     animManager.Add(&someOtherCoolAnimation);
     animManager.InitializeAll();
+
+    // Confirmation System
+    confirmationSystem.init(buttonFont);
 }
 
 void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
@@ -114,31 +123,44 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
         }
 
         // Button click handling
-        if (AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
-            if (startButton.checkMouseClick()) {
-                std::cout << "Start button clicked - Going to Level Selector\n";
+        if (!confirmationSystem.isShowing()) {
 
-                screenFader.StartFadeOut(&GSM, StateId::LevelSelector);
-            }
-            if (howToPlayButton.checkMouseClick()) {
-                screenFader.StartFadeOut(&GSM, StateId::Controls);
-            }
+            if (AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) {
+                if (startButton.checkMouseClick()) {
+                    std::cout << "Start button clicked - Going to Level Selector\n";
 
-            // Settings button
-            if (settingsButton.checkMouseClick()) {
-                std::cout << "Settings button clicked\n";                
-                screenFader.StartFadeOut(&GSM, StateId::Settings);
-            }
+                    screenFader.StartFadeOut(&GSM, StateId::LevelSelector);
+                }
+                if (howToPlayButton.checkMouseClick()) {
+                    screenFader.StartFadeOut(&GSM, StateId::Controls);
+                }
 
-            // Credits button
-            if (creditsButton.checkMouseClick()) {
-                std::cout << "Credits button clicked\n";
-                screenFader.StartFadeOut(&GSM, StateId::Credits);
+                // Settings button
+                if (settingsButton.checkMouseClick()) {
+                    std::cout << "Settings button clicked\n";
+                    screenFader.StartFadeOut(&GSM, StateId::Settings);
+                }
+
+                // Credits button
+                if (creditsButton.checkMouseClick()) {
+                    std::cout << "Credits button clicked\n";
+                    screenFader.StartFadeOut(&GSM, StateId::Credits);
+                }
+                if (quitButton.checkMouseClick()) {
+                    confirmationSystem.show();
+                    confirmationSystem.setTask(ConfirmationTask::Quit);
+                }
             }
-            if (quitButton.checkMouseClick()) {
-                std::cout << "Quit button clicked - Exiting game\n";
+        }
+
+        if (confirmationSystem.confirmationYesClicked()) {
+            if (confirmationSystem.getTask() == ConfirmationTask::Quit) {
                 screenFader.StartFadeOut(&GSM, StateId::Quit);
             }
+        }
+        if (confirmationSystem.confirmationNoClicked()) {
+            confirmationSystem.hide();
+            confirmationSystem.setTask(ConfirmationTask::No);
         }
 
         // ------------------------------------------------------------
@@ -168,6 +190,8 @@ void UpdateMainMenu(GameStateManager& GSM, f32 deltaTime) {
     }
 
     animManager.UpdateAll(deltaTime);
+
+    confirmationSystem.update();
 }
 
 void DrawMainMenu() {
@@ -175,14 +199,24 @@ void DrawMainMenu() {
     MenuBackground::Draw();
 
     // Draw UI on top
-    startButton.draw();
-    howToPlayButton.draw();
-    settingsButton.draw();
-    creditsButton.draw();
-    quitButton.draw();
+    if (confirmationSystem.isShowing()) {
+        startButton.draw(false);
+        howToPlayButton.draw(false);
+        settingsButton.draw(false);
+        creditsButton.draw(false);
+        quitButton.draw(false);
+    } else {
+        startButton.draw();
+        howToPlayButton.draw();
+        settingsButton.draw();
+        creditsButton.draw();
+        quitButton.draw();
+    }
 
     // Draw game title
     titleText.draw();
+
+    confirmationSystem.draw();
 
     animManager.DrawAll();
     g_debugSystem.drawAll();
@@ -213,4 +247,6 @@ void UnloadMainMenu() {
         AEGfxDestroyFont(buttonFont);
         buttonFont = 0;
     }
+
+    confirmationSystem.unload();
 }

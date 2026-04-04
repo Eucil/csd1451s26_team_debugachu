@@ -2,8 +2,8 @@
   "ConfirmationText": {
     "content": "ARE YOU SURE?",
     "x": 0.0,
-    "y": 0.8,
-    "scale": 1.4,
+    "y": 0.6,
+    "scale": 1.6,
     "red": 1.0,
     "green": 1.0,
     "blue": 1.0,
@@ -22,7 +22,7 @@
       "red": 0.0,
       "green": 0.0,
       "blue": 0.0,
-      "alpha": 0.5
+      "alpha": 0.8
     }
   },
     "ButtonYes": {

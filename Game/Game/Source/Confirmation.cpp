@@ -75,7 +75,7 @@ void ConfirmationSystem::update() {
     updateTransform();
 }
 
-void ConfirmationSystem::render() {
+void ConfirmationSystem::draw() {
     if (!show_)
         return;
 

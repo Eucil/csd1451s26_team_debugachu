@@ -1005,7 +1005,7 @@ void DrawLevel() {
     } else { // Game is not paused
     }
 
-    confirmationSystem.render();
+    confirmationSystem.draw();
 
     g_debugSystem.drawAll();
 
