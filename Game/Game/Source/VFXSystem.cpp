@@ -397,7 +397,7 @@ void VFXSystem::Draw() {
 //
 // =========================================================
 void VFXSystem::Free() {
-    // 1. Safely Free Meshes
+    // Free Meshes
     for (int i = 0; i < static_cast<int>(VFXType::Count); ++i) {
         AEGfxVertexList* currentMesh = graphicsConfigs_[i].mesh_;
 
@@ -419,7 +419,7 @@ void VFXSystem::Free() {
         }
     }
 
-    // 2. Safely Free Textures
+    // Free Textures
     for (int i = 0; i < static_cast<int>(VFXType::Count); ++i) {
         AEGfxTexture* currentTexture = graphicsConfigs_[i].texture_;
 
@@ -440,13 +440,13 @@ void VFXSystem::Free() {
         }
     }
 
-    // 3. Nullify all pointers AFTER all freeing is completely done
+    // Nullify all pointers after all freeing is completely done
     for (int i = 0; i < static_cast<int>(VFXType::Count); ++i) {
         graphicsConfigs_[i].mesh_ = nullptr;
         graphicsConfigs_[i].texture_ = nullptr;
     }
 
-    // 4. Clear containers
+    // Clear containers
     vfxEmitters_.clear();
     for (int i = 0; i < static_cast<int>(VFXType::Count); ++i) {
         vfxParticlePool_[i].clear();

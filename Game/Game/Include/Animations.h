@@ -5,7 +5,18 @@
 
 @date		March, 31, 2026
 
-@brief      This header file contains the declaration of functions that
+@brief      This header file contains the declaration of functions and classes
+            for the animation system which includes:
+
+                - IAnimation, an interface for modular animations
+
+                - AnimationManager, a manager for all sub-animation classes
+
+                - UIFader, an animation sub-class which acts as a reusable component 
+                  for interpolating alpha transparency on UI elements.
+     
+                - ScreenFaderManager, an animation sub-class which coordinates 
+                  with the GameStateManager for state-transition overlays
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents
@@ -20,7 +31,7 @@
 #include <vector>
 
 // ==========================================
-// 1. THE INTERFACE (The Contract)
+// INTERFACE 
 // ==========================================
 class IAnimation {
 public:
@@ -34,7 +45,7 @@ public:
 };
 
 // ==========================================
-// 2. THE ANIMATION MANAGER
+// ANIMATION MANAGER
 // ==========================================
 class AnimationManager {
 private:
@@ -50,7 +61,7 @@ public:
 };
 
 // ==========================================
-// 3. UIFADER (Inherits from IAnimation)
+// UIFADER (Inherits from IAnimation)
 // ==========================================
 class UIFader : public IAnimation {
 private:
@@ -71,7 +82,7 @@ public:
 };
 
 // ==========================================
-// 4. SCREEN FADER (Inherits from IAnimation)
+// SCREEN FADER (Inherits from IAnimation)
 // ==========================================
 class ScreenFaderManager : public IAnimation {
 private:
