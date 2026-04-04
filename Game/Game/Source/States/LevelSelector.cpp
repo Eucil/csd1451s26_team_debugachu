@@ -23,6 +23,7 @@
 #include "Button.h"
 #include "Collectible.h"
 #include "ConfigManager.h"
+#include "Confirmation.h"
 #include "FluidSystem.h"
 #include "GameStateManager.h"
 #include "States/LevelManager.h"
@@ -91,6 +92,9 @@ static Button buttonCreate;
 static Button buttonDelete;
 static Button buttonBack;
 static Button buttonToPlayerLevel;
+
+static ConfirmationSystem confirmationSystem;
+static int levelToDeleteIndex = -1;
 
 // Static functions
 static void MapPreviewLoad();
@@ -206,6 +210,9 @@ void LoadLevelSelector() {
     buttonDelete.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
     buttonToPlayerLevel.loadMesh();
     buttonToPlayerLevel.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
+
+    confirmationSystem.load();
+    confirmationSystem.hide();
 }
 
 void InitializeLevelSelector() {
@@ -324,6 +331,9 @@ void InitializeLevelSelector() {
     buttonDelete.updateTransform();
     buttonToPlayerLevel.updateTransform();
     creationBackground.updateTransform();
+
+    // Confirmation System
+    confirmationSystem.init(buttonFont);
 }
 
 void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
@@ -341,101 +351,129 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
             GSM.nextState_ = StateId::Restart;
         }
 
-        if ((buttonSelect.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
-            if (levelManager.getLevelEditorMode() != EditorMode::None) {
-                levelManager.setLevelEditorMode(EditorMode::None);
-                titleText.content_ = titleBaseText;
+        if (!confirmationSystem.isShowing()) {
+
+            // Select Button
+            if ((buttonSelect.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
+                if (levelManager.getLevelEditorMode() != EditorMode::None) {
+                    levelManager.setLevelEditorMode(EditorMode::None);
+                    titleText.content_ = titleBaseText;
+                }
             }
-        }
 
-        if ((buttonEdit.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
-            if (levelManager.getLevelEditorMode() != EditorMode::Edit) {
-                levelManager.setLevelEditorMode(EditorMode::Edit);
-                titleText.content_ = "EDIT LEVEL";
-            } else {
-                levelManager.setLevelEditorMode(EditorMode::None);
-                titleText.content_ = titleBaseText;
+            // Edit Button
+            if ((buttonEdit.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
+                if (levelManager.getLevelEditorMode() != EditorMode::Edit) {
+                    levelManager.setLevelEditorMode(EditorMode::Edit);
+                    titleText.content_ = "EDIT LEVEL";
+                } else {
+                    levelManager.setLevelEditorMode(EditorMode::None);
+                    titleText.content_ = titleBaseText;
+                }
             }
-        }
 
-        if ((buttonCreate.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
-            if (levelManager.getLevelEditorMode() != EditorMode::Create) {
-                levelManager.setLevelEditorMode(EditorMode::Create);
-                titleText.content_ = "CREATE LEVEL";
-            } else {
-                levelManager.setLevelEditorMode(EditorMode::None);
-                titleText.content_ = titleBaseText;
+            // Create Button
+            if ((buttonCreate.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
+                if (levelManager.getLevelEditorMode() != EditorMode::Create) {
+                    levelManager.setLevelEditorMode(EditorMode::Create);
+                    titleText.content_ = "CREATE LEVEL";
+                } else {
+                    levelManager.setLevelEditorMode(EditorMode::None);
+                    titleText.content_ = titleBaseText;
+                }
             }
-        }
-        if ((buttonDelete.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
-            // Add level deletion logic here
-            if (levelManager.getLevelEditorMode() != EditorMode::Delete) {
-                levelManager.setLevelEditorMode(EditorMode::Delete);
-                titleText.content_ = "DELETE LEVEL";
-            } else {
-                levelManager.setLevelEditorMode(EditorMode::None);
-                titleText.content_ = titleBaseText;
+
+            // Delete Button
+            if ((buttonDelete.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
+                // Add level deletion logic here
+                if (levelManager.getLevelEditorMode() != EditorMode::Delete) {
+                    levelManager.setLevelEditorMode(EditorMode::Delete);
+                    titleText.content_ = "DELETE LEVEL";
+                } else {
+                    levelManager.setLevelEditorMode(EditorMode::None);
+                    titleText.content_ = titleBaseText;
+                }
             }
-        }
 
-        if ((buttonToPlayerLevel.checkMouseClick() || 0 == AESysDoesWindowExist()) &&
-            !creatingLevel) {          
-            screenFader.StartFadeOut(&GSM, StateId::PlayerLevel);
-        }
+            // To Player Level Button
+            if ((buttonToPlayerLevel.checkMouseClick() || 0 == AESysDoesWindowExist()) &&
+                !creatingLevel) {
+                screenFader.StartFadeOut(&GSM, StateId::PlayerLevel);
+            }
 
-        if ((buttonBack.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
-            screenFader.StartFadeOut(&GSM, StateId::MainMenu);
-        }
+            // Back Button
+            if ((buttonBack.checkMouseClick() || 0 == AESysDoesWindowExist()) && !creatingLevel) {
+                screenFader.StartFadeOut(&GSM, StateId::MainMenu);
+            }
 
-        if ((AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) && !creatingLevel) {
-            for (int i = 0; i < static_cast<int>(Level::PlayerLevels); ++i) {
-                // Clicks for level selection and editor
-                if (levelButtonPool_[i].checkMouseClick()) {
-                    std::cout << "Level " << (i + 1) << " button clicked\n";
+            // Level Selection Buttons
+            if ((AEInputCheckReleased(AEVK_LBUTTON) || 0 == AESysDoesWindowExist()) &&
+                !creatingLevel) {
+                for (int i = 0; i < static_cast<int>(Level::PlayerLevels); ++i) {
+                    // Clicks for level selection and editor
+                    if (levelButtonPool_[i].checkMouseClick()) {
+                        std::cout << "Level " << (i + 1) << " button clicked\n";
 
-                    // Handle level selection based on editor mode
-                    switch (levelManager.getLevelEditorMode()) {
-                    case EditorMode::None:
-                        // If none, just play the level if it's playable
-                        if (levelManager.playableLevels_[i]) {
-                            levelManager.SetCurrentLevel(i + 1);
-                            screenFader.StartFadeOut(&GSM, StateId::Level);
-                            // GSM.nextState_ = StateId::Level;
+                        // Handle level selection based on editor mode
+                        switch (levelManager.getLevelEditorMode()) {
+                        case EditorMode::None:
+                            // If none, just play the level if it's playable
+                            if (levelManager.playableLevels_[i]) {
+                                levelManager.SetCurrentLevel(i + 1);
+                                screenFader.StartFadeOut(&GSM, StateId::Level);
+                                // GSM.nextState_ = StateId::Level;
+                            }
+                            break;
+                        case EditorMode::Edit:
+                            // If edit, go to level editor with selected level
+                            if (levelManager.playableLevels_[i]) {
+                                levelManager.SetCurrentLevel(i + 1);
+                                GSM.nextState_ = StateId::Level;
+                            }
+                            break;
+                        case EditorMode::Create:
+                            // If create, allow user to input width, height and tilesize before
+                            // creating Only can create levels in empty slots, which means if
+                            // playableLevels_[i] is false. This is to prevent accidental
+                            // overwriting of existing levels, since creating a level will overwrite
+                            if (!levelManager.playableLevels_[i]) {
+                                std::cout << "Level editor mode: Create\n";
+                                creatingLevel = true;
+                                inputWidth = inputWidthMax;
+                                inputHeight = inputHeightMax;
+                                inputPortalLimit = inputPortalLimitMin;
+                                levelInput = i + 1;
+                            }
+                            break;
+                        case EditorMode::Delete:
+                            // If delete, delete the level data and update playable levels
+                            std::cout << "Level editor mode: Delete\n";
+                            levelToDeleteIndex = i + 1;
+                            confirmationSystem.show();
+                            confirmationSystem.setTask(ConfirmationTask::Delete);
+                            break;
+                        default:
+                            break;
                         }
-                        break;
-                    case EditorMode::Edit:
-                        // If edit, go to level editor with selected level
-                        if (levelManager.playableLevels_[i]) {
-                            levelManager.SetCurrentLevel(i + 1);
-                            GSM.nextState_ = StateId::Level;
-                        }
-                        break;
-                    case EditorMode::Create:
-                        // If create, allow user to input width, height and tilesize before creating
-                        // Only can create levels in empty slots, which means if playableLevels_[i]
-                        // is false. This is to prevent accidental overwriting of existing levels,
-                        // since creating a level will overwrite
-                        if (!levelManager.playableLevels_[i]) {
-                            std::cout << "Level editor mode: Create\n";
-                            creatingLevel = true;
-                            inputWidth = inputWidthMax;
-                            inputHeight = inputHeightMax;
-                            inputPortalLimit = inputPortalLimitMin;
-                            levelInput = i + 1;
-                        }
-                        break;
-                    case EditorMode::Delete:
-                        // If delete, delete the level data and update playable levels
-                        std::cout << "Level editor mode: Delete\n";
-                        levelManager.deleteLevelData(i + 1);
-                        levelManager.checkLevelData();
-                        break;
-                    default:
-                        break;
                     }
                 }
             }
         }
+
+        if (confirmationSystem.confirmationYesClicked()) {
+            if (confirmationSystem.getTask() == ConfirmationTask::Delete) {
+                levelManager.deleteLevelData(levelToDeleteIndex);
+                levelManager.checkLevelData();
+                levelToDeleteIndex = -1;
+                confirmationSystem.hide();
+            }
+        }
+        if (confirmationSystem.confirmationNoClicked()) {
+            confirmationSystem.hide();
+            confirmationSystem.setTask(ConfirmationTask::No);
+            levelToDeleteIndex = -1;
+        }
+
         // Digging for destructible background
         if (!creatingLevel) {
             if (AEInputCheckCurr(AEVK_LBUTTON)) {
@@ -519,6 +557,7 @@ void UpdateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
 
         animManager.UpdateAll(deltaTime);
     }
+    confirmationSystem.update();
 }
 
 void DrawLevelSelector() {
@@ -541,8 +580,8 @@ void DrawLevelSelector() {
             levelButtonPool_[i].setRGBA(0.5f, 0.5f, 0.5f, 1.f); // Grey for non-playable levels
         }
 
-        // Disable hover effect when creating level
-        if (creatingLevel) {
+        // Disable hover effect when creating level or confirmation
+        if (creatingLevel || confirmationSystem.isShowing()) {
             levelButtonPool_[i].draw(false);
         } else {
             levelButtonPool_[i].draw();
@@ -585,8 +624,9 @@ void DrawLevelSelector() {
         buttonDecreasePortalLimit.draw();
         buttonConfirmCreation.draw();
         buttonCancelCreation.draw();
+    }
 
-    } else {
+    if (!creatingLevel && !confirmationSystem.isShowing()) {
         buttonBack.draw();
         buttonSelect.draw();
         buttonEdit.draw();
@@ -595,6 +635,8 @@ void DrawLevelSelector() {
         buttonToPlayerLevel.draw();
         MapPreviewDraw();
     }
+
+    confirmationSystem.draw();
 
     animManager.DrawAll();
     g_debugSystem.drawAll();
@@ -670,6 +712,8 @@ void UnloadLevelSelector() {
         AEGfxTextureUnload(pBgDirtTex);
         pBgDirtTex = nullptr;
     }
+
+    confirmationSystem.unload();
 
     animManager.FreeAll();
 }
