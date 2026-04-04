@@ -43,6 +43,36 @@
     <ClCompile Include="Source\WinScreen.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Assets\Audio\button_hover2.ogg" />
+    <None Include="..\Assets\GameData\FileConfigs\background.json" />
+    <None Include="..\Assets\GameData\FileConfigs\Collectible.json" />
+    <None Include="..\Assets\GameData\FileConfigs\FluidSystem.json" />
+    <None Include="..\Assets\GameData\FileConfigs\LevelManager.json" />
+    <None Include="..\Assets\GameData\FileConfigs\LevelSelector.json" />
+    <None Include="..\Assets\GameData\FileConfigs\PlayerLevel.json" />
+    <None Include="..\Assets\GameData\FileConfigs\PortalSystem.json" />
+    <None Include="..\Assets\GameData\FileConfigs\VFXSystem.json" />
+    <None Include="..\Assets\GameData\UI\button_config.json" />
+    <None Include="..\Assets\GameData\UI\confirmation_system.json" />
+    <None Include="..\Assets\GameData\UI\credits.json" />
+    <None Include="..\Assets\GameData\UI\credits_buttons.json" />
+    <None Include="..\Assets\GameData\UI\debug_system.json" />
+    <None Include="..\Assets\GameData\UI\debug_system_buttons.json" />
+    <None Include="..\Assets\GameData\UI\how_to_play.json" />
+    <None Include="..\Assets\GameData\UI\how_to_play_buttons.json" />
+    <None Include="..\Assets\GameData\UI\level_buttons.json" />
+    <None Include="..\Assets\GameData\UI\level_manager_buttons.json" />
+    <None Include="..\Assets\GameData\UI\level_selector_buttons.json" />
+    <None Include="..\Assets\GameData\UI\level_selector_texts.json" />
+    <None Include="..\Assets\GameData\UI\main_menu_buttons.json" />
+    <None Include="..\Assets\GameData\UI\main_menu_texts.json" />
+    <None Include="..\Assets\GameData\UI\pause_system.json" />
+    <None Include="..\Assets\GameData\UI\player_level_buttons.json" />
+    <None Include="..\Assets\GameData\UI\player_level_texts.json" />
+    <None Include="..\Assets\GameData\UI\settings_buttons.json" />
+    <None Include="..\Assets\GameData\UI\settings_text.json" />
+    <None Include="..\Assets\GameData\UI\win_screen_buttons.json" />
+    <None Include="..\Assets\GameData\UI\win_screen_text.json" />
     <None Include=".clang-format" />
     <None Include="Docs\Standards.md" />
   </ItemGroup>
@@ -81,8 +111,42 @@
     <Font Include="..\Assets\Fonts\PressStart2P-Regular.ttf" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="..\Assets\Textures\blue_bricks.png" />
+    <Image Include="..\Assets\Textures\brown_rectangle_40_24.png" />
+    <Image Include="..\Assets\Textures\brown_rectangle_80_24.png" />
+    <Image Include="..\Assets\Textures\brown_square_24_24.png" />
+    <Image Include="..\Assets\Textures\brown_square_50_50.png" />
+    <Image Include="..\Assets\Textures\brown_square_80_80.png" />
+    <Image Include="..\Assets\Textures\Dirt02.png" />
+    <Image Include="..\Assets\Textures\hud_goal_icon.png" />
+    <Image Include="..\Assets\Textures\hud_water_icon.png" />
+    <Image Include="..\Assets\Textures\makeshift_portal.png" />
+    <Image Include="..\Assets\Textures\moss_sprite_sheet.png" />
+    <Image Include="..\Assets\Textures\overgrown_pipe_end.png" />
+    <Image Include="..\Assets\Textures\pink_flower_end.png" />
+    <Image Include="..\Assets\Textures\pink_flower_sprite_sheet.png" />
+    <Image Include="..\Assets\Textures\portal_arrow.png" />
+    <Image Include="..\Assets\Textures\preview_moss.png" />
+    <Image Include="..\Assets\Textures\preview_water.png" />
     <Image Include="..\Assets\Textures\terrain_dirt.png" />
+    <Image Include="..\Assets\Textures\terrain_magic.png" />
     <Image Include="..\Assets\Textures\terrain_stone.png" />
+    <Image Include="..\Assets\Textures\white_square.png" />
+    <Image Include="..\Assets\Textures\wormhole.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="..\Assets\Audio\A SINGLE ROSE - EasyListeningDow MSCLES1_17.mp3" />
+    <Media Include="..\Assets\Audio\BELL-DESK_GEN-HDF-03247.mp3" />
+    <Media Include="..\Assets\Audio\click.mp3" />
+    <Media Include="..\Assets\Audio\ding.mp3" />
+    <Media Include="..\Assets\Audio\dirt_break.mp3" />
+    <Media Include="..\Assets\Audio\DripWater CTE01_55.4.mp3" />
+    <Media Include="..\Assets\Audio\faucet_squeak.mp3" />
+    <Media Include="..\Assets\Audio\GENERATOR-SMALL_GEN-HDF-12831.mp3" />
+    <Media Include="..\Assets\Audio\MagicCartoon CTE01_93.4.mp3" />
+    <Media Include="..\Assets\Audio\pop.mp3" />
+    <Media Include="..\Assets\Audio\WATER-STOPPER_GEN-HDF-25632.mp3" />
+    <Media Include="..\Assets\Audio\wormhole_place.mp3" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
