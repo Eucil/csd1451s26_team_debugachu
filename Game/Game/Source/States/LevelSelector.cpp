@@ -526,7 +526,6 @@ void updateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
             for (int i = 0; i < static_cast<int>(Level::PlayerLevels); ++i) {
                 levelButtonPool_[i].updateTransform();
             }
-
         }
     } else {
         if (AEInputCheckTriggered(AEVK_Z)) {
@@ -592,7 +591,7 @@ void drawLevelSelector() {
 
     if (creatingLevel) {
         creationBackground.setRGBA(0.f, 0.f, 0.f, 0.8f);
-        creationBackground.draw();
+        creationBackground.draw(false);
         inputWidthPrompt.draw(true);
         inputHeightPrompt.draw(true);
         inputPortalLimitPrompt.draw(true);

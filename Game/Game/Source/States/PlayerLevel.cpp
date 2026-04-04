@@ -575,7 +575,7 @@ void drawPlayerLevel() {
 
     if (creatingLevel) {
         creationBackground.setRGBA(0.f, 0.f, 0.f, 0.8f);
-        creationBackground.draw();
+        creationBackground.draw(false);
         inputWidthPrompt.draw(true);
         inputHeightPrompt.draw(true);
         inputPortalLimitPrompt.draw(true);
