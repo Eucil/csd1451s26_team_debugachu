@@ -33,11 +33,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
-    AESysInit(hInstance, nCmdShow, 1600, 900, 1, 60, false, nullptr);
-
-    AESysSetWindowTitle("Water The Plant");
+    AESysInit(hInstance, nCmdShow, 1600, 900, 0, 60, false, nullptr);
 
     AESysReset();
+
+    AESysSetWindowTitle("Water The Plant");
+    AESysSetWindowIcon("Assets/Textures/pink_flower_end.png", 16, 16);
 
     // Initalise config manager
     g_configManager.init("Assets/GameData/FileConfigs");
