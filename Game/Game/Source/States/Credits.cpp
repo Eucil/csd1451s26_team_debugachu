@@ -271,22 +271,22 @@ void drawCredits() {
             break;
         case 5: // TEAM
             r = 1.0f;
-            g = 0.0f;
+            g = 0.84f;
             b = 0.0f;
             textSize = 0.9f;
             break;
         case 6: // Debugachu
             r = 1.0f;
-            g = 0.84f;
+            g = 0.0f;
             b = 0.0f;
             textSize = 0.8f;
             break;
         case 8:  // DEVELOPED BY
-        case 14: // FACULTY AND ADVISORS
+        case 14: // INSTRUCTORS
         case 19: // CREATED AT
         case 22: // PRESIDENT
         case 25: // EXECUTIVES
-        case 30: // SPECIAL THANKS
+        case 33: // SPECIAL THANKS
             r = 1.0f;
             g = 0.84f;
             b = 0.0f;
