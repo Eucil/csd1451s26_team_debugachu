@@ -17,7 +17,7 @@
     "textB" : 1.0,
     "textA" : 1.0
   },
-    "levelCreation":
+  "levelCreation":
   {
     "inputWidthMin" : 5,
     "inputWidthMax" : 80,

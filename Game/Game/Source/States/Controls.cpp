@@ -101,163 +101,16 @@ static AEGfxVertexList* s_leafMesh = nullptr;
 static float s_collectRot = 0.0f;   // shared rotation angle (radians)
 static float s_collectPulse = 0.0f; // shared pulse timer
 
-static AEGfxVertexList* MakeUvMesh(float u0, float u1) {
-    AEGfxMeshStart();
-    AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, u0, 1.0f, 0.5f, -0.5f, 0xFFFFFFFF, u1, 1.0f, -0.5f, 0.5f,
-                0xFFFFFFFF, u0, 0.0f);
-    AEGfxTriAdd(0.5f, -0.5f, 0xFFFFFFFF, u1, 1.0f, 0.5f, 0.5f, 0xFFFFFFFF, u1, 0.0f, -0.5f, 0.5f,
-                0xFFFFFFFF, u0, 0.0f);
-    return AEGfxMeshEnd();
-}
-
-static void createCollectibleMeshes() {
-    // Star (5-pointed) -- matches Collectible.cpp
-    AEGfxMeshStart();
-    constexpr int kStarPoints = 5;
-    constexpr float kOuterRadius = 0.5f;
-    constexpr float kInnerRadius = 0.25f;
-    for (int i = 0; i < kStarPoints; i++) {
-        float a1 = (i * 2.0f * 3.14159f / kStarPoints) - 3.14159f / 2.0f;
-        float a2 = ((i + 1) * 2.0f * 3.14159f / kStarPoints) - 3.14159f / 2.0f;
-        float mid = (a1 + a2) / 2.0f;
-        float x1 = cosf(a1) * kOuterRadius, y1 = sinf(a1) * kOuterRadius;
-        float x2 = cosf(a2) * kOuterRadius, y2 = sinf(a2) * kOuterRadius;
-        float xi = cosf(mid) * kInnerRadius, yi = sinf(mid) * kInnerRadius;
-        AEGfxTriAdd(0, 0, 0xFFFFFF00, 0.5f, 0.5f, x1, y1, 0xFFFFFF00, x1 + 0.5f, y1 + 0.5f, xi, yi,
-                    0xFFFFFF00, xi + 0.5f, yi + 0.5f);
-        AEGfxTriAdd(0, 0, 0xFFFFFF00, 0.5f, 0.5f, xi, yi, 0xFFFFFF00, xi + 0.5f, yi + 0.5f, x2, y2,
-                    0xFFFFFF00, x2 + 0.5f, y2 + 0.5f);
-    }
-    s_starMesh = AEGfxMeshEnd();
-    // Gem (diamond)
-    AEGfxMeshStart();
-    AEGfxTriAdd(0.0f, 0.5f, 0xFFFF00FF, 0.5f, 1.0f, -0.5f, 0.0f, 0xFFFF00FF, 0.0f, 0.5f, 0.5f, 0.0f,
-                0xFFFF00FF, 1.0f, 0.5f);
-    AEGfxTriAdd(0.0f, -0.5f, 0xFFFF00FF, 0.5f, 0.0f, -0.5f, 0.0f, 0xFFFF00FF, 0.0f, 0.5f, 0.5f,
-                0.0f, 0xFFFF00FF, 1.0f, 0.5f);
-    s_gemMesh = AEGfxMeshEnd();
-    // Leaf (teardrop)
-    AEGfxMeshStart();
-    constexpr int kLeafSeg = 12;
-    for (int i = 0; i < kLeafSeg; i++) {
-        float a1 = (i * 2.0f * 3.14159f / kLeafSeg);
-        float a2 = ((i + 1) * 2.0f * 3.14159f / kLeafSeg);
-        float r1 = 0.3f + 0.2f * sinf(a1 * 2.0f);
-        float r2 = 0.3f + 0.2f * sinf(a2 * 2.0f);
-        float x1 = cosf(a1) * r1, y1 = sinf(a1) * r1;
-        float x2 = cosf(a2) * r2, y2 = sinf(a2) * r2;
-        AEGfxTriAdd(0, 0, 0xFF00FF00, 0.5f, 0.5f, x1, y1, 0xFF00FF00, x1 + 0.5f, y1 + 0.5f, x2, y2,
-                    0xFF00FF00, x2 + 0.5f, y2 + 0.5f);
-    }
-    s_leafMesh = AEGfxMeshEnd();
-}
-
-static void drawCollectibleIcons() {
-    if (!s_starMesh || !s_gemMesh || !s_leafMesh)
-        return;
-    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetTransparency(1.0f);
-    float winW = static_cast<float>(AEGfxGetWindowWidth());
-    float winH = static_cast<float>(AEGfxGetWindowHeight());
-    // Pulse scale matching Collectible.cpp: sinf(pulseTimer)*0.1+1.0, base scale 30
-    float pulse = sinf(s_collectPulse) * 0.1f + 1.0f;
-    float iconSize = 60.0f * pulse;
-    // Each collectible spins at a slightly different speed (matching rotationSpeed_ variance)
-    float rotSpeeds[] = {1.0f, 1.5f, 2.0f};
-    struct IconDef {
-        AEGfxVertexList* mesh;
-        float r, g, b, offsetX;
-    };
-    IconDef icons[] = {
-        {s_starMesh, 1.0f, 1.0f, 0.0f, -0.35f},
-        {s_gemMesh, 1.0f, 0.0f, 1.0f, 0.0f},
-        {s_leafMesh, 0.0f, 1.0f, 0.0f, 0.35f},
-    };
-    for (int i = 0; i < 3; ++i) {
-        const auto& ic = icons[i];
-        float worldX = ic.offsetX * winW * 0.5f;
-        float worldY = -0.20f * winH * 0.5f;
-        float rot = s_collectRot * rotSpeeds[i];
-        AEMtx33 S, R, T, W;
-        AEMtx33Scale(&S, iconSize, iconSize);
-        AEMtx33Rot(&R, rot);
-        AEMtx33Trans(&T, worldX, worldY);
-        AEMtx33Concat(&W, &R, &S); // rotate then scale
-        AEMtx33Concat(&W, &T, &W); // then translate
-        AEGfxSetColorToMultiply(ic.r, ic.g, ic.b, 1.0f);
-        AEGfxSetTransform(W.m);
-        AEGfxMeshDraw(ic.mesh, AE_GFX_MDM_TRIANGLES);
-    }
-}
-
 // ----------------------------------------------------------------------------
-// Helpers
+// Static Functions
 // ----------------------------------------------------------------------------
-
-// Build and cache the full-screen overlay quad
-static void ensureOverlayMesh() {
-    if (overlayMesh != nullptr)
-        return;
-    AEGfxMeshStart();
-    AEGfxTriAdd(-0.5f, -0.5f, 0xFF000000, 0.0f, 1.0f, 0.5f, -0.5f, 0xFF000000, 1.0f, 1.0f, -0.5f,
-                0.5f, 0xFF000000, 0.0f, 0.0f);
-    AEGfxTriAdd(0.5f, -0.5f, 0xFF000000, 1.0f, 1.0f, 0.5f, 0.5f, 0xFF000000, 1.0f, 0.0f, -0.5f,
-                0.5f, 0xFF000000, 0.0f, 0.0f);
-    overlayMesh = AEGfxMeshEnd();
-}
-
-// Draw the dark overlay over the live background
-static void drawOverlay(f32 alpha) {
-    ensureOverlayMesh();
-
-    AEMtx33 scale, trans, world;
-    AEMtx33Scale(&scale, (f32)AEGfxGetWindowWidth(), (f32)AEGfxGetWindowHeight());
-    AEMtx33Trans(&trans, 0.0f, 0.0f);
-    AEMtx33Concat(&world, &trans, &scale);
-
-    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetTransparency(alpha);
-    AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
-    AEGfxSetTransform(world.m);
-    AEGfxMeshDraw(overlayMesh, AE_GFX_MDM_TRIANGLES);
-    AEGfxSetTransparency(1.0f);
-}
-
-// Draw text centered horizontally at a given screen-space y (-1..+1)
-static void drawCenteredText(s8 font, const char* text, f32 screenY, f32 size, f32 r, f32 g,
-                             f32 b) {
-    if (!text || strlen(text) == 0)
-        return;
-
-    f32 tw = 0.0f, th = 0.0f;
-    AEGfxGetPrintSize(font, text, size, &tw, &th);
-    f32 xPos = -tw / 2.0f;
-
-    // Black outline for legibility over the live background
-    AEGfxPrint(font, text, xPos - 0.002f, screenY - 0.002f, size, 0.f, 0.f, 0.f, 1.f);
-    AEGfxPrint(font, text, xPos + 0.002f, screenY - 0.002f, size, 0.f, 0.f, 0.f, 1.f);
-    AEGfxPrint(font, text, xPos - 0.002f, screenY + 0.002f, size, 0.f, 0.f, 0.f, 1.f);
-    AEGfxPrint(font, text, xPos + 0.002f, screenY + 0.002f, size, 0.f, 0.f, 0.f, 1.f);
-    AEGfxPrint(font, text, xPos, screenY, size, r, g, b, 1.0f);
-}
-
-// Draw the page indicator (e.g. "2 / 4")
-static void drawPageIndicator() {
-    int totalPages = static_cast<int>(pages.size());
-    if (totalPages == 0)
-        totalPages = 1;
-
-    char buf[16];
-    sprintf_s(buf, sizeof(buf), "%d / %d", currentPage, totalPages);
-
-    f32 tw = 0.0f, th = 0.0f;
-    AEGfxGetPrintSize(bodyFont, buf, s_pageIndScale, &tw, &th);
-    f32 xPos = -tw / 2.0f;
-    AEGfxPrint(bodyFont, buf, xPos, s_pageIndY, s_pageIndScale, s_pageIndR, s_pageIndG, s_pageIndB,
-               1.0f);
-}
+static AEGfxVertexList* MakeUvMesh(float u0, float u1);
+static void createCollectibleMeshes();
+static void drawCollectibleIcons();
+static void ensureOverlayMesh();
+static void drawOverlay(f32 alpha);
+static void drawCenteredText(s8 font, const char* text, f32 screenY, f32 size, f32 r, f32 g, f32 b);
+static void drawPageIndicator();
 
 // ----------------------------------------------------------------------------
 // State functions
@@ -587,4 +440,166 @@ void unloadControls() {
     buttonNext.unload();
     buttonPrevious.unload();
     buttonBack.unload();
+}
+
+// ----------------------------------------------------------------------------
+// Static Functions
+// ----------------------------------------------------------------------------
+
+static AEGfxVertexList* MakeUvMesh(float u0, float u1) {
+    AEGfxMeshStart();
+    AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, u0, 1.0f, 0.5f, -0.5f, 0xFFFFFFFF, u1, 1.0f, -0.5f, 0.5f,
+                0xFFFFFFFF, u0, 0.0f);
+    AEGfxTriAdd(0.5f, -0.5f, 0xFFFFFFFF, u1, 1.0f, 0.5f, 0.5f, 0xFFFFFFFF, u1, 0.0f, -0.5f, 0.5f,
+                0xFFFFFFFF, u0, 0.0f);
+    return AEGfxMeshEnd();
+}
+
+static void createCollectibleMeshes() {
+    // Star (5-pointed) -- matches Collectible.cpp
+    AEGfxMeshStart();
+    constexpr int kStarPoints = 5;
+    constexpr float kOuterRadius = 0.5f;
+    constexpr float kInnerRadius = 0.25f;
+    for (int i = 0; i < kStarPoints; i++) {
+        float a1 = (i * 2.0f * 3.14159f / kStarPoints) - 3.14159f / 2.0f;
+        float a2 = ((i + 1) * 2.0f * 3.14159f / kStarPoints) - 3.14159f / 2.0f;
+        float mid = (a1 + a2) / 2.0f;
+        float x1 = cosf(a1) * kOuterRadius, y1 = sinf(a1) * kOuterRadius;
+        float x2 = cosf(a2) * kOuterRadius, y2 = sinf(a2) * kOuterRadius;
+        float xi = cosf(mid) * kInnerRadius, yi = sinf(mid) * kInnerRadius;
+        AEGfxTriAdd(0, 0, 0xFFFFFF00, 0.5f, 0.5f, x1, y1, 0xFFFFFF00, x1 + 0.5f, y1 + 0.5f, xi, yi,
+                    0xFFFFFF00, xi + 0.5f, yi + 0.5f);
+        AEGfxTriAdd(0, 0, 0xFFFFFF00, 0.5f, 0.5f, xi, yi, 0xFFFFFF00, xi + 0.5f, yi + 0.5f, x2, y2,
+                    0xFFFFFF00, x2 + 0.5f, y2 + 0.5f);
+    }
+    s_starMesh = AEGfxMeshEnd();
+    // Gem (diamond)
+    AEGfxMeshStart();
+    AEGfxTriAdd(0.0f, 0.5f, 0xFFFF00FF, 0.5f, 1.0f, -0.5f, 0.0f, 0xFFFF00FF, 0.0f, 0.5f, 0.5f, 0.0f,
+                0xFFFF00FF, 1.0f, 0.5f);
+    AEGfxTriAdd(0.0f, -0.5f, 0xFFFF00FF, 0.5f, 0.0f, -0.5f, 0.0f, 0xFFFF00FF, 0.0f, 0.5f, 0.5f,
+                0.0f, 0xFFFF00FF, 1.0f, 0.5f);
+    s_gemMesh = AEGfxMeshEnd();
+    // Leaf (teardrop)
+    AEGfxMeshStart();
+    constexpr int kLeafSeg = 12;
+    for (int i = 0; i < kLeafSeg; i++) {
+        float a1 = (i * 2.0f * 3.14159f / kLeafSeg);
+        float a2 = ((i + 1) * 2.0f * 3.14159f / kLeafSeg);
+        float r1 = 0.3f + 0.2f * sinf(a1 * 2.0f);
+        float r2 = 0.3f + 0.2f * sinf(a2 * 2.0f);
+        float x1 = cosf(a1) * r1, y1 = sinf(a1) * r1;
+        float x2 = cosf(a2) * r2, y2 = sinf(a2) * r2;
+        AEGfxTriAdd(0, 0, 0xFF00FF00, 0.5f, 0.5f, x1, y1, 0xFF00FF00, x1 + 0.5f, y1 + 0.5f, x2, y2,
+                    0xFF00FF00, x2 + 0.5f, y2 + 0.5f);
+    }
+    s_leafMesh = AEGfxMeshEnd();
+}
+
+static void drawCollectibleIcons() {
+    if (!s_starMesh || !s_gemMesh || !s_leafMesh)
+        return;
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(1.0f);
+    float winW = static_cast<float>(AEGfxGetWindowWidth());
+    float winH = static_cast<float>(AEGfxGetWindowHeight());
+    // Pulse scale matching Collectible.cpp: sinf(pulseTimer)*0.1+1.0, base scale 30
+    float pulse = sinf(s_collectPulse) * 0.1f + 1.0f;
+    float iconSize = 60.0f * pulse;
+    // Each collectible spins at a slightly different speed (matching rotationSpeed_ variance)
+    float rotSpeeds[] = {1.0f, 1.5f, 2.0f};
+    struct IconDef {
+        AEGfxVertexList* mesh;
+        float r, g, b, offsetX;
+    };
+    IconDef icons[] = {
+        {s_starMesh, 1.0f, 1.0f, 0.0f, -0.35f},
+        {s_gemMesh, 1.0f, 0.0f, 1.0f, 0.0f},
+        {s_leafMesh, 0.0f, 1.0f, 0.0f, 0.35f},
+    };
+    for (int i = 0; i < 3; ++i) {
+        const auto& ic = icons[i];
+        float worldX = ic.offsetX * winW * 0.5f;
+        float worldY = -0.20f * winH * 0.5f;
+        float rot = s_collectRot * rotSpeeds[i];
+        AEMtx33 S, R, T, W;
+        AEMtx33Scale(&S, iconSize, iconSize);
+        AEMtx33Rot(&R, rot);
+        AEMtx33Trans(&T, worldX, worldY);
+        AEMtx33Concat(&W, &R, &S); // rotate then scale
+        AEMtx33Concat(&W, &T, &W); // then translate
+        AEGfxSetColorToMultiply(ic.r, ic.g, ic.b, 1.0f);
+        AEGfxSetTransform(W.m);
+        AEGfxMeshDraw(ic.mesh, AE_GFX_MDM_TRIANGLES);
+    }
+}
+
+// ----------------------------------------------------------------------------
+// Helpers
+// ----------------------------------------------------------------------------
+
+// Build and cache the full-screen overlay quad
+static void ensureOverlayMesh() {
+    if (overlayMesh != nullptr)
+        return;
+    AEGfxMeshStart();
+    AEGfxTriAdd(-0.5f, -0.5f, 0xFF000000, 0.0f, 1.0f, 0.5f, -0.5f, 0xFF000000, 1.0f, 1.0f, -0.5f,
+                0.5f, 0xFF000000, 0.0f, 0.0f);
+    AEGfxTriAdd(0.5f, -0.5f, 0xFF000000, 1.0f, 1.0f, 0.5f, 0.5f, 0xFF000000, 1.0f, 0.0f, -0.5f,
+                0.5f, 0xFF000000, 0.0f, 0.0f);
+    overlayMesh = AEGfxMeshEnd();
+}
+
+// Draw the dark overlay over the live background
+static void drawOverlay(f32 alpha) {
+    ensureOverlayMesh();
+
+    AEMtx33 scale, trans, world;
+    AEMtx33Scale(&scale, (f32)AEGfxGetWindowWidth(), (f32)AEGfxGetWindowHeight());
+    AEMtx33Trans(&trans, 0.0f, 0.0f);
+    AEMtx33Concat(&world, &trans, &scale);
+
+    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(alpha);
+    AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
+    AEGfxSetTransform(world.m);
+    AEGfxMeshDraw(overlayMesh, AE_GFX_MDM_TRIANGLES);
+    AEGfxSetTransparency(1.0f);
+}
+
+// Draw text centered horizontally at a given screen-space y (-1..+1)
+static void drawCenteredText(s8 font, const char* text, f32 screenY, f32 size, f32 r, f32 g,
+                             f32 b) {
+    if (!text || strlen(text) == 0)
+        return;
+
+    f32 tw = 0.0f, th = 0.0f;
+    AEGfxGetPrintSize(font, text, size, &tw, &th);
+    f32 xPos = -tw / 2.0f;
+
+    // Black outline for legibility over the live background
+    AEGfxPrint(font, text, xPos - 0.002f, screenY - 0.002f, size, 0.f, 0.f, 0.f, 1.f);
+    AEGfxPrint(font, text, xPos + 0.002f, screenY - 0.002f, size, 0.f, 0.f, 0.f, 1.f);
+    AEGfxPrint(font, text, xPos - 0.002f, screenY + 0.002f, size, 0.f, 0.f, 0.f, 1.f);
+    AEGfxPrint(font, text, xPos + 0.002f, screenY + 0.002f, size, 0.f, 0.f, 0.f, 1.f);
+    AEGfxPrint(font, text, xPos, screenY, size, r, g, b, 1.0f);
+}
+
+// Draw the page indicator (e.g. "2 / 4")
+static void drawPageIndicator() {
+    int totalPages = static_cast<int>(pages.size());
+    if (totalPages == 0)
+        totalPages = 1;
+
+    char buf[16];
+    sprintf_s(buf, sizeof(buf), "%d / %d", currentPage, totalPages);
+
+    f32 tw = 0.0f, th = 0.0f;
+    AEGfxGetPrintSize(bodyFont, buf, s_pageIndScale, &tw, &th);
+    f32 xPos = -tw / 2.0f;
+    AEGfxPrint(bodyFont, buf, xPos, s_pageIndY, s_pageIndScale, s_pageIndR, s_pageIndG, s_pageIndB,
+               1.0f);
 }

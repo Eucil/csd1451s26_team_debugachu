@@ -46,6 +46,10 @@ enum class Level {
     Level10,
     Level11,
     Level12,
+    Level13,
+    Level14,
+    Level15,
+    Level16,
     None,
     PlayerLevels = 8,
     Level99 = 99

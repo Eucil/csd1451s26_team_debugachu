@@ -2,7 +2,7 @@
   "default" : 
   {
     "buttonStartposX" : -600,
-    "buttonStartposY" : 200,
+    "buttonStartposY" : 100,
     "buttonXOffset" : 400,
     "buttonYOffset" : 200,
     "buttonScale_x" : 200,

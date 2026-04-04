@@ -48,16 +48,7 @@ static bool done_ = false;
 // Tracks how many frames have been drawn -- lets us confirm draw() is running
 static int frameCount_ = 0;
 
-// ----------------------------------------------------------------------------
-// Helper
-// ----------------------------------------------------------------------------
-static void skipToMainMenu(GameStateManager& GSM) {
-    if (!done_) {
-        done_ = true;
-        printf("[LogoScreen] Transitioning to MainMenu\n");
-        GSM.nextState_ = StateId::MainMenu;
-    }
-}
+static void skipToMainMenu(GameStateManager& GSM);
 
 // ----------------------------------------------------------------------------
 // Load
@@ -279,5 +270,16 @@ void unloadLogoScreen() {
         AEGfxMeshFree(logoMesh);
         logoMesh = nullptr;
         printf("[LogoScreen] Mesh freed\n");
+    }
+}
+
+// ----------------------------------------------------------------------------
+// Helper
+// ----------------------------------------------------------------------------
+static void skipToMainMenu(GameStateManager& GSM) {
+    if (!done_) {
+        done_ = true;
+        printf("[LogoScreen] Transitioning to MainMenu\n");
+        GSM.nextState_ = StateId::MainMenu;
     }
 }
