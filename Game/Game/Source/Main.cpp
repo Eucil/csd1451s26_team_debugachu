@@ -58,7 +58,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     g_audioSystem.loadSound("wormhole_place", "Assets/Audio/wormhole_place.mp3");
     g_audioSystem.loadSound("dirt_break", "Assets/Audio/dirt_break.mp3");
     g_audioSystem.loadSound("click", "Assets/Audio/click.mp3");
-    g_audioSystem.loadSound("hover", "Assets/Audio/button_hover2.ogg");
+    g_audioSystem.loadSound("hover", "Assets/Audio/pop.mp3");
     g_audioSystem.loadMusic("main_music",
                             "Assets/Audio/A SINGLE ROSE - EasyListeningDow MSCLES1_17.mp3");
     g_audioSystem.loadSound("bell", "Assets/Audio/BELL-DESK_GEN-HDF-03247.mp3");
