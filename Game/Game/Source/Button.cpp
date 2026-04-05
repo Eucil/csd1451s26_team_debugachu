@@ -5,7 +5,8 @@
 
 @date		March, 31, 2026
 
-@brief      This source file contains the declaration of functions that
+@brief      This source file contains the implementation of the Button and
+            TextData classes, including hover, press, sound, and JSON config.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents
@@ -39,6 +40,16 @@ f32 Button::hoverPitch_ = 1.0f;
 f32 Button::clickVolume_ = 0.8f;
 f32 Button::clickPitch_ = 1.0f;
 
+// =========================================================
+//
+// Button::loadConfigFromJson
+//
+// Loads shared button visual and audio effect parameters
+// from the specified JSON file and section into the static
+// members, falling back to their hardcoded defaults if the
+// file or keys are missing.
+//
+// =========================================================
 void Button::loadConfigFromJson(const std::string& file, const std::string& section) {
     const Json::Value& vfx = g_configManager.getSection(file, section);
     hoverDim_ = vfx.get("hoverDim", hoverDim_).asFloat();
@@ -49,12 +60,35 @@ void Button::loadConfigFromJson(const std::string& file, const std::string& sect
     clickPitch_ = vfx.get("clickPitch", clickPitch_).asFloat();
 }
 
+// =========================================================
+//
+// Button::loadTexture
+//
+// Loads a texture from the given file path and assigns it
+// to this button's graphics component.
+//
+// =========================================================
 void Button::loadTexture(const char* path) { graphics_.texture_ = AEGfxTextureLoad(path); }
 
+// =========================================================
+//
+// Button::loadMesh
+//
+// Creates a rectangle mesh and assigns it to this button's
+// graphics component.
+//
+// =========================================================
 void Button::loadMesh() { graphics_.mesh_ = createRectMesh(); }
 
-// Usage example:
-// obj.initFromJson("level_buttons", "buttons", "Restart");
+// =========================================================
+//
+// Button::initFromJson
+//
+// Initialises the button's transform and text properties
+// from the specified JSON file and section.
+// Usage: obj.initFromJson("level_buttons", "Restart");
+//
+// =========================================================
 void Button::initFromJson(const std::string& file, const std::string& section) {
     const Json::Value& buttonSection = g_configManager.getSection(file, section);
     transform_.pos_.x = buttonSection["position"]["x"].asFloat();
@@ -71,16 +105,45 @@ void Button::initFromJson(const std::string& file, const std::string& section) {
     text_.a_ = t["alpha"].asFloat();
 }
 
+// =========================================================
+//
+// Button::setTransform
+//
+// Sets the button's position, scale, and rotation directly.
+//
+// =========================================================
 void Button::setTransform(const AEVec2& pos, const AEVec2& scale, f32 rotationRad) {
     transform_.pos_ = pos;
     transform_.scale_ = scale;
     transform_.rotationRad_ = rotationRad;
 }
 
+// =========================================================
+//
+// Button::setTextFont
+//
+// Assigns a font handle to the button's text label.
+//
+// =========================================================
 void Button::setTextFont(s8 font) { text_.font_ = font; }
 
+// =========================================================
+//
+// Button::getTransform
+//
+// Returns a copy of the button's current transform.
+//
+// =========================================================
 Transform Button::getTransform() const { return transform_; }
 
+// =========================================================
+//
+// Button::setText
+//
+// Sets the button's text label content, position, scale,
+// and colour directly.
+//
+// =========================================================
 void Button::setText(const std::string& content, const f32& x, const f32& y, const f32& scale,
                      const f32& r, const f32& g, const f32& b, const f32& a) {
     text_.content_ = content;
@@ -93,6 +156,13 @@ void Button::setText(const std::string& content, const f32& x, const f32& y, con
     text_.a_ = a;
 }
 
+// =========================================================
+//
+// Button::setRGBA
+//
+// Sets the button's tint colour and alpha for rendering.
+//
+// =========================================================
 void Button::setRGBA(const f32& r, const f32& g, const f32& b, const f32& a) {
     graphics_.red_ = r;
     graphics_.green_ = g;
@@ -100,6 +170,15 @@ void Button::setRGBA(const f32& r, const f32& g, const f32& b, const f32& a) {
     graphics_.alpha_ = a;
 }
 
+// =========================================================
+//
+// Button::updateTransform
+//
+// Rebuilds the world matrix from the button's position,
+// scale, and rotation. Also recomputes the text position
+// to keep it centred within the button.
+//
+// =========================================================
 void Button::updateTransform() {
     AEMtx33 scaleMtx, rotMtx, transMtx;
     AEMtx33Scale(&scaleMtx, transform_.scale_.x, transform_.scale_.y);
@@ -120,6 +199,16 @@ void Button::updateTransform() {
     }
 }
 
+// =========================================================
+//
+// Button::draw
+//
+// Renders the button mesh and text label. When hoverEffect
+// is true, dims the button when not hovered, plays a hover
+// sound on cursor entry, and scales the button and text
+// down while the mouse button is held.
+//
+// =========================================================
 void Button::draw(bool hoverEffect) {
     // SAFETY CHECK: Make sure mesh exists
     if (graphics_.mesh_ == nullptr) {
@@ -192,6 +281,14 @@ void Button::draw(bool hoverEffect) {
     }
 }
 
+// =========================================================
+//
+// Button::unload
+//
+// Frees the button's texture and mesh from GPU memory
+// and nulls both pointers.
+//
+// =========================================================
 void Button::unload() {
     if (graphics_.texture_ != nullptr) {
         AEGfxTextureUnload(graphics_.texture_);
@@ -203,6 +300,16 @@ void Button::unload() {
     }
 }
 
+// =========================================================
+//
+// Button::checkMouseClick
+//
+// Returns true if the left mouse button was released this
+// frame while the cursor was within the button's bounds,
+// and plays the click sound. Also returns true if the
+// window no longer exists.
+//
+// =========================================================
 bool Button::checkMouseClick() const {
     // Get mouse position
     s32 mouseX{0};
@@ -230,6 +337,16 @@ bool Button::checkMouseClick() const {
     return false;
 }
 
+// =========================================================
+//
+// TextData::draw
+//
+// Renders the text content, splitting on newlines and
+// drawing each line individually. When center is true,
+// each line is horizontally centred around x_ and the
+// block is vertically centred around y_.
+//
+// =========================================================
 void TextData::draw(bool center) {
     if (font_ == 0) {
         printf("ERROR: Attempting to draw text with null font!\n");
@@ -270,6 +387,15 @@ void TextData::draw(bool center) {
     }
 }
 
+// =========================================================
+//
+// TextData::initFromJson
+//
+// Initialises the text content, position, scale, line
+// spacing, and colour from the specified JSON file and
+// section.
+//
+// =========================================================
 void TextData::initFromJson(const std::string& file, const std::string& section) {
     const Json::Value& textSection = g_configManager.getSection(file, section);
     content_ = textSection["content"].asString();
@@ -286,6 +412,13 @@ void TextData::initFromJson(const std::string& file, const std::string& section)
     a_ = textSection["alpha"].asFloat();
 }
 
+// =========================================================
+//
+// TextData::setTransform
+//
+// Sets the text position, scale, and colour directly.
+//
+// =========================================================
 void TextData::setTransform(const f32& x, const f32& y, const f32& scale, const f32& r,
                             const f32& g, const f32& b, const f32& a) {
     x_ = x;
@@ -297,8 +430,24 @@ void TextData::setTransform(const f32& x, const f32& y, const f32& scale, const 
     a_ = a;
 }
 
+// =========================================================
+//
+// Button::isPressed
+//
+// Returns true if the left mouse button is currently held
+// and the cursor is within the button's bounds.
+//
+// =========================================================
 bool Button::isPressed() const { return AEInputCheckCurr(AEVK_LBUTTON) && isHovered(); }
 
+// =========================================================
+//
+// Button::isHovered
+//
+// Returns true if the cursor is currently within the
+// button's axis-aligned bounding box.
+//
+// =========================================================
 bool Button::isHovered() const {
     // Get mouse position
     s32 mouseX{0};

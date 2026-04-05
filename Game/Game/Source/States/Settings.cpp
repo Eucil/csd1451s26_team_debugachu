@@ -5,7 +5,8 @@
 
 @date		March, 31, 2026
 
-@brief      This source file contains the declaration of functions that
+@brief      This source file contains the implementation of the Settings game
+            state, handling load, initialize, update, draw, free, and unload.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents
@@ -46,6 +47,15 @@ static AnimationManager animManager;
 static ScreenFaderManager screenFader;
 static UIFader someOtherCoolAnimation;
 
+// =========================================================
+//
+// loadSettings
+//
+// Loads fonts, button meshes and textures, and the destructible
+// terrain background. Also registers and initialises all
+// animation managers for this state.
+//
+// =========================================================
 void loadSettings() {
 
     animManager.clear();
@@ -72,6 +82,14 @@ void loadSettings() {
     MenuBackground::load(100);
 }
 
+// =========================================================
+//
+// initializeSettings
+//
+// Initialises all buttons and text fields from JSON config,
+// assigns fonts, and sets up the shared background simulation.
+//
+// =========================================================
 void initializeSettings() {
     buttonIncreaseSfxVolume.initFromJson("settings_buttons", "IncreaseSfxVolume");
     buttonIncreaseSfxVolume.setTextFont(buttonFont);
@@ -101,6 +119,16 @@ void initializeSettings() {
     MenuBackground::initialize();
 }
 
+// =========================================================
+//
+// updateSettings
+//
+// Handles button input to adjust SFX and BGM volumes, navigates
+// back to the main menu, updates volume display text, processes
+// dirt destruction on click, and ticks the background simulation.
+// Delegates to the debug system when the debug menu is open.
+//
+// =========================================================
 void updateSettings(GameStateManager& GSM, f32 deltaTime) {
     if (!g_debugSystem.isOpen()) {
         if (AEInputCheckTriggered(AEVK_Z)) {
@@ -156,6 +184,15 @@ void updateSettings(GameStateManager& GSM, f32 deltaTime) {
     animManager.updateAll(deltaTime);
 }
 
+// =========================================================
+//
+// drawSettings
+//
+// Draws the live background, all volume control buttons,
+// the back button, header and volume label text, then the
+// animation and debug overlays.
+//
+// =========================================================
 void drawSettings() {
 
     // Draw the shared live background first
@@ -179,6 +216,14 @@ void drawSettings() {
     g_debugSystem.drawAll();
 }
 
+// =========================================================
+//
+// freeSettings
+//
+// Clears the debug scene, frees the background simulation,
+// and releases all animation resources.
+//
+// =========================================================
 void freeSettings() {
     g_debugSystem.clearScene();
     MenuBackground::free();
@@ -186,6 +231,14 @@ void freeSettings() {
     animManager.freeAll();
 }
 
+// =========================================================
+//
+// unloadSettings
+//
+// Destroys fonts, unloads all button meshes and textures,
+// and unloads the destructible background.
+//
+// =========================================================
 void unloadSettings() {
     // Unload fonts
     if (titleFont) {

@@ -5,7 +5,8 @@
 
 @date		March, 31, 2026
 
-@brief      This header file contains the declaration of functions that
+@brief      This header file declares the lifecycle functions for the Settings
+            game state: load, initialize, update, draw, free, and unload.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents

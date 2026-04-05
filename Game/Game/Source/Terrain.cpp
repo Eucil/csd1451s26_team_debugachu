@@ -5,7 +5,9 @@
 
 @date		March, 31, 2026
 
-@brief      This source file contains the declaration of functions that
+@brief      This source file contains the implementation of the Terrain class,
+            including marching-squares mesh and collider generation, node-based
+            terrain editing, and per-cell transform and render updates.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents
@@ -31,6 +33,14 @@ Collider2D Terrain::colliderLibrary_[16][3]{}; // There are 16 possible collider
 AEGfxVertexList* Terrain::debugTriMesh_{nullptr};
 AEGfxVertexList* Terrain::debugBoxMesh_{nullptr};
 
+// =========================================================
+//
+// Terrain::Terrain
+//
+// Constructs the terrain grid by initialising dimensions,
+// allocating cell and node vectors, and zeroing all nodes.
+//
+// =========================================================
 Terrain::Terrain(TerrainMaterial terrainMaterial, AEGfxTexture* pTex, AEVec2 centerPosition,
                  u32 cellRows, u32 cellCols, u32 cellSize, bool collidable)
     : terrainMaterial_(terrainMaterial), kCellRows_(cellRows), kCellCols_(cellCols),
@@ -56,6 +66,14 @@ Terrain::Terrain(TerrainMaterial terrainMaterial, AEGfxTexture* pTex, AEVec2 cen
     }
 }
 
+// =========================================================
+//
+// Terrain::initCellsTransform
+//
+// Sets the world position and scale for every cell based
+// on the terrain's bottom-left corner and cell size.
+//
+// =========================================================
 void Terrain::initCellsTransform() {
     for (u32 r{0}; r < kCellRows_; ++r) {
         for (u32 c{0}; c < kCellCols_; ++c) {
@@ -69,6 +87,14 @@ void Terrain::initCellsTransform() {
     }
 }
 
+// =========================================================
+//
+// Terrain::initCellsGraphics
+//
+// Assigns the correct mesh from the mesh library to each
+// cell by computing the 4-bit marching-squares node mask.
+//
+// =========================================================
 void Terrain::initCellsGraphics() {
     for (u32 r{0}; r < kCellRows_; ++r) {
         for (u32 c{0}; c < kCellCols_; ++c) {
@@ -88,6 +114,15 @@ void Terrain::initCellsGraphics() {
     }
 }
 
+// =========================================================
+//
+// Terrain::initCellsCollider
+//
+// Assigns colliders from the collider library to each cell
+// using the same 4-bit node mask. Skipped when collidable_
+// is false (leaves all colliders as Empty).
+//
+// =========================================================
 void Terrain::initCellsCollider() {
     for (u32 r{0}; r < kCellRows_; ++r) {
         for (u32 c{0}; c < kCellCols_; ++c) {
@@ -115,6 +150,14 @@ void Terrain::initCellsCollider() {
     }
 }
 
+// =========================================================
+//
+// Terrain::updateTerrain
+//
+// Rebuilds the world matrix for every cell from its stored
+// position, rotation, and scale.
+//
+// =========================================================
 void Terrain::updateTerrain() {
     for (u32 r{0}; r < kCellRows_; ++r) {
         for (u32 c{0}; c < kCellCols_; ++c) {
@@ -132,6 +175,14 @@ void Terrain::updateTerrain() {
     }
 }
 
+// =========================================================
+//
+// Terrain::destroyAtMouse
+//
+// Converts the current mouse cursor position to world space
+// and forwards it to destroyTerrainRadius.
+//
+// =========================================================
 bool Terrain::destroyAtMouse(f32 radius) {
     s32 screenX, screenY;
     AEInputGetCursorPosition(&screenX, &screenY);
@@ -143,6 +194,14 @@ bool Terrain::destroyAtMouse(f32 radius) {
     return destroyTerrainRadius(worldX, worldY, radius);
 }
 
+// =========================================================
+//
+// Terrain::buildAtMouse
+//
+// Converts the current mouse cursor position to world space
+// and forwards it to buildTerrainRadius.
+//
+// =========================================================
 void Terrain::buildAtMouse(f32 radius) {
     s32 screenX, screenY;
     AEInputGetCursorPosition(&screenX, &screenY);
@@ -154,6 +213,14 @@ void Terrain::buildAtMouse(f32 radius) {
     buildTerrainRadius(worldX, worldY, radius);
 }
 
+// =========================================================
+//
+// Terrain::renderTerrain
+//
+// Draws every cell using the terrain texture, offsetting
+// the UV per column and row to tile the spritesheet atlas.
+//
+// =========================================================
 void Terrain::renderTerrain() {
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
@@ -190,6 +257,15 @@ void Terrain::renderTerrain() {
     }
 }
 
+// =========================================================
+//
+// Terrain::createMeshLibrary
+//
+// Builds all 16 marching-squares meshes and stores them in
+// the shared meshLibrary_ array. Each entry corresponds to
+// a unique combination of the four corner node bits.
+//
+// =========================================================
 void Terrain::createMeshLibrary() {
     // Corners (Positions)
     constexpr f32 kXLeft{-0.5f}, kXRight{0.5f}, kYBottom{-0.5f}, kYTop{0.5f};
@@ -337,12 +413,28 @@ void Terrain::createMeshLibrary() {
     }
 }
 
+// =========================================================
+//
+// Terrain::freeMeshLibrary
+//
+// Frees all 16 GPU meshes stored in meshLibrary_.
+//
+// =========================================================
 void Terrain::freeMeshLibrary() {
     for (auto& mesh : meshLibrary_) {
         AEGfxMeshFree(mesh);
     }
 }
 
+// =========================================================
+//
+// Terrain::createColliderLibrary
+//
+// Populates colliderLibrary_ with up to three collider
+// shapes per marching-squares case (box or triangle),
+// matching the geometry built by createMeshLibrary.
+//
+// =========================================================
 void Terrain::createColliderLibrary() {
 
     // Corners
@@ -566,6 +658,14 @@ void Terrain::createColliderLibrary() {
     }
 }
 
+// =========================================================
+//
+// Terrain::destroyTerrain
+//
+// Zeroes the node nearest to the given world position and
+// refreshes meshes, matrices, and colliders.
+//
+// =========================================================
 void Terrain::destroyTerrain(f32 worldX, f32 worldY) {
     // Calculate position relative to the terrain's bottom-left corner
     f32 localX{worldX - bottomLeftPos_.x};
@@ -590,6 +690,15 @@ void Terrain::destroyTerrain(f32 worldX, f32 worldY) {
     }
 }
 
+// =========================================================
+//
+// Terrain::destroyTerrainRadius
+//
+// Zeroes all nodes within a circular radius of the given
+// world position, then refreshes meshes and colliders.
+// Returns true if any node was changed.
+//
+// =========================================================
 bool Terrain::destroyTerrainRadius(f32 worldX, f32 worldY, f32 radius) {
     bool changed{false};
 
@@ -621,6 +730,15 @@ bool Terrain::destroyTerrainRadius(f32 worldX, f32 worldY, f32 radius) {
     return changed;
 }
 
+// =========================================================
+//
+// Terrain::buildTerrainRadius
+//
+// Sets all nodes within a circular radius of the given
+// world position to 1.0, then refreshes meshes and
+// colliders if any node changed.
+//
+// =========================================================
 void Terrain::buildTerrainRadius(f32 worldX, f32 worldY, f32 radius) {
     bool changed{false};
 
@@ -648,6 +766,14 @@ void Terrain::buildTerrainRadius(f32 worldX, f32 worldY, f32 radius) {
     }
 }
 
+// =========================================================
+//
+// Terrain::isNearestNodeToMouseAtThreshold
+//
+// Returns true if the node nearest to the current mouse
+// cursor is exactly at the threshold value.
+//
+// =========================================================
 bool Terrain::isNearestNodeToMouseAtThreshold() {
     s32 screenX{0}, screenY{0};
     AEInputGetCursorPosition(&screenX, &screenY);

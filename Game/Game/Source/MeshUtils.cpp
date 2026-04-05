@@ -5,7 +5,8 @@
 
 @date		March, 31, 2026
 
-@brief      This source file contains the declaration of functions that
+@brief      This source file contains the implementation of utility functions
+            for creating filled and wireframe AEGfxVertexList meshes.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents
@@ -23,6 +24,15 @@
 // Project
 #include "ConfigManager.h"
 
+// =========================================================
+//
+// createCircleMesh
+//
+// Creates a filled circle mesh by tessellating the circle
+// into the given number of pizza-slice triangles, each
+// fanning out from the origin to the circumference.
+//
+// =========================================================
 AEGfxVertexList* createCircleMesh(u32 slices, f32 radius) {
     AEGfxMeshStart();
 
@@ -58,6 +68,15 @@ AEGfxVertexList* createCircleMesh(u32 slices, f32 radius) {
     return AEGfxMeshEnd();
 }
 
+// =========================================================
+//
+// createRectMesh
+//
+// Creates a filled unit rectangle mesh centered at the
+// origin, made of two triangles spanning (-0.5, -0.5)
+// to (0.5, 0.5) with UV coordinates.
+//
+// =========================================================
 AEGfxVertexList* createRectMesh() {
     AEGfxMeshStart();
 
@@ -77,6 +96,14 @@ AEGfxVertexList* createRectMesh() {
     return mesh;
 }
 
+// =========================================================
+//
+// createWireRectMesh
+//
+// Creates a wireframe unit rectangle mesh as a closed
+// line strip spanning (-0.5, -0.5) to (0.5, 0.5).
+//
+// =========================================================
 AEGfxVertexList* createWireRectMesh() {
     AEGfxMeshStart();
     AEGfxVertexAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
@@ -87,6 +114,14 @@ AEGfxVertexList* createWireRectMesh() {
     return AEGfxMeshEnd();
 }
 
+// =========================================================
+//
+// createWireCircleMesh
+//
+// Creates a wireframe circle mesh as a closed line strip
+// with the given number of segments at radius 0.5.
+//
+// =========================================================
 AEGfxVertexList* createWireCircleMesh(u32 slices) {
     AEGfxMeshStart();
     f32 angleStep = (3.14159265f * 2.0f) / static_cast<f32>(slices);
@@ -97,6 +132,14 @@ AEGfxVertexList* createWireCircleMesh(u32 slices) {
     return AEGfxMeshEnd();
 }
 
+// =========================================================
+//
+// createWireLineMesh
+//
+// Creates a two-vertex line mesh from (0,0) to (1,0).
+// Scale and rotate the transform to draw arbitrary lines.
+//
+// =========================================================
 AEGfxVertexList* createWireLineMesh() {
     AEGfxMeshStart();
     AEGfxVertexAdd(0.0f, 0.0f, 0xFFFFFFFF, 0.0f, 0.0f);

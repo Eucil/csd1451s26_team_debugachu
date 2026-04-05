@@ -5,7 +5,8 @@
 
 @date		March, 31, 2026
 
-@brief      This source file contains the declaration of functions that
+@brief      This source file contains the implementation of the TiledBackground
+            class, which loads, draws, and unloads a screen-filling tiled texture.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents
@@ -23,6 +24,15 @@
 // Project
 #include "ConfigManager.h"
 
+// =========================================================
+//
+// TiledBackground::loadFromJson
+//
+// Reads half-extents and tile repeat counts from JSON,
+// loads the texture, and builds a two-triangle mesh that
+// spans the full background with tiled UV coordinates.
+//
+// =========================================================
 void TiledBackground::loadFromJson(const std::string& file, const std::string& section) {
     const Json::Value& s = g_configManager.getSection(file, section);
     f32 halfW = s.get("halfW", 800.0f).asFloat();
@@ -40,6 +50,14 @@ void TiledBackground::loadFromJson(const std::string& file, const std::string& s
     graphics_.mesh_ = AEGfxMeshEnd();
 }
 
+// =========================================================
+//
+// TiledBackground::draw
+//
+// Renders the tiled background at the identity transform
+// so it stays fixed in screen space regardless of camera.
+//
+// =========================================================
 void TiledBackground::draw() const {
     if (!graphics_.texture_ || !graphics_.mesh_)
         return;
@@ -54,6 +72,13 @@ void TiledBackground::draw() const {
     AEGfxMeshDraw(graphics_.mesh_, AE_GFX_MDM_TRIANGLES);
 }
 
+// =========================================================
+//
+// TiledBackground::unload
+//
+// Frees the texture and mesh, nulling both pointers.
+//
+// =========================================================
 void TiledBackground::unload() {
     if (graphics_.texture_) {
         AEGfxTextureUnload(graphics_.texture_);
