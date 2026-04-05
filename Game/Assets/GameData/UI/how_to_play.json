@@ -12,7 +12,7 @@
         "alpha": 1.0
       },
       "body": {
-        "content": "LEFT CLICK - Dig / Destroy dirt\nRIGHT CLICK - Place / Remove portals\nSCROLL WHEEL-UP - Turn portal anti-clockwise\nSCROLL WHEEL-DOWN - Turn portal clockwise",
+        "content": "[LEFT CLICK] Dig dirt / Toggle pipe\n[RIGHT CLICK] Place / Remove portals\n[SCROLL WHEEL-UP] Turn portal anti-clockwise\n[SCROLL WHEEL-DOWN] Turn portal clockwise",
         "x": 0.0,
         "y": 0.35,
         "scale": 0.8,
@@ -34,7 +34,7 @@
         "alpha": 1.0
       },
       "body": {
-        "content": "LEFT CLICK the PIPE for water\nDig Dirt\nPlace Portals\nWater the Flower!",
+        "content": "Left click the pipe for water\nDig dirt\nPlace portals\nWater the plant!",
         "x": 0.0,
         "y": 0.35,
         "scale": 0.8,
@@ -56,7 +56,7 @@
         "alpha": 1.0
       },
       "body": {
-        "content": "Place PORTALS to teleport water\nRIGHT CLICK to place a portal.\nPortals require magic terrain",
+        "content": "Place portals to teleport water\nRight click to place a portal.\nPlace portals only on magic terrain",
         "x": 0.0,
         "y": 0.35,
         "scale": 0.8,
@@ -78,7 +78,7 @@
         "alpha": 1.0
       },
       "body": {
-        "content": "Water flows with gravity.\nLinked portals share a color.\nStone terrain cannot be dug.\nAvoid Moss to conserve water\nPress R to restart a level.",
+        "content": "Water flows with gravity.\nLinked portals share a color.\nStone terrain cannot be dug.\nAvoid moss to conserve water",
         "x": 0.0,
         "y": 0.35,
         "scale": 0.8,
@@ -100,7 +100,7 @@
         "alpha": 1
       },
       "body": {
-        "content": "3 collectibles each stage.\nTry collecting all of them.\nHave Fun!!!",
+        "content": "There are 3 collectibles per level.\nTry collecting all of them!\nHave Fun!!!",
         "x": 0,
         "y": 0.35,
         "scale": 0.8,
