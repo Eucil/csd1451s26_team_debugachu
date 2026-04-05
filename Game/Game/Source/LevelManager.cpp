@@ -6,7 +6,9 @@
 
 @date		March, 31, 2026
 
-@brief      This source file contains the declaration of functions that
+@brief      This source file implements LevelManager, handling level editor UI layout,
+            JSON-based level save/load, playability tracking, and
+            brush preview rendering.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents
@@ -15,21 +17,49 @@
 *//*______________________________________________________________________*/
 #include "LevelManager.h"
 
+// ============================
 // Standard library
+// ============================
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 
+// ============================
 // Third-party
+// ============================
 #include <json/json.h>
 
+// ============================
 // Project
+// ============================
 #include "ConfigManager.h"
 #include "Moss.h"
 #include "MouseUtils.h"
 
 LevelManager levelManager;
 
+EditorMode LevelManager::getLevelEditorMode() const { return levelEditorMode_; }
+
+void LevelManager::setLevelEditorMode(EditorMode mode) { levelEditorMode_ = mode; }
+
+int LevelManager::getCurrentLevel() const { return currentLevel_; }
+
+void LevelManager::setCurrentLevel(int level) { currentLevel_ = level; }
+
+GameBlock LevelManager::getCurrentGameBlock() const { return currentGameBlock_; }
+
+void LevelManager::setCurrentGameBlock(GameBlock block) { currentGameBlock_ = block; }
+
+bool LevelManager::getDisplayBuilderContainer() const { return displayEditorContainer_; }
+
+// =========================================================
+//
+// LevelManager::init()
+//
+// - Reads initial state from config JSON:
+// - editor mode, current level, current game block, and container visibility.
+//
+// =========================================================
 void LevelManager::init() {
     levelEditorMode_ = static_cast<EditorMode>(g_configManager.getInt(
         "LevelManager", "default", "levelEditorMode_", static_cast<int>(EditorMode::None)));
@@ -41,6 +71,15 @@ void LevelManager::init() {
         g_configManager.getBool("LevelManager", "default", "displayEditorContainer_", true);
 }
 
+// =========================================================
+//
+// LevelManager::initEditorUI(s8 font)
+//
+// - Loads editor button and container assets from JSON,
+// - builds the block selector button pool with textures and labels,
+// - and creates the circle mesh used for brush preview rendering.
+//
+// =========================================================
 void LevelManager::initEditorUI(s8 font) {
     // Setup Editor UI
     editorButton_.loadMesh();
@@ -59,6 +98,7 @@ void LevelManager::initEditorUI(s8 font) {
     updateEditorButtonPosition();
     updateContainerPosition();
 
+    // Block selector button pool setup
     static const char* blockNames[] = {"Dirt", "Stone", "Magic",  "Start",
                                        "End",  "Item",  "Portal", "Moss"};
     static const char* blockTextures[] = {
@@ -84,20 +124,14 @@ void LevelManager::initEditorUI(s8 font) {
     readingRoot_ = Json::Value();
 }
 
-EditorMode LevelManager::getLevelEditorMode() const { return levelEditorMode_; }
-
-void LevelManager::setLevelEditorMode(EditorMode mode) { levelEditorMode_ = mode; }
-
-int LevelManager::getCurrentLevel() const { return currentLevel_; }
-
-void LevelManager::setCurrentLevel(int level) { currentLevel_ = level; }
-
-GameBlock LevelManager::getCurrentGameBlock() const { return currentGameBlock_; }
-
-void LevelManager::setCurrentGameBlock(GameBlock block) { currentGameBlock_ = block; }
-
-bool LevelManager::getDisplayBuilderContainer() const { return displayEditorContainer_; }
-
+// =========================================================
+//
+// LevelManager::updateEditorButtonPosition()
+//
+// - Slides the editor button left by the container width when the panel is open,
+// - or resets it to editorButtonStartPosX_ when the panel is closed.
+//
+// =========================================================
 void LevelManager::updateEditorButtonPosition() {
     // Update builder button position
     // If builder container is displayed, move button based on container scale
@@ -116,6 +150,14 @@ void LevelManager::updateEditorButtonPosition() {
     editorButton_.updateTransform();
 }
 
+// =========================================================
+//
+// LevelManager::updateContainerPosition()
+//
+// - Anchors the block selector container directly to the right of the editor button.
+// - Also repositions the controls hint text below the container.
+//
+// =========================================================
 void LevelManager::updateContainerPosition() {
     // Update builder button position
     // And make sure builder container follows the button
@@ -142,6 +184,14 @@ void LevelManager::updateContainerPosition() {
         (containerPos.y - editorContainer_.getTransform().scale_.y / 2.0f - 30.0f) / halfWinH;
 }
 
+// =========================================================
+//
+// LevelManager::updateInnerButtonPosition()
+//
+// - Lays out the block selector buttons in a 3-column grid inside the container,
+// - computing button sizes from the available space after padding.
+//
+// =========================================================
 void LevelManager::updateInnerButtonPosition() {
     // Update inner button position to follow the container
     AEVec2 containerPos = editorContainer_.getTransform().pos_;
@@ -152,8 +202,8 @@ void LevelManager::updateInnerButtonPosition() {
 
     int columns = 3;
     if (columns > totalButtons)
-        columns = totalButtons;                        // avoid empty columns
-    int rows = (totalButtons + columns - 1) / columns; // ceil division
+        columns = totalButtons;
+    int rows = (totalButtons + columns - 1) / columns;
 
     // Available space inside container after padding on edges and between items
     float availableWidth = containerScale.x - (columns + 1) * padding;
@@ -168,8 +218,8 @@ void LevelManager::updateInnerButtonPosition() {
     float top = containerPos.y + (containerScale.y / 2.0f) - padding;
 
     for (int i = 0; i < totalButtons; ++i) {
-        int r = i / columns; // row index 0..rows-1
-        int c = i % columns; // col index 0..columns-1
+        int r = i / columns;
+        int c = i % columns;
 
         // center of the button in world coords
         float x = left + c * (buttonWidth + padding) + buttonWidth * 0.5f;
@@ -177,11 +227,20 @@ void LevelManager::updateInnerButtonPosition() {
 
         editorButtonPool_[i].setTransform({x, y}, {buttonWidth, buttonHeight});
 
-        // If your SetupMesh needs to be re-run after transform changes, keep this.
         editorButtonPool_[i].updateTransform();
     }
 }
 
+// =========================================================
+//
+// LevelManager::updateLevelEditor()
+//
+// - Handles Tab-toggle of the block selector panel,
+// - block selection clicks from the button pool,
+// - and scroll-wheel adjustment of brushRadius_.
+// - Early-returns immediately if not in Edit mode.
+//
+// =========================================================
 void LevelManager::updateLevelEditor() {
     if (levelEditorMode_ != EditorMode::Edit) {
         return;
@@ -223,6 +282,16 @@ void LevelManager::updateLevelEditor() {
     }
 }
 
+// =========================================================
+//
+// LevelManager::renderLevelEditorUI()
+//
+// - Draws the editor toggle button, and when the panel is open,
+// - draws the container, block selector buttons (tinted by selection),
+// - and the controls hint text.
+// - Early-returns if not in Edit mode.
+//
+// =========================================================
 void LevelManager::renderLevelEditorUI() {
 
     if (levelEditorMode_ != EditorMode::Edit) {
@@ -256,6 +325,14 @@ void LevelManager::renderLevelEditorUI() {
     }
 }
 
+// =========================================================
+//
+// LevelManager::freeLevelEditor()
+//
+// - Unloads the editor button, container, all block pool buttons,
+// - and the circle brush mesh.
+//
+// =========================================================
 void LevelManager::freeLevelEditor() {
     editorButton_.unload();
     editorContainer_.unload();
@@ -266,6 +343,14 @@ void LevelManager::freeLevelEditor() {
     }
 }
 
+// =========================================================
+//
+// LevelManager::makeLevelFilePath(int level)
+//
+// - Ensures the Assets/Levels/Level_N directory exists,
+// - creating it if necessary. Returns false if creation fails.
+//
+// =========================================================
 bool LevelManager::makeLevelFilePath(int level) {
     std::string levelPath = "Assets/Levels/Level_" + std::to_string(level);
     std::filesystem::path filepath(levelPath);
@@ -286,6 +371,15 @@ bool LevelManager::makeLevelFilePath(int level) {
     return true;
 }
 
+// =========================================================
+//
+// LevelManager::makeLevelFile(int level)
+//
+// - Ensures Map.json exists inside the level directory,
+// - writing a default empty JSON root if the file is new.
+// - Returns false if the file cannot be created.
+//
+// =========================================================
 bool LevelManager::makeLevelFile(int level) {
     // check if file exists, if not create file
     std::string levelPath = "Assets/Levels/Level_" + std::to_string(level) + "/Map.json";
@@ -318,6 +412,14 @@ bool LevelManager::makeLevelFile(int level) {
     return true;
 }
 
+// =========================================================
+//
+// LevelManager::deleteLevelData(int level)
+//
+// - Overwrites Map.json for the given level with an empty default root,
+// - clearing all saved terrain, objects, and map metadata.
+//
+// =========================================================
 void LevelManager::deleteLevelData(int level) {
     std::string levelPath = "Assets/Levels/Level_" + std::to_string(level) + "/Map.json";
     std::filesystem::path filePath(levelPath);
@@ -344,18 +446,44 @@ void LevelManager::deleteLevelData(int level) {
     savingRoot_.clear();
 }
 
+// =========================================================
+//
+// LevelManager::createLevelData(int level, int width, int height, int tilesize,
+///                              int portalLimit)
+//
+// - Saves map metadata (dimensions, portal limit) to savingRoot_
+// - and immediately flushes it to Map.json via writeToFile().
+//
+// =========================================================
 void LevelManager::createLevelData(int level, int width, int height, int tilesize,
                                    int portalLimit) {
     saveMapInfo(width, height, tilesize, portalLimit);
     writeToFile(level);
 }
 
+// =========================================================
+//
+// LevelManager::saveMapInfo(int width, int height, int tilesize, int portalLimit)
+//
+// - Writes map dimensions and portal limit into savingRoot_["Map"].
+// - Must be followed by writeToFile() to persist to disk.
+//
+// =========================================================
 void LevelManager::saveMapInfo(int width, int height, int tilesize, int portalLimit) {
     savingRoot_["Map"]["width"] = width;
     savingRoot_["Map"]["height"] = height;
     savingRoot_["Map"]["tileSize"] = tilesize;
     savingRoot_["Map"]["portalLimit"] = portalLimit;
 }
+
+// =========================================================
+//
+// LevelManager::saveTerrainInfo(std::vector<float>& nodes, const std::string& terrainType)
+//
+// - Serializes the terrain node float array for the given type
+// - (e.g. "Dirt", "Stone", "Magic") into savingRoot_["Terrain"].
+//
+// =========================================================
 void LevelManager::saveTerrainInfo(std::vector<float>& nodes, const std::string& terrainType) {
     Json::Value terrainJson(Json::arrayValue);
     for (size_t i = 0; i < nodes.size(); ++i) {
@@ -364,6 +492,14 @@ void LevelManager::saveTerrainInfo(std::vector<float>& nodes, const std::string&
     savingRoot_["Terrain"][terrainType] = terrainJson;
 }
 
+// =========================================================
+//
+// LevelManager::saveStartEndInfo(std::vector<StartEnd>& startPoints, StartEnd& endPoint)
+//
+// - Serializes all start points and the single end point
+// - (position, scale, rotation, type, direction) into savingRoot_["Objects"].
+//
+// =========================================================
 void LevelManager::saveStartEndInfo(std::vector<StartEnd>& startPoints, StartEnd& endPoint) {
     Json::Value startPointsJsonArray(Json::arrayValue);
     for (const auto& startPoint : startPoints) {
@@ -390,6 +526,13 @@ void LevelManager::saveStartEndInfo(std::vector<StartEnd>& startPoints, StartEnd
     savingRoot_["Objects"]["endPoint"] = endPointJson;
 }
 
+// =========================================================
+//
+// LevelManager::saveCollectibleInfo(std::vector<Collectible>& collectibles)
+//
+// - Serializes all collectibles (position and type) into savingRoot_["Objects"].
+//
+// =========================================================
 void LevelManager::saveCollectibleInfo(std::vector<Collectible>& collectibles) {
 
     Json::Value collectiblesJsonArray(Json::arrayValue);
@@ -402,6 +545,15 @@ void LevelManager::saveCollectibleInfo(std::vector<Collectible>& collectibles) {
     }
     savingRoot_["Objects"]["collectibles"] = collectiblesJsonArray;
 }
+
+// =========================================================
+//
+// LevelManager::saveMossInfo(std::vector<Moss>& mosses)
+//
+// - Serializes all moss instances (position, type, health, and absorption rate)
+// - into savingRoot_["Objects"].
+//
+// =========================================================
 void LevelManager::saveMossInfo(std::vector<Moss>& mosses) {
     Json::Value mossJsonArray(Json::arrayValue);
     for (const auto& moss : mosses) {
@@ -417,6 +569,14 @@ void LevelManager::saveMossInfo(std::vector<Moss>& mosses) {
     savingRoot_["Objects"]["moss"] = mossJsonArray;
 }
 
+// =========================================================
+//
+// LevelManager::parseMossInfo(MossSystem& mossSystem)
+//
+// - Reads all moss instances from readingRoot_["Objects"]
+// - and calls loadLevelMoss() on each.
+//
+// =========================================================
 void LevelManager::parseMossInfo(MossSystem& mossSystem) {
     if (readingRoot_.isMember("Objects")) {
         const Json::Value& objects = readingRoot_["Objects"];
@@ -426,14 +586,19 @@ void LevelManager::parseMossInfo(MossSystem& mossSystem) {
                 AEVec2 pos{mosses[i]["posX"].asFloat(), mosses[i]["posY"].asFloat()};
                 MossType type = static_cast<MossType>(mosses[i]["type"].asInt());
                 mossSystem.loadLevelMoss(pos, type);
-
-                // Optional: restore health if saved
-                // You'd need to modify LoadLevelMoss to accept more parameters
             }
         }
     }
 }
 
+// =========================================================
+//
+// LevelManager::savePortalInfo(PortalSystem& portalSystem)
+//
+// - Serializes all portal transforms (position, scale, rotation)
+// - into savingRoot_["Objects"].
+//
+// =========================================================
 void LevelManager::savePortalInfo(PortalSystem& portalSystem) {
     Json::Value portalsJsonArray(Json::arrayValue);
 
@@ -451,6 +616,15 @@ void LevelManager::savePortalInfo(PortalSystem& portalSystem) {
     savingRoot_["Objects"]["portals"] = portalsJsonArray;
 }
 
+// =========================================================
+//
+// LevelManager::writeToFile(int level)
+//
+// - Flushes savingRoot_ to Assets/Levels/Level_N/Map.json
+// - using pretty-printed JSON. Clears savingRoot_ after writing
+// - to prevent accidental reuse across save calls.
+//
+// =========================================================
 void LevelManager::writeToFile(int level) {
     std::string levelPath = "Assets/Levels/Level_" + std::to_string(level) + "/Map.json";
     std::filesystem::path filePath(levelPath);
@@ -477,6 +651,17 @@ void LevelManager::writeToFile(int level) {
     savingRoot_.clear();
 }
 
+// =========================================================
+//
+// LevelManager::getLevelData(int level)
+//
+// - Opens and parses Map.json for the given level into readingRoot_.
+// - Caches the stored high score into levelHighScores_.
+// - Returns false if the file is missing, unparseable,
+// - or contains only the default empty root ("None" key).
+// - If the file is missing, attempts to create the directory and file.
+//
+// =========================================================
 bool LevelManager::getLevelData(int level) {
     // Clear previously read data to prevent accidental reuse
     readingRoot_ = Json::Value();
@@ -519,6 +704,14 @@ bool LevelManager::getLevelData(int level) {
     return true;
 }
 
+// =========================================================
+//
+// LevelManager::checkLevelData()
+//
+// - Iterates over every level slot and calls getLevelData() for each.
+// - Populates playableLevels_[] with the result.
+//
+// =========================================================
 void LevelManager::checkLevelData() {
     // Loop through and check if level is playable by calling getLevelData for each
     for (int i = 1; i <= static_cast<int>(Level::None); ++i) {
@@ -527,6 +720,14 @@ void LevelManager::checkLevelData() {
     }
 }
 
+// =========================================================
+//
+// LevelManager::getHighScore(int level)
+//
+// - Returns the cached high score for a level (1-based index).
+// - Returns 0 if the level index is out of range.
+//
+// =========================================================
 int LevelManager::getHighScore(int level) const {
     if (level > 0 && level <= static_cast<int>(Level::None)) {
         return levelHighScores_[level - 1];
@@ -534,6 +735,15 @@ int LevelManager::getHighScore(int level) const {
     return 0;
 }
 
+// =========================================================
+//
+// LevelManager::saveLevelProgress(int level, int collectedCount)
+//
+// - Reads the existing Map.json, compares collectedCount to the stored
+// - high score, and overwrites the file only if it is a new record.
+// - Returns true if the score was updated.
+//
+// =========================================================
 bool LevelManager::saveLevelProgress(int level, int collectedCount) {
     std::string levelPath = "Assets/Levels/Level_" + std::to_string(level) + "/Map.json";
     std::ifstream inFile(levelPath);
@@ -571,6 +781,14 @@ bool LevelManager::saveLevelProgress(int level, int collectedCount) {
     return false;
 }
 
+// =========================================================
+//
+// LevelManager::parseMapInfo(int& width, int& height, int& tilesize, int& portalLimit)
+//
+// - Extracts map dimensions and portal limit from readingRoot_["Map"].
+// - getLevelData() must have been called first.
+//
+// =========================================================
 void LevelManager::parseMapInfo(int& width, int& height, int& tilesize, int& portalLimit) {
     if (readingRoot_.isMember("Map")) {
         std::cout << "Parsing map info...\n";
@@ -582,6 +800,15 @@ void LevelManager::parseMapInfo(int& width, int& height, int& tilesize, int& por
         std::cout << "Map info not found in JSON\n";
     }
 }
+
+// =========================================================
+//
+// LevelManager::parseTerrainInfo(std::vector<float>& nodes, std::string terrainType)
+//
+// - Fills the nodes array with float values from readingRoot_["Terrain"][terrainType].
+// - getLevelData() must have been called first.
+//
+// =========================================================
 void LevelManager::parseTerrainInfo(std::vector<float>& nodes, std::string terrainType) {
     if (!readingRoot_.isMember("Terrain")) {
         std::cout << "Terrain info not found in JSON\n";
@@ -607,6 +834,15 @@ void LevelManager::parseTerrainInfo(std::vector<float>& nodes, std::string terra
         nodes[i] = nodeArray[i].asFloat();
     }
 }
+
+// =========================================================
+//
+// LevelManager::parseStartEndInfo(StartEndPoint& startEndPointSystem)
+//
+// - Reads all start points and the end point from readingRoot_["Objects"]
+// - and calls setupPoint() on each.
+//
+// =========================================================
 void LevelManager::parseStartEndInfo(StartEndPoint& startEndPointSystem) {
 
     if (readingRoot_.isMember("Objects")) {
@@ -646,6 +882,14 @@ void LevelManager::parseStartEndInfo(StartEndPoint& startEndPointSystem) {
     }
 }
 
+// =========================================================
+//
+// LevelManager::parseCollectibleInfo(CollectibleSystem& collectibleSystem)
+//
+// - Reads all collectibles from readingRoot_["Objects"]
+// - and calls loadLevelCollectibles() on each.
+//
+// =========================================================
 void LevelManager::parseCollectibleInfo(CollectibleSystem& collectibleSystem) {
     if (readingRoot_.isMember("Objects")) {
         const Json::Value& objects = readingRoot_["Objects"];
@@ -666,6 +910,14 @@ void LevelManager::parseCollectibleInfo(CollectibleSystem& collectibleSystem) {
     }
 }
 
+// =========================================================
+//
+// LevelManager::parsePortalInfo(PortalSystem& portalSystem)
+//
+// - Reads all portal entries from readingRoot_["Objects"],
+// - converting stored radians back to degrees, and calls setupPortal() on each.
+//
+// =========================================================
 void LevelManager::parsePortalInfo(PortalSystem& portalSystem) {
     if (readingRoot_.isMember("Objects")) {
         const Json::Value& objects = readingRoot_["Objects"];
@@ -691,6 +943,15 @@ void LevelManager::parsePortalInfo(PortalSystem& portalSystem) {
     }
 }
 
+// =========================================================
+//
+// LevelManager::drawBrushPreview(TerrainMaterial terrainType, f32 radius_)
+//
+// - Renders a semi-transparent circle at the current mouse position.
+// - Sized to radius_ if non-zero, otherwise to brushRadius_.
+// - Color varies by terrain type: brown=Dirt, gray=Stone, purple=Magic.
+//
+// =========================================================
 void LevelManager::drawBrushPreview(TerrainMaterial terrainType, f32 radius_) {
     AEVec2 mousePos = getMouseWorldPos();
 

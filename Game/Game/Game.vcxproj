@@ -52,6 +52,7 @@
     <None Include="..\Assets\GameData\FileConfigs\Level.json" />
     <None Include="..\Assets\GameData\FileConfigs\LevelManager.json" />
     <None Include="..\Assets\GameData\FileConfigs\LevelSelector.json" />
+    <None Include="..\Assets\GameData\FileConfigs\moss.json" />
     <None Include="..\Assets\GameData\FileConfigs\PlayerLevel.json" />
     <None Include="..\Assets\GameData\FileConfigs\PortalSystem.json" />
     <None Include="..\Assets\GameData\FileConfigs\VFXSystem.json" />
