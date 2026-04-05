@@ -728,7 +728,6 @@ void freePlayerLevel() {
 // - Called once when leaving the PlayerLevel state.
 //
 // =========================================================
-
 void unloadPlayerLevel() {
 
     // Level Buttons
