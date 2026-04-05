@@ -416,7 +416,7 @@ void VFXSystem::free() {
         if (currentMesh != nullptr) {
             bool isDuplicate = false;
 
-            // Look back at previous configs (they haven't been nullified yet!)
+            // Look back at previous configs 
             for (int j = 0; j < i; ++j) {
                 if (graphicsConfigs_[j].mesh_ == currentMesh) {
                     isDuplicate = true;
