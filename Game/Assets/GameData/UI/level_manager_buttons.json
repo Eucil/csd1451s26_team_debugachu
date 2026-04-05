@@ -18,7 +18,7 @@
     }
   },
   "editorControlsText_": {
-    "content": "[LMB] Place\n[RMB] Delete\n[SCROLL] Brush size\n[S] Save\n[MMB] Rotate Portal\n\nClose this menu to\ncontinue editing\n\nExit through\npause menu",
+    "content": "[LMB] Place\n[RMB] Delete\n[SCROLL] Brush size\n[S] Save\n[RMB] Place/Remove\n      Portal\n[SCROLL] Rotate Portal\n\nClose this menu to\ncontinue editing\n\nExit through\npause menu",
     "x": 0.0,
     "y": 0.0,
     "scale": 0.6,

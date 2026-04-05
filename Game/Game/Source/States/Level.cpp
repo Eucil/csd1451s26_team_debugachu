@@ -210,14 +210,14 @@ void loadLevel() {
     {
         const Json::Value& hint = g_configManager.getSection("Level", "ClickMeHint");
         clickMeText.content_ = hint["content"].asString();
-        clickMeText.scale_   = hint["scale"].asFloat();
-        clickMeText.r_       = hint["red"].asFloat();
-        clickMeText.g_       = hint["green"].asFloat();
-        clickMeText.b_       = hint["blue"].asFloat();
-        clickMeText.a_       = hint["alpha"].asFloat();
-        clickMeText.font_    = font;
-        clickMeOffsetX       = hint["offsetX"].asFloat();
-        clickMeOffsetY       = hint["offsetY"].asFloat();
+        clickMeText.scale_ = hint["scale"].asFloat();
+        clickMeText.r_ = hint["red"].asFloat();
+        clickMeText.g_ = hint["green"].asFloat();
+        clickMeText.b_ = hint["blue"].asFloat();
+        clickMeText.a_ = hint["alpha"].asFloat();
+        clickMeText.font_ = font;
+        clickMeOffsetX = hint["offsetX"].asFloat();
+        clickMeOffsetY = hint["offsetY"].asFloat();
     }
 
     // Level Data
@@ -532,9 +532,6 @@ void updateLevel(GameStateManager& GSM, f32 deltaTime) {
                                 portalSystem.resetIframe();
                             }
                         }
-                        if (AEInputCheckTriggered(AEVK_MBUTTON)) {
-                            portalSystem.rotatePortal();
-                        }
                         break;
                     default:
                         break;
@@ -666,9 +663,6 @@ void updateLevel(GameStateManager& GSM, f32 deltaTime) {
 
                 // Win Screen
                 winScreen.update(GSM);
-                // Pause system
-                pauseSystem.setTransformFillScreen();
-                pauseSystem.updateTransform();
             }
         }
     } else {
@@ -685,6 +679,10 @@ void updateLevel(GameStateManager& GSM, f32 deltaTime) {
     // Always update these
     if (savedLevelTimer > 0.0f)
         savedLevelTimer -= deltaTime;
+
+    // Pause system
+    pauseSystem.setTransformFillScreen();
+    pauseSystem.updateTransform();
 
     animManager.updateAll(deltaTime);
     confirmationSystem.update();
