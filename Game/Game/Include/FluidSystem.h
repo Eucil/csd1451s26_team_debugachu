@@ -42,9 +42,7 @@ struct FluidParticle {
     RigidBody2D physics_;
     Collider2D collider_;
 
-    FluidType
-        type_; //  <--- water, lava, etc
-               // currently only being used for identifying the particle type for setters/getters
+    FluidType type_; //                  //  <--- water, lava, etc
 
     bool portalIframe_{false};           // <--- to prevent immediate re-teleportation
     f32 portalIframeTimer_{0.15f};       // <--- timer for portal iframe
@@ -74,8 +72,7 @@ public:
     std::vector<FluidParticle>& getParticlePool(FluidType type);
 
 private:
-    // particles[0] holds Water, particles[1] holds Lava, etc.
-    // Stores live particles
+    // particles[0] holds Water, particles[1] holds Lava, etc, stores live particles
     std::vector<FluidParticle> particlePools_[static_cast<int>(FluidType::Count)];
 
     // Each fluid will have 3 graphics components

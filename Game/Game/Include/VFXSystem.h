@@ -24,6 +24,10 @@
 *//*______________________________________________________________________*/
 #pragma once
 
+// ==========================================
+//              Includes
+// ==========================================
+
 // Standard library
 #include <vector>
 
@@ -33,6 +37,10 @@
 // Project
 #include "Components.h"
 #include "MeshUtils.h"
+
+// ==========================================
+//              VFXType
+// ==========================================
 enum class VFXType {
     DirtBurst,
     PortalBurst,
@@ -44,6 +52,9 @@ enum class VFXType {
     Count
 };
 
+// ==========================================
+//              VFXParticle
+// ==========================================
 struct VFXParticle {
 
     VFXType type_{VFXType::DirtBurst};
@@ -66,6 +77,9 @@ struct VFXParticle {
     char padding_[4]{0};
 };
 
+// ==========================================
+//              EmitterConfig
+// ==========================================
 struct EmitterConfig {
     int spawnCount_{0}; // How many particles to spawn per burst
     f32 minLife_{0.0f}, maxLife_{0.0f};
@@ -74,6 +88,9 @@ struct EmitterConfig {
     f32 r_{1.0f}, g_{1.0f}, b_{1.0f}, a_{1.0f};
 };
 
+// ==========================================
+//              ParticleEmitter
+// ==========================================
 struct ParticleEmitter {
     bool active_{false};
     VFXType type_{VFXType::DirtBurst};
@@ -84,6 +101,9 @@ struct ParticleEmitter {
     EmitterConfig config_;
 };
 
+// ==========================================
+//              VFXSystem
+// ==========================================
 class VFXSystem {
 public:
     f32 vfxSpawnTimer_{0.0f};

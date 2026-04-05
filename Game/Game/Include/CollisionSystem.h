@@ -6,7 +6,19 @@
 
 @date		March, 31, 2026
 
-@brief      This header file contains the declaration of functions that
+@brief      This source file contains the declarations of functions and classes
+            for the collision detection and resolution system which includes the following:
+
+                - CollisionSystem, a static utility class that manages spatial
+                  partitioning, intersection detection, and physics resolution
+                  between fluid particles and terrain geometry.
+                - Geometric Utility functions for point-in-triangle tests,
+                  vector normalization, and coordinate space transformations.
+                - Intersection Detection algorithms for Circle-vs-AABB and
+                  Circle-vs-Triangle collisions.
+                - Collision Response logic including floor impact spreading,
+                  repulsion forces, and anti-tunneling measures to ensure
+                  stable fluid behavior.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents
@@ -14,6 +26,9 @@
             Technology is prohibited.
 *//*______________________________________________________________________*/
 #pragma once
+// ==========================================
+//              Includes
+// ==========================================
 
 // Standard library
 #include <algorithm>
@@ -29,25 +44,31 @@
 #include "FluidSystem.h"
 #include "Terrain.h"
 
+// ==========================================
+//              CollisionInfo
+// ==========================================
 struct CollisionInfo {
     bool hasCollision_ = false;
     AEVec2 normal_ = {0.0f, 1.0f};
     f32 penetration_ = 0.0f;
 };
 
+// ==========================================
+//              CollisionSystem
+// ==========================================
 class CollisionSystem {
 public:
     static void terrainToFluidCollision(Terrain& terrain, FluidSystem& fluidSystem, f32 dt = {});
 
-    static u32  getLastFrameCollisionCount() { return collisionCount_; }
-    static void resetCollisionCount()        { collisionCount_ = 0; }
-    static void incrementCollisionCount()    { ++collisionCount_; }
+    static u32 getLastFrameCollisionCount() { return collisionCount_; }
+    static void resetCollisionCount() { collisionCount_ = 0; }
+    static void incrementCollisionCount() { ++collisionCount_; }
 
 private:
     using BucketEntry = std::pair<FluidType, u32>;
 
     // -----------------------------
-    // Minimal vector helpers (avoid AE const-pointer issues)
+    // Minimal vector helpers
     // -----------------------------
     static AEVec2 vAdd(const AEVec2& a, const AEVec2& b) { return AEVec2{a.x + b.x, a.y + b.y}; }
     static AEVec2 vSub(const AEVec2& a, const AEVec2& b) { return AEVec2{a.x - b.x, a.y - b.y}; }
@@ -64,9 +85,8 @@ private:
     // Point in triangle (barycentric)
     static bool pointInTriangle(const AEVec2& p, const AEVec2& a, const AEVec2& b, const AEVec2& c);
 
-    // Helper function (terrainToFluidCollision):
-    // Generates a CollisionContact struct containing information about the collision (normal,
-    // penetration).
+    // Helper function (terrainToFluidCollision): Returns a CollisionContact struct containing
+    // information about collision.
     static CollisionInfo cellToFluidParticleCollision(const Cell& cell,
                                                       const FluidParticle& fluidParticle);
 

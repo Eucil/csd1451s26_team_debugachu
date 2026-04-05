@@ -16,6 +16,12 @@
             without the prior written consent of DigiPen Institute of
             Technology is prohibited.
 *//*______________________________________________________________________*/
+
+// ==========================================
+// Includes
+// ==========================================
+
+// Level.h includes
 #include "States/Level.h"
 
 // Standard library
@@ -511,7 +517,7 @@ void updateLevel(GameStateManager& GSM, f32 deltaTime) {
                         break;
                     }
                 }
-                // Inputs to save level
+                // Inputs to save level (Current save input: Press S)
                 if (AEInputCheckReleased(AEVK_S)) {
                     levelManager.saveMapInfo(width, height, tileSize,
                                              portalSystem.getPortalLimit());
@@ -530,7 +536,7 @@ void updateLevel(GameStateManager& GSM, f32 deltaTime) {
                 // Gameplay mode
                 // ====================
 
-                // Input for gameplay
+                // Input for gameplay (Current save input: Left-Click)
                 if (AEInputCheckCurr(AEVK_LBUTTON)) {
                     bool hitDirt = dirt->destroyAtMouse(20.0f);
                     // Only run the VFX timer if we actually dug through dirt
@@ -598,12 +604,10 @@ void updateLevel(GameStateManager& GSM, f32 deltaTime) {
 
                 // System updates for gameplay
                 spawnWaterWithLimit(deltaTime);
-
                 collectibleSystem.update(deltaTime, fluidSystem.getParticlePool(FluidType::Water),
                                          vfxSystem);
                 mossSystem.update(deltaTime, fluidSystem.getParticlePool(FluidType::Water),
                                   startEndPointSystem, vfxSystem);
-
                 fluidSystem.update(deltaTime, {dirt, stone});
                 startEndPointSystem.update(deltaTime, fluidSystem.getParticlePool(FluidType::Water),
                                            vfxSystem);

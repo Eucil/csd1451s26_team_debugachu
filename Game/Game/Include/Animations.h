@@ -24,6 +24,10 @@
 
 #pragma once
 
+// ==========================================
+// Includes
+// ==========================================
+
 // Standard library
 #include <vector>
 
@@ -35,7 +39,7 @@
 #include "MeshUtils.h"
 
 // ==========================================
-// INTERFACE
+// Interface
 // ==========================================
 class IAnimation {
 public:
@@ -49,7 +53,7 @@ public:
 };
 
 // ==========================================
-// ANIMATION MANAGER
+// Animation Manager
 // ==========================================
 class AnimationManager {
 private:
@@ -65,7 +69,7 @@ public:
 };
 
 // ==========================================
-// UIFADER (Inherits from IAnimation)
+// UIFader (Inherits from IAnimation)
 // ==========================================
 class UIFader : public IAnimation {
 private:
@@ -86,7 +90,7 @@ public:
 };
 
 // ==========================================
-// SCREEN FADER (Inherits from IAnimation)
+// Screen Fader (Inherits from IAnimation)
 // ==========================================
 class ScreenFaderManager : public IAnimation {
 private:

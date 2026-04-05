@@ -34,7 +34,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
-    AESysInit(hInstance, nCmdShow, 1600, 900, 1, 60, false, nullptr);
+    AESysInit(hInstance, nCmdShow, 1600, 900, 0, 60, false, nullptr);
 
     AESysReset();
 

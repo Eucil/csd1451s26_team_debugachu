@@ -22,6 +22,12 @@
             without the prior written consent of DigiPen Institute of
             Technology is prohibited.
 *//*______________________________________________________________________*/
+
+// ==========================================
+//               Includes
+// ==========================================
+
+// FluidSystem.h
 #include "FluidSystem.h"
 
 // Standard library
@@ -39,7 +45,6 @@
 // ==========================================
 //               FluidParticle
 // ==========================================
-
 
 // =========================================================
 //
@@ -121,8 +126,6 @@ void FluidSystem::initialize() {
         particlePools_[i].reserve(1000);
     }
 
-    // @todo To change to read values from a json file instead and load them into private containers
-    // instead of using magic numbers Initialize physics for each fluid type
     initializePhysics(
         g_configManager.getFloat("FluidSystem", "Water", "mass", 1.0f),
         g_configManager.getFloat("FluidSystem", "Water", "gravity", -500.0f),
@@ -286,7 +289,7 @@ void FluidSystem::updatePhysics(std::vector<FluidParticle>& particlePool, f32 dt
         }
 
         // ================================================ //
-        // 4. UPDATE POSITION (MUST BE LAST)
+        // UPDATE POSITION (MUST BE LAST)
         // ================================================ /
         // Updates Position after UpdateCollision and main physics calculations within UpdatePhysics
         // has been done.

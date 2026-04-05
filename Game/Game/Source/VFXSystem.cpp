@@ -22,6 +22,11 @@
            without the prior written consent of DigiPen Institute of
            Technology is prohibited.
 *//*______________________________________________________________________*/
+
+// ==========================================
+// Includes
+// ==========================================
+
 #include "VFXSystem.h"
 
 // Standard library
@@ -30,11 +35,19 @@
 // Project
 #include "ConfigManager.h"
 
+// ==========================================
+// Includes
+// ==========================================
+
+// ==========================================
+// VFXSystem
+// ==========================================
+
 // private
 // only used when a game event requires a particle to be spawned
 // =========================================================
 //
-//  ParticleEmitter's Main Initialize function
+//  VFXSystem's ParticleEmitter Initialize function
 //
 // Initializes a single ParticleEmitter with the inputted VFXType and position,
 // assigns its configuration from the preloaded emitter config array, spawns
@@ -416,7 +429,7 @@ void VFXSystem::free() {
         if (currentMesh != nullptr) {
             bool isDuplicate = false;
 
-            // Look back at previous configs 
+            // Look back at previous configs
             for (int j = 0; j < i; ++j) {
                 if (graphicsConfigs_[j].mesh_ == currentMesh) {
                     isDuplicate = true;

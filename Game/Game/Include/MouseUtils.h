@@ -5,7 +5,13 @@
 
 @date		March, 31, 2026
 
-@brief      This header file contains the declaration of functions that
+@brief      This header file contains the declarations of functions and classes
+            for the mouse utility system which includes the following:
+                - getMouseWorldPos, a coordinate transformation utility that
+                  converts hardware-level window coordinates into center-aligned
+                  world-space coordinates.
+                - Helper logic for centering the game origin and inverting the
+                  vertical axis to match Cartesian coordinate standards.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents
@@ -13,6 +19,9 @@
             Technology is prohibited.
 *//*______________________________________________________________________*/
 #pragma once
+// ==========================================
+// Includes
+// ==========================================
 
 // Standard library
 #include <cmath>

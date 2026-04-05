@@ -6,17 +6,52 @@
 
 @date		March, 31, 2026
 
-@brief      This source file contains the declaration of functions that
+@brief      This source file contains the definitions of functions and classes
+            for the collision detection and resolution system which includes the following:
+
+                - CollisionSystem, a static utility class that manages spatial
+                  partitioning, intersection detection, and physics resolution
+                  between fluid particles and terrain geometry.
+                - Geometric Utility functions for point-in-triangle tests,
+                  vector normalization, and coordinate space transformations.
+                - Intersection Detection algorithms for Circle-vs-AABB and
+                  Circle-vs-Triangle collisions.
+                - Collision Response logic including floor impact spreading,
+                  repulsion forces, and anti-tunneling measures to ensure
+                  stable fluid behavior.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents
             without the prior written consent of DigiPen Institute of
             Technology is prohibited.
 *//*______________________________________________________________________*/
+
+// ==========================================
+//               Includes
+// ==========================================
 #include "CollisionSystem.h"
 
 u32 CollisionSystem::collisionCount_ = 0;
 
+// ==========================================
+//              CollisionSystem
+// ==========================================
+
+// =========================================================
+//
+//  CollisionSystem's terrainToFluidCollision function
+//
+// The main collision manager for detecting collisions,
+// resolving both particle-to-particle and particle-to-terrain collisions
+// within a single physics substep.
+//
+// The list of optimisations include:
+// - Uses static vectors for the spatial grid to avoid frequent heap allocations
+// - Caches terrain collider availability to skip empty air cells
+// - Employs memory address comparison to ensure each particle pair is resolved only once
+// - Utilizes a 3x3 neighborhood search to limit collision checks to local particles
+//
+// =========================================================
 void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& fluidSystem, f32 dt) {
     using BucketEntry = std::pair<FluidType, u32>; // (type, index)
 
@@ -62,7 +97,7 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
     }
 
     // ====================================================================
-    // PASS 1: FLUID vs FLUID (Soft Constraints)
+    // PASS 1: FLUID vs FLUID
     // ====================================================================
     // Resolves particle-to-particle overlap first. Fluid-fluid is done first so that pressure from
     // stacked particles is resolved before terrain pushes them out.
@@ -94,6 +129,7 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
                     static_cast<size_t>(ny) * static_cast<size_t>(gridCols) +
                     static_cast<size_t>(nx);
 
+                // BucketEntry = std::pair<FluidType, u32>
                 std::vector<BucketEntry>& neighbourParticles = fluidGrid[neighbourIndex];
                 if (neighbourParticles.empty())
                     continue;
@@ -183,6 +219,18 @@ void CollisionSystem::terrainToFluidCollision(Terrain& terrain, FluidSystem& flu
     }
 }
 
+// =========================================================
+//
+//  CollisionSystem's vNormalizeOr utility function
+//
+// Safely normalizes an inputted vector, providing a fallback vector to
+// prevent division-by-zero errors in physics calculations.
+//
+// The list of optimisations include:
+// - Checks against a small epsilon (1e-8f) to handle near-zero length vectors
+// - Uses a single reciprocal square root calculation for efficiency
+//
+// =========================================================
 AEVec2 CollisionSystem::vNormalizeOr(const AEVec2& v, const AEVec2& fallback) {
     const f32 l2 = vLenSq(v);
     if (l2 <= 1e-8f)
@@ -192,6 +240,18 @@ AEVec2 CollisionSystem::vNormalizeOr(const AEVec2& v, const AEVec2& fallback) {
 }
 
 // Apply terrain cell transform to a local point (scale -> rotate -> translate)
+// =========================================================
+//
+//  CollisionSystem's localToWorldPoint function
+//
+// Transforms a local coordinate from a grid cell's relative space into
+// absolute world-space coordinates.
+//
+// The list of optimisations include:
+// - Skips sine and cosine operations if the cell rotation is zero
+// - Directly calculates the transformed X and Y components to avoid matrix overhead
+//
+// =========================================================
 AEVec2 CollisionSystem::localToWorldPoint(const AEVec2& local, const Transform& t) {
     AEVec2 s{local.x * t.scale_.x, local.y * t.scale_.y};
 
@@ -210,6 +270,18 @@ AEVec2 CollisionSystem::localToWorldPoint(const AEVec2& local, const Transform& 
 }
 
 // Closest point on a segment AB to point P
+// =========================================================
+//
+//  CollisionSystem's closestPointOnSegment function
+//
+// Finds the nearest point on a line segment to a target point, used
+// primarily for edge detection during triangle collision.
+//
+// The list of optimisations include:
+// - Uses dot product projection to find the scalar projection of the point
+// - Clamps the projection value to the [0, 1] range to handle points beyond segment ends
+//
+// =========================================================
 AEVec2 CollisionSystem::closestPointOnSegment(const AEVec2& a, const AEVec2& b, const AEVec2& p) {
     const AEVec2 ab = vSub(b, a);
     const f32 abLenSq = vLenSq(ab);
@@ -229,6 +301,18 @@ AEVec2 CollisionSystem::closestPointOnSegment(const AEVec2& a, const AEVec2& b, 
 
 // Helper function: Determines whether a point (p) is within a triangle with vertices (a,b,c) or
 // not.
+// =========================================================
+//
+//  CollisionSystem's pointInTriangle function
+//
+// Evaluates whether a specific point is contained within a 2D triangle
+// using winding order checks.
+//
+// The list of optimisations include:
+// - Calculates three 2D cross products to determine relative orientation
+// - Early-outs by checking for inconsistent signs across the three cross products
+//
+// =========================================================
 bool CollisionSystem::pointInTriangle(const AEVec2& p, const AEVec2& a, const AEVec2& b,
                                       const AEVec2& c) {
     // Calculate the direction vectors of the three line segments which form the triangle
@@ -272,6 +356,19 @@ bool CollisionSystem::pointInTriangle(const AEVec2& p, const AEVec2& a, const AE
     return !(hasNegative && hasPositive);
 }
 
+// =========================================================
+//
+// CollisionSystem's cellToFluidParticleCollision function
+//
+// Iterates through all colliders inside a specific terrain grid cell to
+// check for intersections with an inputted particle.
+//
+// The list of optimisations include:
+// - Skips slots marked as ColliderShape::Empty
+// - Automatically resolves world-space offsets and scaling for box colliders
+// - Returns contact info for only the first valid collision detected to prevent over-resolution
+//
+// =========================================================
 CollisionInfo CollisionSystem::cellToFluidParticleCollision(const Cell& cell,
                                                             const FluidParticle& fluidParticle) {
 
@@ -346,6 +443,19 @@ CollisionInfo CollisionSystem::cellToFluidParticleCollision(const Cell& cell,
 }
 
 // Helper function for cellToFluidParticleCollision: detects Circle vs Triangle collision in world
+// =========================================================
+//
+// CollisionSystem's detectCircleVsTriangle function
+//
+// Performs low-level intersection math between a circular particle and
+// a triangle's geometric bounds.
+//
+// The list of optimisations include:
+// - Compares squared distances to find the closest edge without expensive square roots
+// - Corrects the collision normal when the particle is embedded inside the triangle
+// - Uses a 1e-8f epsilon to prevent division by zero during normal calculation
+//
+// =========================================================
 bool CollisionSystem::detectCircleVsTriangle(const AEVec2& circleCenter, f32 radius,
                                              const AEVec2& velocity, const AEVec2& v0,
                                              const AEVec2& v1, const AEVec2& v2, AEVec2& outNormal,
@@ -403,8 +513,7 @@ bool CollisionSystem::detectCircleVsTriangle(const AEVec2& circleCenter, f32 rad
         outPenetration = radius - dist;
 
         // Optimisation: If we are moving away from the triangle anyways, it will never collide with
-        // the triangle,
-        //               so we can early-out and skip the collision response.
+        // the triangle, so we can early-out and skip the collision response.
         // f32 dotProduct = (velocity.x * outNormal.x) + (velocity.y * outNormal.y);
         // if (dotProduct > 0.0f) {
         //    return false;
@@ -416,6 +525,19 @@ bool CollisionSystem::detectCircleVsTriangle(const AEVec2& circleCenter, f32 rad
 }
 
 // Helper function for cellToFluidParticleCollision: detects Circle vs AABB collision in world
+// =========================================================
+//
+//  CollisionSystem's detectCircleVsAABB function
+//
+// Checks for intersections between a particle and an axis-aligned
+// bounding box (AABB) using clamping logic.
+//
+// The list of optimisations include:
+// - Clamps the circle center to box bounds to find the nearest contact point
+// - If the particle is inside the box, it finds the nearest edge for immediate ejection
+// - Uses a squared distance check for external collisions to maximize performance
+//
+// =========================================================
 bool CollisionSystem::detectCircleVsAABB(const AEVec2& circleCenter, f32 radius,
                                          const AEVec2& velocity, const AEVec2& boxCenter,
                                          const AEVec2& halfExt, AEVec2& outNormal,
@@ -504,6 +626,19 @@ bool CollisionSystem::detectCircleVsAABB(const AEVec2& circleCenter, f32 radius,
 }
 
 // Collision Response
+// =========================================================
+//
+//  CollisionSystem's pushOutAndSlide function
+//
+// Resolves terrain collisions by adjusting a particle's position and
+// velocity based on the surface normal.
+//
+// The list of optimisations include:
+// - Incorporates a tiny "slop" value to prevent micro-jitter from floating point errors
+// - Converts vertical impact into horizontal "Floor Impact Spread" for fluid behavior
+// - Applies randomized friction to prevent uniform velocity across the fluid pool
+//
+// =========================================================
 void CollisionSystem::pushOutAndSlide(FluidParticle& p, const AEVec2& n, f32 penetration,
                                       f32 radius, f32 dt) {
     // DT Clamp
@@ -551,6 +686,20 @@ void CollisionSystem::pushOutAndSlide(FluidParticle& p, const AEVec2& n, f32 pen
     }
 }
 
+// =========================================================
+//
+//  CollisionSystem's resolveFluidParticlePair function
+//
+//  Manages the physics response when two fluid particles overlap, handling
+//  both separation and energy transfer.
+//
+// The list of optimisations include:
+// - Injects random horizontal jitter to prevent perfect vertical stacking
+// - Dynamically weights particle masses based on verticality to prevent "crushing" through walls
+// - Caps maximum displacement per pair to prevent high-pressure tunneling through thin terrain
+// - Uses a minimum bounce threshold to stop vigorous oscillation in resting fluid
+//
+// =========================================================
 void CollisionSystem::resolveFluidParticlePair(FluidParticle& p1, FluidParticle& p2) {
 
     // Calculate distance between p1 and p2
@@ -681,6 +830,19 @@ void CollisionSystem::resolveFluidParticlePair(FluidParticle& p1, FluidParticle&
     }
 }
 
+// =========================================================
+//
+//  CollisionSystem's buildGrid function
+//
+// Populates the spatial partitioning structure with all active particles
+// before starting the collision loop.
+//
+// The list of optimisations include:
+// - Uses floor-based division to map world positions directly to grid indices
+// - Skips particles that have fallen outside the bounds of the simulation grid
+// - Groups particles by type and index to preserve pool efficiency
+//
+// =========================================================
 void CollisionSystem::buildGrid(std::vector<std::vector<BucketEntry>>& fluidGrid,
                                 FluidSystem& fluidSystem, const AEVec2& gridBottomLeftPos,
                                 u32 gridCols, u32 gridRows, u32 gridSize) {
