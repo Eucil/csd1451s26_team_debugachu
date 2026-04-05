@@ -112,6 +112,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         while (GSM.nextState_ == GSM.currentState_) {
             AESysFrameStart();
 
+            // If the window was closed, exit immediately.
+            if (0 == AESysDoesWindowExist()) {
+                GSM.nextState_ = StateId::Quit;
+                break;
+            }
+
             f32 deltaTime = (f32)AEFrameRateControllerGetFrameTime();
 
             GSM.callUpdate(deltaTime);
