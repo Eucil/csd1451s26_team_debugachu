@@ -45,7 +45,6 @@
     <ClCompile Include="Source\WinScreen.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Assets\Audio\button_hover2.ogg" />
     <None Include="..\Assets\GameData\FileConfigs\background.json" />
     <None Include="..\Assets\GameData\FileConfigs\Collectible.json" />
     <None Include="..\Assets\GameData\FileConfigs\FluidSystem.json" />
@@ -126,7 +125,6 @@
     <Image Include="..\Assets\Textures\Dirt02.png" />
     <Image Include="..\Assets\Textures\hud_goal_icon.png" />
     <Image Include="..\Assets\Textures\hud_water_icon.png" />
-    <Image Include="..\Assets\Textures\makeshift_portal.png" />
     <Image Include="..\Assets\Textures\moss_sprite_sheet.png" />
     <Image Include="..\Assets\Textures\overgrown_pipe_end.png" />
     <Image Include="..\Assets\Textures\pink_flower_end.png" />

@@ -51,9 +51,6 @@
     <ClCompile Include="Source\FluidSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Terrain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -129,6 +126,15 @@
     <ClCompile Include="Source\States\Settings.cpp">
       <Filter>Source Files\Game State Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\MeshUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\MouseUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\TileBackground.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Docs\Standards.md">
@@ -136,9 +142,6 @@
     </None>
     <None Include=".clang-format">
       <Filter>Configuration Files</Filter>
-    </None>
-    <None Include="..\Assets\Audio\button_hover2.ogg">
-      <Filter>Resource Files\Audio Files</Filter>
     </None>
     <None Include="..\Assets\GameData\FileConfigs\background.json">
       <Filter>JSON Files\FileConfig Files</Filter>
@@ -230,6 +233,9 @@
     <None Include="..\Assets\GameData\FileConfigs\Level.json">
       <Filter>JSON Files\FileConfig Files</Filter>
     </None>
+    <None Include="..\Assets\GameData\FileConfigs\moss.json">
+      <Filter>JSON Files\FileConfig Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\GameStateManager.h">
@@ -239,9 +245,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\FluidSystem.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\Terrain.h">
@@ -366,9 +369,6 @@
       <Filter>Resource Files\Texture Files</Filter>
     </Image>
     <Image Include="..\Assets\Textures\hud_water_icon.png">
-      <Filter>Resource Files\Texture Files</Filter>
-    </Image>
-    <Image Include="..\Assets\Textures\makeshift_portal.png">
       <Filter>Resource Files\Texture Files</Filter>
     </Image>
     <Image Include="..\Assets\Textures\moss_sprite_sheet.png">
