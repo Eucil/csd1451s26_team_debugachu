@@ -101,7 +101,6 @@ void initializeLogoScreen() {
 //
 // - Caps deltaTime to 1/30s to prevent the first-frame load spike
 //   from skipping through multiple fade phases in a single step.
-// - Checks for any key or mouse click input and skips to MainMenu.
 // - During the fade-in phase, increments alpha toward 1.0.
 // - During the hold phase, decrements the hold timer until zero.
 // - During the fade-out phase, decrements alpha toward 0.0 then transitions.
@@ -115,12 +114,6 @@ void updateLogoScreen(GameStateManager& GSM, f32 deltaTime) {
     if (!g_debugSystem.isOpen()) {
         if (AEInputCheckTriggered(AEVK_Z)) {
             g_debugSystem.open();
-        }
-
-        if (AEInputCheckReleased(AEVK_ESCAPE) || AEInputCheckReleased(AEVK_RETURN) ||
-            AEInputCheckReleased(AEVK_SPACE) || AEInputCheckReleased(AEVK_LBUTTON)) {
-            skipToMainMenu(GSM);
-            return;
         }
 
         if (done_)
