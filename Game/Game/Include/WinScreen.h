@@ -66,7 +66,6 @@ private:
     bool hasNextLevel_{false};
 
 public:
-    // Call once in Level::load() to create GPU resources and read JSON config.
     void load(s8 font);
 
     // Call when the win condition triggers.
@@ -76,20 +75,14 @@ public:
     // Call after a button click to hide the overlay.
     void hide();
 
-    // Returns true while the win overlay is on screen.
     bool isVisible() const { return isVisible_; }
 
-    // Call every frame in Level::update() to handle button clicks.
     void update(GameStateManager& GSM);
 
-    // Call every frame in Level::draw() to render the overlay.
     void draw();
 
-    // Call in Level::free() to reset state without freeing GPU resources.
     void free();
 
-    // Call in Level::unload() to release GPU resources.
-    // Does not destroy the font since it is owned by Level.cpp.
     void unload();
 
     // Convenience setter to update counts without calling show().
