@@ -5,7 +5,7 @@
 
 @date		March, 31, 2026
 
-@brief      This source file contains the implementation of the TiledBackground
+@brief      This source file contains the definition of functions that make the TiledBackground
             class, which loads, draws, and unloads a screen-filling tiled texture.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.

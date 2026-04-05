@@ -7,9 +7,10 @@
 
 @date		March, 31, 2026
 
-@brief      This source file implements the Level game state,
-            handling terrain, fluid simulation, portals, collectibles,
-            moss, HUD rendering, the level editor, and win condition logic.
+@brief      This source file contains the definitions of functions that
+            makes the Level game state, handling terrain, fluid simulation,
+            portals, collectibles, moss, HUD rendering, the level editor,
+            and win condition logic.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents

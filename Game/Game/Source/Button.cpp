@@ -5,8 +5,9 @@
 
 @date		March, 31, 2026
 
-@brief      This source file contains the implementation of the Button and
-            TextData classes, including hover, press, sound, and JSON config.
+@brief      This source file contains the definition of functions that make
+            the Button and TextData classes,
+            including hover, press, sound, and JSON config.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents

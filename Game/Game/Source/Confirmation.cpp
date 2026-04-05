@@ -5,8 +5,9 @@
 
 @date		March, 31, 2026
 
-@brief      This source file implements ConfirmationSystem, a Yes/No dialog used
-            to confirm destructive actions such as restart, quit, and delete.
+@brief      This source file contains the definition of functions that make
+            ConfirmationSystem, a Yes/No dialog used to confirm destructive
+            actions such as restart, quit, and delete.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents

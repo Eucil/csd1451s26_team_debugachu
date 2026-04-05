@@ -5,9 +5,9 @@
 
 @date		March, 31, 2026
 
-@brief      This source file implements StartEnd constructors and StartEndPoint class,
-            managing pipe start points, the flower end point, water flow, particle collection,
-            and rendering.
+@brief      This source file contains the definition of functions that make the
+            StartEnd constructors and StartEndPoint class, managing pipe start points,
+            the flower end point, water flow, particle collection, and rendering.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
                         Reproduction or disclosure of this file or its contents

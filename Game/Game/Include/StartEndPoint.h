@@ -5,9 +5,9 @@
 
 @date		March, 31, 2026
 
-@brief      This header file declares the StartEnd struct and StartEndPoint class,
-            which manage pipe start points, the flower end point, water flow,
-            particle collection, and related rendering.
+@brief      This header file contains the declarations of the StartEnd struct
+            and StartEndPoint class, which manage pipe start points, the flower end point,
+            water flow, fluid collection, and related rendering.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents

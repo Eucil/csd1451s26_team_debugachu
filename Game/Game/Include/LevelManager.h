@@ -6,8 +6,8 @@
 
 @date		March, 31, 2026
 
-@brief      This header file declares the LevelManager class, which manages
-            level loading, saving, editor UI, and playability tracking
+@brief      This header file  contains the declarations of the LevelManager class,
+            which manages level loading, saving, editor UI, and playability tracking
             for both dev levels (1-8) and player-created levels (9+).
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.

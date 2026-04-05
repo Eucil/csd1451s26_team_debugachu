@@ -5,9 +5,9 @@
 
 @date		March, 31, 2026
 
-@brief      This source file implements the PlayerLevel game state,
-            handling player-created level selection, map preview, level creation UI,
-            collectible display, and the destructible background.
+@brief      This source file contains the definitions of functions that make
+            the PlayerLevel game state, handling player-created level selection,
+            map preview, level creation UI, collectible display, and the destructible background.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents

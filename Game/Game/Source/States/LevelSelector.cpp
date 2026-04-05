@@ -2,14 +2,15 @@
 @file       LevelSelector.cpp
 @author     Woo Guang Theng/guangtheng.woo@digipen.edu
 @co_author  Sean Lee Hong Wei/seanhongwei.lee@digipen.edu,
-                        Chia Hanxin/c.hanxin@digipen.edu,
-                        Han Tianchou/H.tianchou@digipen.edu
+            Chia Hanxin/c.hanxin@digipen.edu,
+            Han Tianchou/H.tianchou@digipen.edu
 
 @date		March, 31, 2026
 
-@brief      This source file implements the LevelSelector game state,
-            handling level button layout, map preview, level creation UI,
-            collectible display, and the destructible background.
+@brief      This source file contains the definitions of functions that make
+            the LevelSelector game state, handling level button layout,
+            map preview, level creation UI, collectible display,
+            and the destructible background.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
                         Reproduction or disclosure of this file or its contents

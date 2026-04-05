@@ -5,8 +5,9 @@
 
 @date		March, 31, 2026
 
-@brief      This source file contains the definitions of the AudioSystem class,
-            which wraps AEEngine audio functionality for sounds, music, and groups.
+@brief      This source file contains the definition of functions that makes
+            the AudioSystem class, which wraps AEEngine audio functionality
+            for sounds, music, and groups.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents
@@ -152,9 +153,7 @@ void AudioSystem::resumeGroup(const std::string& groupKey) {
 // Stops all audio playing in the given group.
 //
 // =========================================================
-void AudioSystem::stopGroup(const std::string& groupKey) {
-    AEAudioStopGroup(groups_.at(groupKey));
-}
+void AudioSystem::stopGroup(const std::string& groupKey) { AEAudioStopGroup(groups_.at(groupKey)); }
 
 // =========================================================
 //
@@ -191,8 +190,8 @@ void AudioSystem::adjustGroupVolume(const std::string& groupKey, f32 delta) {
     if (groups_.find(groupKey) == groups_.end())
         return;
 
-    groupVolumes_[groupKey] = static_cast<s32>(
-        AEClamp(static_cast<f32>(groupVolumes_[groupKey]) + delta, 0.0f, 100.0f));
+    groupVolumes_[groupKey] =
+        static_cast<s32>(AEClamp(static_cast<f32>(groupVolumes_[groupKey]) + delta, 0.0f, 100.0f));
     AEAudioSetGroupVolume(groups_.at(groupKey), groupVolumes_[groupKey] / 100.0f);
 }
 
@@ -244,8 +243,8 @@ void AudioSystem::loadMusic(const std::string& key, const std::string& filepath)
 // either key is not found.
 //
 // =========================================================
-void AudioSystem::playSound(const std::string& audioKey, const std::string& groupKey,
-                            f32 volume, f32 pitch, int loops) {
+void AudioSystem::playSound(const std::string& audioKey, const std::string& groupKey, f32 volume,
+                            f32 pitch, int loops) {
     if (sounds_.find(audioKey) == sounds_.end())
         return;
     if (groups_.find(groupKey) == groups_.end())
@@ -262,8 +261,8 @@ void AudioSystem::playSound(const std::string& audioKey, const std::string& grou
 // default. No-ops silently if either key is not found.
 //
 // =========================================================
-void AudioSystem::playMusic(const std::string& audioKey, const std::string& groupKey,
-                            f32 volume, f32 pitch, int loops) {
+void AudioSystem::playMusic(const std::string& audioKey, const std::string& groupKey, f32 volume,
+                            f32 pitch, int loops) {
     if (music_.find(audioKey) == music_.end())
         return;
     if (groups_.find(groupKey) == groups_.end())

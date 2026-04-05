@@ -5,8 +5,8 @@
 
 @date		March, 31, 2026
 
-@brief      This header file declares the TiledBackground class, which loads
-            and renders a screen-filling tiled texture background from JSON.
+@brief      This header file contains the declarations of the TiledBackground class,
+            which loads and renders a screen-filling tiled texture background from JSON.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents

@@ -5,8 +5,8 @@
 
 @date		March, 31, 2026
 
-@brief      This source file contains the implementation of the Terrain class,
-            including marching-squares mesh and collider generation, node-based
+@brief      This source file contains the definition of functions that make
+            the Terrain class, including marching-squares mesh and collider generation, node-based
             terrain editing, and per-cell transform and render updates.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.

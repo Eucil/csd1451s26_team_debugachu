@@ -6,8 +6,8 @@
 
 @date		March, 31, 2026
 
-@brief      This header file declares the game state functions
-            for the MainMenu state, such as
+@brief      This header file contains the declarations of
+            the game state functions for the MainMenu state, such as
             load, initialize, update, draw, free, and unload.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.

@@ -5,9 +5,9 @@
 
 @date		March, 31, 2026
 
-@brief      This source file contains the implementation of the PauseSystem
-            class, which manages the pause overlay mesh, transform, colour,
-            and pause/resume state.
+@brief      This source file contains the definition of functions that make
+            the PauseSystem class, which manages the pause overlay mesh,
+            transform, colour, and pause/resume state.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents

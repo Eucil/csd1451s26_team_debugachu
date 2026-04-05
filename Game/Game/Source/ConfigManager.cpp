@@ -5,9 +5,9 @@
 
 @date		March, 31, 2026
 
-@brief      This source file implements ConfigManager,
-            which scans a directory for JSON config files, parses them
-            with JsonCpp, and exposes typed accessors for retrieving
+@brief      This source file contains the definition of functions that make
+            ConfigManager class, which scans a directory for JSON config files,
+            parses them with JsonCpp, and exposes typed accessors for retrieving
             values by file, section, and key.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.

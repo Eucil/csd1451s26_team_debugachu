@@ -6,7 +6,8 @@
 
 @date		March, 31, 2026
 
-@brief      This source file implements LevelManager, handling level editor UI layout,
+@brief      This source file contains the definition of functions that make
+            the LevelManager, handling level editor UI layout,
             JSON-based level save/load, playability tracking, and
             brush preview rendering.
 

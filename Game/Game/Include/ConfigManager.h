@@ -5,8 +5,8 @@
 
 @date		March, 31, 2026
 
-@brief      This header file declares the ConfigManager class, which loads
-            JSON config files from a directory and provides typed accessors
+@brief      This header file contains the declarations of the ConfigManager class,
+            which loads JSON config files from a directory and provides typed accessors
             for retrieving values by file, section, and key.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.

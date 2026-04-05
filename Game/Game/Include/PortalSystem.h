@@ -5,9 +5,9 @@
 
 @date		March, 31, 2026
 
-@brief      This header file declares the Portal struct and PortalSystem class,
-            which manage placed portal pairs, particle teleportation,
-            and portal rendering and placement in the level.
+@brief      This header file  contains the declarations of the Portal struct
+            and PortalSystem class, which manages placed portal pairs,
+            fluid teleportation, and portal rendering and placement in the level.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents

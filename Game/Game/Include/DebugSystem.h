@@ -5,9 +5,9 @@
 
 @date		March, 31, 2026
 
-@brief      This header file declares the DebugSystem class, which provides
-            an in-game overlay for toggling debug options, rendering colliders
-            and velocity vectors, and displaying HUD values.
+@brief      This header file contains the declarations of the DebugSystem class,
+            which provides an in-game overlay for toggling debug options,
+            rendering colliders and velocity vectors, and displaying HUD values.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents

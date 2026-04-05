@@ -7,8 +7,8 @@
 
 @date		March, 31, 2026
 
-@brief      This header file declares the GameStateManager class, which drives
-            the game loop by routing load, initialize, update, draw, free, and
+@brief      This header file contains the declarations of the GameStateManager class,
+            which drives the game loop by routing load, initialize, update, draw, free, and
             unload calls to the correct game state function pointers.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.

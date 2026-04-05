@@ -5,8 +5,9 @@
 
 @date		March, 31, 2026
 
-@brief      This source file contains the implementation of the Settings game
-            state, handling load, initialize, update, draw, free, and unload.
+@brief      This source file contains the definitions of functions that makes
+            the Settings game state,
+            handling load, initialize, update, draw, free, and unload.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents
