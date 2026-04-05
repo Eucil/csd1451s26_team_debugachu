@@ -293,9 +293,6 @@ void updateControls(GameStateManager& GSM, f32 deltaTime) {
             if (currentPage > 1)
                 --currentPage;
         }
-        if (AEInputCheckTriggered(AEVK_ESCAPE)) {
-            screenFader.startFadeOut(&GSM, StateId::MainMenu);
-        }
 
         if (buttonNext.checkMouseClick()) {
             if (currentPage < totalPages)

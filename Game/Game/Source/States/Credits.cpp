@@ -162,10 +162,6 @@ void updateCredits(GameStateManager& GSM, f32 deltaTime) {
 
         yPos += scrollSpeed * deltaTime;
 
-        if (AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_SPACE)) {
-            screenFader.startFadeOut(&GSM, StateId::MainMenu);
-        }
-
         if (buttonBack.checkMouseClick()) {
             screenFader.startFadeOut(&GSM, StateId::MainMenu);
         }

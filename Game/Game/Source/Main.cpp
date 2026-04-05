@@ -91,12 +91,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
             f32 deltaTime = (f32)AEFrameRateControllerGetFrameTime();
 
-            // Click ESCAPE to exit game
-            if (AEInputCheckTriggered(AEVK_ESCAPE) || 0 == AESysDoesWindowExist()) {
-                std::cout << "ESCAPE triggered\n";
-                GSM.nextState_ = StateId::Quit;
-            }
-
             GSM.callUpdate(deltaTime);
             GSM.callDraw();
 
