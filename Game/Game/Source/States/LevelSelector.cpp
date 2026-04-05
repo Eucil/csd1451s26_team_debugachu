@@ -115,6 +115,12 @@ static ConfirmationSystem confirmationSystem;
 static int levelToDeleteIndex = -1;
 
 // ==========================================
+// Collectible Layout
+// ==========================================
+static f32 lsCollectibleSpacing = 40.0f;
+static f32 lsCollectibleOffsetY = -95.0f;
+
+// ==========================================
 // Static Functions
 // ==========================================
 static void mapPreviewLoad();
@@ -137,7 +143,8 @@ void loadLevelSelector() {
     buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
 
     // Background & map preview
-    MenuBackground::load(100);
+    int menuBackgroundCount = g_configManager.getInt("LevelSelector", "background", "level", 100);
+    MenuBackground::load(menuBackgroundCount);
     mapPreviewLoad();
 
     // Level button config
@@ -173,7 +180,7 @@ void loadLevelSelector() {
     inputWidthMax = g_configManager.getInt("LevelSelector", "levelCreation", "inputWidthMax", 85);
     inputHeightMax = g_configManager.getInt("LevelSelector", "levelCreation", "inputHeightMax", 40);
     inputPortalLimitMax =
-        g_configManager.getInt("PlayerLevel", "levelCreation", "inputPortalLimitMax", 10);
+        g_configManager.getInt("LevelSelector", "levelCreation", "inputPortalLimitMax", 10);
 
     // Level buttons
     for (int i{}, x{}, y{}; i < static_cast<int>(Level::PlayerLevels); ++i, ++x) {
@@ -242,6 +249,12 @@ void loadLevelSelector() {
     buttonToPlayerLevel.loadMesh();
     buttonToPlayerLevel.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
 
+    // Collectible Layout
+    lsCollectibleSpacing =
+        g_configManager.getFloat("LevelSelector", "collectibles", "spacing", 40.0f);
+    lsCollectibleOffsetY =
+        g_configManager.getFloat("LevelSelector", "collectibles", "buttonOffsetY", -95.0f);
+
     // Confirmation
     confirmationSystem.load();
     confirmationSystem.hide();
@@ -260,7 +273,9 @@ void initializeLevelSelector() {
 
     // Background & VFX
     MenuBackground::initialize();
-    lsVfxSystem.initialize(800, 20);
+    int lsVfxPoolSize = g_configManager.getInt("LevelSelector", "vfx", "poolSize", 800);
+    int lsVfxTypeCount = g_configManager.getInt("LevelSelector", "vfx", "typeCount", 20);
+    lsVfxSystem.initialize(lsVfxPoolSize, lsVfxTypeCount);
 
     // Level manager
     levelManager.init();
@@ -278,14 +293,11 @@ void initializeLevelSelector() {
         // Fetch the world position of the specific button
         AEVec2 buttonPos = levelButtonPool_[i].getTransform().pos_;
 
-        f32 spacing = 40.0f; // Gap between each collectible
-
-        // Center the spawn points based on how many items we are drawing
-        f32 startX = buttonPos.x - (spacing * (3 - 1)) / 2.0f;
-        f32 posY = buttonPos.y - 95.0f; // Shift down to be below the button edge
+        f32 startX = buttonPos.x - (lsCollectibleSpacing * (3 - 1)) / 2.0f;
+        f32 posY = buttonPos.y + lsCollectibleOffsetY;
 
         for (int j = 0; j < count; ++j) {
-            AEVec2 pos = {startX + j * spacing, posY};
+            AEVec2 pos = {startX + j * lsCollectibleSpacing, posY};
             // Type 0 = Star, Type 1 = Gem, Type 2 = Leaf
             CollectibleType type = static_cast<CollectibleType>(j);
             lsCollectibleSystem.loadLevelCollectibles(pos, type);
@@ -788,8 +800,6 @@ void unloadLevelSelector() {
 
     // Confirmation
     confirmationSystem.unload();
-
-    animManager.freeAll();
 }
 
 // =========================================================

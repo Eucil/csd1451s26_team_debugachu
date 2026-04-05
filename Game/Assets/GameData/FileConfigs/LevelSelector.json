@@ -1,29 +1,38 @@
 {
-  "default" : 
-  {
-    "buttonStartposX" : -600,
-    "buttonStartposY" : 100,
-    "buttonXOffset" : 400,
-    "buttonYOffset" : 200,
-    "buttonScale_x" : 200,
-    "buttonScale_y" : 150,
-    "textPosDivisorX" : 800,
-    "textPosDivisorY" : 450,
-    "textXOffset" : 0.025,
-    "textYOffset" : 0.05,
-    "textScale" : 1.0,
-    "textR" : 1.0,
-    "textG" : 1.0,
-    "textB" : 1.0,
-    "textA" : 1.0
+  "default": {
+    "buttonStartposX": -600,
+    "buttonStartposY": 100,
+    "buttonXOffset": 400,
+    "buttonYOffset": 200,
+    "buttonScale_x": 200,
+    "buttonScale_y": 150,
+    "textPosDivisorX": 800,
+    "textPosDivisorY": 450,
+    "textXOffset": 0.025,
+    "textYOffset": 0.05,
+    "textScale": 1.0,
+    "textR": 1.0,
+    "textG": 1.0,
+    "textB": 1.0,
+    "textA": 1.0
   },
-  "levelCreation":
-  {
-    "inputWidthMin" : 5,
-    "inputWidthMax" : 80,
-    "inputHeightMin" : 5,
-    "inputHeightMax" : 45,
-    "inputPortalLimitMin" : 0,
-    "inputPortalLimitMax" : 10
+  "levelCreation": {
+    "inputWidthMin": 5,
+    "inputWidthMax": 80,
+    "inputHeightMin": 5,
+    "inputHeightMax": 45,
+    "inputPortalLimitMin": 0,
+    "inputPortalLimitMax": 10
+  },
+  "background": {
+    "level": 100
+  },
+  "vfx": {
+    "poolSize": 800,
+    "typeCount": 20
+  },
+  "collectibles": {
+    "spacing": 40.0,
+    "buttonOffsetY": -95.0
   }
 }
