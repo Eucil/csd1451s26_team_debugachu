@@ -106,6 +106,8 @@ static AEGfxVertexList* g_barMesh = nullptr;
 static TextData totalWaterText;
 static TextData goalText;
 static TextData portalLimitText;
+static TextData savedLevelText;
+static f32 savedLevelTimer = 0.0f;
 static f32 totalWaterRemaining = 0.0f;
 static f32 totalWaterCapacity = 0.0f;
 static f32 goalPercentage = 0.0f;
@@ -196,6 +198,10 @@ void loadLevel() {
     portalLimitText.scale_ = g_configManager.getFloat("Level", "hud", "portalTextScale", 0.5f);
     portalLimitText.content_ = "Portals: 0/0";
     portalLimitText.font_ = font;
+
+    savedLevelText.initFromJson("Level", "SavedText");
+    savedLevelText.font_ = titleFont;
+    savedLevelTimer = 0.0f;
 
     // Level Data
     levelManager.initEditorUI(font);
@@ -530,6 +536,9 @@ void updateLevel(GameStateManager& GSM, f32 deltaTime) {
                     levelManager.saveMossInfo(mossSystem.getMosses());
                     levelManager.savePortalInfo(portalSystem);
                     levelManager.writeToFile(levelManager.getCurrentLevel());
+                    savedLevelTimer = g_configManager.getSection("Level", "SavedText")
+                                          .get("duration", 2.0f)
+                                          .asFloat();
                 }
             } else {
                 // ====================
@@ -657,6 +666,9 @@ void updateLevel(GameStateManager& GSM, f32 deltaTime) {
         g_debugSystem.update();
     }
     // Always update these
+    if (savedLevelTimer > 0.0f)
+        savedLevelTimer -= deltaTime;
+
     animManager.updateAll(deltaTime);
     confirmationSystem.update();
 }
@@ -768,6 +780,9 @@ void drawLevel() {
             buttonQuit.draw();
         }
     }
+
+    if (savedLevelTimer > 0.0f)
+        savedLevelText.draw(true);
 
     confirmationSystem.draw();
 
