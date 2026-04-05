@@ -964,7 +964,7 @@ static void spawnWaterWithLimit(f32 deltaTime) {
 //
 // =========================================================
 static void drawHudIcon(AEGfxTexture* tex, AEGfxVertexList* mesh, f32 worldX, f32 worldY,
-                        f32 iconSize, f32 uvOffsetX = 0.0f) {
+                        f32 iconSize, f32 uvOffsetX) {
     if (!tex || !mesh)
         return;
     AEMtx33 S, T, W;

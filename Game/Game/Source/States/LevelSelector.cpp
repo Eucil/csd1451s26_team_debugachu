@@ -7,7 +7,9 @@
 
 @date		March, 31, 2026
 
-@brief      This source file contains the declaration of functions that
+@brief      This source file implements the LevelSelector game state,
+            handling level button layout, map preview, level creation UI,
+            collectible display, and the destructible background.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
                         Reproduction or disclosure of this file or its contents
@@ -24,27 +26,34 @@
 
 // Project
 #include "Animations.h"
+#include "AudioSystem.h"
 #include "Button.h"
 #include "Collectible.h"
 #include "ConfigManager.h"
 #include "Confirmation.h"
+#include "DebugSystem.h"
 #include "FluidSystem.h"
 #include "GameStateManager.h"
 #include "LevelManager.h"
-
-// Destructible Background
-#include "AudioSystem.h"
-#include "DebugSystem.h"
 #include "MenuBackground.h"
 #include "Terrain.h"
 #include "VFXSystem.h"
 
+// ==========================================
+// Fonts
+// ==========================================
 static s8 titleFont = 0;
 static s8 buttonFont = 0;
 
+// ==========================================
+// Game Systems
+// ==========================================
 static VFXSystem lsVfxSystem;
+static CollectibleSystem lsCollectibleSystem;
 
-// Map Preview Variables
+// ==========================================
+// Map Preview
+// ==========================================
 static std::vector<AEGfxTexture*> previewTextures;
 static AEGfxTexture* defaultPreviewTex = nullptr;
 static AEGfxVertexList* previewMesh = nullptr;
@@ -52,18 +61,23 @@ static int hoveredLevelIndex = -1; // -1 means the mouse is not in a button
 static UIFader previewFader(8.0f); // Fast fade in/out, 8.0f refers to speed of fade out
 static int displayLevelIndex = -1;
 
+// ==========================================
 // Animations
+// ==========================================
 static AnimationManager animManager;
 static ScreenFaderManager screenFader;
 static UIFader someOtherCoolAnimation;
 
-// Buttons and Text
+// ==========================================
+// Level Buttons & Text
+// ==========================================
 static std::vector<Button> levelButtonPool_;
 static TextData titleText{};
 static std::string titleBaseText;
-static CollectibleSystem lsCollectibleSystem;
 
+// ==========================================
 // Level Creation UI
+// ==========================================
 static bool creatingLevel = false;
 static int inputWidthMin{}, inputWidthMax{}, inputHeightMin{}, inputHeightMax{},
     inputPortalLimitMin{}, inputPortalLimitMax{};
@@ -83,7 +97,10 @@ static Button buttonConfirmCreation;
 static Button buttonCancelCreation;
 static Button creationBackground;
 
-// Buttons for select/editing/creating/deleting levels
+// ==========================================
+// Action Buttons
+// ==========================================
+
 static Button buttonSelect;
 static Button buttonEdit;
 static Button buttonCreate;
@@ -91,24 +108,39 @@ static Button buttonDelete;
 static Button buttonBack;
 static Button buttonToPlayerLevel;
 
+// ==========================================
+// Confirmation
+// ==========================================
 static ConfirmationSystem confirmationSystem;
 static int levelToDeleteIndex = -1;
 
-// Static functions
+// ==========================================
+// Static Functions
+// ==========================================
 static void mapPreviewLoad();
 static void mapPreviewUpdate(f32 deltaTime);
 static void mapPreviewDraw();
 static void drawPlaceholderSlots(AEVec2 buttonPos, int collectedCount, AEGfxVertexList* mesh);
 
+// =========================================================
+//
+// loadLevelSelector()
+//
+// - Loads fonts, background, map preview textures,
+// - level button pool, creation UI assets, and action buttons.
+// - Called once per session (not on restart).
+//
+// =========================================================
 void loadLevelSelector() {
+    // Fonts
     titleFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
     buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
 
+    // Background & map preview
     MenuBackground::load(100);
-
     mapPreviewLoad();
 
-    // Setup texts
+    // Level button config
     f32 buttonStartposX =
         g_configManager.getFloat("LevelSelector", "default", "buttonStartposX", -600.f);
     f32 buttonStartposY =
@@ -133,6 +165,7 @@ void loadLevelSelector() {
     f32 textA = g_configManager.getFloat("LevelSelector", "default", "textA", 1.f);
     f32 extraOffsetX = 0.f;
 
+    // Level creation config
     inputWidthMin = g_configManager.getInt("LevelSelector", "levelCreation", "inputWidthMin", 5);
     inputHeightMin = g_configManager.getInt("LevelSelector", "levelCreation", "inputHeightMin", 5);
     inputPortalLimitMin =
@@ -142,6 +175,7 @@ void loadLevelSelector() {
     inputPortalLimitMax =
         g_configManager.getInt("PlayerLevel", "levelCreation", "inputPortalLimitMax", 10);
 
+    // Level buttons
     for (int i{}, x{}, y{}; i < static_cast<int>(Level::PlayerLevels); ++i, ++x) {
         // Push back button and text
         if (i % 4 == 0 && i != 0) {
@@ -165,13 +199,14 @@ void loadLevelSelector() {
         levelButtonPool_.push_back(tempButton);
     }
 
+    // UI text & animations
     titleText.font_ = titleFont;
-
     animManager.clear();
     animManager.add(&screenFader);
     animManager.add(&someOtherCoolAnimation);
     animManager.initializeAll();
 
+    // Creation UI buttons
     buttonIncreaseWidth.loadMesh();
     buttonIncreaseWidth.loadTexture("Assets/Textures/brown_square_24_24.png");
     buttonDecreaseWidth.loadMesh();
@@ -193,6 +228,7 @@ void loadLevelSelector() {
     creationBackground.setRGBA(0.f, 0.f, 0.f, 0.8f);
     creationBackground.setTransform({0.f, 0.f}, {static_cast<float>(AEGfxGetWindowWidth()),
                                                  static_cast<float>(AEGfxGetWindowHeight())});
+    // Action buttons
     buttonBack.loadMesh();
     buttonBack.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
     buttonSelect.loadMesh();
@@ -206,20 +242,32 @@ void loadLevelSelector() {
     buttonToPlayerLevel.loadMesh();
     buttonToPlayerLevel.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
 
+    // Confirmation
     confirmationSystem.load();
     confirmationSystem.hide();
 }
 
+// =========================================================
+//
+// initializeLevelSelector()
+//
+// - Initializes the background, VFX, level data, collectible icons,
+// - UI text, creation UI buttons, and action buttons.
+// - Called on both first load and every restart.
+//
+// =========================================================
 void initializeLevelSelector() {
 
-    // Initialize destructible Background
+    // Background & VFX
     MenuBackground::initialize();
     lsVfxSystem.initialize(800, 20);
 
+    // Level manager
     levelManager.init();
     levelManager.checkLevelData();
 
-    lsCollectibleSystem.initialize(); // Creates the meshes and clears the list
+    // Collectibles
+    lsCollectibleSystem.initialize();
     for (int i = 0; i < static_cast<int>(Level::PlayerLevels); ++i) {
         int count = levelManager.getHighScore(i + 1);
         std::cout << count << '\n';
@@ -244,11 +292,12 @@ void initializeLevelSelector() {
         }
     }
 
+    // UI text
     titleText.initFromJson("level_selector_texts", "Header");
     titleText.font_ = titleFont;
     titleBaseText = titleText.content_;
 
-    // Text and Buttons for level creation UI
+    // Level creation UI
     inputWidthPrompt.initFromJson("level_selector_texts", "inputWidthPrompt");
     inputWidthPrompt.font_ = buttonFont;
     widthBaseText = inputWidthPrompt.content_;
@@ -284,7 +333,7 @@ void initializeLevelSelector() {
     buttonConfirmCreation.updateTransform();
     buttonCancelCreation.updateTransform();
 
-    // Button for selecting/editing/creating/deleting levels
+    // Action buttons
     buttonBack.initFromJson("level_selector_buttons", "Back");
     buttonBack.setTextFont(buttonFont);
     buttonSelect.initFromJson("level_selector_buttons", "Select");
@@ -310,6 +359,15 @@ void initializeLevelSelector() {
     confirmationSystem.init(buttonFont);
 }
 
+// =========================================================
+//
+// updateLevelSelector(GameStateManager& GSM, f32 deltaTime)
+//
+// - Handles per-frame input for level selection, editor mode switching,
+// - level creation UI, confirmation dialog, and background digging.
+// - Also updates all systems and animations.
+//
+// =========================================================
 void updateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
     if (!g_debugSystem.isOpen()) {
         if (AEInputCheckTriggered(AEVK_Z))
@@ -317,14 +375,12 @@ void updateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
 
         (void)deltaTime; // Unused parameter, but required by function signature
 
+        // Map preview
         mapPreviewUpdate(deltaTime);
 
-        // Press R to restart
-        if (AEInputCheckTriggered(AEVK_R) || 0 == AESysDoesWindowExist()) {
-            std::cout << "R triggered\n";
-            GSM.nextState_ = StateId::Restart;
-        }
-
+        //==========================
+        // Update when confirmation dialog is not showing
+        //==========================
         if (!confirmationSystem.isShowing()) {
 
             const bool levelEditorEnabled = g_debugSystem.options_.count("LevelEditorAccess") &&
@@ -407,7 +463,6 @@ void updateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
                             if (levelManager.playableLevels_[i]) {
                                 levelManager.setCurrentLevel(i + 1);
                                 screenFader.startFadeOut(&GSM, StateId::Level);
-                                // GSM.nextState_ = StateId::Level;
                             }
                             break;
                         case EditorMode::Edit:
@@ -419,7 +474,7 @@ void updateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
                             break;
                         case EditorMode::Create:
                             // If create, allow user to input width, height and tilesize before
-                            // creating Only can create levels in empty slots, which means if
+                            // creating. Only can create levels in empty slots, which means if
                             // playableLevels_[i] is false. This is to prevent accidental
                             // overwriting of existing levels, since creating a level will overwrite
                             if (!levelManager.playableLevels_[i]) {
@@ -432,7 +487,7 @@ void updateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
                             }
                             break;
                         case EditorMode::Delete:
-                            // If delete, delete the level data and update playable levels
+                            // If delete, open confirmation tab before delete
                             std::cout << "Level editor mode: Delete\n";
                             levelToDeleteIndex = i + 1;
                             confirmationSystem.show();
@@ -446,6 +501,7 @@ void updateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
             }
         }
 
+        // Confirmation System Inputs
         if (confirmationSystem.confirmationYesClicked()) {
             if (confirmationSystem.getTask() == ConfirmationTask::Delete) {
                 levelManager.deleteLevelData(levelToDeleteIndex);
@@ -471,12 +527,14 @@ void updateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
         MenuBackground::update(deltaTime);
         lsVfxSystem.update(deltaTime);
 
+        // Level creation UI
         if (creatingLevel) {
             inputWidthPrompt.content_ = widthBaseText + std::to_string(inputWidth);
             inputHeightPrompt.content_ = heightBaseText + std::to_string(inputHeight);
             inputPortalLimitPrompt.content_ =
                 portalLimitBaseText + std::to_string(inputPortalLimit);
 
+            // Width Buttons
             if (buttonIncreaseWidth.checkMouseClick()) {
                 inputWidth += 5;
                 if (inputWidth > inputWidthMax)
@@ -487,6 +545,7 @@ void updateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
                 if (inputWidth < inputWidthMin)
                     inputWidth = inputWidthMin;
             }
+            // Height Buttons
             if (buttonIncreaseHeight.checkMouseClick()) {
                 inputHeight += 5;
                 if (inputHeight > inputHeightMax)
@@ -497,6 +556,7 @@ void updateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
                 if (inputHeight < inputHeightMin)
                     inputHeight = inputHeightMin;
             }
+            // Portal Buttons
             if (buttonIncreasePortalLimit.checkMouseClick()) {
                 inputPortalLimit += 2;
                 if (inputPortalLimit > inputPortalLimitMax)
@@ -507,6 +567,7 @@ void updateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
                 if (inputPortalLimit < inputPortalLimitMin)
                     inputPortalLimit = inputPortalLimitMin;
             }
+            // Confirm/Cancel Button
             if (buttonConfirmCreation.checkMouseClick()) {
                 // Create level with input parameters
                 levelManager.createLevelData(levelInput, inputWidth, inputHeight, 20,
@@ -532,6 +593,7 @@ void updateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
         }
         g_debugSystem.update();
     }
+    // Always update
     std::vector<FluidParticle> dummyPool;
     lsCollectibleSystem.update(deltaTime, dummyPool, lsVfxSystem);
 
@@ -539,6 +601,15 @@ void updateLevelSelector(GameStateManager& GSM, f32 deltaTime) {
     confirmationSystem.update();
 }
 
+// =========================================================
+//
+// drawLevelSelector()
+//
+// - Renders all visual layers each frame:
+// - background, level buttons, collectible icons, placeholder slots,
+// - title text, creation overlay, action buttons, and map preview.
+//
+// =========================================================
 void drawLevelSelector() {
 
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
@@ -548,10 +619,11 @@ void drawLevelSelector() {
     AEGfxSetColorToAdd(0.0f, 0.0f, 0.0f, 0.0f);
     AEGfxSetTransparency(1.0f);
 
+    // Background & VFX
     MenuBackground::draw();
     lsVfxSystem.draw();
 
-    // Draw button with different color base on level editor mode
+    // Level buttons
     for (int i = 0; i < static_cast<int>(Level::PlayerLevels); ++i) {
         if (levelManager.playableLevels_[i]) {
             levelButtonPool_[i].setRGBA(1.0f, 1.0f, 1.f, 1.f); // Base color for playable levels
@@ -567,9 +639,10 @@ void drawLevelSelector() {
         }
     }
 
+    // Collectibles
     lsCollectibleSystem.draw();
 
-    // --- DRAW BLACK PLACEHOLDERS FOR UNCOLLECTED ITEMS (Local to LevelSelector) ---
+    // Collectible placeholders
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(1.0f);
@@ -582,12 +655,13 @@ void drawLevelSelector() {
         drawPlaceholderSlots(levelButtonPool_[i].getTransform().pos_, count, previewMesh);
     }
 
-    // --- RESET ENGINE GRAPHICS STATE FOR THE REST OF THE UI ---
+    // UI text & buttons
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetColorToMultiply(1.0f, 1.0f, 1.0f, 1.0f);
 
     titleText.draw(true);
 
+    // Level creation overlay
     if (creatingLevel) {
         creationBackground.setRGBA(0.f, 0.f, 0.f, 0.8f);
         creationBackground.draw(false);
@@ -605,6 +679,7 @@ void drawLevelSelector() {
         buttonCancelCreation.draw();
     }
 
+    // Action buttons & map preview
     if (!creatingLevel && !confirmationSystem.isShowing()) {
         buttonBack.draw();
         buttonToPlayerLevel.draw();
@@ -620,28 +695,47 @@ void drawLevelSelector() {
         mapPreviewDraw();
     }
 
+    // Confirmation, animations & debug
     confirmationSystem.draw();
-
     animManager.drawAll();
     g_debugSystem.drawAll();
 }
 
+// =========================================================
+//
+// freeLevelSelector()
+//
+// - Frees per-session runtime resources:
+// - background, VFX, animations, and collectibles.
+// - Called on every restart and on state exit.
+//
+// =========================================================
 void freeLevelSelector() {
     MenuBackground::free();
     lsVfxSystem.free();
-
     g_debugSystem.clearScene();
     animManager.freeAll();
-
     lsCollectibleSystem.free();
 }
 
+// =========================================================
+//
+// unloadLevelSelector()
+//
+// - Unloads all persistent assets loaded in loadLevelSelector():
+// - level buttons, creation UI buttons, action buttons,
+// - fonts, preview mesh, preview textures, and background.
+// - Called once when leaving the LevelSelector state.
+//
+// =========================================================
 void unloadLevelSelector() {
 
+    // Level buttons
     for (int i = 0; i < static_cast<int>(Level::PlayerLevels); ++i) {
         levelButtonPool_[i].unload();
     }
 
+    // Creation UI buttons
     buttonIncreaseWidth.unload();
     buttonDecreaseWidth.unload();
     buttonIncreaseHeight.unload();
@@ -651,6 +745,7 @@ void unloadLevelSelector() {
     buttonConfirmCreation.unload();
     buttonCancelCreation.unload();
 
+    // Action buttons
     buttonBack.unload();
     buttonSelect.unload();
     buttonEdit.unload();
@@ -671,12 +766,11 @@ void unloadLevelSelector() {
         buttonFont = 0;
     }
 
+    // Unload preview mesh and textures
     if (previewMesh) {
         AEGfxMeshFree(previewMesh);
         previewMesh = nullptr;
     }
-
-    // Unload all texture pointers in the vector container
     for (AEGfxTexture* tex : previewTextures) {
         if (tex != nullptr) {
             AEGfxTextureUnload(tex);
@@ -689,9 +783,10 @@ void unloadLevelSelector() {
         defaultPreviewTex = nullptr;
     }
 
-    // Unload destructible background
+    // Unload background
     MenuBackground::unload();
 
+    // Confirmation
     confirmationSystem.unload();
 
     animManager.freeAll();
@@ -699,7 +794,16 @@ void unloadLevelSelector() {
 
 // =========================================================
 //
-//              Map Preview Functions
+//  Static Functions Definition
+//
+// =========================================================
+
+// =========================================================
+//
+// mapPreviewLoad()
+//
+// - Creates the shared preview quad mesh and preloads
+// - all level preview textures from Assets/Previews/.
 //
 // =========================================================
 static void mapPreviewLoad() {
@@ -712,6 +816,15 @@ static void mapPreviewLoad() {
         previewTextures.push_back(AEGfxTextureLoad(filePath.c_str()));
     }
 }
+
+// =========================================================
+//
+// mapPreviewUpdate(f32 deltaTime)
+//
+// - Tracks which level button the mouse is hovering over
+// - and drives the preview image fade-in/fade-out animation.
+//
+// =========================================================
 static void mapPreviewUpdate(f32 deltaTime) {
     hoveredLevelIndex = -1;
     for (int i = 0; i < static_cast<int>(Level::PlayerLevels); ++i) {
@@ -733,6 +846,15 @@ static void mapPreviewUpdate(f32 deltaTime) {
     previewFader.update(deltaTime);
 }
 
+// =========================================================
+//
+// mapPreviewDraw()
+//
+// - Renders the hovered level's preview image near the cursor,
+// - clamping position to stay within screen boundaries.
+// - Uses UIFader alpha for smooth fade transitions.
+//
+// =========================================================
 static void mapPreviewDraw() {
     // If mouse is within a button, hoveredLevelIndex = button level.
     // Ensure that hLI is < number of elements within the vector container
@@ -801,10 +923,12 @@ static void mapPreviewDraw() {
 
 // =========================================================
 //
-//              Collectibles Preview Functions
+// drawPlaceholderSlots()
+//
+// - Draws dark placeholder icons below a level button
+// - for each collectible slot the player has not yet filled.
 //
 // =========================================================
-// Static helper to draw placeholder collectible slots below a level button
 static void drawPlaceholderSlots(AEVec2 buttonPos, int collectedCount, AEGfxVertexList* mesh) {
     // Only need to draw if they haven't collected everything
     if (collectedCount >= 3)
