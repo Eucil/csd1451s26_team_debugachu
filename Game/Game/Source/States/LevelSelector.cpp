@@ -18,13 +18,19 @@
 *//*______________________________________________________________________*/
 #include "States/LevelSelector.h"
 
+// ==========================================
 // Standard library
+// ==========================================
 #include <iostream>
 
+// ==========================================
 // Third-party
+// ==========================================
 #include <AEEngine.h>
 
+// ==========================================
 // Project
+// ==========================================
 #include "Animations.h"
 #include "AudioSystem.h"
 #include "Button.h"
@@ -50,6 +56,7 @@ static s8 buttonFont = 0;
 // ==========================================
 static VFXSystem lsVfxSystem;
 static CollectibleSystem lsCollectibleSystem;
+static ConfirmationSystem confirmationSystem;
 
 // ==========================================
 // Map Preview
@@ -109,9 +116,8 @@ static Button buttonBack;
 static Button buttonToPlayerLevel;
 
 // ==========================================
-// Confirmation
+// Level Index
 // ==========================================
-static ConfirmationSystem confirmationSystem;
 static int levelToDeleteIndex = -1;
 
 // ==========================================
