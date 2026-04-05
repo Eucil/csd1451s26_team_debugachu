@@ -5,7 +5,8 @@
 
 @date		March, 31, 2026
 
-@brief      This source file contains the declaration of functions that
+@brief      This source file implements ConfirmationSystem, a Yes/No dialog used
+            to confirm destructive actions such as restart, quit, and delete.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents
@@ -14,29 +15,68 @@
 *//*______________________________________________________________________*/
 #include "Confirmation.h"
 
+// ==========================================
 // Standard library
+// ==========================================
 #include <fstream>
 #include <iostream>
 #include <string>
 
+// ==========================================
 // Third-party
+// ==========================================
 #include <AEEngine.h>
 #include <json/json.h>
 
+// ==========================================
 // Project
+// ==========================================
 #include "Components.h"
 #include "ConfigManager.h"
 #include "MeshUtils.h"
 
+// =========================================================
+//
+// ConfirmationSystem::show()
+//
+// - Makes the dialog visible.
+// - Sets justShown_ so input is ignored for one frame,
+// - preventing the click that opened the dialog from taking input
+// - on the Yes/No buttons.
+//
+// =========================================================
 void ConfirmationSystem::show() {
     show_ = true;
     justShown_ = true;
 }
 
+// =========================================================
+//
+// ConfirmationSystem::hide()
+//
+// - Hides the dialog.
+//
+// =========================================================
 void ConfirmationSystem::hide() { show_ = false; }
 
+// =========================================================
+//
+// ConfirmationSystem::isShowing()
+//
+// - Returns the visibility state of the confirmation dialog.
+//
+// =========================================================
 bool ConfirmationSystem::isShowing() const { return show_; }
 
+// =========================================================
+//
+// ConfirmationSystem::load()
+//
+// - Loads all GPU assets needed by the dialog:
+// - the background quad mesh and button meshes/textures.
+// - Called once per session (not on restart).
+//
+// =========================================================
 void ConfirmationSystem::load() {
     graphics_.mesh_ = createRectMesh();
 
@@ -46,6 +86,15 @@ void ConfirmationSystem::load() {
     buttonNo_.loadMesh();
 }
 
+// =========================================================
+//
+// ConfirmationSystem::init()
+//
+// - Reads background color from JSON, fills the screen with the background,
+// - initializes button and text layouts from JSON, and hides the dialog.
+// - Called on both first load and every restart.
+//
+// =========================================================
 void ConfirmationSystem::init(s8& buttonFont) {
     const Json::Value& confirmationSection =
         g_configManager.getSection("confirmation_system", "Background");
@@ -57,6 +106,7 @@ void ConfirmationSystem::init(s8& buttonFont) {
     setTransformFillScreen();
     updateTransform();
 
+    // Initialize buttons and text from JSON
     buttonYes_.initFromJson("confirmation_system", "ButtonYes");
     buttonYes_.setTextFont(buttonFont);
     buttonNo_.initFromJson("confirmation_system", "ButtonNo");
@@ -71,6 +121,14 @@ void ConfirmationSystem::init(s8& buttonFont) {
     hide();
 }
 
+// =========================================================
+//
+// ConfirmationSystem::update()
+//
+// - Clears the justShown_ flag after one frame so clicks become valid.
+// - Also refreshes the world transform in case the window resized.
+//
+// =========================================================
 void ConfirmationSystem::update() {
     if (justShown_) {
         justShown_ = false;
@@ -78,6 +136,14 @@ void ConfirmationSystem::update() {
     updateTransform();
 }
 
+// =========================================================
+//
+// ConfirmationSystem::draw()
+//
+// - Renders the background, confirmation text, and Yes/No buttons.
+// - Early-returns if the dialog is not currently showing.
+//
+// =========================================================
 void ConfirmationSystem::draw() {
     if (!show_)
         return;
@@ -88,6 +154,14 @@ void ConfirmationSystem::draw() {
     buttonNo_.draw();
 }
 
+// =========================================================
+//
+// ConfirmationSystem::renderBackground()
+//
+// - Draws the solid-color background quad using the current
+// - transform and RGBA color values from graphics_.
+//
+// =========================================================
 void ConfirmationSystem::renderBackground() {
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -97,6 +171,14 @@ void ConfirmationSystem::renderBackground() {
     AEGfxMeshDraw(graphics_.mesh_, AE_GFX_MDM_TRIANGLES);
 }
 
+// =========================================================
+//
+// ConfirmationSystem::setTransformFillScreen()
+//
+// - Positions and scales the background quad to cover the entire screen.
+// - Uses the AEEngine window size and world-space min coordinates.
+//
+// =========================================================
 void ConfirmationSystem::setTransformFillScreen() {
     s32 windowHeight{AEGfxGetWindowHeight()};
     s32 windowWidth{AEGfxGetWindowWidth()};
@@ -114,6 +196,15 @@ void ConfirmationSystem::setTransformFillScreen() {
     transform_.rotationRad_ = 0.0f;
 }
 
+// =========================================================
+//
+// ConfirmationSystem::updateTransform()
+//
+// - Rebuilds the world matrix from the current scale, rotation, and position.
+// - Must be called after any transform change for it to take effect in draw.
+//
+// =========================================================
+
 void ConfirmationSystem::updateTransform() {
     AEMtx33 scaleMtx, rotMtx, transMtx;
     AEMtx33Scale(&scaleMtx, transform_.scale_.x, transform_.scale_.y);
@@ -123,6 +214,14 @@ void ConfirmationSystem::updateTransform() {
     AEMtx33Concat(&transform_.worldMtx_, &transMtx, &transform_.worldMtx_);
 }
 
+// =========================================================
+//
+// ConfirmationSystem::initFromJson()
+//
+// - Reads the background RGBA color from file -> section in the config JSON.
+// - Used to recolor the background for different contexts if needed.
+//
+// =========================================================
 void ConfirmationSystem::initFromJson(const std::string& file, const std::string& section) {
     const Json::Value& pauseSection = g_configManager.getSection(file, section);
     graphics_.red_ = pauseSection["graphics"]["red"].asFloat();
@@ -131,6 +230,14 @@ void ConfirmationSystem::initFromJson(const std::string& file, const std::string
     graphics_.alpha_ = pauseSection["graphics"]["alpha"].asFloat();
 }
 
+// =========================================================
+//
+// ConfirmationSystem::unload()
+//
+// - Frees the background quad mesh and unloads button GPU assets.
+// - Called once when leaving the state.
+//
+// =========================================================
 void ConfirmationSystem::unload() {
     if (graphics_.mesh_ != nullptr) {
         AEGfxMeshFree(graphics_.mesh_);
@@ -141,18 +248,50 @@ void ConfirmationSystem::unload() {
     buttonNo_.unload();
 }
 
+// =========================================================
+//
+// ConfirmationSystem::confirmationYesClicked()
+//
+// - Returns true if Yes was clicked this frame.
+// - Returns false if the dialog is hidden or was just shown this frame,
+// - preventing the opening click from being treated as a confirmation.
+//
+// =========================================================
 bool ConfirmationSystem::confirmationYesClicked() {
     if (!show_ || justShown_)
         return false;
     return buttonYes_.checkMouseClick();
 }
 
+// =========================================================
+//
+// ConfirmationSystem::confirmationNoClicked()
+//
+// - Returns true if No was clicked this frame.
+// - Same one-frame guard as confirmationYesClicked.
+//
+// =========================================================
 bool ConfirmationSystem::confirmationNoClicked() {
     if (!show_ || justShown_)
         return false;
     return buttonNo_.checkMouseClick();
 }
 
+// =========================================================
+//
+// ConfirmationSystem::setTask()
+//
+// - Sets the action this dialog is currently guarding.
+// - Call this before show() so the caller knows what to do on Yes.
+//
+// =========================================================
 void ConfirmationSystem::setTask(ConfirmationTask task) { task_ = task; }
 
+// =========================================================
+//
+// ConfirmationSystem::getTask()
+//
+// - Returns the currently assigned task.
+//
+// =========================================================
 ConfirmationTask ConfirmationSystem::getTask() const { return task_; }
