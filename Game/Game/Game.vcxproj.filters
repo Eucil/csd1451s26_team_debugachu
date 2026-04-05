@@ -5,10 +5,6 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
@@ -28,9 +24,6 @@
     <Filter Include="Source Files\Game State Files">
       <UniqueIdentifier>{27660bcb-4fb4-4047-89e0-8e0e49c57cd5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Game State Files">
-      <UniqueIdentifier>{5d4b4b89-4de9-4e1b-a78a-3b9b047f5321}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Resource Files\Audio Files">
       <UniqueIdentifier>{44c7ee05-df04-4a7b-9810-fd3ad831df27}</UniqueIdentifier>
     </Filter>
@@ -43,15 +36,19 @@
     <Filter Include="JSON Files\FileConfig Files">
       <UniqueIdentifier>{611453d6-a990-43d6-b2e5-df464dc0248a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Document Files\Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Document Files\Header Files\Game State Files">
+      <UniqueIdentifier>{5d4b4b89-4de9-4e1b-a78a-3b9b047f5321}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\FluidSystem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Terrain.cpp">
@@ -128,6 +125,15 @@
     </ClCompile>
     <ClCompile Include="Source\States\Settings.cpp">
       <Filter>Source Files\Game State Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\MeshUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\MouseUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\TileBackground.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -230,91 +236,97 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\GameStateManager.h">
-      <Filter>Header Files</Filter>
+      <Filter>Document Files\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\Components.h">
-      <Filter>Header Files</Filter>
+      <Filter>Document Files\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\FluidSystem.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Utils.h">
-      <Filter>Header Files</Filter>
+      <Filter>Document Files\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\Terrain.h">
-      <Filter>Header Files</Filter>
+      <Filter>Document Files\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\StartEndPoint.h">
-      <Filter>Header Files</Filter>
+      <Filter>Document Files\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\PortalSystem.h">
-      <Filter>Header Files</Filter>
+      <Filter>Document Files\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\CollisionSystem.h">
-      <Filter>Header Files</Filter>
+      <Filter>Document Files\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\VFXSystem.h">
-      <Filter>Header Files</Filter>
+      <Filter>Document Files\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\Button.h">
-      <Filter>Header Files</Filter>
+      <Filter>Document Files\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\Pause.h">
-      <Filter>Header Files</Filter>
+      <Filter>Document Files\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\ConfigManager.h">
-      <Filter>Header Files</Filter>
+      <Filter>Document Files\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\Collectible.h">
-      <Filter>Header Files</Filter>
+      <Filter>Document Files\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\AudioSystem.h">
-      <Filter>Header Files</Filter>
+      <Filter>Document Files\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\Animations.h">
-      <Filter>Header Files</Filter>
+      <Filter>Document Files\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\Moss.h">
-      <Filter>Header Files</Filter>
+      <Filter>Document Files\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\WinScreen.h">
-      <Filter>Header Files</Filter>
+      <Filter>Document Files\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\DebugSystem.h">
-      <Filter>Header Files</Filter>
+      <Filter>Document Files\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\MenuBackground.h">
-      <Filter>Header Files</Filter>
+      <Filter>Document Files\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\Confirmation.h">
-      <Filter>Header Files</Filter>
+      <Filter>Document Files\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\LevelManager.h">
-      <Filter>Header Files</Filter>
+      <Filter>Document Files\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\States\Controls.h">
-      <Filter>Header Files\Game State Files</Filter>
+      <Filter>Document Files\Header Files\Game State Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\States\Credits.h">
-      <Filter>Header Files\Game State Files</Filter>
+      <Filter>Document Files\Header Files\Game State Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\States\Level.h">
-      <Filter>Header Files\Game State Files</Filter>
+      <Filter>Document Files\Header Files\Game State Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\States\LevelSelector.h">
-      <Filter>Header Files\Game State Files</Filter>
+      <Filter>Document Files\Header Files\Game State Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\States\LogoScreen.h">
-      <Filter>Header Files\Game State Files</Filter>
+      <Filter>Document Files\Header Files\Game State Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\States\MainMenu.h">
-      <Filter>Header Files\Game State Files</Filter>
+      <Filter>Document Files\Header Files\Game State Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\States\PlayerLevel.h">
-      <Filter>Header Files\Game State Files</Filter>
+      <Filter>Document Files\Header Files\Game State Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\States\Settings.h">
-      <Filter>Header Files\Game State Files</Filter>
+      <Filter>Document Files\Header Files\Game State Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MeshUtils.h">
+      <Filter>Document Files\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MouseUtils.h">
+      <Filter>Document Files\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\TileBackground.h">
+      <Filter>Document Files\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

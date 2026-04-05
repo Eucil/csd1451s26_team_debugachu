@@ -568,16 +568,6 @@ void updateLevel(GameStateManager& GSM, f32 deltaTime) {
                 snprintf(goalBuffer, sizeof(goalBuffer), "Goal: %.0f%%", goalPercentage);
                 goalText.content_ = goalBuffer;
 
-                if (AEInputCheckTriggered(AEVK_F)) {
-                    // Refill all start points
-                    startEndPointSystem.refillAllWater();
-                }
-
-                if (AEInputCheckTriggered(AEVK_G)) {
-                    // Toggle infinite water for all start points
-                    startEndPointSystem.toggleInfiniteWater();
-                }
-
                 int portalsUsed =
                     portalSystem.getPortalCount(); // however your PortalSystem exposes this
                 int portalsLimit = portalSystem.getPortalLimit();

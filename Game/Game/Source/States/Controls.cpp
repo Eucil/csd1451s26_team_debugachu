@@ -4,9 +4,21 @@
 @co_author  Sean Lee Hong Wei/seanhongwei.lee@digipen.edu,
             Chia Hanxin/c.hanxin@digipen.edu
 
-@date		March, 31, 2026
+@date       March, 31, 2026
 
-@brief      This source file contains the declaration of functions that
+@brief      This source file contains the definitions of functions that
+            implement the Controls screen state, which displays a multi-page
+            how-to-play guide. Pages are loaded from JSON and illustrated with
+            sprite icons and animated collectibles. The state shares the live
+            menu background with MainMenu and Credits.
+
+            Functions defined:
+                - loadControls,       loads fonts, pages, sprites, and buttons
+                - initializeControls, resets page index and initializes animations
+                - updateControls,     handles input, navigation, and background
+                - drawControls,       renders background, overlay, text, and sprites
+                - freeControls,       releases meshes, textures, and animations
+                - unloadControls,     unloads fonts and button assets
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents
@@ -17,9 +29,8 @@
 #include "States/Controls.h"
 
 // Standard library
-#include <cstdio>
-#include <cstring>
 #include <sstream>
+#include <string>
 
 // Third-party
 #include <AEEngine.h>
@@ -34,53 +45,52 @@
 #include "MenuBackground.h"
 #include "MeshUtils.h"
 
-// ----------------------------------------------------------------------------
-// Static state
-// ----------------------------------------------------------------------------
-static int currentPage = 1; // 1-indexed current page
-static s8 titleFont = 0;    // large font for page titles
-static s8 bodyFont = 0;     // smaller font for body text
-static s8 buttonFont = 0;   // font for buttons
-
-// Navigation buttons
-static Button buttonNext;
-static Button buttonPrevious;
-static Button buttonBack;
-
-// Animations
-static AnimationManager animManager;
-static ScreenFaderManager screenFader;
-static UIFader someOtherCoolAnimation;
-
-// Full-screen semi-transparent overlay mesh (created once, reused)
-static AEGfxVertexList* overlayMesh = nullptr;
-
-// Each page has a title (header) and a body (newline-separated lines)
+// ==========================================
+//            PAGE DATA
+// ==========================================
 struct HTPPage {
     TextData title;
     TextData body;
 };
-static std::vector<HTPPage> pages;
 
-// Display settings loaded from JSON
-static f32 s_overlayAlpha = 0.55f;
-static f32 s_bodyLineSpacing = 0.15f;
-static f32 s_pageIndY = -0.88f;
-static f32 s_pageIndScale = 0.8f;
-static f32 s_pageIndR = 0.6f, s_pageIndG = 0.6f, s_pageIndB = 0.6f;
+// ==========================================
+//            SPRITE ILLUSTRATION SYSTEM
+// ==========================================
 
-// ----------------------------------------------------------------------------
-// Sprite illustration system
-// ----------------------------------------------------------------------------
+// Each entry attaches a sprite to a specific page number.
+// screenX/Y are in normalised [-1, 1] space. sizeX/Y are world units.
 struct PageSprite {
     AEGfxTexture* tex{nullptr};
     AEGfxVertexList* mesh{nullptr};
     int page{0};
     f32 screenX{0.6f};
     f32 screenY{0.0f};
-    f32 sizeX{80.0f}; // width  in world units
-    f32 sizeY{80.0f}; // height in world units
+    f32 sizeX{80.0f};
+    f32 sizeY{80.0f};
 };
+
+// ==========================================
+//            STATIC STATE
+// ==========================================
+static int currentPage = 1;
+static s8 titleFont = 0;
+static s8 bodyFont = 0;
+static s8 buttonFont = 0;
+
+static Button buttonNext;
+static Button buttonPrevious;
+static Button buttonBack;
+
+static std::vector<HTPPage> pages;
+static AEGfxVertexList* overlayMesh = nullptr;
+
+static f32 s_overlayAlpha = 0.55f;
+static f32 s_bodyLineSpacing = 0.15f;
+static f32 s_pageIndY = -0.88f;
+static f32 s_pageIndScale = 0.8f;
+static f32 s_pageIndR = 0.6f;
+static f32 s_pageIndG = 0.6f;
+static f32 s_pageIndB = 0.6f;
 
 static std::vector<PageSprite> s_sprites;
 static AEGfxVertexList* s_fullUvMesh = nullptr;
@@ -94,17 +104,24 @@ static AEGfxVertexList* s_magicMesh = nullptr;
 static AEGfxTexture* s_mossTex = nullptr;
 static AEGfxVertexList* s_mossMesh = nullptr;
 
-// Collectible meshes (colour-drawn, no texture) for page 5
+// Collectible icon meshes for page 5 (colour-drawn, no texture)
 static AEGfxVertexList* s_starMesh = nullptr;
 static AEGfxVertexList* s_gemMesh = nullptr;
 static AEGfxVertexList* s_leafMesh = nullptr;
 static float s_collectRot = 0.0f;   // shared rotation angle (radians)
 static float s_collectPulse = 0.0f; // shared pulse timer
 
-// ----------------------------------------------------------------------------
-// Static Functions
-// ----------------------------------------------------------------------------
-static AEGfxVertexList* MakeUvMesh(float u0, float u1);
+// ==========================================
+//            ANIMATIONS
+// ==========================================
+static AnimationManager animManager;
+static ScreenFaderManager screenFader;
+static UIFader uiFadeIn_;
+
+// ==========================================
+//            STATIC FUNCTION DECLARATIONS
+// ==========================================
+static AEGfxVertexList* makeUvMesh(float u0, float u1);
 static void createCollectibleMeshes();
 static void drawCollectibleIcons();
 static void ensureOverlayMesh();
@@ -112,26 +129,36 @@ static void drawOverlay(f32 alpha);
 static void drawCenteredText(s8 font, const char* text, f32 screenY, f32 size, f32 r, f32 g, f32 b);
 static void drawPageIndicator();
 
-// ----------------------------------------------------------------------------
-// State functions
-// ----------------------------------------------------------------------------
+// ==========================================
+//            CONTROLS STATE
+// ==========================================
 
+// =========================================================
+//
+// loadControls()
+//
+// - Loads the shared menu background assets.
+// - Creates title, body, and button fonts.
+// - Reads each page's title and body from the how_to_play JSON config.
+// - Reads display settings (overlay alpha, line spacing, indicator style).
+// - Loads sprite illustration textures and builds UV-baked quad meshes.
+// - Builds collectible icon meshes for page 5.
+// - Registers sprite entries with page number and screen position.
+// - Loads navigation button meshes and textures.
+//
+// =========================================================
 void loadControls() {
-    // Shared background (same as MainMenu and Credits)
     MenuBackground::load();
 
-    // Load fonts
     titleFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 48);
     bodyFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
     buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
 
-    // Load pages
     pages.clear();
     Json::Value pagesArray = g_configManager.getSection("how_to_play", "Pages");
     if (!pagesArray.isNull() && pagesArray.isArray()) {
         for (const Json::Value& p : pagesArray) {
             HTPPage page;
-
             const Json::Value& t = p["title"];
             page.title.content_ = t["content"].asString();
             page.title.x_ = t["x"].asFloat();
@@ -158,7 +185,6 @@ void loadControls() {
         }
     }
 
-    // Load display settings
     Json::Value ds = g_configManager.getSection("how_to_play", "DisplaySettings");
     if (!ds.isNull()) {
         s_overlayAlpha = ds["overlayAlpha"].asFloat();
@@ -170,34 +196,30 @@ void loadControls() {
         s_pageIndB = ds["pageIndicatorBlue"].asFloat();
     }
 
-    // Load sprite illustrations
     s_pipeTex = AEGfxTextureLoad("Assets/Textures/overgrown_pipe_end.png");
     s_portalTex = AEGfxTextureLoad("Assets/Textures/wormhole.png");
     s_flowerTex = AEGfxTextureLoad("Assets/Textures/pink_flower_sprite_sheet.png");
-
-    s_fullUvMesh = MakeUvMesh(0.0f, 1.0f);
-    s_flowerMesh = MakeUvMesh(0.0f, 1.0f / 4.0f);
-    s_portalMesh = MakeUvMesh(0.0f, 1.0f);
-
     s_magicTex = AEGfxTextureLoad("Assets/Textures/terrain_magic.png");
-    s_magicMesh = MakeUvMesh(0.0f, 1.0f);
     s_mossTex = AEGfxTextureLoad("Assets/Textures/moss_sprite_sheet.png");
-    s_mossMesh = MakeUvMesh(0.0f, 1.0f / 3.0f); // frame 0 (idle) of moss sheet
+
+    s_fullUvMesh = makeUvMesh(0.0f, 1.0f);
+    s_flowerMesh = makeUvMesh(0.0f, 1.0f / 4.0f);
+    s_portalMesh = makeUvMesh(0.0f, 1.0f);
+    s_magicMesh = makeUvMesh(0.0f, 1.0f);
+    s_mossMesh = makeUvMesh(0.0f, 1.0f / 3.0f); // frame 0 (idle) of moss sheet
+
     createCollectibleMeshes();
 
     // {tex, mesh, page, screenX, screenY, sizeX, sizeY}
-    // Portal in-game is 30w x 60h -- mirror that 1:2 ratio here scaled up
+    // Portal in-game is 30w x 60h -- mirrored as 1:2 ratio here
     s_sprites.clear();
     s_sprites.push_back({s_pipeTex, s_fullUvMesh, 2, -0.42f, 0.35f, 80.0f, 80.0f});    // pipe
-    s_sprites.push_back({s_portalTex, s_portalMesh, 2, 0.42f, 0.10f, 60.0f, 120.0f});  // portal 1:2
+    s_sprites.push_back({s_portalTex, s_portalMesh, 2, 0.42f, 0.10f, 60.0f, 120.0f});  // portal
     s_sprites.push_back({s_flowerTex, s_flowerMesh, 2, -0.42f, -0.10f, 80.0f, 80.0f}); // flower
-    // Page 3: magic terrain tile (left) + portal (right)
-    s_sprites.push_back({s_magicTex, s_magicMesh, 3, 0.52f, 0.05f, 80.0f, 80.0f}); // magic terrain
-    s_sprites.push_back({s_portalTex, s_portalMesh, 3, -0.52f, 0.20f, 60.0f, 120.0f}); // portal 1:2
-    // Page 4: moss (idle frame 0)
-    s_sprites.push_back({s_mossTex, s_mossMesh, 4, 0.42f, -0.05f, 80.0f, 80.0f}); // moss
+    s_sprites.push_back({s_magicTex, s_magicMesh, 3, 0.52f, 0.05f, 80.0f, 80.0f});     // magic
+    s_sprites.push_back({s_portalTex, s_portalMesh, 3, -0.52f, 0.20f, 60.0f, 120.0f}); // portal
+    s_sprites.push_back({s_mossTex, s_mossMesh, 4, 0.42f, -0.05f, 80.0f, 80.0f});      // moss
 
-    // Load navigation button assets
     buttonNext.loadMesh();
     buttonNext.loadTexture("Assets/Textures/brown_square_24_24.png");
     buttonPrevious.loadMesh();
@@ -206,27 +228,51 @@ void loadControls() {
     buttonBack.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
 }
 
+// =========================================================
+//
+// initializeControls()
+//
+// - Initializes the shared menu background simulation.
+// - Resets the current page index to 1 on every entry.
+// - Clears and re-registers animations, then initializes all.
+// - Reads navigation button transforms from JSON config.
+// - Assigns the button font to each navigation button.
+//
+// =========================================================
 void initializeControls() {
     MenuBackground::initialize();
 
-    // Animations
+    currentPage = 1;
+
     animManager.clear();
     animManager.add(&screenFader);
-    animManager.add(&someOtherCoolAnimation);
+    animManager.add(&uiFadeIn_);
     animManager.initializeAll();
-    // Reset to first page every time we enter
-    currentPage = 1;
 
     buttonNext.initFromJson("how_to_play_buttons", "Next");
     buttonNext.setTextFont(buttonFont);
-
     buttonPrevious.initFromJson("how_to_play_buttons", "Previous");
     buttonPrevious.setTextFont(buttonFont);
-
     buttonBack.initFromJson("how_to_play_buttons", "Back");
     buttonBack.setTextFont(buttonFont);
 }
 
+// =========================================================
+//
+// updateControls()
+//
+// - Handles right-arrow and space to advance pages or exit to MainMenu.
+// - Handles left-arrow to go back a page.
+// - Handles escape to exit to MainMenu immediately.
+// - Mirrors keyboard navigation on next, previous, and back button clicks.
+// - Destroys dirt at the mouse cursor when left mouse is held.
+// - Updates navigation button transforms each frame.
+// - Advances collectible icon rotation and pulse animation timers.
+// - Updates the shared menu background simulation.
+// - Updates all registered animations.
+// - Delegates to the debug system when it is open.
+//
+// =========================================================
 void updateControls(GameStateManager& GSM, f32 deltaTime) {
     if (!g_debugSystem.isOpen()) {
         if (AEInputCheckTriggered(AEVK_Z)) {
@@ -237,7 +283,6 @@ void updateControls(GameStateManager& GSM, f32 deltaTime) {
         if (totalPages == 0)
             totalPages = 1;
 
-        // Keyboard navigation
         if (AEInputCheckTriggered(AEVK_RIGHT) || AEInputCheckTriggered(AEVK_SPACE)) {
             if (currentPage < totalPages)
                 ++currentPage;
@@ -258,12 +303,10 @@ void updateControls(GameStateManager& GSM, f32 deltaTime) {
             else
                 screenFader.startFadeOut(&GSM, StateId::MainMenu);
         }
-
         if (buttonPrevious.checkMouseClick()) {
             if (currentPage > 1)
                 --currentPage;
         }
-
         if (buttonBack.checkMouseClick()) {
             screenFader.startFadeOut(&GSM, StateId::MainMenu);
         }
@@ -275,16 +318,13 @@ void updateControls(GameStateManager& GSM, f32 deltaTime) {
             }
         }
 
-        // Update button transforms (recalculates centered text positions)
         buttonNext.updateTransform();
         buttonPrevious.updateTransform();
         buttonBack.updateTransform();
 
-        // Advance collectible icon animation
         s_collectRot += deltaTime * 0.5f;
         s_collectPulse += deltaTime * 3.0f;
 
-        // Keep background alive
         MenuBackground::update(deltaTime);
     } else {
         if (AEInputCheckTriggered(AEVK_Z)) {
@@ -292,20 +332,28 @@ void updateControls(GameStateManager& GSM, f32 deltaTime) {
         }
         g_debugSystem.update();
     }
-    // Animations
     animManager.updateAll(deltaTime);
 }
 
+// =========================================================
+//
+// drawControls()
+//
+// - Draws the shared live menu background.
+// - Draws the semi-transparent dark overlay.
+// - Draws the title and body text for the current page, centered.
+// - Draws the page indicator (e.g. "2 / 5").
+// - Draws animated collectible icons on page 5.
+// - Draws sprite illustrations registered for the current page.
+// - Draws navigation buttons, animation overlays, and debug overlay.
+//
+// =========================================================
 void drawControls() {
-    // 1. Live background (terrain + fluid + portals)
     MenuBackground::draw();
-
-    // 2. Dark overlay to make text readable
     drawOverlay(s_overlayAlpha);
 
-    // 3. Draw title and body for the current page
     if (currentPage >= 1 && currentPage <= static_cast<int>(pages.size())) {
-        const HTPPage& page = pages[currentPage - 1];
+        const HTPPage& page = pages[static_cast<size_t>(currentPage) - 1u];
 
         drawCenteredText(titleFont, page.title.content_.c_str(), page.title.y_, page.title.scale_,
                          page.title.r_, page.title.g_, page.title.b_);
@@ -320,15 +368,12 @@ void drawControls() {
         }
     }
 
-    // 4. Page indicator (e.g. "2 / 4")
     drawPageIndicator();
 
-    // 5a. Collectible icons on page 5
     if (currentPage == 5) {
         drawCollectibleIcons();
     }
 
-    // 5b. Sprite illustrations for current page
     for (const auto& sp : s_sprites) {
         if (sp.page != currentPage || !sp.tex || !sp.mesh)
             continue;
@@ -347,7 +392,6 @@ void drawControls() {
         AEGfxMeshDraw(sp.mesh, AE_GFX_MDM_TRIANGLES);
     }
 
-    // 6. Navigation buttons
     buttonNext.draw();
     if (currentPage > 1) {
         buttonPrevious.draw();
@@ -357,9 +401,20 @@ void drawControls() {
     g_debugSystem.drawAll();
 }
 
+// =========================================================
+//
+// freeControls()
+//
+// - Frees the shared menu background simulation objects.
+// - Frees all registered animation resources.
+// - Frees the overlay mesh and all sprite meshes and textures.
+// - Frees the collectible icon meshes and clears the sprite list.
+//
+// =========================================================
 void freeControls() {
     MenuBackground::free();
     animManager.freeAll();
+
     if (overlayMesh) {
         AEGfxMeshFree(overlayMesh);
         overlayMesh = nullptr;
@@ -376,33 +431,13 @@ void freeControls() {
         AEGfxMeshFree(s_portalMesh);
         s_portalMesh = nullptr;
     }
-    if (s_pipeTex) {
-        AEGfxTextureUnload(s_pipeTex);
-        s_pipeTex = nullptr;
-    }
-    if (s_portalTex) {
-        AEGfxTextureUnload(s_portalTex);
-        s_portalTex = nullptr;
-    }
-    if (s_flowerTex) {
-        AEGfxTextureUnload(s_flowerTex);
-        s_flowerTex = nullptr;
-    }
     if (s_magicMesh) {
         AEGfxMeshFree(s_magicMesh);
         s_magicMesh = nullptr;
     }
-    if (s_magicTex) {
-        AEGfxTextureUnload(s_magicTex);
-        s_magicTex = nullptr;
-    }
     if (s_mossMesh) {
         AEGfxMeshFree(s_mossMesh);
         s_mossMesh = nullptr;
-    }
-    if (s_mossTex) {
-        AEGfxTextureUnload(s_mossTex);
-        s_mossTex = nullptr;
     }
     if (s_starMesh) {
         AEGfxMeshFree(s_starMesh);
@@ -416,13 +451,43 @@ void freeControls() {
         AEGfxMeshFree(s_leafMesh);
         s_leafMesh = nullptr;
     }
+
+    if (s_pipeTex) {
+        AEGfxTextureUnload(s_pipeTex);
+        s_pipeTex = nullptr;
+    }
+    if (s_portalTex) {
+        AEGfxTextureUnload(s_portalTex);
+        s_portalTex = nullptr;
+    }
+    if (s_flowerTex) {
+        AEGfxTextureUnload(s_flowerTex);
+        s_flowerTex = nullptr;
+    }
+    if (s_magicTex) {
+        AEGfxTextureUnload(s_magicTex);
+        s_magicTex = nullptr;
+    }
+    if (s_mossTex) {
+        AEGfxTextureUnload(s_mossTex);
+        s_mossTex = nullptr;
+    }
+
     s_sprites.clear();
 }
 
+// =========================================================
+//
+// unloadControls()
+//
+// - Unloads the shared menu background GPU assets.
+// - Destroys the title, body, and button fonts.
+// - Unloads the navigation button meshes and textures.
+//
+// =========================================================
 void unloadControls() {
     MenuBackground::unload();
 
-    // Unload fonts
     if (titleFont) {
         AEGfxDestroyFont(titleFont);
         titleFont = 0;
@@ -436,17 +501,24 @@ void unloadControls() {
         buttonFont = 0;
     }
 
-    // Unload buttons
     buttonNext.unload();
     buttonPrevious.unload();
     buttonBack.unload();
 }
 
-// ----------------------------------------------------------------------------
-// Static Functions
-// ----------------------------------------------------------------------------
+// ==========================================
+//            STATIC HELPERS
+// ==========================================
 
-static AEGfxVertexList* MakeUvMesh(float u0, float u1) {
+// =========================================================
+//
+// makeUvMesh()
+//
+// - Builds a unit quad with UVs mapped from u0 to u1 on the U axis.
+// - Used to sample a specific region of a sprite sheet without offsets.
+//
+// =========================================================
+static AEGfxVertexList* makeUvMesh(float u0, float u1) {
     AEGfxMeshStart();
     AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, u0, 1.0f, 0.5f, -0.5f, 0xFFFFFFFF, u1, 1.0f, -0.5f, 0.5f,
                 0xFFFFFFFF, u0, 0.0f);
@@ -455,12 +527,23 @@ static AEGfxVertexList* MakeUvMesh(float u0, float u1) {
     return AEGfxMeshEnd();
 }
 
+// =========================================================
+//
+// createCollectibleMeshes()
+//
+// - Builds the star mesh as a 5-pointed shape using outer and inner radii,
+//   matching the geometry used in CollectibleSystem::CreateMeshes().
+// - Builds the gem mesh as a diamond using two triangles.
+// - Builds the leaf mesh as a teardrop using 12 fan segments with
+//   a sinusoidally varying radius per segment.
+//
+// =========================================================
 static void createCollectibleMeshes() {
-    // Star (5-pointed) -- matches Collectible.cpp
-    AEGfxMeshStart();
     constexpr int kStarPoints = 5;
     constexpr float kOuterRadius = 0.5f;
     constexpr float kInnerRadius = 0.25f;
+
+    AEGfxMeshStart();
     for (int i = 0; i < kStarPoints; i++) {
         float a1 = (i * 2.0f * 3.14159f / kStarPoints) - 3.14159f / 2.0f;
         float a2 = ((i + 1) * 2.0f * 3.14159f / kStarPoints) - 3.14159f / 2.0f;
@@ -474,16 +557,16 @@ static void createCollectibleMeshes() {
                     0xFFFFFF00, x2 + 0.5f, y2 + 0.5f);
     }
     s_starMesh = AEGfxMeshEnd();
-    // Gem (diamond)
+
     AEGfxMeshStart();
     AEGfxTriAdd(0.0f, 0.5f, 0xFFFF00FF, 0.5f, 1.0f, -0.5f, 0.0f, 0xFFFF00FF, 0.0f, 0.5f, 0.5f, 0.0f,
                 0xFFFF00FF, 1.0f, 0.5f);
     AEGfxTriAdd(0.0f, -0.5f, 0xFFFF00FF, 0.5f, 0.0f, -0.5f, 0.0f, 0xFFFF00FF, 0.0f, 0.5f, 0.5f,
                 0.0f, 0xFFFF00FF, 1.0f, 0.5f);
     s_gemMesh = AEGfxMeshEnd();
-    // Leaf (teardrop)
-    AEGfxMeshStart();
+
     constexpr int kLeafSeg = 12;
+    AEGfxMeshStart();
     for (int i = 0; i < kLeafSeg; i++) {
         float a1 = (i * 2.0f * 3.14159f / kLeafSeg);
         float a2 = ((i + 1) * 2.0f * 3.14159f / kLeafSeg);
@@ -497,19 +580,33 @@ static void createCollectibleMeshes() {
     s_leafMesh = AEGfxMeshEnd();
 }
 
+// =========================================================
+//
+// drawCollectibleIcons()
+//
+// - Guards against null meshes and returns early if any are missing.
+// - Computes a pulse scale from s_collectPulse using the same formula
+//   as CollectibleSystem::Update (sinf * 0.1 + 1.0).
+// - Draws each icon with a per-icon rotation speed applied to s_collectRot,
+//   giving each a distinct spin rate.
+// - Applies Scale * Rotate * Translate so each icon spins around its centre.
+//
+// =========================================================
 static void drawCollectibleIcons() {
     if (!s_starMesh || !s_gemMesh || !s_leafMesh)
         return;
+
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(1.0f);
+
     float winW = static_cast<float>(AEGfxGetWindowWidth());
     float winH = static_cast<float>(AEGfxGetWindowHeight());
-    // Pulse scale matching Collectible.cpp: sinf(pulseTimer)*0.1+1.0, base scale 30
     float pulse = sinf(s_collectPulse) * 0.1f + 1.0f;
     float iconSize = 60.0f * pulse;
-    // Each collectible spins at a slightly different speed (matching rotationSpeed_ variance)
+
     float rotSpeeds[] = {1.0f, 1.5f, 2.0f};
+
     struct IconDef {
         AEGfxVertexList* mesh;
         float r, g, b, offsetX;
@@ -519,8 +616,9 @@ static void drawCollectibleIcons() {
         {s_gemMesh, 1.0f, 0.0f, 1.0f, 0.0f},
         {s_leafMesh, 0.0f, 1.0f, 0.0f, 0.35f},
     };
+
     for (int i = 0; i < 3; ++i) {
-        const auto& ic = icons[i];
+        const IconDef& ic = icons[i];
         float worldX = ic.offsetX * winW * 0.5f;
         float worldY = -0.20f * winH * 0.5f;
         float rot = s_collectRot * rotSpeeds[i];
@@ -528,19 +626,22 @@ static void drawCollectibleIcons() {
         AEMtx33Scale(&S, iconSize, iconSize);
         AEMtx33Rot(&R, rot);
         AEMtx33Trans(&T, worldX, worldY);
-        AEMtx33Concat(&W, &R, &S); // rotate then scale
-        AEMtx33Concat(&W, &T, &W); // then translate
+        AEMtx33Concat(&W, &R, &S);
+        AEMtx33Concat(&W, &T, &W);
         AEGfxSetColorToMultiply(ic.r, ic.g, ic.b, 1.0f);
         AEGfxSetTransform(W.m);
         AEGfxMeshDraw(ic.mesh, AE_GFX_MDM_TRIANGLES);
     }
 }
 
-// ----------------------------------------------------------------------------
-// Helpers
-// ----------------------------------------------------------------------------
-
-// Build and cache the full-screen overlay quad
+// =========================================================
+//
+// ensureOverlayMesh()
+//
+// - Returns immediately if the overlay mesh already exists.
+// - Builds a fullscreen unit quad with solid black vertex colours.
+//
+// =========================================================
 static void ensureOverlayMesh() {
     if (overlayMesh != nullptr)
         return;
@@ -552,7 +653,16 @@ static void ensureOverlayMesh() {
     overlayMesh = AEGfxMeshEnd();
 }
 
-// Draw the dark overlay over the live background
+// =========================================================
+//
+// drawOverlay()
+//
+// - Ensures the overlay mesh exists before drawing.
+// - Scales the mesh to fill the entire window.
+// - Draws a solid black quad at the given alpha transparency.
+// - Resets transparency to 1.0 after drawing.
+//
+// =========================================================
 static void drawOverlay(f32 alpha) {
     ensureOverlayMesh();
 
@@ -570,7 +680,16 @@ static void drawOverlay(f32 alpha) {
     AEGfxSetTransparency(1.0f);
 }
 
-// Draw text centered horizontally at a given screen-space y (-1..+1)
+// =========================================================
+//
+// drawCenteredText()
+//
+// - Returns early if the text pointer is null or the string is empty.
+// - Measures rendered text width to compute a centered x position.
+// - Draws four offset copies in black to create a legible outline.
+// - Draws the main text in the specified colour on top.
+//
+// =========================================================
 static void drawCenteredText(s8 font, const char* text, f32 screenY, f32 size, f32 r, f32 g,
                              f32 b) {
     if (!text || strlen(text) == 0)
@@ -580,7 +699,6 @@ static void drawCenteredText(s8 font, const char* text, f32 screenY, f32 size, f
     AEGfxGetPrintSize(font, text, size, &tw, &th);
     f32 xPos = -tw / 2.0f;
 
-    // Black outline for legibility over the live background
     AEGfxPrint(font, text, xPos - 0.002f, screenY - 0.002f, size, 0.f, 0.f, 0.f, 1.f);
     AEGfxPrint(font, text, xPos + 0.002f, screenY - 0.002f, size, 0.f, 0.f, 0.f, 1.f);
     AEGfxPrint(font, text, xPos - 0.002f, screenY + 0.002f, size, 0.f, 0.f, 0.f, 1.f);
@@ -588,7 +706,15 @@ static void drawCenteredText(s8 font, const char* text, f32 screenY, f32 size, f
     AEGfxPrint(font, text, xPos, screenY, size, r, g, b, 1.0f);
 }
 
-// Draw the page indicator (e.g. "2 / 4")
+// =========================================================
+//
+// drawPageIndicator()
+//
+// - Formats the current and total page count as "X / Y".
+// - Measures the string width to compute a centered x position.
+// - Draws the indicator using the settings loaded from JSON.
+//
+// =========================================================
 static void drawPageIndicator() {
     int totalPages = static_cast<int>(pages.size());
     if (totalPages == 0)

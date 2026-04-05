@@ -1,0 +1,8 @@
+{
+  "default": {
+    "maxHealth": 10.0,
+    "absorptionRate": 1.0,
+    "hitVfxCooldown": 0.1,
+    "frameTime": 0.35
+  }
+}
