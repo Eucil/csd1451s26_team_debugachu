@@ -62,14 +62,10 @@ void LevelManager::initEditorUI(s8 font) {
     static const char* blockNames[] = {"Dirt", "Stone", "Magic",  "Start",
                                        "End",  "Item",  "Portal", "Moss"};
     static const char* blockTextures[] = {
-        "Assets/Textures/terrain_dirt.png",
-        "Assets/Textures/terrain_stone.png",
-        "Assets/Textures/terrain_magic.png",
-        "Assets/Textures/overgrown_pipe_end.png",
-        "Assets/Textures/pink_flower_sprite_sheet.png",
-        "Assets/Textures/white_square.png",
-        "Assets/Textures/wormhole.png",
-        "Assets/Textures/white_square.png",
+        "Assets/Textures/terrain_dirt.png",    "Assets/Textures/terrain_stone.png",
+        "Assets/Textures/terrain_magic.png",   "Assets/Textures/overgrown_pipe_end.png",
+        "Assets/Textures/pink_flower_end.png", "Assets/Textures/white_square.png",
+        "Assets/Textures/wormhole.png",        "Assets/Textures/moss_full.png",
     };
 
     editorButtonPool_.resize(static_cast<int>(GameBlock::None));

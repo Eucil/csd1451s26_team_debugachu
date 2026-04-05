@@ -361,12 +361,19 @@ void MossSystem::drawPreview() {
     AEMtx33Concat(&worldMtx, &rotMtx, &scaleMtx);
     AEMtx33Concat(&worldMtx, &transMtx, &worldMtx);
 
-    AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
     AEGfxSetTransparency(0.5f);
     AEGfxSetColorToMultiply(0.0f, 0.5f, 0.0f, 1.0f);
     AEGfxSetTransform(worldMtx.m);
     AEGfxMeshDraw(spikyMossMesh_, AE_GFX_MDM_TRIANGLES);
+
+    AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+    AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+    AEGfxSetTransparency(0.5f);
+    AEGfxSetTransform(worldMtx.m);
+    AEGfxTextureSet(mossTexture_, 0.0f, 0.0f);
+    AEGfxMeshDraw(mossFrameMeshes_[1], AE_GFX_MDM_TRIANGLES);
 }
 
 void MossSystem::draw() {
