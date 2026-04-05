@@ -5,7 +5,7 @@
 
 @date		March, 31, 2026
 
-@brief      This header file contains the definitions of functions and classes
+@brief      This source file contains the definitions of functions and classes
             for the animation system which includes the following classes:
 
                 - IAnimation, a base-class which acts as an interface for 
