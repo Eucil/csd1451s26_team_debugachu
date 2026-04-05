@@ -5,7 +5,10 @@
 
 @date		March, 31, 2026
 
-@brief      This source file contains the declaration of functions that
+@brief      This source file implements ConfigManager,
+            which scans a directory for JSON config files, parses them
+            with JsonCpp, and exposes typed accessors for retrieving
+            values by file, section, and key.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents
@@ -14,13 +17,27 @@
 *//*______________________________________________________________________*/
 #include "ConfigManager.h"
 
+// ==========================================
 // Standard library
+// ==========================================
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 
+// ==========================================
+// Global instance of ConfigManager
+// ==========================================
 ConfigManager g_configManager;
 
+// =========================================================
+//
+// ConfigManager::init(const std::string& fileDir)
+//
+// - Scans fileDir for .json files and loads each one.
+// - The filename without extension becomes the key in configs_.
+// - e.g. "Level.json" is accessible as configs_["Level"].
+//
+// =========================================================
 void ConfigManager::init(const std::string& fileDir) {
 
     // Check if directory exists
@@ -42,6 +59,15 @@ void ConfigManager::init(const std::string& fileDir) {
     }
 }
 
+// =========================================================
+//
+// ConfigManager::loadFile(const std::string& filePath, const std::string& fileName)
+//
+// - Opens filePath, parses it as JSON, and stores the result
+// - in configs_ under fileName.
+// - Returns false if the file cannot be opened or parsed.
+//
+// =========================================================
 bool ConfigManager::loadFile(const std::string& filePath, const std::string& fileName) {
     std::ifstream file(filePath);
     // Check if file can be opened
@@ -66,6 +92,14 @@ bool ConfigManager::loadFile(const std::string& filePath, const std::string& fil
     return true;
 }
 
+// =========================================================
+//
+// ConfigManager::hasFile(const std::string& file)
+//
+// - Returns true if a config with the given file key has been loaded.
+// - Else returns false.
+//
+// =========================================================
 bool ConfigManager::hasFile(const std::string& file) const {
     // Check if this file key exists
     if (configs_.count(file) == 0) {
@@ -74,6 +108,14 @@ bool ConfigManager::hasFile(const std::string& file) const {
     return true;
 }
 
+// =========================================================
+//
+// ConfigManager::hasSection(const std::string& file, const std::string& section)
+//
+// - Returns true if the given section exists within the loaded file.
+// - Else returns false.
+//
+// =========================================================
 bool ConfigManager::hasSection(const std::string& file, const std::string& section) const {
     if (hasFile(file)) {
         // Check if this section key exists within the file's root
@@ -84,6 +126,15 @@ bool ConfigManager::hasSection(const std::string& file, const std::string& secti
     return false;
 }
 
+// =========================================================
+//
+// ConfigManager::hasKey(const std::string& file, const std::string& section,
+//                       const std::string& key)
+//
+// - Returns true if the given key exists within file -> section.
+// - Else returns false.
+//
+// =========================================================
 bool ConfigManager::hasKey(const std::string& file, const std::string& section,
                            const std::string& key) const {
     if (hasSection(file, section)) {
@@ -95,6 +146,15 @@ bool ConfigManager::hasKey(const std::string& file, const std::string& section,
     return false;
 }
 
+// =========================================================
+//
+// ConfigManager::getValueRoot(const std::string& file, const std::string& section,
+//                             const std::string& key)
+//
+// - Internal helper that navigates to file -> section -> key
+// - and returns a pointer to the Json::Value, or nullptr if not found.
+//
+// =========================================================
 const Json::Value* ConfigManager::getValueRoot(const std::string& file, const std::string& section,
                                                const std::string& key) const {
     // If key can't be found, return nullptr
@@ -106,6 +166,15 @@ const Json::Value* ConfigManager::getValueRoot(const std::string& file, const st
     return &root;
 }
 
+// =========================================================
+//
+// ConfigManager::getArrayRoot(const std::string& file, const std::string& section,
+//                             const std::string& key)
+//
+// - Same as getValueRoot but additionally validates that the value
+// - is a JSON array. Returns nullptr if not found or not an array.
+//
+// =========================================================
 const Json::Value* ConfigManager::getArrayRoot(const std::string& file, const std::string& section,
                                                const std::string& key) const {
     // If key can't be found, return nullptr
@@ -122,6 +191,15 @@ const Json::Value* ConfigManager::getArrayRoot(const std::string& file, const st
     return &root;
 }
 
+// =========================================================
+//
+// ConfigManager::getInt(const std::string& file, const std::string& section,
+//                       const std::string& key, int defaultVal)
+//
+// - Returns the int value at file -> section -> key.
+// - Prints a warning and returns defaultVal if not found.
+//
+// =========================================================
 int ConfigManager::getInt(const std::string& file, const std::string& section,
                           const std::string& key, int defaultVal) const {
     const Json::Value* root = getValueRoot(file, section, key);
@@ -133,6 +211,15 @@ int ConfigManager::getInt(const std::string& file, const std::string& section,
     return root->asInt();
 }
 
+// =========================================================
+//
+// ConfigManager::getFloat(const std::string& file, const std::string& section,
+//                         const std::string& key, float defaultVal)
+//
+// - Returns the float value at file -> section -> key.
+// - Prints a warning and returns defaultVal if not found.
+//
+// =========================================================
 float ConfigManager::getFloat(const std::string& file, const std::string& section,
                               const std::string& key, float defaultVal) const {
     const Json::Value* root = getValueRoot(file, section, key);
@@ -144,6 +231,15 @@ float ConfigManager::getFloat(const std::string& file, const std::string& sectio
     return root->asFloat();
 }
 
+// =========================================================
+//
+// ConfigManager::getBool(const std::string& file, const std::string& section,
+//                        const std::string& key, bool defaultVal)
+//
+// - Returns the bool value at file -> section -> key.
+// - Prints a warning and returns defaultVal if not found.
+//
+// =========================================================
 bool ConfigManager::getBool(const std::string& file, const std::string& section,
                             const std::string& key, bool defaultVal) const {
     const Json::Value* root = getValueRoot(file, section, key);
@@ -155,6 +251,15 @@ bool ConfigManager::getBool(const std::string& file, const std::string& section,
     return root->asBool();
 }
 
+// =========================================================
+//
+// ConfigManager::getString(const std::string& file, const std::string& section,
+//                          const std::string& key, const std::string& defaultVal)
+//
+// - Returns the string value at file -> section -> key.
+// - Prints a warning and returns defaultVal if not found.
+//
+// =========================================================
 std::string ConfigManager::getString(const std::string& file, const std::string& section,
                                      const std::string& key, const std::string& defaultVal) const {
     const Json::Value* root = getValueRoot(file, section, key);
@@ -166,6 +271,16 @@ std::string ConfigManager::getString(const std::string& file, const std::string&
     return root->asString();
 }
 
+// =========================================================
+//
+// ConfigManager::getAEVec2(const std::string& file, const std::string& section,
+//                          const std::string& key, const AEVec2& defaultVal)
+//
+// - Returns the AEVec2 value at file -> section -> key,
+// - parsed from a two-element JSON array [x, y].
+// - Prints a warning and returns defaultVal if not found or wrong size.
+//
+// =========================================================
 AEVec2 ConfigManager::getAEVec2(const std::string& file, const std::string& section,
                                 const std::string& key, const AEVec2& defaultVal) const {
     const Json::Value* arrayRoot = getArrayRoot(file, section, key);
@@ -181,6 +296,15 @@ AEVec2 ConfigManager::getAEVec2(const std::string& file, const std::string& sect
     return out;
 }
 
+// =========================================================
+//
+// ConfigManager::getFloatArray(const std::string& file, const std::string& section,
+//                              const std::string& key, std::vector<float>& out)
+//
+// - Fills out with all float values from the JSON array
+// - at file -> section -> key. Does nothing if not found.
+//
+// =========================================================
 void ConfigManager::getFloatArray(const std::string& file, const std::string& section,
                                   const std::string& key, std::vector<float>& out) const {
     const Json::Value* arrayRoot = getArrayRoot(file, section, key);
@@ -194,6 +318,14 @@ void ConfigManager::getFloatArray(const std::string& file, const std::string& se
     }
 }
 
+// =========================================================
+//
+// ConfigManager::getSection(const std::string& file, const std::string& section)
+//
+// - Returns the entire section as a Json::Value.
+// - Returns an empty Json::Value and prints a warning if not found.
+//
+// =========================================================
 Json::Value ConfigManager::getSection(const std::string& file, const std::string& section) const {
     if (!hasSection(file, section)) {
         std::cout << "ConfigManager: getSection failed to find " << file << "." << section
