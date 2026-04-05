@@ -24,6 +24,9 @@
 *//*______________________________________________________________________*/
 #pragma once
 
+// ==========================================
+//               Includes
+// ==========================================
 // Standard library
 #include <initializer_list>
 #include <vector>
@@ -35,8 +38,14 @@
 #include "Components.h"
 #include "Terrain.h"
 
+// ==========================================
+//               FluidType
+// ==========================================
 enum class FluidType { Water, Lava, Count };
 
+// ==========================================
+//               FluidParticle
+// ==========================================
 struct FluidParticle {
     Transform transform_;
     RigidBody2D physics_;
@@ -51,6 +60,9 @@ struct FluidParticle {
     FluidParticle(f32 posX, f32 posY, f32 radius, FluidType type);
 };
 
+// ==========================================
+//               FluidSystem
+// ==========================================
 class FluidSystem {
 public:
     u32 particleMaxCount_{300};
