@@ -1,0 +1,28 @@
+{
+  "hud": {
+    "waterTextX": -0.69,
+    "waterTextY": 0.92,
+    "waterTextScale": 0.5,
+    "goalTextX": -0.12,
+    "goalTextY": 0.92,
+    "goalTextScale": 0.5,
+    "portalTextX": 0.42,
+    "portalTextY": 0.92,
+    "portalTextScale": 0.5,
+    "flowerFrameCount": 4,
+    "flowerFrameTime": 0.25
+  },
+  "defaults": {
+    "width": 80,
+    "height": 45,
+    "tileSize": 20,
+    "portalLimit": 0
+  },
+  "vfx": {
+    "poolSize": 800,
+    "typeCount": 20
+  },
+  "gameplay": {
+    "winThresholdDivisor": 4
+  }
+}

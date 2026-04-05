@@ -51,9 +51,6 @@
     <ClCompile Include="Source\FluidSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Terrain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -128,6 +125,15 @@
     </ClCompile>
     <ClCompile Include="Source\States\Settings.cpp">
       <Filter>Source Files\Game State Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\MeshUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\MouseUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\TileBackground.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -227,6 +233,9 @@
     <None Include="..\Assets\GameData\UI\win_screen_text.json">
       <Filter>JSON Files\UI Files</Filter>
     </None>
+    <None Include="..\Assets\GameData\FileConfigs\Level.json">
+      <Filter>JSON Files\FileConfig Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\GameStateManager.h">
@@ -236,9 +245,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\FluidSystem.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\Terrain.h">
@@ -315,6 +321,15 @@
     </ClInclude>
     <ClInclude Include="Include\States\Settings.h">
       <Filter>Header Files\Game State Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MeshUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MouseUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\TileBackground.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

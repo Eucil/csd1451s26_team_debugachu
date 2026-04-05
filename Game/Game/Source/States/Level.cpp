@@ -105,8 +105,9 @@ static f32 totalWaterCapacity = 0.0f;
 static f32 goalPercentage = 0.0f;
 static f32 goalFlowerFrameTimer_ = 0.0f;
 static int goalFlowerFrame_ = 0;
-static constexpr int kGoalFlowerFrames = 4;
-static constexpr f32 kGoalFlowerFrameTime = 0.25f;
+static int kGoalFlowerFrames = 4;
+static f32 kGoalFlowerFrameTime = 0.25f;
+static int winThresholdDivisor = 4;
 static bool winTriggered = false;
 
 // ==========================================
@@ -172,21 +173,21 @@ void loadLevel() {
     startEndPointSystem.initializeUI(font);
 
     // Setup HUD
-    totalWaterText.x_ = -0.69f;
-    totalWaterText.y_ = 0.92f;
-    totalWaterText.scale_ = 0.5f;
+    totalWaterText.x_ = g_configManager.getFloat("Level", "hud", "waterTextX", -0.69f);
+    totalWaterText.y_ = g_configManager.getFloat("Level", "hud", "waterTextY", 0.92f);
+    totalWaterText.scale_ = g_configManager.getFloat("Level", "hud", "waterTextScale", 0.5f);
     totalWaterText.content_ = "Water: 0/0";
     totalWaterText.font_ = font;
 
-    goalText.x_ = -0.12f;
-    goalText.y_ = 0.92f;
-    goalText.scale_ = 0.5f;
+    goalText.x_ = g_configManager.getFloat("Level", "hud", "goalTextX", -0.12f);
+    goalText.y_ = g_configManager.getFloat("Level", "hud", "goalTextY", 0.92f);
+    goalText.scale_ = g_configManager.getFloat("Level", "hud", "goalTextScale", 0.5f);
     goalText.content_ = "Goal: 0%";
     goalText.font_ = font;
 
-    portalLimitText.x_ = 0.42f;
-    portalLimitText.y_ = 0.92f;
-    portalLimitText.scale_ = 0.5f;
+    portalLimitText.x_ = g_configManager.getFloat("Level", "hud", "portalTextX", 0.42f);
+    portalLimitText.y_ = g_configManager.getFloat("Level", "hud", "portalTextY", 0.92f);
+    portalLimitText.scale_ = g_configManager.getFloat("Level", "hud", "portalTextScale", 0.5f);
     portalLimitText.content_ = "Portals: 0/0";
     portalLimitText.font_ = font;
 
@@ -198,10 +199,10 @@ void loadLevel() {
     } else {
         std::cout << "Failed to load level data\n";
         std::cout << "Using default values\n";
-        width = 80;
-        height = 45;
-        tileSize = 20;
-        portalLimit = 0;
+        width = g_configManager.getInt("Level", "defaults", "width", 80);
+        height = g_configManager.getInt("Level", "defaults", "height", 45);
+        tileSize = g_configManager.getInt("Level", "defaults", "tileSize", 20);
+        portalLimit = g_configManager.getInt("Level", "defaults", "portalLimit", 0);
         fileExist = false;
     }
 
@@ -287,12 +288,16 @@ void initializeLevel() {
     }
 
     // VFX Systems
-    vfxSystem.initialize(800, 20);
+    vfxSystem.initialize(g_configManager.getInt("Level", "vfx", "poolSize", 800),
+                         g_configManager.getInt("Level", "vfx", "typeCount", 20));
 
     // HUD
     winTriggered = false; // reset win latch for this level
 
     // Reset HUD animation state every level start (including Restart)
+    kGoalFlowerFrames = g_configManager.getInt("Level", "hud", "flowerFrameCount", 4);
+    kGoalFlowerFrameTime = g_configManager.getFloat("Level", "hud", "flowerFrameTime", 0.25f);
+    winThresholdDivisor = g_configManager.getInt("Level", "gameplay", "winThresholdDivisor", 4);
     goalFlowerFrameTimer_ = 0.0f;
     goalFlowerFrame_ = 0;
 
@@ -575,9 +580,10 @@ void updateLevel(GameStateManager& GSM, f32 deltaTime) {
 
                 // Calculate
                 // percentage based on particles collected vs max particles
-                goalPercentage = (static_cast<f32>(startEndPointSystem.particlesCollected_) /
-                                  static_cast<f32>(fluidSystem.particleMaxCount_ / 4)) *
-                                 100.0f;
+                goalPercentage =
+                    (static_cast<f32>(startEndPointSystem.particlesCollected_) /
+                     static_cast<f32>(fluidSystem.particleMaxCount_ / winThresholdDivisor)) *
+                    100.0f;
                 if (goalPercentage > 100.0f)
                     goalPercentage = 100.0f;
 
