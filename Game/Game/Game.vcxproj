@@ -116,6 +116,17 @@
     <Font Include="..\Assets\Fonts\PressStart2P-Regular.ttf" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="..\Assets\Logo\DigiPen_Singapore_WEB_WHITE.png" />
+    <Image Include="..\Assets\Logo\DigiPen_Singapore_WEB_WHITE_2026.png" />
+    <Image Include="..\Assets\Previews\Empty.png" />
+    <Image Include="..\Assets\Previews\Level_1.png" />
+    <Image Include="..\Assets\Previews\Level_2.png" />
+    <Image Include="..\Assets\Previews\Level_3.png" />
+    <Image Include="..\Assets\Previews\Level_4.png" />
+    <Image Include="..\Assets\Previews\Level_5.png" />
+    <Image Include="..\Assets\Previews\Level_6.png" />
+    <Image Include="..\Assets\Previews\Level_7.png" />
+    <Image Include="..\Assets\Previews\Level_8.png" />
     <Image Include="..\Assets\Textures\blue_bricks.png" />
     <Image Include="..\Assets\Textures\brown_rectangle_40_24.png" />
     <Image Include="..\Assets\Textures\brown_rectangle_80_24.png" />
@@ -125,8 +136,10 @@
     <Image Include="..\Assets\Textures\Dirt02.png" />
     <Image Include="..\Assets\Textures\hud_goal_icon.png" />
     <Image Include="..\Assets\Textures\hud_water_icon.png" />
+    <Image Include="..\Assets\Textures\moss_full.png" />
     <Image Include="..\Assets\Textures\moss_sprite_sheet.png" />
     <Image Include="..\Assets\Textures\overgrown_pipe_end.png" />
+    <Image Include="..\Assets\Textures\pink_flower_end.ico" />
     <Image Include="..\Assets\Textures\pink_flower_end.png" />
     <Image Include="..\Assets\Textures\pink_flower_sprite_sheet.png" />
     <Image Include="..\Assets\Textures\portal_arrow.png" />
