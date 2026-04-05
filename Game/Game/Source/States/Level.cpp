@@ -109,6 +109,9 @@ static TextData goalText;
 static TextData portalLimitText;
 static TextData savedLevelText;
 static f32 savedLevelTimer = 0.0f;
+static TextData clickMeText;
+static f32 clickMeOffsetX = 0.0f;
+static f32 clickMeOffsetY = 0.0f;
 static f32 totalWaterRemaining = 0.0f;
 static f32 totalWaterCapacity = 0.0f;
 static f32 goalPercentage = 0.0f;
@@ -203,6 +206,19 @@ void loadLevel() {
     savedLevelText.initFromJson("Level", "SavedText");
     savedLevelText.font_ = titleFont;
     savedLevelTimer = 0.0f;
+
+    {
+        const Json::Value& hint = g_configManager.getSection("Level", "ClickMeHint");
+        clickMeText.content_ = hint["content"].asString();
+        clickMeText.scale_   = hint["scale"].asFloat();
+        clickMeText.r_       = hint["red"].asFloat();
+        clickMeText.g_       = hint["green"].asFloat();
+        clickMeText.b_       = hint["blue"].asFloat();
+        clickMeText.a_       = hint["alpha"].asFloat();
+        clickMeText.font_    = font;
+        clickMeOffsetX       = hint["offsetX"].asFloat();
+        clickMeOffsetY       = hint["offsetY"].asFloat();
+    }
 
     // Level Data
     levelManager.initEditorUI(font);
@@ -784,6 +800,13 @@ void drawLevel() {
 
     if (savedLevelTimer > 0.0f)
         savedLevelText.draw(true);
+
+    if (levelManager.getCurrentLevel() == 1 && !startEndPointSystem.startPoints_.empty()) {
+        const AEVec2& pipePos = startEndPointSystem.startPoints_[0].transform_.pos_;
+        clickMeText.x_ = (pipePos.x / 800.0f) + clickMeOffsetX;
+        clickMeText.y_ = (pipePos.y / 450.0f) + clickMeOffsetY;
+        clickMeText.draw(true);
+    }
 
     confirmationSystem.draw();
 
