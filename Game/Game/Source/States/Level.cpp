@@ -525,8 +525,7 @@ void updateLevel(GameStateManager& GSM, f32 deltaTime) {
                         break;
                     case GameBlock::Portal:
                         if (magic->isNearestNodeToMouseAtThreshold() == true) {
-                            if (AEInputCheckTriggered(AEVK_RBUTTON) ||
-                                0 == AESysDoesWindowExist()) {
+                            if (AEInputCheckTriggered(AEVK_RBUTTON)) {
                                 portalSystem.checkMouseClick();
                             } else if (AEInputCheckReleased(AEVK_RBUTTON)) {
                                 portalSystem.resetIframe();
