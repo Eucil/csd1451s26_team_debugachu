@@ -1,11 +1,13 @@
 /*!
-@file       DebugSystem.h
+@file       DebugSystem.cpp
 @author     Sean Lee Hong Wei/seanhongwei.lee@digipen.edu
 @co_author  NIL
 
 @date		March, 31, 2026
 
-@brief      This source file contains the declaration of functions that
+@brief      This source file contains the implementation of the DebugSystem
+            class, providing an in-game overlay for toggling debug options,
+            rendering colliders and velocity vectors, and displaying HUD values.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents
@@ -35,6 +37,14 @@
 
 DebugSystem g_debugSystem;
 
+// =========================================================
+//
+// DebugSystem::load
+//
+// Creates all meshes and loads the close button texture
+// needed to render the debug overlay.
+//
+// =========================================================
 void DebugSystem::load(s8 font) {
     font_ = font;
 
@@ -48,6 +58,15 @@ void DebugSystem::load(s8 font) {
     buttonClose_.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
 }
 
+// =========================================================
+//
+// DebugSystem::initFromJson
+//
+// Reads overlay colour, header text, close button, and all
+// toggle buttons from JSON, rebuilding the toggles_ vector
+// and resetting options_ to false.
+//
+// =========================================================
 void DebugSystem::initFromJson(const std::string& file, const std::string& section) {
     const Json::Value& debugSection = g_configManager.getSection(file, section);
     graphics_.red_ = debugSection["graphics"]["red"].asFloat();
@@ -112,6 +131,14 @@ void DebugSystem::initFromJson(const std::string& file, const std::string& secti
     }
 }
 
+// =========================================================
+//
+// DebugSystem::unload
+//
+// Frees all owned meshes, unloads toggle checkboxes, and
+// clears the toggles_ vector.
+//
+// =========================================================
 void DebugSystem::unload() {
     if (graphics_.mesh_ != nullptr) {
         AEGfxMeshFree(graphics_.mesh_);
@@ -139,14 +166,50 @@ void DebugSystem::unload() {
     toggles_.clear();
 }
 
+// =========================================================
+//
+// DebugSystem::open
+//
+// Opens the debug overlay.
+//
+// =========================================================
 void DebugSystem::open() { open_ = true; }
 
+// =========================================================
+//
+// DebugSystem::close
+//
+// Closes the debug overlay.
+//
+// =========================================================
 void DebugSystem::close() { open_ = false; }
 
+// =========================================================
+//
+// DebugSystem::toggle
+//
+// Toggles the debug overlay between open and closed.
+//
+// =========================================================
 void DebugSystem::toggle() { open_ = !open_; }
 
+// =========================================================
+//
+// DebugSystem::isOpen
+//
+// Returns true if the debug overlay is currently open.
+//
+// =========================================================
 bool DebugSystem::isOpen() const { return open_; }
 
+// =========================================================
+//
+// DebugSystem::updateTransform
+//
+// Rebuilds the overlay world matrix to fill the full window,
+// then updates the close button transform.
+//
+// =========================================================
 void DebugSystem::updateTransform() {
     // Fill entire screen
     s32 windowWidth{AEGfxGetWindowWidth()};
@@ -169,6 +232,14 @@ void DebugSystem::updateTransform() {
     buttonClose_.updateTransform();
 }
 
+// =========================================================
+//
+// DebugSystem::renderBackground
+//
+// Draws the semi-transparent background quad using the
+// stored colour and world matrix.
+//
+// =========================================================
 void DebugSystem::renderBackground() {
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
@@ -178,6 +249,14 @@ void DebugSystem::renderBackground() {
     AEGfxMeshDraw(graphics_.mesh_, AE_GFX_MDM_TRIANGLES);
 }
 
+// =========================================================
+//
+// DebugSystem::update
+//
+// Handles checkbox click input and updates each toggle's
+// state in options_. Does nothing when the overlay is closed.
+//
+// =========================================================
 void DebugSystem::update() {
     if (!open_)
         return;
@@ -193,6 +272,14 @@ void DebugSystem::update() {
     }
 }
 
+// =========================================================
+//
+// DebugSystem::draw
+//
+// Draws the overlay background, header, close button, and
+// all toggle checkboxes with labels. Does nothing when closed.
+//
+// =========================================================
 void DebugSystem::draw() {
     if (!open_)
         return;
@@ -211,6 +298,15 @@ void DebugSystem::draw() {
     }
 }
 
+// =========================================================
+//
+// DebugSystem::drawHUD
+//
+// Draws a translucent HUD box in the top-left corner showing
+// live values (FPS, particle counts, etc.) for every toggle
+// that is on and has a hudFormat string.
+//
+// =========================================================
 void DebugSystem::drawHUD() {
     hudValues_["ShowFps"] = static_cast<float>(AEFrameRateControllerGetFrameRate());
     const auto& values = hudValues_;
@@ -271,6 +367,14 @@ void DebugSystem::drawHUD() {
     }
 }
 
+// =========================================================
+//
+// DebugSystem::setScene
+//
+// Registers scene system pointers so drawAll() can iterate
+// them each frame for collider and velocity visualisation.
+//
+// =========================================================
 void DebugSystem::setScene(Terrain* dirt, Terrain* stone, Terrain* magic, FluidSystem* fluidSystem,
                            CollectibleSystem* collectibles, PortalSystem* portals,
                            StartEndPoint* startEnd, VFXSystem* vfx) {
@@ -284,6 +388,13 @@ void DebugSystem::setScene(Terrain* dirt, Terrain* stone, Terrain* magic, FluidS
     vfx_ = vfx;
 }
 
+// =========================================================
+//
+// DebugSystem::clearScene
+//
+// Nulls all registered scene pointers.
+//
+// =========================================================
 void DebugSystem::clearScene() {
     dirt_ = stone_ = magic_ = nullptr;
     fluidSystem_ = nullptr;
@@ -293,6 +404,15 @@ void DebugSystem::clearScene() {
     vfx_ = nullptr;
 }
 
+// =========================================================
+//
+// DebugSystem::drawAll
+//
+// Updates HUD values, applies the UnlimitedWater toggle,
+// runs all collider and velocity visualisations for every
+// registered scene system, then draws the overlay and HUD.
+//
+// =========================================================
 void DebugSystem::drawAll() {
     u32 totalFluidParticles = 0;
     if (fluidSystem_) {
@@ -339,6 +459,14 @@ void DebugSystem::drawAll() {
     drawHUD();
 }
 
+// =========================================================
+//
+// DebugSystem::drawSingleCollider
+//
+// Draws a wireframe rect or circle for the given collider,
+// transformed to its world position and size.
+//
+// =========================================================
 void DebugSystem::drawSingleCollider(const Transform& transform, const Collider2D& col) {
     AEMtx33 scale, rot, trans, world;
 
@@ -364,6 +492,14 @@ void DebugSystem::drawSingleCollider(const Transform& transform, const Collider2
     }
 }
 
+// =========================================================
+//
+// DebugSystem::drawCollectibleColliders
+//
+// Draws collider wireframes for all active, uncollected
+// collectibles when RenderColliders is toggled on.
+//
+// =========================================================
 void DebugSystem::drawCollectibleColliders(CollectibleSystem& system) {
     if (!options_.count("RenderColliders") || !options_.at("RenderColliders"))
         return;
@@ -380,6 +516,14 @@ void DebugSystem::drawCollectibleColliders(CollectibleSystem& system) {
     }
 }
 
+// =========================================================
+//
+// DebugSystem::drawPortalColliders
+//
+// Draws collider wireframes for all portals when
+// RenderColliders is toggled on.
+//
+// =========================================================
 void DebugSystem::drawPortalColliders(PortalSystem& system) {
     if (!options_.count("RenderColliders") || !options_.at("RenderColliders"))
         return;
@@ -394,6 +538,14 @@ void DebugSystem::drawPortalColliders(PortalSystem& system) {
     }
 }
 
+// =========================================================
+//
+// DebugSystem::drawStartEndColliders
+//
+// Draws collider wireframes for all start points and the
+// end point when RenderColliders is toggled on.
+//
+// =========================================================
 void DebugSystem::drawStartEndColliders(StartEndPoint& system) {
     if (!options_.count("RenderColliders") || !options_.at("RenderColliders"))
         return;
@@ -409,6 +561,14 @@ void DebugSystem::drawStartEndColliders(StartEndPoint& system) {
     drawSingleCollider(system.endPoint_.transform_, system.endPoint_.collider_);
 }
 
+// =========================================================
+//
+// DebugSystem::drawTerrainColliders
+//
+// Draws wireframe outlines for every active box and triangle
+// collider in a terrain layer when RenderColliders is on.
+//
+// =========================================================
 void DebugSystem::drawTerrainColliders(Terrain& terrain) {
     if (!options_.count("RenderColliders") || !options_.at("RenderColliders"))
         return;
@@ -469,6 +629,14 @@ void DebugSystem::drawTerrainColliders(Terrain& terrain) {
     }
 }
 
+// =========================================================
+//
+// DebugSystem::drawFluidColliders
+//
+// Draws collider wireframes for all fluid particles across
+// every fluid type when RenderColliders is toggled on.
+//
+// =========================================================
 void DebugSystem::drawFluidColliders(FluidSystem& fluidSystem) {
     if (!options_.count("RenderColliders") || !options_.at("RenderColliders"))
         return;
@@ -486,6 +654,14 @@ void DebugSystem::drawFluidColliders(FluidSystem& fluidSystem) {
     }
 }
 
+// =========================================================
+//
+// DebugSystem::drawFluidVelocities
+//
+// Draws a velocity vector line for every fluid particle
+// across all fluid types when ShowVelocity is toggled on.
+//
+// =========================================================
 void DebugSystem::drawFluidVelocities(FluidSystem& fluidSystem) {
     if (!options_.count("ShowVelocity") || !options_.at("ShowVelocity"))
         return;
@@ -498,6 +674,15 @@ void DebugSystem::drawFluidVelocities(FluidSystem& fluidSystem) {
     }
 }
 
+// =========================================================
+//
+// DebugSystem::drawVelocity
+//
+// Draws a yellow line scaled to velocity magnitude and
+// rotated to velocity direction for a single object.
+// Does nothing if ShowVelocity is off or speed is near zero.
+//
+// =========================================================
 void DebugSystem::drawVelocity(const Transform& transform, const RigidBody2D& rb) {
     if (!options_.count("ShowVelocity") || !options_.at("ShowVelocity"))
         return;
