@@ -6,8 +6,8 @@
 
 @date		March, 31, 2026
 
-@brief      This source file implements the MainMenu game state,
-            handling button input, background simulation,
+@brief      This source file contains the definitions of functions that make
+            the MainMenu game state, handling button input, background simulation,
             and navigation to other states.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.

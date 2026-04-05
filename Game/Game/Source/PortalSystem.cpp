@@ -5,9 +5,9 @@
 
 @date		March, 31, 2026
 
-@brief      This source file implements Portal struct constructors and PortalSystem,
-            handling portal placement, particle teleportation with rotation,
-            VFX, and rendering.
+@brief      This source file contains the definition of functions that make
+            the Portal struct constructors and PortalSystem, handling portal
+            placement, particle teleportation with rotation, VFX, and rendering.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
            Reproduction or disclosure of this file or its contents
