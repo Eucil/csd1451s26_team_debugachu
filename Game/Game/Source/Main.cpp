@@ -5,21 +5,30 @@
 
 @date		March, 31, 2026
 
-@brief      This source file contains the declaration of functions that
+@brief      This source file contains the defintion of functions that implements
+            the application entry point. Initialises the engine,
+            config manager, audio system, debug system, and game state machine,
+            then runs the main game loop until the Quit state is reached.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents
             without the prior written consent of DigiPen Institute of
             Technology is prohibited.
 *//*______________________________________________________________________*/
+// =====================
 // Standard library
+// =====================
 #include <iostream>
 
+// =====================
 // Third-party
+// =====================
 #include <AEEngine.h>
 #include <crtdbg.h>
 
+// =====================
 // Project
+// =====================
 #include "AudioSystem.h"
 #include "Button.h"
 #include "ConfigManager.h"
@@ -34,6 +43,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
+    // ==========================================
+    // Engine Initialisation
+    // ==========================================
     AESysInit(hInstance, nCmdShow, 1600, 900, 0, 60, false, nullptr);
 
     AESysReset();
@@ -41,15 +53,22 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     AESysSetWindowTitle("Water The Plant");
     AESysSetWindowIcon("Assets/Textures/pink_flower_end.ico", 16, 16);
 
-    // Initalise config manager
+    // ==========================================
+    // Config Manager
+    // ==========================================
     g_configManager.init("Assets/GameData/FileConfigs");
     g_configManager.init("Assets/GameData/UI");
     Button::loadConfigFromJson("button_config", "Settings");
 
+    // ==========================================
+    // Game State Manager
+    // ==========================================
     GameStateManager GSM{};
     GSM.init(StateId::LogoScreen);
 
-    // Audio system
+    // ==========================================
+    // Audio System
+    // ==========================================
     g_audioSystem.createGroup("sfx");
     g_audioSystem.createGroup("bgm");
     g_audioSystem.setGroupVolume("sfx", 0.5f);
@@ -68,12 +87,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
     g_audioSystem.playMusic("main_music", "bgm", 1.0f, 1.0f);
 
-    // Debug system
+    // ==========================================
+    // Debug System
+    // ==========================================
     s8 debugFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
     g_debugSystem.load(debugFont);
     g_debugSystem.initFromJson("debug_system", "DebugOverlay");
 
+    // ==========================================
     // Game Loop
+    // =========================================
     while (GSM.currentState_ != StateId::Quit) {
         if (GSM.currentState_ == StateId::Restart) {
             GSM.currentState_ = GSM.previousState_;
@@ -106,6 +129,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         GSM.previousState_ = GSM.currentState_;
         GSM.currentState_ = GSM.nextState_;
     }
+
+    // ==========================================
+    // Shutdown
+    // ==========================================
+
     // Debug system
     g_debugSystem.unload();
     if (debugFont) {
