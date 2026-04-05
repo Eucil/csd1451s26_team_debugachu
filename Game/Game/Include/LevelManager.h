@@ -32,7 +32,7 @@
 #include "Terrain.h"
 
 // Level 1 to 8 are dev levels
-// Level 9 to 12 are player levels
+// Level 9 to 6 are player levels
 enum class Level {
     Level1,
     Level2,

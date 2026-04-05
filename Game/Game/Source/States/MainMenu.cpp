@@ -6,7 +6,9 @@
 
 @date		March, 31, 2026
 
-@brief      This source file contains the declaration of functions that
+@brief      This source file implements the MainMenu game state,
+            handling button input, background simulation,
+            and navigation to other states.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents
@@ -30,29 +32,46 @@
 #include "GameStateManager.h"
 #include "MenuBackground.h"
 
+// ==========================================
+// Fonts
+// ==========================================
+static s8 titleFont = 0;
+static s8 buttonFont = 0;
 
-// ----------------------------------------------------------------------------
-// UI-only state  (background lives in MenuBackground)
-// ----------------------------------------------------------------------------
+// ==========================================
+// UI Text
+// ==========================================
+static TextData titleText;
+
+// ==========================================
+// Buttons
+// ==========================================
 static Button startButton;
 static Button howToPlayButton;
 static Button settingsButton;
 static Button creditsButton;
 static Button quitButton;
 
-// Text/Font
-static TextData titleText;
-
-static s8 titleFont = 0;
-static s8 buttonFont = 0;
-
+// ==========================================
 // Animations
+// ==========================================
 static AnimationManager animManager;
 static ScreenFaderManager screenFader;
 static UIFader someOtherCoolAnimation;
 
+// ==========================================
+// Confirmation
+// ==========================================
 static ConfirmationSystem confirmationSystem;
 
+// =========================================================
+//
+// loadMainMenu()
+//
+// - Loads fonts, background, button assets, and confirmation system.
+// - Called once per session (not on restart).
+//
+// =========================================================
 void loadMainMenu() {
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
@@ -75,10 +94,20 @@ void loadMainMenu() {
     quitButton.loadMesh();
     quitButton.loadTexture("Assets/Textures/brown_rectangle_80_24.png");
 
+    // Load confirmation system
     confirmationSystem.load();
     confirmationSystem.hide();
 }
 
+// =========================================================
+//
+// initializeMainMenu()
+//
+// - Initializes the background simulation, UI buttons,
+// - title text, animations, and confirmation system.
+// - Called on both first load and every restart.
+//
+// =========================================================
 void initializeMainMenu() {
     // Initialize the shared background simulation
     MenuBackground::initialize();
@@ -109,6 +138,15 @@ void initializeMainMenu() {
     confirmationSystem.init(buttonFont);
 }
 
+// =========================================================
+//
+// updateMainMenu(GameStateManager& GSM, f32 deltaTime)
+//
+// - Handles per-frame input for button clicks, background digging,
+// - and the quit confirmation dialog.
+// - Also updates button transforms, background, and animations.
+//
+// =========================================================
 void updateMainMenu(GameStateManager& GSM, f32 deltaTime) {
     if (!g_debugSystem.isOpen()) {
         if (AEInputCheckTriggered(AEVK_Z)) {
@@ -153,6 +191,7 @@ void updateMainMenu(GameStateManager& GSM, f32 deltaTime) {
             }
         }
 
+        // Confirmation input handling
         if (confirmationSystem.confirmationYesClicked()) {
             if (confirmationSystem.getTask() == ConfirmationTask::Quit) {
                 screenFader.startFadeOut(&GSM, StateId::Quit);
@@ -189,11 +228,19 @@ void updateMainMenu(GameStateManager& GSM, f32 deltaTime) {
         g_debugSystem.update();
     }
 
+    // Always update
     animManager.updateAll(deltaTime);
-
     confirmationSystem.update();
 }
 
+// =========================================================
+//
+// drawMainMenu()
+//
+// - Renders the background, UI buttons, title text,
+// - confirmation dialog, animations, and debug visuals.
+//
+// =========================================================
 void drawMainMenu() {
     // Draw shared background (terrain, fluid, portals, collectibles, VFX)
     MenuBackground::draw();
@@ -222,12 +269,29 @@ void drawMainMenu() {
     g_debugSystem.drawAll();
 }
 
+// =========================================================
+//
+// freeMainMenu()
+//
+// - Frees per-session runtime resources: animations and background.
+// - Called on every restart and on state exit.
+//
+// =========================================================
 void freeMainMenu() {
 
     animManager.freeAll();
     MenuBackground::free();
 }
 
+// =========================================================
+//
+// unloadMainMenu()
+//
+// - Unloads all persistent assets loaded in loadMainMenu():
+// - background, buttons, fonts, and confirmation system.
+// - Called once when leaving the MainMenu state.
+//
+// =========================================================
 void unloadMainMenu() {
     // Unload shared GPU assets
     MenuBackground::unload();
@@ -239,6 +303,7 @@ void unloadMainMenu() {
     creditsButton.unload();
     quitButton.unload();
 
+    // Unload fonts
     if (titleFont) {
         AEGfxDestroyFont(titleFont);
         titleFont = 0;
@@ -248,5 +313,6 @@ void unloadMainMenu() {
         buttonFont = 0;
     }
 
+    // Unload Confirmation
     confirmationSystem.unload();
 }
