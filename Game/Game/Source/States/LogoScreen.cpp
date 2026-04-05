@@ -1,21 +1,30 @@
 /*!
-@file       LogoScreen.h
+@file       LogoScreen.cpp
 @author     Han Tianchou/H.tianchou@digipen.edu
 @co_author  NIL
 
-@date		March, 31, 2026
+@date       March, 31, 2026
 
-@brief      This source file contains the declaration of functions that
+@brief      This source file contains the definitions of functions that
+            implement the LogoScreen state, which displays the DigiPen logo
+            with a fade-in, hold, and fade-out sequence before transitioning
+            to the MainMenu state.
+
+            Functions defined:
+                - loadLogoScreen,       loads the logo texture and quad mesh
+                - initializeLogoScreen, resets the fade sequence state
+                - updateLogoScreen,     drives fade-in, hold, and fade-out phases
+                - drawLogoScreen,       renders the logo at the correct aspect ratio
+                - freeLogoScreen,       no runtime resources to release
+                - unloadLogoScreen,     unloads the texture and frees the mesh
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents
             without the prior written consent of DigiPen Institute of
             Technology is prohibited.
 *//*______________________________________________________________________*/
-#include "States/LogoScreen.h"
 
-// Standard library
-#include <cstdio>
+#include "States/LogoScreen.h"
 
 // Third-party
 #include <AEEngine.h>
@@ -24,19 +33,18 @@
 #include "DebugSystem.h"
 #include "GameStateManager.h"
 
-
-// ----------------------------------------------------------------------------
-// Constants
-// ----------------------------------------------------------------------------
+// ==========================================
+//            CONSTANTS
+// ==========================================
 static constexpr f32 FADE_SPEED = 1.5f;    // seconds to complete a fade in or out
 static constexpr f32 HOLD_DURATION = 1.5f; // seconds to hold logo at full opacity
 
 // Actual pixel dimensions of DigiPen_Singapore_WEB_WHITE_2026.png (1525 x 900)
 static constexpr f32 LOGO_ASPECT = 1525.0f / 900.0f;
 
-// ----------------------------------------------------------------------------
-// State
-// ----------------------------------------------------------------------------
+// ==========================================
+//            STATIC STATE
+// ==========================================
 static AEGfxTexture* logoTexture = nullptr;
 static AEGfxVertexList* logoMesh = nullptr;
 
@@ -45,102 +53,72 @@ static f32 holdTimer_ = 0.0f;
 static bool fadingIn_ = true;
 static bool done_ = false;
 
-// Tracks how many frames have been drawn -- lets us confirm draw() is running
-static int frameCount_ = 0;
-
 static void skipToMainMenu(GameStateManager& GSM);
 
-// ----------------------------------------------------------------------------
-// Load
-// ----------------------------------------------------------------------------
+// ==========================================
+//            LOGO SCREEN STATE
+// ==========================================
+
+// =========================================================
+//
+// loadLogoScreen()
+//
+// - Loads the DigiPen logo texture from Assets/Logo/.
+// - Creates the fullscreen quad mesh used to display the texture.
+//
+// =========================================================
 void loadLogoScreen() {
-    printf("[LogoScreen] loadLogoScreen() called\n");
+    logoTexture = AEGfxTextureLoad("Assets/Logo/DigiPen_Singapore_WEB_WHITE_2026.png");
 
-    // --- CHECK 1: Texture load ---
-    const char* texturePath = "Assets/Logo/DigiPen_Singapore_WEB_WHITE_2026.png";
-    printf("[LogoScreen] Attempting to load texture: %s\n", texturePath);
-    logoTexture = AEGfxTextureLoad(texturePath);
-
-    if (logoTexture == nullptr) {
-        printf("[LogoScreen] ERROR: Texture failed to load!\n");
-        printf("[LogoScreen]        Check that the file exists at the path above,\n");
-        printf("[LogoScreen]        relative to your executable's working directory.\n");
-    } else {
-        printf("[LogoScreen] OK: Texture loaded successfully (ptr=%p)\n", (void*)logoTexture);
-    }
-
-    // --- CHECK 2: Mesh creation ---
-    printf("[LogoScreen] Creating quad mesh...\n");
     AEGfxMeshStart();
     AEGfxTriAdd(-0.5f, -0.5f, 0xFFFFFFFF, 0.0f, 1.0f, 0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 1.0f, -0.5f,
                 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
     AEGfxTriAdd(0.5f, -0.5f, 0xFFFFFFFF, 1.0f, 1.0f, 0.5f, 0.5f, 0xFFFFFFFF, 1.0f, 0.0f, -0.5f,
                 0.5f, 0xFFFFFFFF, 0.0f, 0.0f);
     logoMesh = AEGfxMeshEnd();
-
-    if (logoMesh == nullptr) {
-        printf("[LogoScreen] ERROR: Mesh creation failed!\n");
-    } else {
-        printf("[LogoScreen] OK: Mesh created successfully (ptr=%p)\n", (void*)logoMesh);
-    }
-
-    printf("[LogoScreen] loadLogoScreen() complete\n");
 }
 
-// ----------------------------------------------------------------------------
-// Initialize
-// ----------------------------------------------------------------------------
+// =========================================================
+//
+// initializeLogoScreen()
+//
+// - Resets alpha to 0.0 to begin the fade-in from transparent.
+// - Resets the hold timer to HOLD_DURATION seconds.
+// - Sets fadingIn_ to true to start the fade-in phase immediately.
+// - Sets done_ to false so the sequence is allowed to run.
+//
+// =========================================================
 void initializeLogoScreen() {
-    printf("[LogoScreen] initializeLogoScreen() called\n");
-
     alpha_ = 0.0f;
     holdTimer_ = HOLD_DURATION;
     fadingIn_ = true;
     done_ = false;
-    frameCount_ = 0;
-
-    // --- CHECK 3: Confirm state is set ---
-    printf("[LogoScreen] State reset: alpha=%.2f, fadingIn=%s, done=%s\n", alpha_,
-           fadingIn_ ? "true" : "false", done_ ? "true" : "false");
-
-    // --- CHECK 4: Confirm GSM was started with LogoScreen ---
-    printf("[LogoScreen] Texture ptr: %p  Mesh ptr: %p\n", (void*)logoTexture, (void*)logoMesh);
-    if (logoTexture == nullptr) {
-        printf("[LogoScreen] WARNING: Texture is null at Initialize time.\n");
-        printf("[LogoScreen]          This means loadLogoScreen() was not called,\n");
-        printf("[LogoScreen]          OR the starting state is not StateId::LogoScreen.\n");
-        printf("[LogoScreen]          Check GSM.init() call in your game entry point.\n");
-    }
-
-    printf("[LogoScreen] initializeLogoScreen() complete\n");
 }
 
-// ----------------------------------------------------------------------------
-// Update
-// ----------------------------------------------------------------------------
+// =========================================================
+//
+// updateLogoScreen()
+//
+// - Caps deltaTime to 1/30s to prevent the first-frame load spike
+//   from skipping through multiple fade phases in a single step.
+// - Checks for any key or mouse click input and skips to MainMenu.
+// - During the fade-in phase, increments alpha toward 1.0.
+// - During the hold phase, decrements the hold timer until zero.
+// - During the fade-out phase, decrements alpha toward 0.0 then transitions.
+// - Delegates to the debug system when it is open.
+//
+// =========================================================
 void updateLogoScreen(GameStateManager& GSM, f32 deltaTime) {
-
-    // Cap deltaTime to 1/30s so a spike never skips through phases.
-    // The first frame often has an inflated dt due to load time.
     if (deltaTime > 0.0333f)
         deltaTime = 0.0333f;
-
-    // --- CHECK 5: Confirm update() is being called ---
-    if (frameCount_ <= 3) {
-        printf("[LogoScreen] updateLogoScreen() frame=%d  dt=%.4f  alpha=%.3f  phase=%s\n",
-               frameCount_, deltaTime, alpha_,
-               fadingIn_ ? "FADE_IN" : (holdTimer_ > 0.0f ? "HOLD" : "FADE_OUT"));
-    }
 
     if (!g_debugSystem.isOpen()) {
         if (AEInputCheckTriggered(AEVK_Z)) {
             g_debugSystem.open();
         }
 
-        // Skip on any key / click
         if (AEInputCheckReleased(AEVK_ESCAPE) || AEInputCheckReleased(AEVK_RETURN) ||
             AEInputCheckReleased(AEVK_SPACE) || AEInputCheckReleased(AEVK_LBUTTON)) {
-            printf("[LogoScreen] Skip input detected -- jumping to MainMenu\n");
             skipToMainMenu(GSM);
             return;
         }
@@ -153,8 +131,6 @@ void updateLogoScreen(GameStateManager& GSM, f32 deltaTime) {
             if (alpha_ >= 1.0f) {
                 alpha_ = 1.0f;
                 fadingIn_ = false;
-                printf("[LogoScreen] Fade-in complete, entering HOLD phase (%.1fs)\n",
-                       HOLD_DURATION);
             }
         } else if (holdTimer_ > 0.0f) {
             holdTimer_ -= deltaTime;
@@ -162,7 +138,6 @@ void updateLogoScreen(GameStateManager& GSM, f32 deltaTime) {
             alpha_ -= deltaTime / FADE_SPEED;
             if (alpha_ <= 0.0f) {
                 alpha_ = 0.0f;
-                printf("[LogoScreen] Fade-out complete\n");
                 skipToMainMenu(GSM);
             }
         }
@@ -174,69 +149,43 @@ void updateLogoScreen(GameStateManager& GSM, f32 deltaTime) {
     }
 }
 
-// ----------------------------------------------------------------------------
-// Draw
-// ----------------------------------------------------------------------------
+// =========================================================
+//
+// drawLogoScreen()
+//
+// - Sets the background color to black.
+// - Guards against null texture or mesh pointers.
+// - Guards against zero or negative window dimensions.
+// - Computes scaleW and scaleH to fit the logo at 75% of the window
+//   while preserving the 1525 x 900 pixel aspect ratio.
+// - Renders the logo texture with the current alpha transparency.
+// - Draws the debug system overlay.
+//
+// =========================================================
 void drawLogoScreen() {
-    ++frameCount_;
-
-    // Black background
     AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 
-    // --- CHECK 6: Confirm draw() is being called ---
-    if (frameCount_ <= 3) {
-        printf("[LogoScreen] drawLogoScreen() frame=%d  alpha=%.3f\n", frameCount_, alpha_);
-    }
-
-    // --- CHECK 7: Guard on null resources ---
-    if (logoTexture == nullptr) {
-        printf("[LogoScreen] WARNING: drawLogoScreen() -- logoTexture is null, "
-               "nothing will render!\n");
+    if (!logoTexture || !logoMesh)
         return;
-    }
-    if (logoMesh == nullptr) {
-        printf("[LogoScreen] WARNING: drawLogoScreen() -- logoMesh is null, "
-               "nothing will render!\n");
-        return;
-    }
 
-    // --- CHECK 8: Confirm window dimensions are non-zero ---
     f32 winW = static_cast<f32>(AEGfxGetWindowWidth());
     f32 winH = static_cast<f32>(AEGfxGetWindowHeight());
-    if (frameCount_ <= 3) {
-        printf("[LogoScreen] Window size: %.0f x %.0f\n", winW, winH);
-    }
-    if (winW <= 0.0f || winH <= 0.0f) {
-        printf("[LogoScreen] ERROR: Window dimensions are zero or negative!\n");
-        return;
-    }
 
-    // -------------------------------------------------------------------------
-    // Compute a scale that fits the logo at 75% of the screen while
-    // preserving its original aspect ratio (1525 x 445 px).
-    //
-    // Strategy: fit within a box that is 75% of the window on both axes,
-    // then let the logo's own aspect ratio determine the final size.
-    // -------------------------------------------------------------------------
+    if (winW <= 0.0f || winH <= 0.0f)
+        return;
+
     f32 maxW = winW * 0.75f;
     f32 maxH = winH * 0.75f;
 
     f32 scaleW, scaleH;
     if (maxW / LOGO_ASPECT <= maxH) {
-        // Constrained by width
         scaleW = maxW;
         scaleH = maxW / LOGO_ASPECT;
     } else {
-        // Constrained by height
         scaleH = maxH;
         scaleW = maxH * LOGO_ASPECT;
     }
 
-    if (frameCount_ <= 3) {
-        printf("[LogoScreen] Logo draw size: %.1f x %.1f\n", scaleW, scaleH);
-    }
-
-    // Draw logo centered on screen with correct aspect ratio and current alpha
     AEMtx33 scale, trans, world;
     AEMtx33Scale(&scale, scaleW, scaleH);
     AEMtx33Trans(&trans, 0.0f, 0.0f);
@@ -253,33 +202,51 @@ void drawLogoScreen() {
     g_debugSystem.drawAll();
 }
 
-// ----------------------------------------------------------------------------
-// Free / Unload
-// ----------------------------------------------------------------------------
-void freeLogoScreen() { printf("[LogoScreen] freeLogoScreen() called\n"); }
+// =========================================================
+//
+// freeLogoScreen()
+//
+// - No runtime resources to release for this state.
+//
+// =========================================================
+void freeLogoScreen() {}
 
+// =========================================================
+//
+// unloadLogoScreen()
+//
+// - Unloads the logo texture from the GPU if the pointer is valid.
+// - Frees the quad mesh from the GPU if the pointer is valid.
+// - Nulls both pointers to prevent dangling references.
+//
+// =========================================================
 void unloadLogoScreen() {
-    printf("[LogoScreen] unloadLogoScreen() called\n");
-
     if (logoTexture) {
         AEGfxTextureUnload(logoTexture);
         logoTexture = nullptr;
-        printf("[LogoScreen] Texture unloaded\n");
     }
     if (logoMesh) {
         AEGfxMeshFree(logoMesh);
         logoMesh = nullptr;
-        printf("[LogoScreen] Mesh freed\n");
     }
 }
 
-// ----------------------------------------------------------------------------
-// Helper
-// ----------------------------------------------------------------------------
+// ==========================================
+//            HELPER
+// ==========================================
+
+// =========================================================
+//
+// skipToMainMenu()
+//
+// - Guards against being called more than once using the done_ flag.
+// - Sets done_ to true to prevent further state transitions.
+// - Assigns StateId::MainMenu to the GameStateManager's nextState_.
+//
+// =========================================================
 static void skipToMainMenu(GameStateManager& GSM) {
     if (!done_) {
         done_ = true;
-        printf("[LogoScreen] Transitioning to MainMenu\n");
         GSM.nextState_ = StateId::MainMenu;
     }
 }

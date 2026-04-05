@@ -51,6 +51,9 @@
     <ClCompile Include="Source\FluidSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Terrain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -125,15 +128,6 @@
     </ClCompile>
     <ClCompile Include="Source\States\Settings.cpp">
       <Filter>Source Files\Game State Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\MeshUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\MouseUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\TileBackground.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -245,6 +239,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\FluidSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\Terrain.h">

@@ -4,9 +4,20 @@
 @co_author  Sean Lee Hong Wei/seanhongwei.lee@digipen.edu,
             Chia Hanxin/c.hanxin@digipen.edu
 
-@date		March, 31, 2026
+@date       March, 31, 2026
 
-@brief      This source file contains the definition of functions that
+@brief      This source file contains the definitions of functions that
+            implement the Credits screen state. Credits lines are loaded
+            from a JSON config file and scrolled upward automatically.
+            The state shares the live menu background with MainMenu and Controls.
+
+            Functions defined:
+                - loadCredits,       loads fonts, credits data, and back button
+                - initializeCredits, resets scroll position and initializes animations
+                - updateCredits,     handles scrolling, input, and auto-return
+                - drawCredits,       renders background, overlay, styled text, and button
+                - freeCredits,       releases background and animation resources
+                - unloadCredits,     unloads fonts, overlay mesh, and button assets
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
             Reproduction or disclosure of this file or its contents
@@ -17,8 +28,6 @@
 #include "States/Credits.h"
 
 // Standard library
-#include <cstdio>
-#include <cstring>
 #include <string>
 
 // Third-party
@@ -34,122 +43,125 @@
 #include "MenuBackground.h"
 #include "MeshUtils.h"
 
-// ----------------------------------------------------------------------------
-// Credits text list (NULL-terminated)
-// ----------------------------------------------------------------------------
-/*
-static const char* credits[] = {
-    "",
-    "",
-    "WWW.DIGIPEN.EDU",
-    "All content copyright (C) DigiPen Institute of Technology Singapore. All Rights Reserved",
-    "",
-    "TEAM",
-    "Debugachu",
-    "",
-    "DEVELOPED BY",
-    "Woo Guang Theng",
-    "Sean Lee Hong Wei",
-    "Chia Hanxin",
-    "Han Tianchou",
-    "",
-    "FACULTY AND ADVISORS",
-    "Gerald Wong",
-    "Soroor Malekmohammadi Faradounbeh",
-    "Tommy Tan",
-    "",
-    "CREATED AT",
-    "DigiPen Institute of Technology Singapore",
-    "",
-    "PRESIDENT",
-    "Claude Comair",
-    "",
-    "EXECUTIVES",
-    "Chu Jason Yeu Tat       Michael Gats",
-    "Tan Chek Ming       Prasanna Kumar Ghali",
-    "Mandy Wong       Johnny Deek",
-    "",
-    "SPECIAL THANKS",
-    "All playtesters",
-    "",
-    NULL};
-*/
-
-// ----------------------------------------------------------------------------
-// Static state
-// ----------------------------------------------------------------------------
+// ==========================================
+//            STATIC STATE
+// ==========================================
 static f32 yPos = 0.0f;
+static float lineSpacing = 80.0f;  // read from credits.json DisplaySettings
+static float scrollSpeed = 200.0f; // read from credits.json DisplaySettings
+static float overlayAlpha = 0.5f;  // read from credits.json DisplaySettings
+
 static s8 creditsFont = 0;
 static s8 buttonFont = 0;
 static Button buttonBack;
-static float lineSpacing = 80.0f;
-static float scrollSpeed = -200.0f; // negative = scroll up
-std::vector<std::string> creditsData;
+
+static std::vector<std::string> creditsData;
 static AEGfxVertexList* overlayMesh = nullptr;
 
-// Animations
+// ==========================================
+//            ANIMATIONS
+// ==========================================
 static AnimationManager animManager;
 static ScreenFaderManager screenFader;
-static UIFader someOtherCoolAnimation;
+static UIFader uiFadeIn_;
 
+// ==========================================
+//            CREDITS STATE
+// ==========================================
+
+// =========================================================
+//
+// loadCredits()
+//
+// - Loads the shared menu background assets.
+// - Creates the credits and button fonts from PressStart2P-Regular.ttf.
+// - Reads all credits lines from the credits JSON config into creditsData.
+// - Builds and caches the fullscreen overlay mesh.
+// - Loads the back button mesh and texture.
+//
+// =========================================================
 void loadCredits() {
-    // Load the destructible terrain background
     MenuBackground::load();
 
-    // Load credits font
     creditsFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 36);
-
-    // Load button font
     buttonFont = AEGfxCreateFont("Assets/Fonts/PressStart2P-Regular.ttf", 24);
 
-    Json::Value Lines = g_configManager.getSection("credits", "CreditsInfo");
+    // Read display settings from credits.json
+    Json::Value ds = g_configManager.getSection("credits", "DisplaySettings");
+    if (!ds.isNull()) {
+        lineSpacing = ds.get("lineSpacing", 80.0f).asFloat();
+        scrollSpeed = ds.get("scrollSpeed", 200.0f).asFloat();
+        overlayAlpha = ds.get("overlayAlpha", 0.5f).asFloat();
+    }
 
-    if (!Lines.isNull() && Lines.isMember("Lines") && Lines["Lines"].isArray()) {
-        const Json::Value& linesArray = Lines["Lines"];
-
-        // Clear old data just in case
+    Json::Value lines = g_configManager.getSection("credits", "CreditsInfo");
+    if (!lines.isNull() && lines.isMember("Lines") && lines["Lines"].isArray()) {
         creditsData.clear();
-
-        // Loop through the linearray and read into creditsData instead
-        for (Json::Value const& line : linesArray) {
-            std::string str = line.asString();
-            creditsData.push_back(str);
+        for (Json::Value const& line : lines["Lines"]) {
+            creditsData.push_back(line.asString());
         }
     }
 
-    // Load back button
+    AEGfxMeshStart();
+    AEGfxTriAdd(-0.5f, -0.5f, 0xFF000000, 0.0f, 1.0f, 0.5f, -0.5f, 0xFF000000, 1.0f, 1.0f, -0.5f,
+                0.5f, 0xFF000000, 0.0f, 0.0f);
+    AEGfxTriAdd(0.5f, -0.5f, 0xFF000000, 1.0f, 1.0f, 0.5f, 0.5f, 0xFF000000, 1.0f, 0.0f, -0.5f,
+                0.5f, 0xFF000000, 0.0f, 0.0f);
+    overlayMesh = AEGfxMeshEnd();
+
     buttonBack.loadMesh();
     buttonBack.loadTexture("Assets/Textures/brown_rectangle_40_24.png");
 }
 
+// =========================================================
+//
+// initializeCredits()
+//
+// - Initializes the shared menu background simulation.
+// - Resets the vertical scroll position to the bottom of the screen.
+// - Reads the back button transform from JSON config.
+// - Assigns the button font to the back button.
+// - Clears and re-registers the screen fader and UI fader with the
+//   animation manager, then initializes all animations.
+//
+// =========================================================
 void initializeCredits() {
-    // Initialize the shared background simulation
     MenuBackground::initialize();
 
-    // Reset credits scroll position
     yPos = -450.0f;
-    printf("Credits: Initialized with yPos = %f\n", yPos);
 
     buttonBack.initFromJson("credits_buttons", "Back");
     buttonBack.setTextFont(buttonFont);
 
-    // Animations
     animManager.clear();
     animManager.add(&screenFader);
-    animManager.add(&someOtherCoolAnimation);
+    animManager.add(&uiFadeIn_);
     animManager.initializeAll();
 }
 
+// =========================================================
+//
+// updateCredits()
+//
+// - Advances the vertical scroll position upward each frame.
+// - Handles escape and space input to trigger a fade-out to MainMenu.
+// - Handles back button click to trigger a fade-out to MainMenu.
+// - Updates the back button transform each frame.
+// - Triggers a fade-out to MainMenu when all lines have scrolled off screen.
+// - Destroys dirt at the mouse position when left mouse button is held.
+// - Updates the shared menu background simulation.
+// - Updates all registered animations each frame.
+// - Delegates to the debug system when it is open.
+//
+// =========================================================
 void updateCredits(GameStateManager& GSM, f32 deltaTime) {
     if (!g_debugSystem.isOpen()) {
         if (AEInputCheckTriggered(AEVK_Z)) {
             g_debugSystem.open();
         }
 
-        // Scroll credits upward
-        yPos -= scrollSpeed * deltaTime;
+        yPos += scrollSpeed * deltaTime;
 
-        // Input to skip or return
         if (AEInputCheckTriggered(AEVK_ESCAPE) || AEInputCheckTriggered(AEVK_SPACE)) {
             screenFader.startFadeOut(&GSM, StateId::MainMenu);
         }
@@ -159,14 +171,11 @@ void updateCredits(GameStateManager& GSM, f32 deltaTime) {
         }
         buttonBack.updateTransform();
 
-        // Auto-return when all lines have scrolled past
-        float lastLineY = yPos - (creditsData.size() - 1) * lineSpacing;
+        float lastLineY = yPos - (static_cast<int>(creditsData.size()) - 1) * lineSpacing;
         if (lastLineY > 450.0f) {
-            printf("Credits: Finished scrolling, returning to MainMenu\n");
             screenFader.startFadeOut(&GSM, StateId::MainMenu);
         }
 
-        // Left-click held: destroy dirt + VFX + audio (same as MainMenu)
         if (AEInputCheckCurr(AEVK_LBUTTON)) {
             bool hitDirt = MenuBackground::destroyDirtAtMouse(20.0f);
             if (hitDirt) {
@@ -174,7 +183,6 @@ void updateCredits(GameStateManager& GSM, f32 deltaTime) {
             }
         }
 
-        // Update the shared background (fluid, portals, etc. keep running)
         MenuBackground::update(deltaTime);
     } else {
         if (AEInputCheckTriggered(AEVK_Z)) {
@@ -185,19 +193,47 @@ void updateCredits(GameStateManager& GSM, f32 deltaTime) {
     animManager.updateAll(deltaTime);
 }
 
+// =========================================================
+//
+// drawCredits()
+//
+// - Draws the shared live menu background.
+// - Draws the semi-transparent dark overlay for text readability.
+// - Iterates over all credits lines, skipping those outside the visible region.
+// - Applies index-based styling to avoid strcmp on multi-byte characters.
+// - Centers each line horizontally and draws a black outline for legibility.
+// - Draws the back button, animation overlays, and debug overlay.
+//
+// Index map (matches credits.json Lines array order):
+//   [0,1]  = empty lines
+//   [2]    = WWW.DIGIPEN.EDU
+//   [3]    = copyright line       styled smaller, grey
+//   [4]    = empty
+//   [5]    = TEAM                 gold header
+//   [6]    = DEBUGACHU            white
+//   [7]    = empty
+//   [8]    = TEAM MEMBERS         gold header
+//   [9-12] = team member names
+//   [13]   = empty
+//   [14]   = INSTRUCTORS          gold header
+//   [15-17]= instructor names
+//   [18]   = empty
+//   [19]   = CREATED AT           gold header
+//   [20]   = DigiPen Singapore
+//   [21]   = empty
+//   [22]   = PRESIDENT            gold header
+//   [23]   = Claude Comair
+//   [24]   = empty
+//   [25]   = EXECUTIVES           gold header
+//   [26-31]= executive names (one per line)
+//   [32]   = empty
+//   [33]   = SPECIAL THANKS       gold header
+//   [34]   = All playtesters
+//   [35]   = empty
+//
+// =========================================================
 void drawCredits() {
-    // Draw the shared live background first
     MenuBackground::draw();
-
-    // Semi-transparent dark overlay so text is readable
-    if (overlayMesh == nullptr) {
-        AEGfxMeshStart();
-        AEGfxTriAdd(-0.5f, -0.5f, 0xFF000000, 0.0f, 1.0f, 0.5f, -0.5f, 0xFF000000, 1.0f, 1.0f,
-                    -0.5f, 0.5f, 0xFF000000, 0.0f, 0.0f);
-        AEGfxTriAdd(0.5f, -0.5f, 0xFF000000, 1.0f, 1.0f, 0.5f, 0.5f, 0xFF000000, 1.0f, 0.0f, -0.5f,
-                    0.5f, 0xFF000000, 0.0f, 0.0f);
-        overlayMesh = AEGfxMeshEnd();
-    }
 
     AEMtx33 scale, trans, world;
     AEMtx33Scale(&scale, (f32)AEGfxGetWindowWidth(), (f32)AEGfxGetWindowHeight());
@@ -206,62 +242,26 @@ void drawCredits() {
 
     AEGfxSetRenderMode(AE_GFX_RM_COLOR);
     AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-    AEGfxSetTransparency(0.5f);
+    AEGfxSetTransparency(overlayAlpha);
     AEGfxSetColorToMultiply(0.0f, 0.0f, 0.0f, 1.0f);
     AEGfxSetTransform(world.m);
     AEGfxMeshDraw(overlayMesh, AE_GFX_MDM_TRIANGLES);
-
     AEGfxSetTransparency(1.0f);
     AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 
-    // ----------------------------------------------------------------
-    // Index-based styling table.
-    // Using array indices avoids strcmp on strings that contain
-    // multi-byte UTF-8 characters (like (c)), which can cause
-    // mismatches depending on the compiler's codepage setting.
-    //
-    // Index map (matches the credits[] array order):
-    //   0,1  = empty lines
-    //   2    = WWW.DIGIPEN.EDU
-    //   3    = copyright line   <-- contains (c), styled smaller/grey
-    //   4    = empty
-    //   5    = TEAM             <-- red header
-    //   6    = Debugachu        <-- gold
-    //   7    = empty
-    //   8    = DEVELOPED BY     <-- gold header
-    //   9-12 = dev names
-    //   13   = empty
-    //   14   = FACULTY AND ADVISORS <-- gold header
-    //   15-17= faculty names
-    //   18   = empty
-    //   19   = CREATED AT       <-- gold header
-    //   20   = DigiPen SG
-    //   21   = empty
-    //   22   = PRESIDENT        <-- gold header
-    //   23   = Claude Comair
-    //   24   = empty
-    //   25   = EXECUTIVES       <-- gold header
-    //   26-28= executive names
-    //   29   = empty
-    //   30   = SPECIAL THANKS   <-- gold header
-    //   31   = All playtesters
-    //   32   = empty
-    // ----------------------------------------------------------------
     for (size_t i = 0; i < creditsData.size(); i++) {
-        float yLine = yPos - i * lineSpacing;
+        float yLine = yPos - static_cast<float>(i) * lineSpacing;
 
         if (yLine <= -450.0f || yLine >= 450.0f)
             continue;
 
-        std::string currentLine = creditsData[i];
-        if (currentLine.size() == 0)
+        std::string const& currentLine = creditsData[i];
+        if (currentLine.empty())
             continue;
 
-        // Default style
         float textSize = 0.6f;
         float r = 1.0f, g = 1.0f, b = 1.0f;
 
-        // Style by index -- no strcmp needed
         switch (i) {
         case 3: // copyright line
             r = 0.7f;
@@ -277,11 +277,11 @@ void drawCredits() {
             break;
         case 6: // Debugachu
             r = 1.0f;
-            g = 0.0f;
-            b = 0.0f;
+            g = 1.0f;
+            b = 1.0f;
             textSize = 0.8f;
             break;
-        case 8:  // DEVELOPED BY
+        case 8:  // TEAM MEMBERS
         case 14: // INSTRUCTORS
         case 19: // CREATED AT
         case 22: // PRESIDENT
@@ -297,14 +297,12 @@ void drawCredits() {
             break;
         }
 
-        // Auto-center: measure text width and compute xPos
         float textWidth = 0.0f, textHeight = 0.0f;
         AEGfxGetPrintSize(creditsFont, currentLine.c_str(), textSize, &textWidth, &textHeight);
         float xPos = -textWidth / 2.0f;
-
         float screenY = yLine / 450.0f;
 
-        // Black outline for readability
+        // Black outline for legibility over the background
         AEGfxPrint(creditsFont, currentLine.c_str(), xPos - 0.002f, screenY - 0.002f, textSize, 0.f,
                    0.f, 0.f, 1.f);
         AEGfxPrint(creditsFont, currentLine.c_str(), xPos + 0.002f, screenY - 0.002f, textSize, 0.f,
@@ -313,36 +311,48 @@ void drawCredits() {
                    0.f, 0.f, 1.f);
         AEGfxPrint(creditsFont, currentLine.c_str(), xPos + 0.002f, screenY + 0.002f, textSize, 0.f,
                    0.f, 0.f, 1.f);
-
-        // Main colored text
         AEGfxPrint(creditsFont, currentLine.c_str(), xPos, screenY, textSize, r, g, b, 1.0f);
     }
 
-    // Draw back button on top
     buttonBack.draw();
     animManager.drawAll();
     g_debugSystem.drawAll();
 }
+
+// =========================================================
+//
+// freeCredits()
+//
+// - Frees the shared menu background simulation objects.
+// - Calls freeAll() on the animation manager to release animation resources.
+//
+// =========================================================
 void freeCredits() {
-    // Free the shared background simulation objects
     MenuBackground::free();
     animManager.freeAll();
 }
 
+// =========================================================
+//
+// unloadCredits()
+//
+// - Unloads the shared menu background GPU assets.
+// - Destroys the credits and button fonts.
+// - Frees the overlay mesh.
+// - Unloads the back button mesh and texture.
+//
+// =========================================================
 void unloadCredits() {
-    // Unload shared GPU assets
     MenuBackground::unload();
 
     if (creditsFont) {
         AEGfxDestroyFont(creditsFont);
         creditsFont = 0;
     }
-
     if (buttonFont) {
         AEGfxDestroyFont(buttonFont);
         buttonFont = 0;
     }
-
     if (overlayMesh) {
         AEGfxMeshFree(overlayMesh);
         overlayMesh = nullptr;

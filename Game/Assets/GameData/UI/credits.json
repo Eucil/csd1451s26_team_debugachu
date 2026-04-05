@@ -27,7 +27,7 @@
       "Claude Comair",
       "",
       "EXECUTIVES",
-      "Chu Jason Yeu Tat",        
+      "Chu Jason Yeu Tat",
       "Michael Gats",
       "Tan Chek Ming",
       "Prasanna Kumar Ghali",
@@ -38,5 +38,10 @@
       "All playtesters",
       ""
     ]
+  },
+  "DisplaySettings": {
+    "overlayAlpha": 0.5,
+    "lineSpacing": 80.0,
+    "scrollSpeed": 200.0
   }
 }
