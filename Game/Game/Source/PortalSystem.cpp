@@ -5,7 +5,9 @@
 
 @date		March, 31, 2026
 
-@brief      This source file contains the declaration of functions that
+@brief      This source file implements Portal struct constructors and PortalSystem,
+            handling portal placement, particle teleportation with rotation,
+            VFX, and rendering.
 
 @copyright  Copyright (C) 2026 DigiPen Institute of Technology.
            Reproduction or disclosure of this file or its contents
@@ -14,19 +16,33 @@
 *//*______________________________________________________________________*/
 #include "PortalSystem.h"
 
+// =============================
 // Standard library
+// =============================
 #include <cmath>
 #include <iostream>
 
+// =============================
 // Third-party
+// =============================
 #include <AEEngine.h>
 
+// =============================
 // Project
+// =============================
 #include "AudioSystem.h"
 #include "CollisionSystem.h"
 #include "ConfigManager.h"
 #include "MouseUtils.h"
 
+// =========================================================
+//
+// Portal::Portal()
+//
+// - Default constructor. Initializes transform at the origin with unit scale,
+// - sets a box collider of unit size, clears the tint color, and nulls the link.
+//
+// =========================================================
 Portal::Portal() {
     // Set up transform
     transform_.pos_ = {0.0f, 0.0f};
@@ -54,6 +70,15 @@ Portal::Portal() {
     linkedPortal_ = nullptr;
 }
 
+// =========================================================
+//
+// Portal::Portal(pos, scale, rotationDeg)
+//
+// - Constructs a portal at the given world position with a random tint color.
+// - The collider is inset to 90% of the scale to allow slight portal overlap.
+// - Rotation is stored in radians converted from the given degrees.
+//
+// =========================================================
 Portal::Portal(AEVec2 pos, AEVec2 scale, f32 rotationDeg) {
     transform_.pos_ = pos;
     transform_.scale_ = scale;
@@ -81,6 +106,15 @@ Portal::Portal(AEVec2 pos, AEVec2 scale, f32 rotationDeg) {
     linkedPortal_ = nullptr;
 }
 
+// =========================================================
+//
+// PortalSystem::initialize(int const& portalMax)
+//
+// - Creates the shared rect mesh, loads the portal wormhole and arrow textures,
+// - reads the portal scale from config, and resets all runtime state.
+// - portalMax sets the portal count limit for this level (0 = unlimited).
+//
+// =========================================================
 void PortalSystem::initialize(int const& portalMax) {
 
     rectMesh_ = createRectMesh();
@@ -102,6 +136,17 @@ void PortalSystem::initialize(int const& portalMax) {
     nextBlue_ = AERandFloat();
 }
 
+// =========================================================
+//
+// PortalSystem::setupPortal(AEVec2 pos, AEVec2 scale, f32 rotationDeg)
+//
+// - Allocates a new Portal and appends it to portalVec_.
+// - The first portal of a pair is held in currentPortal_ and assigned the pending color.
+// - The second portal is linked to the first bidirectionally; both share the same tint.
+// - A new random color is then queued for the next pair.
+// - Returns false without placing if the portal limit has been reached.
+//
+// =========================================================
 bool PortalSystem::setupPortal(AEVec2 pos, AEVec2 scale, f32 rotationDeg) {
     // Limit number of portals that can be placed
     if (portalVec_.size() >= static_cast<size_t>(portalLimit_)) {
@@ -135,6 +180,16 @@ bool PortalSystem::setupPortal(AEVec2 pos, AEVec2 scale, f32 rotationDeg) {
     return true;
 }
 
+// =========================================================
+//
+// PortalSystem::collisionCheckWithWater(Portal portal, FluidParticle particle)
+//
+// - Rotated AABB-circle collision test.
+// - Transforms the particle position into the portal's local (unrotated) space,
+// - finds the closest point on the axis-aligned box, and checks whether
+// - the squared distance is less than the particle radius squared.
+//
+// =========================================================
 bool PortalSystem::collisionCheckWithWater(Portal portal, FluidParticle particle) {
     // Circle to Rectangle Collision Detection
 
@@ -167,6 +222,17 @@ bool PortalSystem::collisionCheckWithWater(Portal portal, FluidParticle particle
     return distance_squared < (radius * radius);
 }
 
+// =========================================================
+//
+// PortalSystem::update(f32 dt, std::vector<FluidParticle>& particlePool, VFXSystem& vfx)
+//
+// - Each frame: finds any unlinked portal to hold as currentPortal_,
+// - then checks every linked portal against every particle.
+// - On collision: maps the particle position through the entry-to-exit rotation,
+// - applies a pop-boost in the exit direction, sets a portal iframe,
+// - and spawns VFX at the exit portal on cooldown.
+//
+// =========================================================
 void PortalSystem::update(f32 dt, std::vector<FluidParticle>& particlePool, VFXSystem& vfx) {
     portalVfxCooldown_ -= dt;
     // Look for unlinked portals to set to currentPortal_
@@ -246,6 +312,15 @@ void PortalSystem::update(f32 dt, std::vector<FluidParticle>& particlePool, VFXS
     }
 }
 
+// =========================================================
+//
+// PortalSystem::draw()
+//
+// - Draws all portals with their individual tint color.
+// - Uses texture mode if the portal texture is loaded,
+// - otherwise falls back to solid color mode.
+//
+// =========================================================
 void PortalSystem::draw() {
 
     // If texture doesn't exist, draw as color
@@ -273,6 +348,15 @@ void PortalSystem::draw() {
     }
 }
 
+// =========================================================
+//
+// PortalSystem::drawPreview()
+//
+// - Draws a ghost portal at the current mouse position at 50% transparency.
+// - Color matches the pending pair color (or the open currentPortal_ color).
+// - Also draws a direction arrow offset along the portal's exit axis.
+//
+// =========================================================
 void PortalSystem::drawPreview() {
     // Get mouse position in world space
     AEVec2 mousePos_ = getMouseWorldPos();
@@ -327,6 +411,15 @@ void PortalSystem::drawPreview() {
     AEGfxMeshDraw(arrowGraphicsConfigs_.mesh_, AE_GFX_MDM_TRIANGLES);
 }
 
+// =========================================================
+//
+// PortalSystem::free()
+//
+// - Frees the shared rect mesh and both textures.
+// - Deletes all heap-allocated Portal objects and clears the vector.
+// - Resets currentPortal_ to nullptr.
+//
+// =========================================================
 void PortalSystem::free() {
 
     AEGfxMeshFree(rectMesh_);
@@ -351,6 +444,17 @@ void PortalSystem::free() {
     currentPortal_ = nullptr;
 }
 
+// =========================================================
+//
+// PortalSystem::checkMouseClick()
+//
+// - If the click iframe is active, returns immediately.
+// - Checks whether the mouse overlaps any portal's AABB.
+// - If so, unlinks and deletes that portal, then returns.
+// - Otherwise, places a new portal at the mouse position via setupPortal().
+// - Sets the iframe after any action to prevent double-triggering.
+//
+// =========================================================
 void PortalSystem::checkMouseClick() {
     if (clickIframe_) {
         return;
@@ -395,8 +499,23 @@ void PortalSystem::checkMouseClick() {
     clickIframe_ = true;
 }
 
+// =========================================================
+//
+// PortalSystem::resetIframe()
+//
+// - Clears the click debounce flag so the next click is accepted.
+//
+// =========================================================
 void PortalSystem::resetIframe() { clickIframe_ = false; }
 
+// =========================================================
+//
+// PortalSystem::rotatePortal()
+//
+// - Reads scroll wheel input and adjusts rotationValue_ by +/-15 degrees.
+// - Wraps the value within [0, 360).
+//
+// =========================================================
 void PortalSystem::rotatePortal() {
 
     s32 scrollInput{};
