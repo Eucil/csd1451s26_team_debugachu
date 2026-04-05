@@ -43,11 +43,11 @@ private:
     Button mainMenuButton_;
 
     // Text elements
-    TextData titleText_;        // "VICTORY!" header
-    TextData collectiblesText_; // "Items: X/Y" dynamically formatted
-    TextData statsPerfectText_; // Shown when all collectibles were gathered
-    TextData statsPartialText_; // Shown when some collectibles were missed
-    TextData noNextLevelText_;  // Hint shown below greyed-out Next Level button
+    TextData titleText_;
+    TextData collectiblesText_;
+    TextData statsPerfectText_;
+    TextData statsPartialText_;
+    TextData noNextLevelText_;
 
     // Format string for collectiblesText_ (loaded from JSON, filled at runtime)
     std::string collectiblesFormat_;
@@ -59,11 +59,11 @@ private:
     s8 font_{0}; // Owned by Level.cpp; do not destroy here
 
     // Result data set by show() and used by update() and draw()
-    int collectiblesCollected_{0}; // How many collectibles the player gathered
-    int totalCollectibles_{0};     // Total collectibles available in the level
-    int currentLevel_{0};          // 1-based level number just completed
-    int nextLevel_{0};             // currentLevel_ + 1
-    bool hasNextLevel_{false};     // True when a playable next level exists
+    int collectiblesCollected_{0};
+    int totalCollectibles_{0};
+    int currentLevel_{0};
+    int nextLevel_{0};
+    bool hasNextLevel_{false};
 
 public:
     // Call once in Level::load() to create GPU resources and read JSON config.
